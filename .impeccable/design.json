@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-10T18:50:00.000Z",
+  "title": "Design System: Gatálogo",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Blush Petal / Rosa Gatálogo", "canonical": "#DC8BA1" },
+      "primary-dark": { "role": "primary", "displayName": "Deep Petal", "canonical": "#C7607E" },
+      "green": { "role": "secondary", "displayName": "Sage Foliage / Verde Botânico", "canonical": "#7E9B70" },
+      "green-link": { "role": "secondary", "displayName": "Forest Link / Verde Musgo", "canonical": "#5D7A58" },
+      "background": { "role": "neutral", "displayName": "Warm Paper / Fundo Pergaminho", "canonical": "#FBF6F2" },
+      "text-dark": { "role": "neutral", "displayName": "Deep Roast / Café Escuro", "canonical": "#382923" },
+      "text-title": { "role": "neutral", "displayName": "Warm Umber / Marrom Título", "canonical": "#4A352F" },
+      "border": { "role": "neutral", "displayName": "Blush Border", "canonical": "#EDDEDB" },
+      "input-bg": { "role": "neutral", "displayName": "Vanilla Cream / Fundo de Input", "canonical": "#FDF6F5" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Títulos heróicos" },
+      "headline": { "displayName": "Headline", "purpose": "Títulos de seções principais" },
+      "title": { "displayName": "Title", "purpose": "Títulos de formulários e telas de ação" },
+      "body": { "displayName": "Body", "purpose": "Textos informativos e inputs" },
+      "label": { "displayName": "Label", "purpose": "Links e botões compactos" }
+    },
+    "shadows": [
+      { "name": "none", "value": "none", "purpose": "Sistema plano por padrão com elevação puramente tonal" }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "402px" },
+      { "name": "tablet", "value": "768px" }
+    ]
+  },
+  "narrative": {
+    "northStar": "O Herbário Felino Acolhedor",
+    "overview": "Gatálogo constrói uma experiência sensorial suave e afetuosa, inspirada em cadernos de campo botânicos e ilustrações infantis artesanais. A identidade visual afasta-se da frieza tecnológica, priorizando tons terrosos suaves, bordas arredondadas e folhagens.",
+    "keyCharacteristics": [
+      "Ilustrações botânicas delicadas integradas holisticamente às margens.",
+      "Cantos arredondados contínuos em todos os elementos estruturais (14px a 24px).",
+      "Tipografia Nunito orgânica em tons de cacau e café.",
+      "Zero pretos puros; contraste obtido com marrons quentes."
+    ],
+    "rules": [
+      { "name": "The No-Pure-Black Rule", "body": "O código #000000 é expressamente proibido no sistema. Toda hierarquia de texto utiliza cafés e marrons quentes.", "section": "colors" },
+      { "name": "The Organic Accent Rule", "body": "O rosa primário (#DC8BA1) é reservado para ações de avanço imediato.", "section": "colors" },
+      { "name": "The Tight Heading Rule", "body": "Título e subtítulo mantêm espaçamento mínimo (máximo 2-4px) e altura de linha compacta (1.1 a 1.15).", "section": "typography" },
+      { "name": "The Tonal Flatness Rule", "body": "Elementos de formulário e cartões não utilizam sombras suspensas; a elevação é puramente cromática.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do usar o asset oficial google_logo.png para todas as chamadas de login com Google.",
+      "Do manter Icons.pets sólido e branco nos botões de avanço primário.",
+      "Do utilizar OutlineInputBorder com borderRadius de 16px nos campos de texto.",
+      "Do posicionar Folha_2 com inclinação horizontal atravessando a margem superior esquerda.",
+      "Do alinhar Folha_4 paralelamente à lateral esquerda do botão de ação primária."
+    ],
+    "donts": [
+      "Don't utilizar ícones vazados/outline na pata do botão primário.",
+      "Don't usar texto preto puro #000000 em nenhuma circunstância.",
+      "Don't aproximar excessivamente o gato ilustrado do texto da logo Gatálogo.",
+      "Don't adicionar sombras projetadas escuras ou artificiais."
+    ]
+  }
+}
