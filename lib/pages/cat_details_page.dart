@@ -531,15 +531,19 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                         color: AppColors.textDark,
                                       ),
                                       const SizedBox(width: 8),
-                                      Text(
-                                        'Análise da pelagem',
-                                        style: GoogleFonts.nunito(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w800,
-                                          color: AppColors.textDark,
+                                      Expanded(
+                                        child: Text(
+                                          'Análise da pelagem',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.nunito(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w800,
+                                            color: AppColors.textDark,
+                                          ),
                                         ),
                                       ),
-                                      const Spacer(),
+                                      const SizedBox(width: 8),
                                       Text(
                                         'Confiança: $confidenceInt%',
                                         style: GoogleFonts.nunito(
@@ -675,15 +679,19 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                         color: AppColors.textDark,
                                       ),
                                       const SizedBox(width: 8),
-                                      Text(
-                                        'Fotos adicionais',
-                                        style: GoogleFonts.nunito(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w800,
-                                          color: AppColors.textDark,
+                                      Expanded(
+                                        child: Text(
+                                          'Fotos adicionais',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.nunito(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w800,
+                                            color: AppColors.textDark,
+                                          ),
                                         ),
                                       ),
-                                      const Spacer(),
+                                      const SizedBox(width: 8),
                                       GestureDetector(
                                         onTap: () => Navigator.push(
                                           context,
@@ -849,7 +857,7 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                       Expanded(
                         child: SizedBox(
                           height: 48,
-                          child: ElevatedButton.icon(
+                          child: ElevatedButton(
                             onPressed: () => Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -864,55 +872,77 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                 ),
                               ),
                             ),
-                            icon: const Icon(
-                              LucideIcons.map,
-                              size: 18,
-                              color: Colors.white,
-                            ),
-                            label: Text(
-                              'Ver no mapa',
-                              style: GoogleFonts.nunito(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                            ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.greenButton,
                               elevation: 0,
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(24),
                               ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  LucideIcons.map,
+                                  size: 18,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    'Ver no mapa',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.nunito(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
                       ),
                       const SizedBox(width: 12),
-                      // Botão Compartilhar
+                      // Botao Compartilhar
                       Expanded(
                         child: SizedBox(
                           height: 48,
-                          child: ElevatedButton.icon(
+                          child: ElevatedButton(
                             onPressed: () => _shareCat(cat),
-                            icon: const Icon(
-                              LucideIcons.share2,
-                              size: 18,
-                              color: Colors.white,
-                            ),
-                            label: Text(
-                              'Compartilhar',
-                              style: GoogleFonts.nunito(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                            ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               elevation: 0,
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(24),
                               ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  LucideIcons.share2,
+                                  size: 18,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    'Compartilhar',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.nunito(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -950,15 +980,19 @@ class _ColorItem extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Text(
-            label,
-            style: GoogleFonts.nunito(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textMedium,
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.nunito(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textMedium,
+              ),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 8),
           Text(
             percentage,
             style: GoogleFonts.nunito(

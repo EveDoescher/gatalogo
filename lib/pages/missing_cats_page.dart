@@ -1,17 +1,21 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../models/cat.dart';
 import '../services/product_api_service.dart';
 import '../stores/cat_store.dart';
 import '../stores/session_store.dart';
+import '../theme/app_theme.dart';
 import '../widgets/app_widgets.dart';
+import '../widgets/gatalogo_components.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'location_page.dart';
 import 'conversation_page.dart';
 import 'my_cats_page.dart';
-import 'account_page.dart';
+import 'auth_page.dart';
 
 class MissingCatsPage extends StatefulWidget {
   const MissingCatsPage({
@@ -54,7 +58,14 @@ class _MissingCatsPageState extends State<MissingCatsPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: const Text('Gatos desaparecidos'),
+      title: Text(
+        'Gatos desaparecidos',
+        style: GoogleFonts.fredoka(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textTitle,
+        ),
+      ),
       actions: [
         IconButton(
           tooltip: 'Atualizar',
@@ -63,22 +74,6 @@ class _MissingCatsPageState extends State<MissingCatsPage> {
         ),
       ],
     ),
-    floatingActionButton: widget.sessionStore.isSignedIn
-        ? FloatingActionButton.extended(
-            onPressed: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      CreateMissingReportPage(store: widget.catStore),
-                ),
-              );
-              if (mounted) _load();
-            },
-            label: const Text('Criar alerta'),
-            icon: const Icon(Icons.add),
-          )
-        : null,
     body: !widget.sessionStore.isSignedIn
         ? EmptyContent(
             'Receba pistas do seu gato',
@@ -87,8 +82,10 @@ class _MissingCatsPageState extends State<MissingCatsPage> {
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) =>
-                      AccountPage(sessionStore: widget.sessionStore),
+                  builder: (_) => AuthPage(
+                    sessionStore: widget.sessionStore,
+                    onContinueOffline: () => Navigator.pop(context),
+                  ),
                 ),
               ),
               child: const Text('Entrar na conta'),
@@ -100,7 +97,30 @@ class _MissingCatsPageState extends State<MissingCatsPage> {
               padding: const EdgeInsets.only(bottom: 100),
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
-                if (_loading) const LinearProgressIndicator(),
+                Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CreateMissingReportPage(store: widget.catStore),
+                        ),
+                      );
+                      if (mounted) _load();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                    ),
+                    icon: const Icon(Icons.add, color: Colors.white),
+                    label: const Text('Criar alerta', style: TextStyle(color: Colors.white)),
+                  ),
+                ),
+                if (_loading) LinearProgressIndicator(borderRadius: BorderRadius.circular(AppRadius.sm)),
                 if (_error != null)
                   EmptyContent(
                     'Não foi possível carregar',
@@ -394,73 +414,295 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
     final cats = widget.store.cats.where(
       (cat) => cat.id == _report['cat_client_id'],
     );
+    final isActive = _report['status'] == 'active';
+    final cat = cats.isEmpty ? null : cats.first;
+
     return Scaffold(
-      appBar: AppBar(title: Text(_report['name'] ?? 'Detalhes do alerta')),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        leading: GestureDetector(
+          onTap: () => Navigator.maybePop(context),
+          child: Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.borderLight, width: 1.2),
+            ),
+            child: const Icon(
+              LucideIcons.chevronLeft,
+              color: AppColors.textDark,
+              size: 22,
+            ),
+          ),
+        ),
+        title: Text(
+          _report['name'] ?? 'Detalhes do Alerta',
+          style: GoogleFonts.fredoka(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textTitle,
+          ),
+        ),
+      ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.xl),
         children: [
-          if (cats.isNotEmpty) CatPhotoView(cats.first.photoPath, height: 260),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: Icon(
-              _report['status'] == 'active'
-                  ? Icons.search
-                  : Icons.check_circle_outline,
-            ),
-            title: Text(
-              _report['status'] == 'active' ? 'Em busca' : 'Alerta concluído',
-            ),
-            subtitle: Text('Aberto em ${displayDate(_report['created_at'])}'),
-          ),
-          Text(
-            'Raio de busca: ${((_report['radius_meters'] as num) / 1000).toStringAsFixed(1)} km',
-          ),
-          TextButton.icon(
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => LocationPage(
-                  initial: LatLng(
-                    (_report['latitude'] as num).toDouble(),
-                    (_report['longitude'] as num).toDouble(),
+          // Card 1: Perfil do Gato e Status
+          GatalogoCard(
+            backgroundColor: AppColors.surface,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (cat != null)
+                  GestureDetector(
+                    onTap: () => showFullscreenImage(
+                      context,
+                      imagePath: cat.photoPath,
+                      title: cat.displayName,
+                    ),
+                    child: Stack(
+                      children: [
+                        CatPhotoView(
+                          cat.photoPath,
+                          height: 200,
+                          fit: BoxFit.cover,
+                          borderRadius: AppRadius.photo,
+                        ),
+                        Positioned(
+                          right: 10,
+                          bottom: 10,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  LucideIcons.zoomIn,
+                                  size: 12,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Toque para ampliar',
+                                  style: GoogleFonts.nunito(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  radius: _report['radius_meters'] as int,
-                  readOnly: true,
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            cat?.displayName ?? _report['name'] ?? 'Gato',
+                            style: GoogleFonts.fredoka(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textTitle,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Alerta aberto em ${displayDate(_report['created_at'])}',
+                            style: GoogleFonts.nunito(
+                              fontSize: 12,
+                              color: AppColors.textMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isActive ? AppColors.errorBg : AppColors.greenLight,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        border: Border.all(
+                          color: isActive ? AppColors.error.withValues(alpha: 0.3) : AppColors.green.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Text(
+                        isActive ? 'Em busca ativa' : 'Alerta concluído',
+                        style: GoogleFonts.nunito(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: isActive ? AppColors.error : AppColors.greenLink,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: AppSpacing.md),
+
+          // Card 2: Área de Busca
+          GatalogoCard(
+            backgroundColor: AppColors.surface,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(LucideIcons.mapPin, size: 18, color: AppColors.primaryDark),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text(
+                      'Área de Monitoramento',
+                      style: GoogleFonts.fredoka(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textTitle,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Raio de busca: ${((_report['radius_meters'] as num) / 1000).toStringAsFixed(1)} km ao redor do ponto inicial.',
+                  style: GoogleFonts.nunito(fontSize: 13, color: AppColors.textMedium),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.textDark,
+                          side: const BorderSide(color: AppColors.border),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => LocationPage(
+                              initial: LatLng(
+                                (_report['latitude'] as num).toDouble(),
+                                (_report['longitude'] as num).toDouble(),
+                              ),
+                              radius: _report['radius_meters'] as int,
+                              readOnly: true,
+                            ),
+                          ),
+                        ),
+                        icon: const Icon(LucideIcons.map, size: 16),
+                        label: const Text('Ver Mapa'),
+                      ),
+                    ),
+                    if (isActive) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primaryDark,
+                            side: const BorderSide(color: AppColors.borderProfile),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                          ),
+                          onPressed: _busy ? null : _editArea,
+                          icon: const Icon(LucideIcons.edit3, size: 16),
+                          label: const Text('Ajustar Área'),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: AppSpacing.md),
+
+          // Card 3: Pistas e Avistamentos
+          GatalogoCard(
+            backgroundColor: AppColors.surface,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(LucideIcons.search, size: 18, color: AppColors.greenLink),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text(
+                      'Pistas e Avistamentos',
+                      style: GoogleFonts.fredoka(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textTitle,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'A inteligência do Gatálogo cruza fotos registradas na região para encontrar semelhanças com o seu gato.',
+                  style: GoogleFonts.nunito(fontSize: 13, color: AppColors.textMedium),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CluesPage(report: _report, store: widget.store),
+                      ),
+                    ),
+                    icon: const Icon(Icons.pets, size: 16),
+                    label: const Text('Explorar Avistamentos Recebidos'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          if (isActive) ...[
+            const SizedBox(height: AppSpacing.xl),
+            Center(
+              child: TextButton.icon(
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.error,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                ),
+                onPressed: _busy ? null : _resolve,
+                icon: const Icon(LucideIcons.checkCircle, size: 18),
+                label: Text(
+                  _busy ? 'Encerrando…' : 'Encerrar este alerta',
+                  style: GoogleFonts.nunito(fontWeight: FontWeight.w700),
                 ),
               ),
             ),
-            icon: const Icon(Icons.map_outlined),
-            label: const Text('Ver área de busca'),
-          ),
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => CluesPage(report: _report, store: widget.store),
-              ),
-            ),
-            icon: const Icon(Icons.pets_outlined),
-            label: const Text('Ver possíveis avistamentos'),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Uma pista pode ajudar a encontrar seu gato. Confira a foto e o contexto antes de agir.',
-          ),
-          if (_report['status'] == 'active')
-            TextButton.icon(
-              onPressed: _busy ? null : _editArea,
-              icon: const Icon(Icons.edit_location_alt_outlined),
-              label: const Text('Ajustar área de busca'),
-            ),
-          if (_report['status'] == 'active')
-            Padding(
-              padding: const EdgeInsets.only(top: 24),
-              child: OutlinedButton(
-                onPressed: _busy ? null : _resolve,
-                child: Text(_busy ? 'Encerrando…' : 'Encerrar alerta'),
-              ),
-            ),
+          ],
         ],
       ),
     );
@@ -540,8 +782,8 @@ class _CluesPageState extends State<CluesPage> {
     ),
     body: ListView(
       padding: const EdgeInsets.all(16),
-      children: [
-        if (_loading) const LinearProgressIndicator(),
+              children: [
+        if (_loading) LinearProgressIndicator(borderRadius: BorderRadius.circular(AppRadius.sm)),
         if (_error != null)
           EmptyContent(
             'Não foi possível carregar',
@@ -618,7 +860,55 @@ class _PrivateCluePhotoState extends State<PrivateCluePhoto> {
       future: _photo,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
-          return Image.memory(snapshot.data!, fit: BoxFit.contain);
+          return GestureDetector(
+            onTap: () => showFullscreenMemoryImage(
+              context,
+              bytes: snapshot.data!,
+              title: 'Foto do Avistamento',
+            ),
+            child: Stack(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  height: 240,
+                  child: Image.memory(snapshot.data!, fit: BoxFit.contain),
+                ),
+                Positioned(
+                  right: 8,
+                  bottom: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          LucideIcons.zoomIn,
+                          size: 12,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Toque para ampliar',
+                          style: GoogleFonts.nunito(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
         }
         if (snapshot.hasError) {
           return TextButton.icon(
@@ -677,75 +967,364 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
     final cats = widget.store.cats.where(
       (cat) => cat.id == widget.report['cat_client_id'],
     );
+    final myCat = cats.isEmpty ? null : cats.first;
+    final isFriendSighting = widget.clue['conversation_id'] != null;
+    final isPending = _clue['status'] == 'pending' && widget.report['status'] == 'active';
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Detalhes do avistamento')),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        leading: GestureDetector(
+          onTap: () => Navigator.maybePop(context),
+          child: Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.borderLight, width: 1.2),
+            ),
+            child: const Icon(
+              LucideIcons.chevronLeft,
+              color: AppColors.textDark,
+              size: 22,
+            ),
+          ),
+        ),
+        title: Text(
+          'Detalhes do Avistamento',
+          style: GoogleFonts.fredoka(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textTitle,
+          ),
+        ),
+      ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.xl),
         children: [
-          Text('Gato avistado', style: Theme.of(context).textTheme.titleLarge),
-          PrivateCluePhoto(
-            path: widget.clue['photo_url'] as String,
-            session: widget.store.sessionStore,
-          ),
-          Text(
-            'Visto em ${displayDate(widget.clue['created_at'])}, a cerca de ${((widget.clue['distance_meters'] as num) / 1000).toStringAsFixed(1)} km do ponto da busca.',
-          ),
-          if (widget.clue['note'] != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Text(widget.clue['note'] as String),
-            ),
-          if (cats.isNotEmpty) ...[
-            const SizedBox(height: 20),
-            Text('Seu gato', style: Theme.of(context).textTheme.titleLarge),
-            CatPhotoView(cats.first.photoPath, height: 200),
-          ],
-          const SizedBox(height: 16),
-          const Text(
-            'Este pode ser seu gato. Reconhecer uma pista não encerra o alerta; encerre a busca somente quando fizer sentido para você.',
-          ),
-          if (_clue['status'] == 'pending' &&
-              widget.report['status'] == 'active') ...[
-            FilledButton(
-              onPressed: _busy ? null : () => _decide(true),
-              child: const Text('Reconheço meu gato'),
-            ),
-            OutlinedButton(
-              onPressed: _busy ? null : () => _decide(false),
-              child: const Text('Não é meu gato'),
-            ),
-          ],
-          if (_clue['latitude'] != null)
-            TextButton.icon(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => LocationPage(
-                    initial: LatLng(
-                      (_clue['latitude'] as num).toDouble(),
-                      (_clue['longitude'] as num).toDouble(),
+          // Destaque Especial: Avistamento por um Amigo
+          if (isFriendSighting) ...[
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.socialPurpleBg,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                border: Border.all(
+                  color: AppColors.socialPurple.withValues(alpha: 0.5),
+                  width: 1.4,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          LucideIcons.heartHandshake,
+                          color: AppColors.socialPurpleText,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Avistado por um Amigo!',
+                              style: GoogleFonts.fredoka(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.socialPurpleText,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Um amigo da sua rede registrou esta foto e pode fornecer detalhes cruciais sobre onde o gatinho estava.',
+                              style: GoogleFonts.nunito(
+                                fontSize: 12,
+                                color: AppColors.textDark,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.socialPurpleText,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ConversationPage(
+                            sessionStore: widget.store.sessionStore,
+                            conversationId: widget.clue['conversation_id'] as String,
+                          ),
+                        ),
+                      ),
+                      icon: const Icon(LucideIcons.messageCircle, size: 16),
+                      label: const Text('Conversar no Chat com seu Amigo'),
                     ),
-                    readOnly: true,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+          ],
+
+          // Card: Foto do Gato Avistado
+          GatalogoCard(
+            backgroundColor: AppColors.surface,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(LucideIcons.camera, size: 18, color: AppColors.textTitle),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text(
+                      'Foto do Avistamento',
+                      style: GoogleFonts.fredoka(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textTitle,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.photo),
+                  child: PrivateCluePhoto(
+                    path: widget.clue['photo_url'] as String,
+                    session: widget.store.sessionStore,
                   ),
                 ),
-              ),
-              icon: const Icon(Icons.map_outlined),
-              label: const Text('Ver local do avistamento'),
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  children: [
+                    const Icon(LucideIcons.clock, size: 14, color: AppColors.textMedium),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Visto em ${displayDate(widget.clue['created_at'])}, a ~${((widget.clue['distance_meters'] as num) / 1000).toStringAsFixed(1)} km do ponto de busca.',
+                        style: GoogleFonts.nunito(
+                          fontSize: 13,
+                          color: AppColors.textMedium,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (widget.clue['note'] != null && (widget.clue['note'] as String).trim().isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: AppColors.cardBackground,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(LucideIcons.fileText, size: 14, color: AppColors.textMedium),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Observação: "${widget.clue['note']}"',
+                            style: GoogleFonts.nunito(
+                              fontSize: 12,
+                              fontStyle: FontStyle.italic,
+                              color: AppColors.textDark,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (widget.clue['latitude'] != null) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.textDark,
+                      side: const BorderSide(color: AppColors.border),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+                    ),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => LocationPage(
+                          initial: LatLng(
+                            (widget.clue['latitude'] as num).toDouble(),
+                            (widget.clue['longitude'] as num).toDouble(),
+                          ),
+                          readOnly: true,
+                        ),
+                      ),
+                    ),
+                    icon: const Icon(LucideIcons.mapPin, size: 16),
+                    label: const Text('Ver Ponto no Mapa'),
+                  ),
+                ],
+              ],
             ),
-          if (_clue['conversation_id'] != null)
-            FilledButton.icon(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ConversationPage(
-                    sessionStore: widget.store.sessionStore,
-                    conversationId: _clue['conversation_id'] as String,
+          ),
+
+          // Comparação com o gato cadastrado
+          if (myCat != null) ...[
+            const SizedBox(height: AppSpacing.md),
+            GatalogoCard(
+              backgroundColor: AppColors.surface,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.pets, size: 18, color: AppColors.primaryDark),
+                      const SizedBox(width: AppSpacing.xs),
+                      Text(
+                        'Comparar com ${myCat.displayName}',
+                        style: GoogleFonts.fredoka(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textTitle,
+                        ),
+                      ),
+                    ],
+                  ),
+                  GestureDetector(
+                    onTap: () => showFullscreenImage(
+                      context,
+                      imagePath: myCat.photoPath,
+                      title: myCat.displayName,
+                    ),
+                    child: Stack(
+                      children: [
+                        CatPhotoView(
+                          myCat.photoPath,
+                          height: 170,
+                          borderRadius: AppRadius.photo,
+                        ),
+                        Positioned(
+                          right: 8,
+                          bottom: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  LucideIcons.zoomIn,
+                                  size: 12,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Toque para ampliar',
+                                  style: GoogleFonts.nunito(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // Decisão de reconhecimento
+          if (isPending) ...[
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              'Este é o seu gato?',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.fredoka(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textTitle,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'Reconhecer uma pista ajuda a registrar o histórico de localização.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.nunito(fontSize: 12, color: AppColors.textMedium),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.greenProgress,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: _busy ? null : () => _decide(true),
+                    icon: const Icon(LucideIcons.check, size: 16),
+                    label: const Text('É meu gato!'),
                   ),
                 ),
-              ),
-              icon: const Icon(Icons.chat_outlined),
-              label: const Text('Conversar com amigo'),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.textMedium,
+                      side: const BorderSide(color: AppColors.border),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: _busy ? null : () => _decide(false),
+                    icon: const Icon(LucideIcons.x, size: 16),
+                    label: const Text('Não é ele'),
+                  ),
+                ),
+              ],
             ),
+          ],
         ],
       ),
     );

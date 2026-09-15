@@ -74,6 +74,7 @@ flutter:
   assets:
     - assets/models/cat_detector.tflite
     - assets/images/
+    - assets/templates/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -1,35 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+/// Design tokens do Gatálogo — "O Herbário Felino Acolhedor"
+///
+/// Regras fundamentais:
+/// - Zero preto puro (#000000) em qualquer lugar
+/// - Sombras projetadas proibidas (Tonal Flatness Rule)
+/// - Cantos arredondados contínuos (14–24px)
+/// - Fredoka para títulos, Nunito para corpo
 class AppColors {
-  // Cores exatas extraídas do Figma (402x874)
+  AppColors._();
+
+  // ─── Superfícies ─────────────────────────────────────────────
   static const Color background = Color(0xFFFBF6F2);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color cardBackground = Color(0xFFFAF3F0);
   static const Color cardAltBackground = Color(0xFFFDF8F5);
 
-  // Rosa Principal Figma
+  // ─── Rosa Principal (CTAs e acentos de marca) ────────────────
   static const Color primary = Color(0xFFDC8BA1);
   static const Color primaryDark = Color(0xFFC7607E);
   static const Color primaryLight = Color(0xFFFCEBE8);
   static const Color primarySoftBg = Color(0xFFFCEDED);
 
-  // Verdes Figma
+  // ─── Verde Botânico ──────────────────────────────────────────
   static const Color green = Color(0xFF7E9B70);
   static const Color greenButton = Color(0xFF72856A);
   static const Color greenLight = Color(0xFFF1F5ED);
   static const Color greenLink = Color(0xFF5D7A58);
   static const Color greenProgress = Color(0xFF6B8A5A);
 
-  // Textos Neutros Figma
+  // ─── Textos Neutros (marrons quentes, nunca preto) ──────────
   static const Color textDark = Color(0xFF382923);
   static const Color textTitle = Color(0xFF4A352F);
   static const Color textMedium = Color(0xFF786B67);
   static const Color textLight = Color(0xFF948C87);
+
+  // ─── Bordas e Divisores ──────────────────────────────────────
   static const Color border = Color(0xFFEDDEDB);
   static const Color borderLight = Color(0xFFF3ECE6);
+  static const Color borderProfile = Color(0xFFE8D6DE);
 
-  // Atalhos / Badges Figma
+  // ─── Inputs ──────────────────────────────────────────────────
+  static const Color inputBg = Color(0xFFFDF6F5);
+
+  // ─── Atalhos / Badges (Home Page) ────────────────────────────
   static const Color shortcutGreenBg = Color(0xFFF0F4EC);
   static const Color shortcutGreenIcon = Color(0xFF5A734D);
   static const Color shortcutBlueBg = Color(0xFFEAF2FD);
@@ -39,16 +54,101 @@ class AppColors {
   static const Color shortcutPinkBg = Color(0xFFFDEEED);
   static const Color shortcutPinkIcon = Color(0xFFB84F6E);
 
-  // Fundo dos Inputs Figma
-  static const Color inputBg = Color(0xFFFDF6F5);
-
-  // Card "Explorar sem conta"
+  // ─── Card "Explorar sem conta" ───────────────────────────────
   static const Color guestCardBg = Color(0xFFF0EEE3);
   static const Color guestCardText = Color(0xFF4A5844);
   static const Color guestCardSubtext = Color(0xFF7A8772);
+
+  // ═══ GAMIFICAÇÃO — tons quentes e acolhedores ════════════════
+
+  // ─── Conquistas (troféus e progresso) ────────────────────────
+  static const Color achievement = Color(0xFFF5C853);
+  static const Color achievementBg = Color(0xFFFEF9E7);
+  static const Color achievementText = Color(0xFF8B6914);
+  static const Color achievementDark = Color(0xFFD4A828);
+
+  // ─── Social (amigos e interação) ─────────────────────────────
+  static const Color socialPurple = Color(0xFFB39DDB);
+  static const Color socialPurpleBg = Color(0xFFF3F0FA);
+  static const Color socialPurpleText = Color(0xFF6A5A8C);
+
+  // ─── Raridades de Gatos ──────────────────────────────────────
+  static const Color rarityCommon = Color(0xFF7E9B70);
+  static const Color rarityCommonBg = Color(0xFFF1F5ED);
+  static const Color rarityUncommon = Color(0xFF5BA3C4);
+  static const Color rarityUncommonBg = Color(0xFFE8F4FD);
+  static const Color rarityRare = Color(0xFFDC8BA1);
+  static const Color rarityRareBg = Color(0xFFFCEBE8);
+  static const Color rarityLegendary = Color(0xFFF5C853);
+  static const Color rarityLegendaryBg = Color(0xFFFEF9E7);
+
+  // ─── Erros e Alertas (terroso, não vermelho puro) ────────────
+  static const Color error = Color(0xFFD4543C);
+  static const Color errorBg = Color(0xFFFDE8E8);
+  static const Color errorText = Color(0xFFAA3327);
+
+  // ─── Sucesso ─────────────────────────────────────────────────
+  static const Color success = Color(0xFF5D8A4E);
+  static const Color successBg = Color(0xFFEDF5E8);
+
+  // ─── Sombras tonais (café sutil, NUNCA preto) ────────────────
+  static const Color shadowWarm = Color(0x14382923);
+  static const Color shadowMedium = Color(0x28382923);
+}
+
+/// Escala de espaçamento padronizada (base 4px)
+class AppSpacing {
+  AppSpacing._();
+
+  static const double xs = 4;
+  static const double sm = 8;
+  static const double md = 12;
+  static const double lg = 16;
+  static const double xl = 24;
+  static const double xxl = 32;
+  static const double xxxl = 48;
+}
+
+/// Raios de borda padronizados (14–24px contínuos)
+class AppRadius {
+  AppRadius._();
+
+  static const double sm = 14;
+  static const double md = 16;
+  static const double lg = 18;
+  static const double xl = 20;
+  static const double xxl = 24;
+  static const double pill = 24;
+  static const double card = 18;
+  static const double input = 16;
+  static const double photo = 16;
+  static const double button = 24;
+  static const double dialog = 24;
+}
+
+/// Durations padrão para animações suaves (cozy)
+class AppDurations {
+  AppDurations._();
+
+  static const Duration fast = Duration(milliseconds: 150);
+  static const Duration normal = Duration(milliseconds: 250);
+  static const Duration slow = Duration(milliseconds: 400);
+  static const Duration celebration = Duration(milliseconds: 600);
+}
+
+/// Curves padrão — suaves, sem bounce agressivo
+class AppCurves {
+  AppCurves._();
+
+  static const Curve standard = Curves.easeInOut;
+  static const Curve enter = Curves.easeOut;
+  static const Curve exit = Curves.easeIn;
+  static const Curve bounce = Curves.elasticOut;
 }
 
 class AppTheme {
+  AppTheme._();
+
   static ThemeData get lightTheme {
     final baseTextTheme = GoogleFonts.nunitoTextTheme();
 
@@ -62,58 +162,80 @@ class AppTheme {
         onSecondary: Colors.white,
         surface: AppColors.surface,
         onSurface: AppColors.textDark,
-        error: Color(0xFFD32F2F),
+        error: AppColors.error,
       ),
+
+      // ─── Tipografia: Fredoka (títulos) + Nunito (corpo) ──────
       textTheme: baseTextTheme.copyWith(
-        displayLarge: GoogleFonts.nunito(
+        // Fredoka para hierarquia de títulos
+        displayLarge: GoogleFonts.fredoka(
           fontSize: 32,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w700,
           color: AppColors.textDark,
+          height: 1.1,
         ),
-        displayMedium: GoogleFonts.nunito(
+        displayMedium: GoogleFonts.fredoka(
           fontSize: 26,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w700,
           color: AppColors.textDark,
+          height: 1.15,
         ),
-        titleLarge: GoogleFonts.nunito(
+        titleLarge: GoogleFonts.fredoka(
           fontSize: 22,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w600,
           color: AppColors.textDark,
+          height: 1.1,
         ),
-        titleMedium: GoogleFonts.nunito(
+        titleMedium: GoogleFonts.fredoka(
           fontSize: 18,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: AppColors.textDark,
         ),
-        titleSmall: GoogleFonts.nunito(
+        titleSmall: GoogleFonts.fredoka(
           fontSize: 16,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: AppColors.textDark,
         ),
+        // Nunito para corpo, labels e captions
         bodyLarge: GoogleFonts.nunito(
           fontSize: 16,
           fontWeight: FontWeight.w600,
           color: AppColors.textDark,
+          height: 1.3,
         ),
         bodyMedium: GoogleFonts.nunito(
           fontSize: 14,
           fontWeight: FontWeight.w500,
           color: AppColors.textMedium,
+          height: 1.3,
         ),
         bodySmall: GoogleFonts.nunito(
           fontSize: 12,
           fontWeight: FontWeight.w500,
           color: AppColors.textLight,
+          height: 1.2,
         ),
         labelLarge: GoogleFonts.nunito(
           fontSize: 15,
           fontWeight: FontWeight.w700,
           color: Colors.white,
         ),
+        labelMedium: GoogleFonts.nunito(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textDark,
+        ),
+        labelSmall: GoogleFonts.nunito(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textMedium,
+        ),
       ),
+
+      // ─── Inputs ──────────────────────────────────────────────
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFFFCFAF7),
+        fillColor: AppColors.inputBg,
         hintStyle: GoogleFonts.nunito(
           fontSize: 14,
           fontWeight: FontWeight.w500,
@@ -121,36 +243,44 @@ class AppTheme {
         ),
         prefixIconColor: AppColors.textMedium,
         suffixIconColor: AppColors.textMedium,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 16,
+        ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.input),
           borderSide: const BorderSide(color: AppColors.border, width: 1.2),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.input),
           borderSide: const BorderSide(color: AppColors.border, width: 1.2),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.input),
           borderSide: const BorderSide(color: AppColors.primary, width: 1.6),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFFD32F2F), width: 1.2),
+          borderRadius: BorderRadius.circular(AppRadius.input),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.2),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFFD32F2F), width: 1.6),
+          borderRadius: BorderRadius.circular(AppRadius.input),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.6),
         ),
       ),
+
+      // ─── Botões: formato pílula, elevação zero ───────────────
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           elevation: 0,
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          padding: const EdgeInsets.symmetric(
+            vertical: 16,
+            horizontal: AppSpacing.xl,
+          ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(AppRadius.button),
           ),
           textStyle: GoogleFonts.nunito(
             fontSize: 16,
@@ -158,12 +288,141 @@ class AppTheme {
           ),
         ),
       ),
+
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.textTitle,
+          elevation: 0,
+          side: const BorderSide(color: AppColors.border, width: 1.2),
+          padding: const EdgeInsets.symmetric(
+            vertical: 12,
+            horizontal: AppSpacing.xl,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.button),
+          ),
+          textStyle: GoogleFonts.nunito(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.greenLink,
+          textStyle: GoogleFonts.nunito(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+
+      // ─── Cards: cantos suaves, sem elevação ──────────────────
       cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           side: const BorderSide(color: AppColors.borderLight, width: 1),
+        ),
+      ),
+
+      // ─── Dividers: borda quente ──────────────────────────────
+      dividerTheme: const DividerThemeData(
+        color: AppColors.border,
+        thickness: 1,
+        space: AppSpacing.xl,
+      ),
+
+      // ─── AppBar: transparente, sem sombra ────────────────────
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        titleTextStyle: GoogleFonts.fredoka(
+          fontSize: 22,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textDark,
+        ),
+        iconTheme: const IconThemeData(color: AppColors.textDark, size: 24),
+      ),
+
+      // ─── Switch: verde botânico quando ativo ─────────────────
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return AppColors.green;
+          return AppColors.textLight;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return AppColors.greenLight;
+          return AppColors.borderLight;
+        }),
+      ),
+
+      // ─── Slider: rosa Gatálogo ───────────────────────────────
+      sliderTheme: const SliderThemeData(
+        activeTrackColor: AppColors.primary,
+        inactiveTrackColor: AppColors.borderLight,
+        thumbColor: AppColors.primary,
+        overlayColor: Color(0x22DC8BA1),
+      ),
+
+      // ─── ProgressIndicator: verde botânico ───────────────────
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: AppColors.greenProgress,
+        linearTrackColor: AppColors.greenLight,
+        circularTrackColor: AppColors.greenLight,
+      ),
+
+      // ─── Dialog: fundo pergaminho, cantos generosos ──────────
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.dialog),
+        ),
+        titleTextStyle: GoogleFonts.fredoka(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textDark,
+        ),
+        contentTextStyle: GoogleFonts.nunito(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: AppColors.textMedium,
+        ),
+      ),
+
+      // ─── SnackBar: estilizado ────────────────────────────────
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppColors.textDark,
+        contentTextStyle: GoogleFonts.nunito(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+      ),
+
+      // ─── Badge: rosa Gatálogo ────────────────────────────────
+      badgeTheme: const BadgeThemeData(
+        backgroundColor: AppColors.primary,
+        textColor: Colors.white,
+      ),
+
+      // ─── BottomSheet ─────────────────────────────────────────
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xxl),
+          ),
         ),
       ),
     );

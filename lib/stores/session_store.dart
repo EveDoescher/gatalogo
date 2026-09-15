@@ -8,6 +8,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../data/cat_database.dart';
 import '../models/auth_session.dart';
 import '../services/auth_api_service.dart';
+import '../services/product_api_service.dart';
 import '../services/websocket_service.dart';
 import '../services/push_notification_service.dart';
 
@@ -22,6 +23,7 @@ class SessionStore extends ChangeNotifier {
   static const _accessKey = 'auth_access_token';
   static const _refreshKey = 'auth_refresh_token';
   static const _profileKey = 'auth_local_profile';
+  static const _avatarKey = 'auth_avatar_url';
   Future<String?>? _refreshing;
 
   final AuthApiService _api;
@@ -30,17 +32,23 @@ class SessionStore extends ChangeNotifier {
   late final WebSocketService webSocket;
   late final PushNotificationService pushNotifications;
   AuthSession? _session;
+  String? _avatarUrl;
   bool _isReady = false;
   bool _isBusy = false;
 
   AuthSession? get session => _session;
+  String? get avatarUrl => _avatarUrl;
   bool get isSignedIn => _session != null;
   bool get isReady => _isReady;
   bool get isBusy => _isBusy;
 
+  final _sessionExpiredController = StreamController<void>.broadcast();
+  Stream<void> get onSessionExpired => _sessionExpiredController.stream;
+
   Future<void> initialize() async {
     try {
       await pushNotifications.initialize();
+      _avatarUrl = await _secureStorage.read(key: _avatarKey);
       final access = await _secureStorage.read(key: _accessKey);
       final refresh = await _secureStorage.read(key: _refreshKey);
       if (access != null && refresh != null) {
@@ -84,6 +92,9 @@ class SessionStore extends ChangeNotifier {
     } finally {
       _isReady = true;
       notifyListeners();
+      if (_session != null) {
+        unawaited(syncAccountDetails());
+      }
     }
   }
 
@@ -141,6 +152,22 @@ class SessionStore extends ChangeNotifier {
     await _save(tokens);
   }
 
+  Future<void> loginWithApple({
+    required String idToken,
+    String? userIdentifier,
+    String? email,
+  }) async {
+    final tokens = await _runResult(
+      () async => _api.loginWithApple(
+        idToken: idToken,
+        deviceId: await deviceId(),
+        userIdentifier: userIdentifier,
+        email: email,
+      ),
+    );
+    await _save(tokens);
+  }
+
   Future<void> requestPasswordReset(String email) =>
       _run(() => _api.requestPasswordReset(email.trim()));
   Future<void> resendVerification(String email) =>
@@ -184,6 +211,7 @@ class SessionStore extends ChangeNotifier {
       if (_session == previous &&
           (error.statusCode == 401 || error.statusCode == 403)) {
         await clearLocalSession();
+        _sessionExpiredController.add(null);
       }
       return null;
     }
@@ -199,6 +227,23 @@ class SessionStore extends ChangeNotifier {
     await clearLocalSession();
   }
 
+  Future<void> requestDeactivationCode() async {
+    final token = _session?.accessToken;
+    if (token == null) {
+      throw const AuthApiException('Entre na sua conta para continuar.');
+    }
+    await _run(() => _api.requestDeactivationCode(token));
+  }
+
+  Future<void> confirmDeactivate({required String code}) async {
+    final token = _session?.accessToken;
+    if (token == null) {
+      throw const AuthApiException('Entre na sua conta para continuar.');
+    }
+    await _run(() => _api.confirmDeactivate(token, code: code.trim()));
+    await clearLocalSession();
+  }
+
   Future<void> deactivate() async {
     final token = _session?.accessToken;
     if (token == null) return;
@@ -206,11 +251,37 @@ class SessionStore extends ChangeNotifier {
     await clearLocalSession();
   }
 
+  Future<void> updateAvatarUrl(String? url) async {
+    _avatarUrl = url;
+    if (url != null && url.isNotEmpty) {
+      await _secureStorage.write(key: _avatarKey, value: url);
+    } else {
+      await _secureStorage.delete(key: _avatarKey);
+    }
+    notifyListeners();
+  }
+
+  Future<void> syncAccountDetails() async {
+    if (_session == null) return;
+    try {
+      final productApi = ProductApiService(this);
+      final accountData = await productApi.get('/app/account');
+      final newAvatar = accountData['avatar_url'] as String?;
+      if (newAvatar != _avatarUrl) {
+        await updateAvatarUrl(newAvatar);
+      }
+    } catch (_) {
+      // Ignora erro em offline
+    }
+  }
+
   Future<void> clearLocalSession() async {
     _session = null;
+    _avatarUrl = null;
     await _secureStorage.delete(key: _accessKey);
     await _secureStorage.delete(key: _refreshKey);
     await _secureStorage.delete(key: _profileKey);
+    await _secureStorage.delete(key: _avatarKey);
     notifyListeners();
   }
 
@@ -242,6 +313,7 @@ class SessionStore extends ChangeNotifier {
 
   @override
   void dispose() {
+    _sessionExpiredController.close();
     webSocket.dispose();
     unawaited(pushNotifications.dispose());
     super.dispose();

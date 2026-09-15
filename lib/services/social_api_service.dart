@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
@@ -48,12 +49,13 @@ class SocialApiService {
   }
 
   Future<void> registerDeviceToken(String token) async {
+    final platform = defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android';
     await _request(
       'PUT',
       '/social/device-token',
       {
         'token': token,
-        'platform': 'android',
+        'platform': platform,
         'preferences': {
           'sighting_notifications': true,
           'social_notifications': true,
@@ -76,6 +78,76 @@ class SocialApiService {
       {'body': body},
       accepted: {201},
     );
+  }
+
+  Future<Map<String, dynamic>> createPost({
+    required String catName,
+    String note = '',
+    String? locationName,
+    String? photoBase64,
+  }) async {
+    final response = await _request(
+      'POST',
+      '/social/posts',
+      {
+        'cat_name': catName,
+        'note': note,
+        'location_name': locationName,
+        'photo_base64': photoBase64,
+      },
+      accepted: {201},
+    );
+    return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+  }
+
+  Future<Map<String, dynamic>> toggleLike(String itemId) async {
+    final response = await _request(
+      'POST',
+      '/social/feed/$itemId/like',
+      {},
+      accepted: {200},
+    );
+    return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+  }
+
+  Future<List<Map<String, dynamic>>> addComment(String itemId, String text) async {
+    final response = await _request(
+      'POST',
+      '/social/feed/$itemId/comments',
+      {'text': text},
+      accepted: {200},
+    );
+    final decoded = jsonDecode(response.body) as List<dynamic>;
+    return decoded.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+  }
+
+  Future<Map<String, dynamic>> updateAccount({String? username, String? bio}) async {
+    final response = await _request(
+      'PUT',
+      '/app/account',
+      {
+        ...?username == null ? null : {'username': username},
+        ...?bio == null ? null : {'bio': bio},
+      },
+      accepted: {200},
+    );
+    return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+  }
+
+  Future<String?> uploadAvatar(List<int> imageBytes, String filename) async {
+    final token = await _sessionStore.accessToken();
+    if (token == null) return null;
+    final uri = Uri.parse('${ApiConfig.baseUrl}/app/account/avatar');
+    final request = http.MultipartRequest('POST', uri)
+      ..headers['Authorization'] = 'Bearer $token'
+      ..files.add(http.MultipartFile.fromBytes('file', imageBytes, filename: filename));
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final decoded = jsonDecode(response.body) as Map;
+      return decoded['avatar_url'] as String?;
+    }
+    return null;
   }
 
   Future<List<Map<String, dynamic>>> _list(String path) async {

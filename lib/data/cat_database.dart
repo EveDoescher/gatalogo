@@ -33,7 +33,7 @@ class CatDatabase {
 
     return openDatabase(
       path,
-      version: 11,
+      version: 12,
 
       onCreate: (db, version) async {
         await db.execute('''
@@ -62,6 +62,7 @@ class CatDatabase {
     cat_id TEXT PRIMARY KEY,
     analysis_status TEXT NOT NULL,
     coat_type TEXT,
+    hair_type TEXT,
     primary_color TEXT,
     colors_json TEXT NOT NULL,
     confidence REAL,
@@ -80,6 +81,19 @@ class CatDatabase {
       },
 
       onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 12) {
+          final columns = await db.rawQuery(
+            'PRAGMA table_info(cat_analyses)',
+          );
+          final hasHairType = columns.any(
+            (column) => column['name'] == 'hair_type',
+          );
+          if (!hasHairType) {
+            await db.execute(
+              'ALTER TABLE cat_analyses ADD COLUMN hair_type TEXT',
+            );
+          }
+        }
         if (oldVersion < 11) {
           await db.execute(
             'ALTER TABLE cats ADD COLUMN is_owned INTEGER NOT NULL DEFAULT 0',

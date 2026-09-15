@@ -27,11 +27,13 @@ class WebSocketService extends ChangeNotifier with WidgetsBindingObserver {
   final _notificationController =
       StreamController<Map<String, dynamic>>.broadcast();
   final _clueController = StreamController<Map<String, dynamic>>.broadcast();
+  final _feedController = StreamController<Map<String, dynamic>>.broadcast();
 
   Stream<Map<String, dynamic>> get onMessage => _messageController.stream;
   Stream<Map<String, dynamic>> get onNotification =>
       _notificationController.stream;
   Stream<Map<String, dynamic>> get onClue => _clueController.stream;
+  Stream<Map<String, dynamic>> get onFeedUpdate => _feedController.stream;
   bool get isConnected => _connected;
 
   void _onSessionChanged() {
@@ -118,6 +120,9 @@ class WebSocketService extends ChangeNotifier with WidgetsBindingObserver {
         case 'new_clue':
           _clueController.add(data);
           break;
+        case 'feed_update':
+          _feedController.add(data);
+          break;
       }
     } catch (e) {
       debugPrint('Erro ao processar mensagem do WebSocket: $e');
@@ -173,6 +178,7 @@ class WebSocketService extends ChangeNotifier with WidgetsBindingObserver {
     _messageController.close();
     _notificationController.close();
     _clueController.close();
+    _feedController.close();
     super.dispose();
   }
 }

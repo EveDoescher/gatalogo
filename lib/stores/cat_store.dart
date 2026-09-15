@@ -78,6 +78,13 @@ class CatStore extends ChangeNotifier {
   List<CatReferencePhoto> referencePhotosFor(String catId) =>
       List.unmodifiable(_referencePhotos[catId] ?? const []);
 
+  Future<List<CatReferencePhoto>> loadReferencePhotos(String catId) async {
+    final photos = await _database.getReferencePhotos(catId);
+    _referencePhotos[catId] = photos;
+    notifyListeners();
+    return photos;
+  }
+
   Future<void> loadCats() async {
     _isLoading = true;
     notifyListeners();

@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../services/product_api_service.dart';
 import '../stores/cat_store.dart';
+import '../theme/app_theme.dart';
 import '../widgets/app_widgets.dart';
+import '../widgets/gatalogo_components.dart';
 import 'missing_cats_page.dart';
 import 'conversation_page.dart';
 import 'social_page.dart';
 import 'journey_page.dart';
+import 'friends_page.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({
@@ -26,6 +31,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
   String? _error;
   late final ProductApiService _api;
   bool _openedInitialNotification = false;
+
   @override
   void initState() {
     super.initState();
@@ -57,13 +63,38 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   String _title(Map<String, dynamic> item) => switch (item['type']) {
     'possible_match' => 'Possível avistamento do seu gato',
-    'match_confirmed' => 'Seu avistamento ajudou uma busca',
+    'match_confirmed' => 'Seu avistamento ajudou uma busca!',
     'friend_invite' => 'Novo convite de amizade',
     'friend_accepted' => 'Convite de amizade aceito',
-    'message' => 'Nova mensagem',
-    'achievement' => 'Nova conquista',
+    'message' => 'Nova mensagem no chat',
+    'achievement' => 'Nova conquista desbloqueada!',
     _ => 'Novidade no Gatálogo',
   };
+
+  IconData _iconForType(String? type) => switch (type) {
+    'possible_match' || 'match_confirmed' => Icons.pets,
+    'friend_invite' || 'friend_accepted' => LucideIcons.users,
+    'message' => LucideIcons.messageCircle,
+    'achievement' => LucideIcons.trophy,
+    _ => LucideIcons.bell,
+  };
+
+  Color _colorForType(String? type) => switch (type) {
+    'possible_match' || 'match_confirmed' => AppColors.green,
+    'friend_invite' || 'friend_accepted' => AppColors.socialPurpleText,
+    'message' => AppColors.primary,
+    'achievement' => AppColors.achievementText,
+    _ => AppColors.textMedium,
+  };
+
+  Color _bgForType(String? type) => switch (type) {
+    'possible_match' || 'match_confirmed' => AppColors.greenLight,
+    'friend_invite' || 'friend_accepted' => AppColors.socialPurpleBg,
+    'message' => AppColors.primaryLight,
+    'achievement' => AppColors.achievementBg,
+    _ => AppColors.cardAltBackground,
+  };
+
   Future<void> _open(Map<String, dynamic> item) async {
     try {
       await _api.post('/app/notifications/${item['id']}/read');
@@ -99,11 +130,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
           catStore: widget.store,
           sessionStore: widget.store.sessionStore,
         );
+      } else if (item['type'] == 'friend_invite' ||
+          item['type'] == 'friend_accepted') {
+        page = FriendsPage(sessionStore: widget.store.sessionStore);
       } else {
-        page = Scaffold(
-          appBar: AppBar(title: const Text('Amigos')),
-          body: SocialPage(sessionStore: widget.store.sessionStore),
-        );
+        page = SocialPage(sessionStore: widget.store.sessionStore);
       }
       if (mounted) {
         await Navigator.push(context, MaterialPageRoute(builder: (_) => page!));
@@ -115,59 +146,238 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text('Notificações'),
-      actions: [
-        IconButton(
-          tooltip: 'Atualizar',
-          onPressed: _load,
-          icon: const Icon(Icons.refresh),
-        ),
-      ],
-    ),
-    body: RefreshIndicator(
-      onRefresh: _load,
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          if (_loading) const LinearProgressIndicator(),
-          if (_error != null)
-            EmptyContent(
-              'Não foi possível carregar',
-              _error!,
-              action: TextButton(
-                onPressed: _load,
-                child: const Text('Tentar novamente'),
-              ),
-            ),
-          if (!_loading && _error == null && _items.isEmpty)
-            const EmptyContent(
-              'Tudo em dia',
-              'Novas pistas, mensagens e conquistas aparecerão aqui.',
-            ),
-          ..._items.map(
-            (item) => ListTile(
-              leading: Icon(
-                item['read_at'] == null
-                    ? Icons.notifications_active_outlined
-                    : Icons.notifications_none,
-              ),
-              title: Text(
-                _title(item),
-                style: TextStyle(
-                  fontWeight: item['read_at'] == null
-                      ? FontWeight.bold
-                      : FontWeight.normal,
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Folhagens decorativas
+            Positioned(
+              top: -10,
+              right: -10,
+              child: IgnorePointer(
+                child: Image.asset(
+                  'assets/images/Folha_3.png',
+                  width: 70,
+                  fit: BoxFit.contain,
                 ),
               ),
-              subtitle: Text(displayDate(item['created_at'])),
-              onTap: () => _open(item),
-              trailing: const Icon(Icons.chevron_right),
             ),
-          ),
-        ],
+            Positioned(
+              bottom: 0,
+              left: -15,
+              child: IgnorePointer(
+                child: Image.asset(
+                  'assets/images/Folha_6.png',
+                  width: 100,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+
+            // Conteúdo
+            RefreshIndicator(
+              onRefresh: _load,
+              color: AppColors.primary,
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                slivers: [
+                  // Cabeçalho
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.md),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            onPressed: () => Navigator.maybePop(context),
+                            icon: const Icon(LucideIcons.arrowLeft, color: AppColors.textDark),
+                            tooltip: 'Voltar',
+                          ),
+                          const SizedBox(width: AppSpacing.xs),
+                          Text(
+                            'Notificações',
+                            style: GoogleFonts.fredoka(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textTitle,
+                            ),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            tooltip: 'Atualizar',
+                            onPressed: _loading ? null : _load,
+                            icon: const Icon(LucideIcons.refreshCw, size: 18, color: AppColors.textMedium),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  if (_loading)
+                    const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                        child: LinearProgressIndicator(color: AppColors.primary),
+                      ),
+                    ),
+
+                  if (_error != null)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSpacing.xl),
+                        child: GatalogoCard(
+                          backgroundColor: AppColors.errorBg,
+                          child: Column(
+                            children: [
+                              const Icon(LucideIcons.alertCircle, size: 28, color: AppColors.error),
+                              const SizedBox(height: AppSpacing.sm),
+                              Text(
+                                'Não foi possível carregar',
+                                style: GoogleFonts.fredoka(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.errorText,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
+                              Text(
+                                _error!,
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.nunito(fontSize: 12, color: AppColors.errorText),
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              TextButton(
+                                onPressed: _load,
+                                child: Text(
+                                  'Tentar novamente',
+                                  style: GoogleFonts.nunito(fontWeight: FontWeight.w700, color: AppColors.primary),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  if (!_loading && _error == null && _items.isEmpty)
+                    SliverToBoxAdapter(
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.xxxl),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Image.asset('assets/images/gato_2.png', width: 120),
+                              const SizedBox(height: AppSpacing.md),
+                              Text(
+                                'Tudo calmo por aqui',
+                                style: GoogleFonts.fredoka(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textTitle,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
+                              Text(
+                                'Quando surgirem novos avistamentos, mensagens de amigos ou conquistas, você verá os avisos aqui.',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.nunito(
+                                  fontSize: 13,
+                                  color: AppColors.textMedium,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.xs, AppSpacing.xl, AppSpacing.xxxl),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final item = _items[index];
+                            final isUnread = item['read_at'] == null;
+                            final type = item['type'] as String?;
+                            final icon = _iconForType(type);
+                            final color = _colorForType(type);
+                            final bgColor = _bgForType(type);
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                              child: GatalogoCard(
+                                backgroundColor: isUnread ? AppColors.surface : AppColors.cardAltBackground,
+                                onTap: () => _open(item),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        color: bgColor,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(icon, color: color, size: 20),
+                                    ),
+                                    const SizedBox(width: AppSpacing.md),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  _title(item),
+                                                  style: GoogleFonts.fredoka(
+                                                    fontSize: 15,
+                                                    fontWeight: isUnread ? FontWeight.w600 : FontWeight.w500,
+                                                    color: AppColors.textTitle,
+                                                  ),
+                                                ),
+                                              ),
+                                              if (isUnread)
+                                                Container(
+                                                  width: 8,
+                                                  height: 8,
+                                                  decoration: const BoxDecoration(
+                                                    color: AppColors.primary,
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            displayDate(item['created_at']),
+                                            style: GoogleFonts.nunito(
+                                              fontSize: 12,
+                                              color: AppColors.textLight,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: AppSpacing.xs),
+                                    const Icon(LucideIcons.chevronRight, size: 16, color: AppColors.textLight),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                          childCount: _items.length,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }

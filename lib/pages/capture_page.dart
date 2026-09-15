@@ -12,6 +12,8 @@ import '../services/cat_preflight_service.dart';
 import '../services/location_service.dart';
 import '../stores/cat_store.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_widgets.dart';
+import '../widgets/inbox_button.dart';
 import 'cat_details_page.dart';
 
 class CapturePage extends StatefulWidget {
@@ -259,6 +261,7 @@ class _CapturePageState extends State<CapturePage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
+        bottom: false,
         child: _foto == null ? _buildCaptura() : _buildPreview(),
       ),
     );
@@ -267,29 +270,32 @@ class _CapturePageState extends State<CapturePage> {
   Widget _buildCaptura() {
     return Stack(
       children: [
-        // Ramo de folhas à esquerda atrás do título
+        // Ramo de folhas à esquerda atrás do título (Flipped horizontalmente conforme Figma Tela 3)
         Positioned(
-          top: 60,
-          left: -35,
+          top: 85,
+          left: -20,
           child: IgnorePointer(
-            child: Transform.rotate(
-              angle: 0.25,
-              child: Image.asset(
-                'assets/images/Folha_1.png',
-                width: 170,
-                fit: BoxFit.contain,
+            child: Transform.flip(
+              flipX: true,
+              child: Transform.rotate(
+                angle: -0.22,
+                child: Image.asset(
+                  'assets/images/Folha_1.png',
+                  width: 160,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
           ),
         ),
-        // Ilustração inferior direita (vaso com plantas e tijolos)
+        // Ilustração inferior direita (plantas e tijolos encostando na base da tela)
         Positioned(
-          bottom: -15,
-          right: -10,
+          bottom: -10,
+          right: -4,
           child: IgnorePointer(
             child: Image.asset(
               'assets/images/Folha_6.png',
-              width: 175,
+              width: 255,
               fit: BoxFit.contain,
             ),
           ),
@@ -311,25 +317,16 @@ class _CapturePageState extends State<CapturePage> {
                     fit: BoxFit.contain,
                   ),
                   const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.all(7),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: const Color(0xFFE8D6DE),
-                        width: 1.4,
-                      ),
-                    ),
-                    child: const Icon(
-                      LucideIcons.user,
-                      size: 20,
-                      color: AppColors.textDark,
-                    ),
+                  InboxButton(store: widget.catStore, size: 42),
+                  const SizedBox(width: 10),
+                  UserAvatarButton(
+                    sessionStore: widget.catStore.sessionStore,
+                    catStore: widget.catStore,
                   ),
                 ],
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 28),
 
               // Hero: Título + Ilustração do gatinho com a câmera rosa
               Row(
@@ -342,8 +339,8 @@ class _CapturePageState extends State<CapturePage> {
                         Text(
                           'Encontrou\num gato?',
                           style: GoogleFonts.nunito(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w900,
+                            fontSize: 36,
+                            fontWeight: FontWeight.w800,
                             color: AppColors.textTitle,
                             height: 1.05,
                           ),
@@ -352,7 +349,7 @@ class _CapturePageState extends State<CapturePage> {
                         Text(
                           'Registre uma nova\ndescoberta para\nsua coleção',
                           style: GoogleFonts.nunito(
-                            fontSize: 16,
+                            fontSize: 16.5,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textTitle,
                             height: 1.25,
@@ -375,7 +372,7 @@ class _CapturePageState extends State<CapturePage> {
                             width: 140,
                             height: 35,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFCEBE8),
+                              color: AppColors.primaryLight,
                               borderRadius: BorderRadius.circular(50),
                             ),
                           ),
@@ -391,13 +388,13 @@ class _CapturePageState extends State<CapturePage> {
                 ],
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 28),
 
               // Card: Como Funciona
               Container(
                 decoration: BoxDecoration(
                   color: AppColors.greenLight,
-                  borderRadius: BorderRadius.circular(26),
+                  borderRadius: BorderRadius.circular(AppRadius.xxl),
                 ),
                 child: Stack(
                   clipBehavior: Clip.none,
@@ -435,7 +432,7 @@ class _CapturePageState extends State<CapturePage> {
                               // Passo 1: Fotografe
                               Expanded(
                                 child: _StepItem(
-                                  circleColor: const Color(0xFFFCEBE8),
+                                  circleColor: AppColors.primaryLight,
                                   icon: LucideIcons.camera,
                                   title: 'Fotografe',
                                   description: 'Tire uma\nfoto nítida\ndo gato.',
@@ -452,7 +449,7 @@ class _CapturePageState extends State<CapturePage> {
                               // Passo 2: Analise
                               Expanded(
                                 child: _StepItem(
-                                  circleColor: const Color(0xFFE2EAD9),
+                                  circleColor: AppColors.greenLight,
                                   icon: LucideIcons.search,
                                   title: 'Analise',
                                   description: 'Nosso\nsistema\nidentifica a\npelagem.',
@@ -469,7 +466,7 @@ class _CapturePageState extends State<CapturePage> {
                               // Passo 3: Colecione
                               Expanded(
                                 child: _StepItem(
-                                  circleColor: const Color(0xFFFCEBE8),
+                                  circleColor: AppColors.primaryLight,
                                   icon: LucideIcons.bookHeart,
                                   title: 'Colecione',
                                   description: 'Adicione ao\nseu\nGatálogo!',
@@ -484,18 +481,18 @@ class _CapturePageState extends State<CapturePage> {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 26),
 
-              // Botão Principal: "Abrir câmera" (altura 50, raio 25, rosa #DC8BA1)
+              // Botão Principal: "Abrir câmera" (altura 48, raio pill, rosa #DC8BA1)
               SizedBox(
-                height: 50,
+                height: 48,
                 child: ElevatedButton(
                   onPressed: _isAnalyzing || _isValidating ? null : _tirarFoto,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                   ),
                   child: Row(
@@ -520,27 +517,7 @@ class _CapturePageState extends State<CapturePage> {
                 ),
               ),
 
-              const SizedBox(height: 10),
-
-              // Botão secundário de escolher da galeria
-              Center(
-                child: TextButton.icon(
-                  onPressed: _isAnalyzing || _isValidating
-                      ? null
-                      : () => _escolherFoto(ImageSource.gallery),
-                  icon: const Icon(LucideIcons.image, size: 16, color: AppColors.textMedium),
-                  label: Text(
-                    'Ou escolha da galeria',
-                    style: GoogleFonts.nunito(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textMedium,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 6),
+              const SizedBox(height: 18),
 
               // Card de Dica / Aviso (fundo #FCEDED, raio 18)
               Container(
@@ -556,7 +533,7 @@ class _CapturePageState extends State<CapturePage> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const Icon(
-                      LucideIcons.pawPrint,
+                      Icons.pets,
                       size: 28,
                       color: AppColors.primary,
                     ),
@@ -589,7 +566,7 @@ class _CapturePageState extends State<CapturePage> {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 28),
             ],
           ),
         ),
@@ -617,7 +594,7 @@ class _CapturePageState extends State<CapturePage> {
             children: [
               Expanded(
                 child: SizedBox(
-                  height: 52,
+                  height: 48,
                   child: OutlinedButton(
                     onPressed:
                         _isAnalyzing || _isValidating ? null : _cancelarFoto,
@@ -627,7 +604,7 @@ class _CapturePageState extends State<CapturePage> {
                         width: 1.4,
                       ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(26),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                     ),
                     child: Text(
@@ -644,7 +621,7 @@ class _CapturePageState extends State<CapturePage> {
               const SizedBox(width: 14),
               Expanded(
                 child: SizedBox(
-                  height: 52,
+                  height: 48,
                   child: ElevatedButton(
                     onPressed: _isAnalyzing || _isValidating
                         ? null
@@ -653,7 +630,7 @@ class _CapturePageState extends State<CapturePage> {
                       backgroundColor: AppColors.primary,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(26),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                     ),
                     child: _isAnalyzing || _isValidating

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Código de Verificação - Gatálogo</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #FBF6F2;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: #382923;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrapper {
+      width: 100%;
+      background-color: #FBF6F2;
+      padding: 40px 16px;
+      box-sizing: border-box;
+    }
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
+      background-color: #FFFFFF;
+      border-radius: 24px;
+      border: 1.5px solid #EDDEDB;
+      padding: 36px 32px;
+      box-sizing: border-box;
+      text-align: center;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background-color: #FCEBE8;
+      color: #C7607E;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-family: 'Comic Sans MS', 'Fredoka', -apple-system, sans-serif;
+      font-size: 26px;
+      color: #4A352F;
+      margin: 0 0 12px 0;
+      font-weight: 700;
+    }
+    p {
+      font-size: 15px;
+      line-height: 1.6;
+      color: #786B67;
+      margin: 0 0 24px 0;
+    }
+    .code-box {
+      background-color: #FAF3F0;
+      border: 1.5px dashed #DC8BA1;
+      border-radius: 18px;
+      padding: 22px 16px;
+      margin: 28px 0;
+    }
+    .code-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #948C87;
+      margin-bottom: 8px;
+    }
+    .code-number {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: 8px;
+      color: #DC8BA1;
+      margin: 0;
+    }
+    .warning-box {
+      background-color: #F1F5ED;
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-top: 24px;
+      font-size: 13px;
+      color: #5D7A58;
+      text-align: left;
+      line-height: 1.5;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 28px;
+      font-size: 12px;
+      color: #948C87;
+    }
+    .paw {
+      font-size: 28px;
+      margin-bottom: 8px;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="container">
+      <div class="paw">🐾</div>
+      <br>
+      <div class="badge">Segurança Gatálogo</div>
+      <h1>Confirmação de Segurança</h1>
+      <p>
+        Olá! Recebemos uma solicitação que requer confirmação de segurança na sua conta do <strong>Gatálogo</strong>. Use o código de 6 dígitos abaixo para concluir o procedimento:
+      </p>
+
+      <div class="code-box">
+        <div class="code-label">Seu código de verificação</div>
+        <div class="code-number">{{OTP_CODE}}</div>
+      </div>
+
+      <p style="font-size: 13px; margin-bottom: 0;">
+        Este código é válido por <strong>15 minutos</strong> e expira logo após o uso.
+      </p>
+
+      <div class="warning-box">
+        🔒 <strong>Dica de segurança:</strong> Nunca compartilhe este código com ninguém. Se você não solicitou esta ação, recomendamos alterar sua senha imediatamente e desconsiderar esta mensagem.
+      </div>
+
+      <div class="footer">
+        © Gatálogo • O jogo aconchegante de colecionamento e proteção felina.<br>
+        Enviado com carinho para o bem-estar dos bichanos.
+      </div>
+    </div>
+  </div>
+</body>
+</html>

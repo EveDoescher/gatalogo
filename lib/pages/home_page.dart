@@ -7,12 +7,12 @@ import '../stores/cat_store.dart';
 import '../stores/session_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_widgets.dart';
-import 'account_page.dart';
+import '../widgets/inbox_button.dart';
 import 'cat_details_page.dart';
+import 'friends_page.dart';
 import 'journey_page.dart';
 import 'location_page.dart';
 import 'my_cats_page.dart';
-import 'social_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({
@@ -44,30 +44,11 @@ class HomePage extends StatelessWidget {
                 : ((catCount ~/ 10) + 1) * 10;
             final progress = (catCount / nextMilestone).clamp(0.0, 1.0);
 
-            return Stack(
+            return ListView(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               children: [
-                // Forma orgânica curva rosada no topo esquerdo conforme Figma Tela 2
-                Positioned(
-                  top: -45,
-                  left: -40,
-                  child: IgnorePointer(
-                    child: Container(
-                      width: 250,
-                      height: 180,
-                      decoration: const BoxDecoration(
-                        color: Color(0x3DF4D2DC),
-                        borderRadius: BorderRadius.only(
-                          bottomRight: Radius.circular(170),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                ListView(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  children: [
-                // Header: Logo e Botão de Conta (sem InboxButton conforme Figma)
+                // Header: Logo, Notificações e Botão de Perfil
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -77,30 +58,11 @@ class HomePage extends StatelessWidget {
                       fit: BoxFit.contain,
                     ),
                     const Spacer(),
-                    InkWell(
-                      onTap: () => _open(
-                        context,
-                        AccountPage(
-                          sessionStore: sessionStore,
-                          catStore: catStore,
-                        ),
-                      ),
-                      borderRadius: BorderRadius.circular(24),
-                      child: Container(
-                        padding: const EdgeInsets.all(7),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: const Color(0xFFE8D6DE),
-                            width: 1.4,
-                          ),
-                        ),
-                        child: const Icon(
-                          LucideIcons.user,
-                          size: 20,
-                          color: Color(0xFF948C87),
-                        ),
-                      ),
+                    InboxButton(store: catStore, size: 42),
+                    const SizedBox(width: 10),
+                    UserAvatarButton(
+                      sessionStore: sessionStore,
+                      catStore: catStore,
                     ),
                   ],
                 ),
@@ -124,7 +86,7 @@ class HomePage extends StatelessWidget {
                       'Bora explorar?',
                       style: GoogleFonts.nunito(
                         fontSize: 28,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w800,
                         color: AppColors.textTitle,
                       ),
                     ),
@@ -134,38 +96,49 @@ class HomePage extends StatelessWidget {
                 const SizedBox(height: 18),
 
                 // Card Destaque: Sua Coleção (conforme Figma Tela 2)
-                Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFDF1EF),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      // Raminho de folhas decorativas saindo do lado direito superior
-                      Positioned(
-                        right: 0,
-                        top: 0,
-                        child: IgnorePointer(
-                          child: Image.asset(
-                            'assets/images/Folha_2.png',
-                            width: 140,
-                            fit: BoxFit.contain,
+                GestureDetector(
+                  onTap: () => onNavigate(3),
+                  child: Container(
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(
+                      color: AppColors.primarySoftBg,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Stack(
+                      children: [
+                        // Raminho de folhas decorativas saindo do lado direito superior apontando para dentro
+                        Positioned(
+                          right: -10,
+                          top: -6,
+                          child: IgnorePointer(
+                            child: Transform.rotate(
+                              angle: 2.70,
+                              child: Image.asset(
+                                'assets/images/Folha_2.png',
+                                width: 138,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                      // Raminho verde saindo de baixo
-                      Positioned(
-                        right: 120,
-                        bottom: 0,
-                        child: IgnorePointer(
-                          child: Image.asset(
-                            'assets/images/Folha_5.png',
-                            width: 65,
-                            fit: BoxFit.contain,
+                        // Raminho verde saindo da base entre o texto e o gato
+                        Positioned(
+                          left: 122,
+                          bottom: -12,
+                          child: IgnorePointer(
+                            child: Transform.flip(
+                              flipX: true,
+                              child: Transform.rotate(
+                                angle: -0.05,
+                                child: Image.asset(
+                                  'assets/images/Folha_1.png',
+                                  width: 90,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
                       // Conteúdo interno do Card
                       Padding(
                         padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
@@ -176,7 +149,7 @@ class HomePage extends StatelessWidget {
                               'Sua Coleção',
                               style: GoogleFonts.nunito(
                                 fontSize: 20,
-                                fontWeight: FontWeight.w900,
+                                fontWeight: FontWeight.w800,
                                 color: AppColors.textTitle,
                               ),
                             ),
@@ -185,34 +158,38 @@ class HomePage extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 // Número grande e rótulo
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      '$catCount',
-                                      style: GoogleFonts.nunito(
-                                        fontSize: 68,
-                                        fontWeight: FontWeight.w900,
-                                        color: const Color(0xFFBA5372),
-                                        height: 0.95,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '$catCount',
+                                        style: GoogleFonts.nunito(
+                                          fontSize: 68,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppColors.primaryDark,
+                                          height: 0.95,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Gatos catalogados',
-                                      style: GoogleFonts.nunito(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w800,
-                                        color: const Color(0xFFBA5372),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Gatos catalogados',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.nunito(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppColors.primaryDark,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                                const Spacer(),
+                                const SizedBox(width: 8),
                                 // Gatinho dormindo
                                 Image.asset(
                                   'assets/images/gato_2.png',
-                                  height: 84,
+                                  height: 80,
                                   fit: BoxFit.contain,
                                 ),
                               ],
@@ -222,42 +199,46 @@ class HomePage extends StatelessWidget {
                             Row(
                               children: [
                                 const Spacer(),
-                                SizedBox(
-                                  width: 165,
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Container(
-                                        height: 11,
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(10),
-                                          border: Border.all(
-                                            color: const Color(0xFF5C504A),
-                                            width: 1.2,
+                                Flexible(
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(maxWidth: 165),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          height: 11,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                                            border: Border.all(
+                                              color: AppColors.textMedium,
+                                              width: 1.2,
+                                            ),
                                           ),
-                                        ),
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(8),
-                                          child: LinearProgressIndicator(
-                                            value: progress,
-                                            backgroundColor: Colors.transparent,
-                                            valueColor: const AlwaysStoppedAnimation<Color>(
-                                              Color(0xFF638354),
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(8),
+                                            child: LinearProgressIndicator(
+                                              value: progress,
+                                              backgroundColor: Colors.transparent,
+                                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                                AppColors.greenProgress,
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Próxima conquista: $nextMilestone gatos.',
-                                        style: GoogleFonts.nunito(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w600,
-                                          color: const Color(0xFF5C504A),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Próxima conquista: $nextMilestone gatos.',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.nunito(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.textMedium,
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ],
@@ -268,8 +249,9 @@ class HomePage extends StatelessWidget {
                     ],
                   ),
                 ),
+              ),
 
-                const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
                 // Seção: Descobertas Recentes (sem "Ver tudo" conforme Figma Tela 2)
                 Text(
@@ -290,7 +272,7 @@ class HomePage extends StatelessWidget {
                       vertical: 24,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFAF7F2),
+                      color: AppColors.cardBackground,
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
                         color: AppColors.borderLight,
@@ -309,7 +291,7 @@ class HomePage extends StatelessWidget {
                         ),
                         const SizedBox(height: 10),
                         ElevatedButton.icon(
-                          onPressed: () => onNavigate(1),
+                          onPressed: () => onNavigate(2),
                           icon: const Icon(LucideIcons.camera, size: 18),
                           label: const Text('Gatalogar primeiro gato'),
                           style: ElevatedButton.styleFrom(
@@ -318,7 +300,7 @@ class HomePage extends StatelessWidget {
                               vertical: 10,
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(AppRadius.pill),
                             ),
                           ),
                         ),
@@ -327,7 +309,7 @@ class HomePage extends StatelessWidget {
                   )
                 else
                   SizedBox(
-                    height: 175,
+                    height: 152,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: discoveries.take(6).length,
@@ -344,6 +326,81 @@ class HomePage extends StatelessWidget {
                       },
                     ),
                   ),
+
+                const SizedBox(height: 20),
+
+                // Card de Destaque Social & Conquistas (incentivo à comunidade e progresso)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.achievementBg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: AppColors.achievement.withValues(alpha: 0.35),
+                      width: 1.2,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          LucideIcons.trophy,
+                          size: 24,
+                          color: AppColors.achievementDark,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Comunidade & Conquistas',
+                              style: GoogleFonts.fredoka(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.achievementText,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Veja os gatos que seus amigos encontraram e seus marcos!',
+                              style: GoogleFonts.nunito(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textMedium,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      TextButton(
+                        onPressed: () => onNavigate(1),
+                        style: TextButton.styleFrom(
+                          backgroundColor: AppColors.achievementDark.withValues(alpha: 0.15),
+                          foregroundColor: AppColors.achievementText,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                        child: Text(
+                          'Explorar',
+                          style: GoogleFonts.nunito(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
                 const SizedBox(height: 24),
 
@@ -382,19 +439,7 @@ class HomePage extends StatelessWidget {
                         subtitle: 'Conversas e conquistas compartilhadas.',
                         onTap: () => _open(
                           context,
-                          Scaffold(
-                            appBar: AppBar(
-                              title: Text(
-                                'Amigos',
-                                style: GoogleFonts.nunito(
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              backgroundColor: AppColors.background,
-                              elevation: 0,
-                            ),
-                            body: SocialPage(sessionStore: sessionStore),
-                          ),
+                          FriendsPage(sessionStore: sessionStore),
                         ),
                       ),
                     ),
@@ -436,9 +481,7 @@ class HomePage extends StatelessWidget {
 
                 const SizedBox(height: 20),
               ],
-            ),
-          ],
-        );
+            );
           },
         ),
       ),
@@ -462,24 +505,25 @@ class _RecentCatCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: const Color(0xFFF7E2E6),
+            color: AppColors.borderLight,
             width: 1.2,
           ),
         ),
-        padding: const EdgeInsets.fromLTRB(6, 6, 6, 8),
+        padding: const EdgeInsets.fromLTRB(6, 6, 6, 4),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Foto com cantos arredondados
             ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               child: SizedBox(
-                height: 98,
+                height: 90,
                 width: double.infinity,
                 child: CatPhotoView(cat.photoPath, fit: BoxFit.cover),
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             // Rodapé com Nome e Patinha vazada rosa
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -499,9 +543,9 @@ class _RecentCatCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   const Icon(
-                    LucideIcons.pawPrint,
+                    Icons.pets,
                     size: 16,
-                    color: Color(0xFFD4728C),
+                    color: AppColors.primary,
                   ),
                 ],
               ),
@@ -539,7 +583,7 @@ class _ShortcutCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         child: Container(
           height: 84,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
             color: backgroundColor,
             borderRadius: BorderRadius.circular(18),
@@ -547,8 +591,8 @@ class _ShortcutCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(icon, size: 28, color: iconColor),
-              const SizedBox(width: 10),
+              Icon(icon, size: 24, color: iconColor),
+              const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -559,20 +603,20 @@ class _ShortcutCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.nunito(
-                        fontSize: 13.5,
+                        fontSize: 13,
                         fontWeight: FontWeight.w800,
                         color: iconColor,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 1),
                     Text(
                       subtitle,
-                      maxLines: 2,
+                      maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.nunito(
-                        fontSize: 9.5,
+                        fontSize: 9.0,
                         fontWeight: FontWeight.w600,
-                        color: iconColor.withValues(alpha: 0.8),
+                        color: iconColor.withValues(alpha: 0.85),
                         height: 1.15,
                       ),
                     ),

@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'pages/auth_page.dart';
 import 'pages/capture_page.dart';
 import 'pages/home_page.dart';
+import 'pages/social_page.dart';
 import 'pages/library_page.dart';
 import 'pages/notifications_page.dart';
 import 'services/push_notification_service.dart';
@@ -23,16 +24,28 @@ class CatlogueApp extends StatefulWidget {
 
 class _CatlogueAppState extends State<CatlogueApp> {
   late final SessionStore _sessionStore;
+  final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+  StreamSubscription? _expiredSubscription;
   bool _offlineMode = false;
 
   @override
   void initState() {
     super.initState();
     _sessionStore = SessionStore()..initialize();
+    _expiredSubscription = _sessionStore.onSessionExpired.listen((_) {
+      _scaffoldMessengerKey.currentState?.showSnackBar(
+        const SnackBar(
+          content: Text('Sua sessao expirou. Faca login novamente para continuar conectado.'),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 4),
+        ),
+      );
+    });
   }
 
   @override
   void dispose() {
+    _expiredSubscription?.cancel();
     _sessionStore.dispose();
     super.dispose();
   }
@@ -40,6 +53,7 @@ class _CatlogueAppState extends State<CatlogueApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      scaffoldMessengerKey: _scaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
       title: 'Gatálogo',
       theme: AppTheme.lightTheme,
@@ -129,6 +143,10 @@ class _MainNavigationState extends State<MainNavigation>
         catStore: catStore,
         onNavigate: (index) => setState(() => currentIndex = index),
       ),
+      SocialPage(
+        sessionStore: widget.sessionStore,
+        catStore: catStore,
+      ),
       CapturePage(catStore: catStore),
       LibraryPage(catStore: catStore),
     ];
@@ -176,13 +194,14 @@ class _MainNavigationState extends State<MainNavigation>
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildNavItem(0, LucideIcons.home, 'Inicio'),
-                _buildNavItem(1, LucideIcons.camera, 'Gatalogar'),
-                _buildNavItem(2, LucideIcons.library, 'Coleção'),
+                _buildNavItem(0, LucideIcons.home, 'Início'),
+                _buildNavItem(1, LucideIcons.users, 'Social'),
+                _buildNavItem(2, LucideIcons.camera, 'Gatalogar'),
+                _buildNavItem(3, LucideIcons.library, 'Coleção'),
               ],
             ),
           ),
@@ -193,7 +212,7 @@ class _MainNavigationState extends State<MainNavigation>
 
   Widget _buildNavItem(int index, IconData icon, String label) {
     final isSelected = currentIndex == index;
-    final color = isSelected ? AppColors.primary : const Color(0xFF7A6E69);
+    final color = isSelected ? AppColors.primary : AppColors.textMedium;
 
     return InkWell(
       onTap: () => setState(() => currentIndex = index),
@@ -207,7 +226,7 @@ class _MainNavigationState extends State<MainNavigation>
             const SizedBox(height: 4),
             Text(
               label,
-              style: GoogleFonts.nunito(
+              style: GoogleFonts.fredoka(
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
                 color: color,

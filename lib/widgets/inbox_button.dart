@@ -1,14 +1,18 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../services/product_api_service.dart';
 import '../stores/cat_store.dart';
 import '../pages/notifications_page.dart';
+import '../theme/app_theme.dart';
 
 class InboxButton extends StatefulWidget {
-  const InboxButton({super.key, required this.store});
+  const InboxButton({super.key, required this.store, this.size = 42});
   final CatStore store;
+  final double size;
   @override
   State<InboxButton> createState() => _InboxButtonState();
 }
@@ -73,21 +77,76 @@ class _InboxButtonState extends State<InboxButton> with WidgetsBindingObserver {
   }
 
   @override
-  Widget build(BuildContext context) => IconButton(
-    tooltip: 'Notificações',
-    icon: Badge.count(
-      count: _unread,
-      isLabelVisible: _unread > 0,
-      child: const Icon(Icons.notifications_outlined),
-    ),
-    onPressed: () async {
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => NotificationsPage(store: widget.store),
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () async {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => NotificationsPage(store: widget.store),
+          ),
+        );
+        if (mounted) _refresh();
+      },
+      child: Tooltip(
+        message: 'Notificações',
+        child: Container(
+          width: widget.size,
+          height: widget.size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.surface,
+            border: Border.all(
+              color: AppColors.borderProfile,
+              width: 1.4,
+            ),
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              const Icon(
+                LucideIcons.bell,
+                size: 20,
+                color: AppColors.textDark,
+              ),
+              if (_unread > 0)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0, end: 1),
+                    duration: const Duration(milliseconds: 200),
+                    builder: (context, scale, child) {
+                      return Transform.scale(
+                        scale: scale,
+                        child: child,
+                      );
+                    },
+                    child: Container(
+                      width: 18,
+                      height: 18,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        _unread > 99 ? '99+' : _unread.toString(),
+                        style: GoogleFonts.nunito(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          height: 1.0,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
-      );
-      if (mounted) _refresh();
-    },
-  );
+      ),
+    );
+  }
 }

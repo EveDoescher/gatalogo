@@ -7,6 +7,7 @@ import '../services/favorites_manager.dart';
 import '../stores/cat_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_widgets.dart';
+import '../widgets/inbox_button.dart';
 import 'cat_details_page.dart';
 
 class LibraryPage extends StatefulWidget {
@@ -21,12 +22,18 @@ class LibraryPage extends StatefulWidget {
 class _LibraryPageState extends State<LibraryPage> {
   String _query = '';
   String _selectedFilter = 'todos';
+  bool _showFilters = true;
   final FavoritesManager _favoritesManager = FavoritesManager.instance;
 
   @override
   void initState() {
     super.initState();
     _favoritesManager.initialize();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   String _formatDate(DateTime date) {
@@ -54,42 +61,54 @@ class _LibraryPageState extends State<LibraryPage> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Folhas decorativas sutis nas bordas
+            // Folhagens decorativas das bordas (Figma Tela 4)
             Positioned(
-              left: 15,
-              top: 55,
+              left: -15,
+              top: 40,
               child: IgnorePointer(
-                child: Image.asset(
-                  'assets/images/Folha_3.png',
-                  width: 44,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-            Positioned(
-              left: -35,
-              top: 280,
-              child: IgnorePointer(
-                child: Opacity(
-                  opacity: 0.8,
+                child: Transform.rotate(
+                  angle: 1.6,
                   child: Image.asset(
-                    'assets/images/Folha_1.png',
-                    width: 100,
+                    'assets/images/Folha_3.png',
+                    width: 48,
                     fit: BoxFit.contain,
                   ),
                 ),
               ),
             ),
             Positioned(
-              right: -30,
-              bottom: 40,
+              left: -20,
+              top: 260,
               child: IgnorePointer(
                 child: Opacity(
-                  opacity: 0.8,
-                  child: Image.asset(
-                    'assets/images/Folha_2.png',
-                    width: 110,
-                    fit: BoxFit.contain,
+                  opacity: 0.85,
+                  child: Transform.flip(
+                    flipX: true,
+                    child: Transform.rotate(
+                      angle: -0.28,
+                      child: Image.asset(
+                        'assets/images/Folha_1.png',
+                        width: 90,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              right: -20,
+              bottom: 25,
+              child: IgnorePointer(
+                child: Opacity(
+                  opacity: 0.85,
+                  child: Transform.rotate(
+                    angle: 3.14,
+                    child: Image.asset(
+                      'assets/images/Folha_2.png',
+                      width: 110,
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
               ),
@@ -110,7 +129,7 @@ class _LibraryPageState extends State<LibraryPage> {
 
                   switch (_selectedFilter) {
                     case 'recentes':
-                      return true; // já ordenado por data
+                      return true;
                     case 'com_nome':
                       return cat.name != null && cat.name!.trim().isNotEmpty;
                     case 'favoritos':
@@ -126,149 +145,167 @@ class _LibraryPageState extends State<LibraryPage> {
 
                 return Column(
                   children: [
-                    // Cabeçalho fixo com Busca e Filtros
+                    // Topo: Barra com Logo + Avatar
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 8,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // Topo: Logo + Folhas + Avatar
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Image.asset(
-                                'assets/images/Logo.png',
-                                height: 40,
-                                fit: BoxFit.contain,
-                              ),
-                              const Spacer(),
-                              Container(
-                                padding: const EdgeInsets.all(7),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: const Color(0xFFE8D6DE),
-                                    width: 1.4,
-                                  ),
-                                ),
-                                child: const Icon(
-                                  LucideIcons.user,
-                                  size: 20,
-                                  color: AppColors.textDark,
-                                ),
-                              ),
-                            ],
+                          Image.asset(
+                            'assets/images/Logo.png',
+                            height: 44,
+                            fit: BoxFit.contain,
                           ),
-
-                          // Barra de Busca com Gatinho deitado em cima no canto direito
-                          SizedBox(
-                            height: 85,
-                            child: Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                // Barra de Busca (embaixo)
-                                Positioned(
-                                  left: 0,
-                                  right: 0,
-                                  bottom: 0,
-                                  child: Container(
-                                    height: 48,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFFAF5F2),
-                                      borderRadius: BorderRadius.circular(24),
-                                      border: Border.all(
-                                        color: const Color(0xFFD5CDC8),
-                                        width: 1.0,
-                                      ),
-                                    ),
-                                    child: TextField(
-                                      controller: null,
-                                      onChanged: (val) => setState(() => _query = val),
-                                      style: GoogleFonts.nunito(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.textDark,
-                                      ),
-                                      decoration: InputDecoration(
-                                        hintText: 'Buscar gatos na sua coleção...',
-                                        hintStyle: GoogleFonts.nunito(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w500,
-                                          color: AppColors.textLight,
-                                        ),
-                                        prefixIcon: const Icon(
-                                          LucideIcons.search,
-                                          size: 19,
-                                          color: AppColors.textLight,
-                                        ),
-                                        suffixIcon: const Icon(
-                                          LucideIcons.slidersHorizontal,
-                                          size: 19,
-                                          color: AppColors.textDark,
-                                        ),
-                                        border: InputBorder.none,
-                                        enabledBorder: InputBorder.none,
-                                        focusedBorder: InputBorder.none,
-                                        isDense: true,
-                                        contentPadding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical: 14,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                // Gatinho debruçado sobre a barra de busca no lado direito
-                                Positioned(
-                                  right: 32,
-                                  bottom: 34,
-                                  child: IgnorePointer(
-                                    child: Image.asset(
-                                      'assets/images/gato_3.png',
-                                      width: 130,
-                                      fit: BoxFit.contain,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 12),
-
-                          // Pílulas de Filtros horizontais
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: [
-                                _buildFilterChip(
-                                  label: 'Todos (${allDiscoveries.length})',
-                                  key: 'todos',
-                                ),
-                                const SizedBox(width: 8),
-                                _buildFilterChip(
-                                  label: 'Recentes',
-                                  key: 'recentes',
-                                ),
-                                const SizedBox(width: 8),
-                                _buildFilterChip(
-                                  label: 'Com nome',
-                                  key: 'com_nome',
-                                ),
-                                const SizedBox(width: 8),
-                                _buildFilterChip(
-                                  label: 'Favoritos',
-                                  key: 'favoritos',
-                                ),
-                              ],
-                            ),
+                          const Spacer(),
+                          InboxButton(store: widget.catStore, size: 44),
+                          const SizedBox(width: 10),
+                          UserAvatarButton(
+                            sessionStore: widget.catStore.sessionStore,
+                            catStore: widget.catStore,
+                            size: 44,
                           ),
                         ],
                       ),
                     ),
+
+                    // Barra de Busca com o Gatinho debruçado com micro-animação
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: SizedBox(
+                        height: 84,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            // Campo de Busca
+                            Positioned(
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              child: SizedBox(
+                                height: 48,
+                                child: TextField(
+                                  onChanged: (val) => setState(() => _query = val),
+                                  style: GoogleFonts.nunito(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textDark,
+                                  ),
+                                  decoration: InputDecoration(
+                                    filled: true,
+                                    fillColor: AppColors.surface,
+                                    hintText: 'Buscar gatos na sua coleção...',
+                                    hintStyle: GoogleFonts.nunito(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.textLight,
+                                    ),
+                                    prefixIcon: const Icon(
+                                      LucideIcons.search,
+                                      size: 19,
+                                      color: AppColors.textLight,
+                                    ),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        LucideIcons.slidersHorizontal,
+                                        size: 19,
+                                        color: _showFilters
+                                            ? AppColors.primary
+                                            : AppColors.textDark,
+                                      ),
+                                      onPressed: () => setState(
+                                        () => _showFilters = !_showFilters,
+                                      ),
+                                      tooltip: 'Filtros',
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(24),
+                                      borderSide: const BorderSide(
+                                        color: AppColors.border,
+                                        width: 1.2,
+                                      ),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(24),
+                                      borderSide: const BorderSide(
+                                        color: AppColors.border,
+                                        width: 1.2,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(24),
+                                      borderSide: const BorderSide(
+                                        color: AppColors.primary,
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Gatinho ilustrado
+                            Positioned(
+                              right: 28,
+                              bottom: 32,
+                              child: IgnorePointer(
+                                child: Image.asset(
+                                  'assets/images/gato_3.png',
+                                  width: 130,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // Filtros horizontais em estilo cápsula (Pills)
+                    AnimatedCrossFade(
+                      firstChild: Padding(
+                        padding: const EdgeInsets.only(left: 20, bottom: 8),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
+                          child: Row(
+                            children: [
+                              _buildFilterChip(
+                                label: 'Todos (${allDiscoveries.length})',
+                                key: 'todos',
+                              ),
+                              const SizedBox(width: 8),
+                              _buildFilterChip(
+                                label: 'Recentes',
+                                key: 'recentes',
+                              ),
+                              const SizedBox(width: 8),
+                              _buildFilterChip(
+                                label: 'Com nome',
+                                key: 'com_nome',
+                              ),
+                              const SizedBox(width: 8),
+                              _buildFilterChip(
+                                label: 'Favoritos',
+                                key: 'favoritos',
+                              ),
+                              const SizedBox(width: 20),
+                            ],
+                          ),
+                        ),
+                      ),
+                      secondChild: const SizedBox.shrink(),
+                      crossFadeState: _showFilters
+                          ? CrossFadeState.showFirst
+                          : CrossFadeState.showSecond,
+                      duration: const Duration(milliseconds: 250),
+                    ),
+
+                    const SizedBox(height: 8),
 
                     // Grid de Gatos
                     Expanded(
@@ -283,26 +320,25 @@ class _LibraryPageState extends State<LibraryPage> {
                                   child: Padding(
                                     padding: const EdgeInsets.all(32),
                                     child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                      mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         Image.asset(
                                           'assets/images/gato_2.png',
-                                          height: 90,
+                                          height: 100,
                                           fit: BoxFit.contain,
                                         ),
                                         const SizedBox(height: 16),
                                         Text(
                                           'Nenhum gato encontrado',
-                                          style: GoogleFonts.nunito(
-                                            fontSize: 17,
-                                            fontWeight: FontWeight.w800,
+                                          style: GoogleFonts.fredoka(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w600,
                                             color: AppColors.textDark,
                                           ),
                                         ),
-                                        const SizedBox(height: 4),
+                                        const SizedBox(height: 6),
                                         Text(
-                                          'Tente ajustar a busca ou o filtro selecionado.',
+                                          'Fotografe novos gatos na rua para expandir seu herbário felino!',
                                           textAlign: TextAlign.center,
                                           style: GoogleFonts.nunito(
                                             fontSize: 13,
@@ -315,35 +351,45 @@ class _LibraryPageState extends State<LibraryPage> {
                                   ),
                                 )
                               : GridView.builder(
-                                  padding: const EdgeInsets.fromLTRB(
-                                      20, 8, 20, 24),
-                                  gridDelegate:
-                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                  physics: const BouncingScrollPhysics(),
+                                  padding: const EdgeInsets.fromLTRB(20, 6, 20, 24),
+                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: 2,
                                     crossAxisSpacing: 14,
                                     mainAxisSpacing: 16,
-                                    childAspectRatio: 0.68,
+                                    childAspectRatio: 0.74,
                                   ),
                                   itemCount: filteredCats.length,
                                   itemBuilder: (context, index) {
                                     final cat = filteredCats[index];
-                                    final isFav = _favoritesManager
-                                        .isFavorite(cat.id);
+                                    final isFav = _favoritesManager.isFavorite(cat.id);
 
-                                    return _CollectionCatCard(
-                                      cat: cat,
-                                      isFavorite: isFav,
-                                      formattedDate:
-                                          _formatDate(cat.capturedAt),
-                                      onToggleFavorite: () =>
-                                          _favoritesManager
-                                              .toggleFavorite(cat.id),
-                                      onTap: () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => CatDetailsPage(
-                                            cat: cat,
-                                            catStore: widget.catStore,
+                                    // Staggered animated entrance for items
+                                    return TweenAnimationBuilder<double>(
+                                      duration: Duration(milliseconds: 250 + (index % 6) * 50),
+                                      curve: Curves.easeOutCubic,
+                                      tween: Tween(begin: 0.0, end: 1.0),
+                                      builder: (context, val, child) {
+                                        return Opacity(
+                                          opacity: val,
+                                          child: Transform.translate(
+                                            offset: Offset(0, (1.0 - val) * 20),
+                                            child: child,
+                                          ),
+                                        );
+                                      },
+                                      child: _CollectionCatCard(
+                                        cat: cat,
+                                        isFavorite: isFav,
+                                        formattedDate: _formatDate(cat.capturedAt),
+                                        onToggleFavorite: () => _favoritesManager.toggleFavorite(cat.id),
+                                        onTap: () => Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => CatDetailsPage(
+                                              cat: cat,
+                                              catStore: widget.catStore,
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -368,10 +414,15 @@ class _LibraryPageState extends State<LibraryPage> {
       onTap: () => setState(() => _selectedFilter = key),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : const Color(0xFFF1EBE4),
+          color: isSelected ? AppColors.primary : AppColors.cardBackground,
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.border,
+            width: 1.0,
+          ),
         ),
         child: Text(
           label,
@@ -386,7 +437,7 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 }
 
-class _CollectionCatCard extends StatelessWidget {
+class _CollectionCatCard extends StatefulWidget {
   const _CollectionCatCard({
     required this.cat,
     required this.isFavorite,
@@ -402,175 +453,230 @@ class _CollectionCatCard extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_CollectionCatCard> createState() => _CollectionCatCardState();
+}
+
+class _CollectionCatCardState extends State<_CollectionCatCard> with SingleTickerProviderStateMixin {
+  late final AnimationController _heartController;
+  late final Animation<double> _heartScale;
+  bool _isPressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _heartController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _heartScale = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.35).chain(CurveTween(curve: Curves.easeOutBack)), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: 1.35, end: 1.0).chain(CurveTween(curve: Curves.easeIn)), weight: 50),
+    ]).animate(_heartController);
+  }
+
+  @override
+  void dispose() {
+    _heartController.dispose();
+    super.dispose();
+  }
+
+  void _handleHeartTap() {
+    _heartController.forward(from: 0.0);
+    widget.onToggleFavorite();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final catName = cat.name?.trim().isNotEmpty == true
-        ? cat.name!.trim()
+    final catName = widget.cat.name?.trim().isNotEmpty == true
+        ? widget.cat.name!.trim()
         : 'Gato';
     final catCode =
-        'Gato #${cat.captureNumber.toString().padLeft(3, '0')}';
-    final locationText = cat.locationName?.isNotEmpty == true
-        ? cat.locationName!.split(',').take(2).join(',').trim()
+        'Gato #${widget.cat.captureNumber.toString().padLeft(3, '0')}';
+    final locationText = widget.cat.locationName?.isNotEmpty == true
+        ? widget.cat.locationName!.split(',').take(2).join(',').trim()
         : 'Centro,\nLimeira - SP';
 
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFFFDF8F5),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: const Color(0xFFF2ECE6),
-            width: 1.0,
+      onTap: widget.onTap,
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: AnimatedScale(
+        scale: _isPressed ? 0.97 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeInOut,
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: AppColors.border,
+              width: 1.0,
+            ),
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Imagem do Gato com recorte diagonal sutil no canto inferior
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(17),
-              ),
-              child: ClipPath(
-                clipper: _CardImageClipper(),
-                child: SizedBox(
-                  height: 120,
-                  width: double.infinity,
-                  child: CatPhotoView(cat.photoPath, fit: BoxFit.cover),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Imagem do Gato com recorte suave diagonal
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(17),
+                ),
+                child: ClipPath(
+                  clipper: _CardImageClipper(),
+                  child: SizedBox(
+                    height: 114,
+                    width: double.infinity,
+                    child: CatPhotoView(
+                      widget.cat.photoPath,
+                      fit: BoxFit.cover,
+                      borderRadius: 0,
+                    ),
+                  ),
                 ),
               ),
-            ),
 
-            // Informações do Card
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Nome do Gato
-                    Text(
-                      catName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.nunito(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textTitle,
-                      ),
-                    ),
-                    // Código / Identificador
-                    Text(
-                      catCode,
-                      style: GoogleFonts.nunito(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textLight,
-                      ),
-                    ),
-                    const Spacer(),
-
-                    // Linha com Data, Local e Botão de Favoritar
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+              // Informações do Card
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+                  child: SingleChildScrollView(
+                    physics: const NeverScrollableScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Data
-                              Row(
-                                children: [
-                                  const Icon(
-                                    LucideIcons.calendar,
-                                    size: 11,
-                                    color: AppColors.textLight,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Expanded(
-                                    child: Text(
-                                      formattedDate,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.nunito(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.textMedium,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 2),
-                              // Localização
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Padding(
-                                    padding: EdgeInsets.only(top: 1),
-                                    child: Icon(
-                                      LucideIcons.mapPin,
+                      // Nome do Gato em Fredoka
+                      Text(
+                        catName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.fredoka(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textTitle,
+                        ),
+                      ),
+                      // Código / Identificador
+                      Text(
+                        catCode,
+                        style: GoogleFonts.nunito(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textLight,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+
+                      // Linha com Data, Local e Botão de Favoritar
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Data
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      LucideIcons.calendar,
                                       size: 11,
                                       color: AppColors.textLight,
                                     ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Expanded(
-                                    child: Text(
-                                      locationText,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.nunito(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.textMedium,
-                                        height: 1.1,
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        widget.formattedDate,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.nunito(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.textMedium,
+                                        ),
                                       ),
                                     ),
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                // Localização
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Padding(
+                                      padding: EdgeInsets.only(top: 1),
+                                      child: Icon(
+                                        LucideIcons.mapPin,
+                                        size: 11,
+                                        color: AppColors.textLight,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        locationText,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.nunito(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.textMedium,
+                                          height: 1.15,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Botão de Favoritar Animado
+                          GestureDetector(
+                            onTap: _handleHeartTap,
+                            behavior: HitTestBehavior.opaque,
+                            child: ScaleTransition(
+                              scale: _heartScale,
+                              child: Container(
+                                width: 34,
+                                height: 34,
+                                decoration: BoxDecoration(
+                                  color: widget.isFavorite
+                                      ? AppColors.primaryLight
+                                      : AppColors.cardBackground,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: widget.isFavorite
+                                        ? AppColors.primary
+                                        : AppColors.border,
+                                    width: 1.0,
                                   ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Botão de Favoritar (círculo com borda sutil)
-                        GestureDetector(
-                          onTap: onToggleFavorite,
-                          behavior: HitTestBehavior.opaque,
-                          child: Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF7F1EB),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: const Color(0xFFEBE3D8),
-                                width: 1,
+                                ),
+                                child: Icon(
+                                  widget.isFavorite
+                                      ? Icons.favorite
+                                      : LucideIcons.heart,
+                                  size: 16,
+                                  color: widget.isFavorite
+                                      ? AppColors.primary
+                                      : AppColors.textMedium,
+                                ),
                               ),
                             ),
-                            child: Icon(
-                              isFavorite
-                                  ? Icons.favorite
-                                  : LucideIcons.heart,
-                              size: 16,
-                              color: isFavorite
-                                  ? AppColors.primary
-                                  : AppColors.textMedium,
-                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _CardImageClipper extends CustomClipper<Path> {
@@ -578,12 +684,12 @@ class _CardImageClipper extends CustomClipper<Path> {
   Path getClip(Size size) {
     final path = Path();
     path.lineTo(0, size.height);
-    // Linha curva diagonal subindo suavemente da esquerda para a direita
+    // Curva sutil da esquerda descendo suavemente para a direita como no Figma
     path.quadraticBezierTo(
-      size.width * 0.5,
-      size.height - 10,
+      size.width * 0.45,
+      size.height - 12,
       size.width,
-      size.height - 22,
+      size.height - 2,
     );
     path.lineTo(size.width, 0);
     path.close();
@@ -591,5 +697,5 @@ class _CardImageClipper extends CustomClipper<Path> {
   }
 
   @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }

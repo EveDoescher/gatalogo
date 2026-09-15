@@ -25,6 +25,7 @@ class CatAnalysis {
   final AnalysisStatus status;
 
   final String? coatType;
+  final String? hairType;
   final String? primaryColor;
 
   final List<CoatColor> colors;
@@ -41,6 +42,7 @@ class CatAnalysis {
     required this.catId,
     required this.status,
     this.coatType,
+    this.hairType,
     this.primaryColor,
     this.colors = const [],
     this.confidence,
@@ -53,6 +55,7 @@ class CatAnalysis {
       'cat_id': catId,
       'analysis_status': status.name,
       'coat_type': coatType,
+      'hair_type': hairType,
       'primary_color': primaryColor,
       'colors_json': jsonEncode(colors.map((color) => color.toJson()).toList()),
       'confidence': confidence,
@@ -66,6 +69,12 @@ class CatAnalysis {
         jsonDecode(map['colors_json'] ?? '[]') as List<dynamic>;
 
     final patternMapJson = map['pattern_map_json'] as String?;
+    final patternMap = patternMapJson == null
+        ? null
+        : Map<String, dynamic>.from(jsonDecode(patternMapJson) as Map);
+
+    final resolvedHairType = map['hair_type'] as String? ??
+        (patternMap?['hair_type'] as String?);
 
     return CatAnalysis(
       catId: map['cat_id'] as String,
@@ -74,6 +83,7 @@ class CatAnalysis {
         orElse: () => AnalysisStatus.pending,
       ),
       coatType: map['coat_type'] as String?,
+      hairType: resolvedHairType,
       primaryColor: map['primary_color'] as String?,
       colors: decodedColors
           .map(
@@ -84,9 +94,7 @@ class CatAnalysis {
       confidence: map['confidence'] == null
           ? null
           : (map['confidence'] as num).toDouble(),
-      patternMap: patternMapJson == null
-          ? null
-          : Map<String, dynamic>.from(jsonDecode(patternMapJson) as Map),
+      patternMap: patternMap,
       analyzedAt: map['analyzed_at'] == null
           ? null
           : DateTime.parse(map['analyzed_at'] as String),
@@ -95,11 +103,18 @@ class CatAnalysis {
 
   factory CatAnalysis.fromApiJson(Map<String, dynamic> json) {
     final colorsJson = json['colors'] as List<dynamic>? ?? [];
+    final patternMap = json['pattern_map'] == null
+        ? null
+        : Map<String, dynamic>.from(json['pattern_map'] as Map);
+
+    final resolvedHairType = json['hair_type'] as String? ??
+        (patternMap?['hair_type'] as String?);
 
     return CatAnalysis(
       catId: json['cat_id'] as String,
       status: AnalysisStatus.completed,
       coatType: json['coat_type'] as String?,
+      hairType: resolvedHairType,
       primaryColor: json['primary_color'] as String?,
       colors: colorsJson
           .map(
@@ -110,9 +125,7 @@ class CatAnalysis {
       confidence: json['confidence'] == null
           ? null
           : (json['confidence'] as num).toDouble(),
-      patternMap: json['pattern_map'] == null
-          ? null
-          : Map<String, dynamic>.from(json['pattern_map'] as Map),
+      patternMap: patternMap,
       analyzedAt: json['analyzed_at'] == null
           ? null
           : DateTime.parse(json['analyzed_at'] as String),
@@ -123,6 +136,7 @@ class CatAnalysis {
     return {
       'cat_id': catId,
       'coat_type': coatType,
+      'hair_type': hairType,
       'primary_color': primaryColor,
       'colors': colors.map((color) => color.toJson()).toList(),
       'confidence': confidence,
@@ -137,6 +151,7 @@ class CatAnalysis {
       catId: catId,
       status: newStatus,
       coatType: coatType,
+      hairType: hairType,
       primaryColor: primaryColor,
       colors: colors,
       confidence: confidence,
