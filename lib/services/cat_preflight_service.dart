@@ -5,22 +5,39 @@ import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
+import 'dart:ui' show Rect;
+
 class CapturePreflightResult {
   const CapturePreflightResult._({
     required this.accepted,
     this.message,
+    this.tip,
     this.usedLocalModel = false,
+    this.boundingBox,
   });
 
-  const CapturePreflightResult.accepted({bool usedLocalModel = false})
-    : this._(accepted: true, usedLocalModel: usedLocalModel);
+  const CapturePreflightResult.accepted({
+    bool usedLocalModel = false,
+    Rect? boundingBox,
+  }) : this._(
+          accepted: true,
+          usedLocalModel: usedLocalModel,
+          boundingBox: boundingBox,
+        );
 
-  const CapturePreflightResult.rejected(String message)
-    : this._(accepted: false, message: message, usedLocalModel: true);
+  const CapturePreflightResult.rejected(String message, {String? tip})
+      : this._(
+          accepted: false,
+          message: message,
+          tip: tip,
+          usedLocalModel: true,
+        );
 
   final bool accepted;
   final String? message;
+  final String? tip;
   final bool usedLocalModel;
+  final Rect? boundingBox;
 }
 
 class CatPreflightService {
@@ -60,7 +77,15 @@ class CatPreflightService {
 
       final qualityMessage = _qualityMessage(image);
       if (qualityMessage != null) {
-        return CapturePreflightResult.rejected(qualityMessage);
+        String? tip;
+        if (qualityMessage.contains('escura')) {
+          tip = 'Procure um ambiente com iluminação adequada para valorizar as cores da pelagem.';
+        } else if (qualityMessage.contains('borrada')) {
+          tip = 'Mantenha o aparelho firme e aguarde o foco antes de fotografar.';
+        } else if (qualityMessage.contains('estourada') || qualityMessage.contains('contraste')) {
+          tip = 'Evite luz solar muito intensa ou reflexos diretos contra a lente.';
+        }
+        return CapturePreflightResult.rejected(qualityMessage, tip: tip);
       }
 
       final rawCats = await _detectCats(image);
@@ -68,6 +93,7 @@ class CatPreflightService {
       if (cats.isEmpty) {
         return const CapturePreflightResult.rejected(
           'Não encontramos um gato com clareza. Aproxime-se e tente outra foto.',
+          tip: 'Posicione o gato em destaque no centro da imagem para facilitar a identificação.',
         );
       }
 
@@ -76,6 +102,7 @@ class CatPreflightService {
       if (primary.area < _minimumCatArea) {
         return const CapturePreflightResult.rejected(
           'O gato está muito distante. Faça uma foto mais próxima.',
+          tip: 'Aproxime-se mais do gato para que a pelagem ocupe uma área maior da foto.',
         );
       }
 
@@ -83,10 +110,21 @@ class CatPreflightService {
           cats[1].area / primary.area >= _secondaryCatAreaRatio) {
         return const CapturePreflightResult.rejected(
           'Encontramos mais de um gato em destaque. Fotografe um por vez.',
+          tip: 'Fotografe apenas um gato por vez para a análise da pelagem.',
         );
       }
 
-      return const CapturePreflightResult.accepted(usedLocalModel: true);
+      final boundingBox = Rect.fromLTRB(
+        primary.xmin,
+        primary.ymin,
+        primary.xmax,
+        primary.ymax,
+      );
+
+      return CapturePreflightResult.accepted(
+        usedLocalModel: true,
+        boundingBox: boundingBox,
+      );
     } on Object catch (error, stackTrace) {
       // O filtro reduz chamadas desnecessárias, mas não pode impedir o uso do
       // aplicativo caso o modelo local esteja indisponível no aparelho.

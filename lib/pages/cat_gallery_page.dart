@@ -128,7 +128,62 @@ class _CatGalleryPageState extends State<CatGalleryPage> {
                   color: AppColors.textMedium,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.primarySoftBg,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.borderLight),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: const BoxDecoration(
+                        color: AppColors.surface,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        kind == 'front'
+                            ? Icons.pets
+                            : kind == 'back'
+                                ? LucideIcons.alignCenter
+                                : LucideIcons.maximize2,
+                        color: AppColors.primary,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Guia da Pose: $title',
+                            style: GoogleFonts.nunito(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textDark,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            referenceDescriptions[kind] ?? '',
+                            style: GoogleFonts.nunito(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
               ListTile(
                 leading: Container(
                   width: 44,
@@ -202,6 +257,55 @@ class _CatGalleryPageState extends State<CatGalleryPage> {
                   _pickAndAdd(kind, ImageSource.gallery);
                 },
               ),
+              if (widget.cat.photoPath.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                ListTile(
+                  leading: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFE8F5E9),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      LucideIcons.copyCheck,
+                      color: Color(0xFF2E7D32),
+                      size: 20,
+                    ),
+                  ),
+                  title: Text(
+                    'Vincular foto de cadastro',
+                    style: GoogleFonts.nunito(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Utilizar a foto principal como pose de $title',
+                    style: GoogleFonts.nunito(
+                      fontSize: 12,
+                      color: AppColors.textMedium,
+                    ),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    await widget.store.addReferencePhoto(
+                      widget.cat.id,
+                      kind,
+                      widget.cat.photoPath,
+                    );
+                    if (mounted) {
+                      showMessage(
+                        context,
+                        'Foto principal vinculada a $title!',
+                      );
+                    }
+                  },
+                ),
+              ],
             ],
           ),
         ),

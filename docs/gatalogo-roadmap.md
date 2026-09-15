@@ -78,37 +78,37 @@ O catálogo é a principal fonte de dados do matching. A captura precisa ser rá
 
 ### 2.1 Corrigir o fluxo de entrada de fotos
 
-- [ ] Adicionar **Galeria** na `CapturePage`.
-- [ ] Expor o método `_escolherFoto(ImageSource.gallery)` que já existe.
-- [ ] Permitir catalogar uma foto já existente sem exigir nova fotografia.
-- [ ] Melhorar feedback de rejeição de imagem:
-  - [ ] Substituir SnackBar volátil por feedback persistente/modal.
-  - [ ] Explicar por que a foto foi rejeitada.
-  - [ ] Explicar como tirar uma foto melhor.
+- [x] Adicionar **Galeria** na `CapturePage`.
+- [x] Expor o método `_escolherFoto(ImageSource.gallery)` que já existe.
+- [x] Permitir catalogar uma foto já existente sem exigir nova fotografia.
+- [x] Melhorar feedback de rejeição de imagem:
+  - [x] Substituir SnackBar volátil por feedback persistente/modal.
+  - [x] Explicar por que a foto foi rejeitada.
+  - [x] Explicar como tirar uma foto melhor.
 
 ### 2.2 Recuperação de análise
 
-- [ ] Expor o botão **Tentar novamente** quando a análise de IA falhar.
-- [ ] Conectar `retryAnalysis(catId)` já existente no `CatStore`.
-- [ ] Garantir estados claros: analisando → sucesso → falha → retry.
+- [x] Expor o botão **Tentar novamente** quando a análise de IA falhar.
+- [x] Conectar `retryAnalysis(catId)` já existente no `CatStore`.
+- [x] Garantir estados claros: analisando → sucesso → falha → retry.
 
 ### 2.3 Melhorar qualidade das fotos
 
-- [ ] Criar overlay/silhueta para orientar as quatro poses.
-- [ ] Exibir bounding box do TFLite na pré-visualização.
-- [ ] Corrigir/organizar a tela de fotos adicionais para refletir corretamente a foto de cadastro.
-- [ ] Adicionar filtros avançados à biblioteca por cor, padrão, bairro e status da análise.
+- [x] Criar overlay/silhueta para orientar as quatro poses.
+- [x] Exibir bounding box do TFLite na pré-visualização.
+- [x] Corrigir/organizar a tela de fotos adicionais para refletir corretamente a foto de cadastro.
+- [x] Adicionar filtros avançados à biblioteca por cor, padrão, bairro e status da análise.
 
 ### 2.4 Compartilhamento real do gato
 
-- [ ] Implementar compartilhamento nativo com `share_plus`.
-- [ ] Criar card visual com:
+- [x] Implementar compartilhamento nativo com `share_plus`.
+- [x] Criar card visual com:
   - foto;
   - nome;
   - número do Gatálogo;
   - stats da IA;
   - informações relevantes.
-- [ ] Substituir todos os mocks de share existentes.
+- [x] Substituir todos os mocks de share existentes.
 
 ### 2.5 Critério de conclusão
 

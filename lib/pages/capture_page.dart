@@ -33,6 +33,7 @@ class _CapturePageState extends State<CapturePage> {
   bool _isValidating = false;
 
   File? _foto;
+  Rect? _detectedBoundingBox;
   Future<Position?>? _locationAtCapture;
   DateTime? _capturedAt;
 
@@ -42,18 +43,103 @@ class _CapturePageState extends State<CapturePage> {
     _preflight.warmUp();
   }
 
+  void _showRejectionDialog(String message, [String? tip]) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            const Icon(
+              LucideIcons.alertCircle,
+              color: AppColors.primary,
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Orientação da foto',
+                style: GoogleFonts.nunito(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textTitle,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              message,
+              style: GoogleFonts.nunito(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textDark,
+              ),
+            ),
+            if (tip != null && tip.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.primarySoftBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      LucideIcons.lightbulb,
+                      color: AppColors.primary,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        tip,
+                        style: GoogleFonts.nunito(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textMedium,
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Entendido',
+              style: GoogleFonts.nunito(
+                fontWeight: FontWeight.w800,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _tirarFoto() async {
     try {
       await _escolherFoto(ImageSource.camera);
     } catch (_) {
       if (mounted) {
         setState(() => _isValidating = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Não foi possível abrir a câmera. Confira a permissão do aplicativo e tente novamente.',
-            ),
-          ),
+        _showRejectionDialog(
+          'Não foi possível abrir a câmera. Confira a permissão do aplicativo e tente novamente.',
         );
       }
     }
@@ -96,13 +182,17 @@ class _CapturePageState extends State<CapturePage> {
       setState(() {
         _foto = null;
         _isValidating = false;
+        _detectedBoundingBox = null;
       });
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(result.message!)));
+      _showRejectionDialog(
+        result.message ?? 'Não foi possível validar a foto.',
+        result.tip,
+      );
       return;
     }
 
     setState(() {
+      _detectedBoundingBox = result.boundingBox;
       _isValidating = false;
     });
   }
@@ -114,6 +204,7 @@ class _CapturePageState extends State<CapturePage> {
 
     setState(() {
       _foto = null;
+      _detectedBoundingBox = null;
     });
   }
 
@@ -167,8 +258,10 @@ class _CapturePageState extends State<CapturePage> {
       }
 
       final message = _messageForRejection(error.code);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
+      _showRejectionDialog(
+        message,
+        'Tente se aproximar ou alterar a iluminação para capturar novamente.',
+      );
     } on AnalysisConnectionException {
       if (!mounted) {
         return;
@@ -483,38 +576,93 @@ class _CapturePageState extends State<CapturePage> {
 
               const SizedBox(height: 26),
 
-              // Botão Principal: "Abrir câmera" (altura 48, raio pill, rosa #DC8BA1)
-              SizedBox(
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: _isAnalyzing || _isValidating ? null : _tirarFoto,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        LucideIcons.camera,
-                        size: 20,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Abrir câmera',
-                        style: GoogleFonts.nunito(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
+              // Botões de Ação: Câmera e Galeria
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: _isAnalyzing || _isValidating ? null : _tirarFoto,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              LucideIcons.camera,
+                              size: 18,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                'Abrir câmera',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.nunito(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: OutlinedButton(
+                        onPressed: _isAnalyzing || _isValidating
+                            ? null
+                            : () => _escolherFoto(ImageSource.gallery),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(
+                            color: AppColors.primary,
+                            width: 1.4,
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              LucideIcons.image,
+                              size: 18,
+                              color: AppColors.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                'Galeria',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.nunito(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 18),
@@ -582,10 +730,65 @@ class _CapturePageState extends State<CapturePage> {
           Expanded(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(24),
-              child: Image.file(
-                _foto!,
-                width: double.infinity,
-                fit: BoxFit.cover,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.file(
+                    _foto!,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                  if (_detectedBoundingBox != null)
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final rect = _detectedBoundingBox!;
+                        final left = rect.left * constraints.maxWidth;
+                        final top = rect.top * constraints.maxHeight;
+                        final width = rect.width * constraints.maxWidth;
+                        final height = rect.height * constraints.maxHeight;
+
+                        return Positioned(
+                          left: left,
+                          top: top,
+                          width: width,
+                          height: height,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: AppColors.primary,
+                                width: 2.5,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Align(
+                              alignment: Alignment.topLeft,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: const BoxDecoration(
+                                  color: AppColors.primary,
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(9),
+                                    bottomRight: Radius.circular(8),
+                                  ),
+                                ),
+                                child: Text(
+                                  'Gato detectado',
+                                  style: GoogleFonts.nunito(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                ],
               ),
             ),
           ),

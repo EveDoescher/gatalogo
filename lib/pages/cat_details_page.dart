@@ -8,6 +8,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../models/cat.dart';
 import '../models/cat_analysis.dart';
+import '../services/cat_sharing_service.dart';
 import '../services/favorites_manager.dart';
 import '../stores/cat_store.dart';
 import '../theme/app_theme.dart';
@@ -114,19 +115,11 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
     }
   }
 
-  void _shareCat(Cat cat) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Compartilhando descoberta de ${cat.displayName} no Gatálogo!',
-          style: GoogleFonts.nunito(fontWeight: FontWeight.w700),
-        ),
-        backgroundColor: AppColors.primary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
-    );
+  Future<void> _shareCat(Cat cat, [CatAnalysis? analysis]) async {
+    final shared = await CatSharingService.shareCat(cat: cat, analysis: analysis);
+    if (!shared && mounted) {
+      showMessage(context, 'Não foi possível abrir o compartilhamento.');
+    }
   }
 
   @override
@@ -156,12 +149,6 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
             ? locationParts.sublist(1).join(',').trim()
             : 'Limeira - SP';
 
-        // Análise
-        final confidenceInt = analysis?.confidence != null
-            ? (analysis!.confidence! * 100).round()
-            : 95;
-        final coatType = analysis?.coatType ?? 'Tricolor';
-        final hairType = analysis?.primaryColor ?? 'Curta';
 
         return Scaffold(
           backgroundColor: AppColors.background,
@@ -512,151 +499,8 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
 
                             const SizedBox(height: 18),
 
-                            // Card 2: Análise da Pelagem
-                            Container(
-                              padding: const EdgeInsets.all(20),
-                              decoration: BoxDecoration(
-                                color: AppColors.cardBackground,
-                                borderRadius: BorderRadius.circular(24),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Cabeçalho da Análise
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        LucideIcons.sparkles,
-                                        size: 18,
-                                        color: AppColors.textDark,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          'Análise da pelagem',
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: GoogleFonts.nunito(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w800,
-                                            color: AppColors.textDark,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Confiança: $confidenceInt%',
-                                        style: GoogleFonts.nunito(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.textMedium,
-                                          decoration: TextDecoration.underline,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      const Icon(
-                                        LucideIcons.helpCircle,
-                                        size: 15,
-                                        color: AppColors.textMedium,
-                                      ),
-                                    ],
-                                  ),
-
-                                  const SizedBox(height: 18),
-
-                                  // Conteúdo: Cores Principais + Padrão + Tipo
-                                  Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      // Lado Esquerdo: Cores Principais
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Cores principais',
-                                              style: GoogleFonts.nunito(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w800,
-                                                color: AppColors.textDark,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 10),
-                                            if (analysis?.colors.isNotEmpty ==
-                                                true)
-                                              ...analysis!.colors.take(3).map(
-                                                    (c) => _ColorItem(
-                                                      label: c.name,
-                                                      percentage:
-                                                          '${(c.percentage * 100).round()}%',
-                                                    ),
-                                                  )
-                                            else ...[
-                                              const _ColorItem(
-                                                  label: 'Cor',
-                                                  percentage: '60%'),
-                                              const _ColorItem(
-                                                  label: 'Cor',
-                                                  percentage: '60%'),
-                                              const _ColorItem(
-                                                  label: 'Cor',
-                                                  percentage: '60%'),
-                                            ],
-                                          ],
-                                        ),
-                                      ),
-
-                                      // Lado Direito: Padrão e Tipo de Pelagem
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Padrão',
-                                              style: GoogleFonts.nunito(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w800,
-                                                color: AppColors.textDark,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              coatType,
-                                              style: GoogleFonts.nunito(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColors.textMedium,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 16),
-                                            Text(
-                                              'Tipo de pelagem',
-                                              style: GoogleFonts.nunito(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w800,
-                                                color: AppColors.textDark,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              hairType,
-                                              style: GoogleFonts.nunito(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColors.textMedium,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
+                            // Card 2: Análise da Pelagem com estados reais (analisando, erro com retry, pendente e concluído)
+                            _buildAnalysisCard(cat, analysis),
 
                             const SizedBox(height: 16),
 
@@ -912,7 +756,7 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                         child: SizedBox(
                           height: 48,
                           child: ElevatedButton(
-                            onPressed: () => _shareCat(cat),
+                            onPressed: () => _shareCat(cat, analysis),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               elevation: 0,
@@ -955,6 +799,353 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildAnalysisCard(Cat cat, CatAnalysis? analysis) {
+    if (cat.status == 'analyzing') {
+      return Container(
+        padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  LucideIcons.sparkles,
+                  size: 18,
+                  color: AppColors.textDark,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Análise da pelagem',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.nunito(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            const SizedBox(
+              width: 32,
+              height: 32,
+              child: CircularProgressIndicator(
+                color: AppColors.primary,
+                strokeWidth: 3,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Analisando com Inteligência Artificial...',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.nunito(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textDark,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Identificando padrões e cores da descoberta.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.nunito(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textMedium,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (cat.status == 'failed') {
+      return Container(
+        padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  LucideIcons.alertTriangle,
+                  size: 18,
+                  color: Color(0xFFD32F2F),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Análise da pelagem',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.nunito(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'Não foi possível concluir a análise.',
+              style: GoogleFonts.nunito(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textDark,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'O servidor não respondeu ou houve instabilidade de conexão.',
+              style: GoogleFonts.nunito(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textMedium,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => widget.catStore.retryAnalysis(cat.id),
+              icon: const Icon(LucideIcons.refreshCw, size: 16, color: Colors.white),
+              label: Text(
+                'Tentar novamente',
+                style: GoogleFonts.nunito(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (cat.status == 'pending_analysis' || cat.status == 'pending') {
+      return Container(
+        padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  LucideIcons.cloud,
+                  size: 18,
+                  color: AppColors.textMedium,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Análise pendente',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.nunito(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'A análise será concluída assim que houver conexão com o servidor.',
+              style: GoogleFonts.nunito(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textMedium,
+              ),
+            ),
+            const SizedBox(height: 14),
+            OutlinedButton.icon(
+              onPressed: () => widget.catStore.retryAnalysis(cat.id),
+              icon: const Icon(LucideIcons.refreshCw, size: 16, color: AppColors.primary),
+              label: Text(
+                'Analisar agora',
+                style: GoogleFonts.nunito(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primary,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: AppColors.primary, width: 1.2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final confidenceInt = analysis?.confidence != null
+        ? (analysis!.confidence! * 100).round()
+        : 95;
+    final coatType = analysis?.coatType ?? 'Tricolor';
+    final hairType = analysis?.primaryColor ?? 'Curta';
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                LucideIcons.sparkles,
+                size: 18,
+                color: AppColors.textDark,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Análise da pelagem',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.nunito(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textDark,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Confiança: $confidenceInt%',
+                style: GoogleFonts.nunito(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textMedium,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(
+                LucideIcons.helpCircle,
+                size: 15,
+                color: AppColors.textMedium,
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Cores principais',
+                      style: GoogleFonts.nunito(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    if (analysis?.colors.isNotEmpty == true)
+                      ...analysis!.colors.take(3).map(
+                            (c) => _ColorItem(
+                              label: c.name,
+                              percentage: '${(c.percentage * 100).round()}%',
+                            ),
+                          )
+                    else
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          'Cores naturais registradas',
+                          style: GoogleFonts.nunito(
+                            fontSize: 12,
+                            color: AppColors.textMedium,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Padrão',
+                      style: GoogleFonts.nunito(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      coatType,
+                      style: GoogleFonts.nunito(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textMedium,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Tipo de pelagem',
+                      style: GoogleFonts.nunito(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      hairType,
+                      style: GoogleFonts.nunito(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textMedium,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
