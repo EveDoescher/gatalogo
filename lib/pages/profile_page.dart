@@ -6,12 +6,14 @@ import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../config/api_config.dart';
+import '../models/gamification.dart';
 import '../services/product_api_service.dart';
 import '../services/social_api_service.dart';
 import '../stores/cat_store.dart';
 import '../stores/session_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_widgets.dart';
+import '../widgets/gatalogo_gamification.dart';
 import 'auth_page.dart';
 import 'cat_details_page.dart';
 import 'friends_page.dart';
@@ -60,6 +62,10 @@ class _ProfilePageState extends State<ProfilePage> {
       List<Map<String, dynamic>> friendsData = [];
       try {
         friendsData = await _socialApi.friends();
+      } catch (_) {}
+
+      try {
+        await widget.catStore?.refreshGamification();
       } catch (_) {}
 
       if (mounted) {
@@ -705,6 +711,20 @@ class _ProfilePageState extends State<ProfilePage> {
 
                 const SizedBox(height: 18),
 
+                // Card de Gamificação, Nível e Streak (Etapa 6.1 e 6.2)
+                if (widget.catStore != null) ...[
+                  _ProfileGamificationCard(
+                    gamification: widget.catStore!.gamification,
+                    onTapJourney: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => JourneyPage(store: widget.catStore!),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                ],
+
                 // 3. Vitrine de Estatísticas Reais
                 Row(
                   children: [
@@ -1099,6 +1119,148 @@ class _ProfilePageState extends State<ProfilePage> {
                 const SizedBox(height: 30),
               ],
             ),
+    );
+  }
+}
+
+class _ProfileGamificationCard extends StatelessWidget {
+  const _ProfileGamificationCard({
+    required this.gamification,
+    required this.onTapJourney,
+  });
+
+  final GamificationState gamification;
+  final VoidCallback onTapJourney;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTapJourney,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: AppColors.primarySoftBg,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(LucideIcons.sparkles, size: 16, color: AppColors.primary),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Nível ${gamification.level} • ${gamification.levelTitle}',
+                        style: GoogleFonts.fredoka(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textTitle,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF3E0),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      border: Border.all(color: const Color(0xFFFFB74D).withValues(alpha: 0.5)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(LucideIcons.flame, size: 14, color: Color(0xFFE65100)),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${gamification.streak} dias',
+                          style: GoogleFonts.nunito(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFFE65100),
+                          ),
+                        ),
+                        if (gamification.multiplier > 1.0) ...[
+                          const SizedBox(width: 4),
+                          Text(
+                            '(${gamification.multiplier.toStringAsFixed(1)}x)',
+                            style: GoogleFonts.nunito(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFFE65100),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              GatalogoXPBar(
+                currentLevel: gamification.level,
+                currentXP: gamification.xp,
+                targetXP: gamification.targetXp,
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        const Icon(LucideIcons.gift, size: 13, color: AppColors.textMedium),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            gamification.levelReward,
+                            style: GoogleFonts.nunito(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textMedium,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(LucideIcons.shieldCheck, size: 14, color: Color(0xFF00796B)),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${gamification.freezeShields} escudo${gamification.freezeShields == 1 ? '' : 's'}',
+                        style: GoogleFonts.nunito(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF00796B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

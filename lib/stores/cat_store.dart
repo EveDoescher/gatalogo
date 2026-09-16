@@ -11,8 +11,10 @@ import '../data/cat_database.dart';
 import '../models/cat.dart';
 import '../models/cat_analysis.dart';
 import '../models/cat_reference_photo.dart';
+import '../models/gamification.dart';
 import '../services/analysis_api_service.dart';
 import '../services/catalog_sync_service.dart';
+import '../services/gamification_service.dart';
 import '../services/location_service.dart';
 import '../services/vision_api_service.dart';
 import 'session_store.dart';
@@ -41,6 +43,7 @@ class CatStore extends ChangeNotifier {
     );
     _catalogSync = CatalogSyncService(_sessionStore);
     _visionApi = VisionApiService(_sessionStore);
+    _gamificationService = GamificationService(_sessionStore);
     _sessionStore.addListener(_onSessionChanged);
   }
 
@@ -48,7 +51,10 @@ class CatStore extends ChangeNotifier {
   late final AnalysisApiService _analysisApi;
   late final CatalogSyncService _catalogSync;
   late final VisionApiService _visionApi;
+  late final GamificationService _gamificationService;
   final Connectivity _connectivity = Connectivity();
+
+  GamificationState get gamification => _gamificationService.currentState;
 
   bool _isLoading = false;
   bool _disposed = false;
@@ -123,6 +129,24 @@ class CatStore extends ChangeNotifier {
     unawaited(syncCatalog());
     unawaited(syncPendingAnalyses());
     unawaited(resolvePendingLocations());
+    unawaited(_gamificationService.loadGamification().then((_) => notifyListeners()));
+  }
+
+  Future<GamificationActionResult> recordGamificationAction(
+    String action, {
+    String? contextId,
+  }) async {
+    final result = await _gamificationService.recordAction(
+      action,
+      contextId: contextId,
+    );
+    notifyListeners();
+    return result;
+  }
+
+  Future<void> refreshGamification() async {
+    await _gamificationService.loadGamification();
+    notifyListeners();
   }
 
   Future<SavedCatResult> addFromTempPhoto(
@@ -196,6 +220,7 @@ class CatStore extends ChangeNotifier {
     // mesmo quando a rede cai durante a captura ou a API está indisponível.
     unawaited(syncPendingAnalyses());
     unawaited(syncCatalog());
+    unawaited(recordGamificationAction('photo', contextId: id));
 
     return SavedCatResult(cat: cat, awaitingConnection: awaitingConnection);
   }
@@ -552,6 +577,7 @@ class CatStore extends ChangeNotifier {
       'observed_at': (observedAt ?? DateTime.now()).toUtc().toIso8601String(),
     });
     unawaited(syncCatalog());
+    unawaited(recordGamificationAction('sighting', contextId: cat.id));
   }
 
   bool _sendingSightings = false;

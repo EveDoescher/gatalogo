@@ -84,6 +84,7 @@ class GatalogoAchievementCard extends StatefulWidget {
   final int targetCount;
   final AchievementState state;
   final Color themeColor;
+  final String? unlockedAt;
   final VoidCallback? onTap;
 
   const GatalogoAchievementCard({
@@ -96,6 +97,7 @@ class GatalogoAchievementCard extends StatefulWidget {
     required this.targetCount,
     required this.state,
     required this.themeColor,
+    this.unlockedAt,
     this.onTap,
   });
 
@@ -234,6 +236,23 @@ class _GatalogoAchievementCardState extends State<GatalogoAchievementCard> with 
                         ],
                       ),
                     ],
+                    if (isCompleted && widget.unlockedAt != null && widget.unlockedAt!.isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      Row(
+                        children: [
+                          Icon(LucideIcons.calendarCheck, size: 12, color: widget.themeColor),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Desbloqueado em ${_formatUnlockedDate(widget.unlockedAt!)}',
+                            style: GoogleFonts.nunito(
+                              color: widget.themeColor,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -244,6 +263,109 @@ class _GatalogoAchievementCardState extends State<GatalogoAchievementCard> with 
     ),
   );
 }
+
+  String _formatUnlockedDate(String raw) {
+    try {
+      final dt = DateTime.parse(raw).toLocal();
+      final day = dt.day.toString().padLeft(2, '0');
+      final month = dt.month.toString().padLeft(2, '0');
+      final year = dt.year;
+      return '$day/$month/$year';
+    } catch (_) {
+      return raw.length >= 10 ? raw.substring(0, 10) : raw;
+    }
+  }
+}
+
+Future<void> showAchievementCelebrationDialog(
+  BuildContext context, {
+  required String title,
+  required String description,
+  required IconData icon,
+  required RarityLevel rarity,
+  VoidCallback? onShare,
+}) {
+  return showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: AppColors.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 12),
+          GatalogoTrophyIcon(
+            icon: icon,
+            themeColor: rarity.color,
+            isUnlocked: true,
+            size: 72,
+            isLegendary: rarity == RarityLevel.legendary,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Conquista Desbloqueada!',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.fredoka(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textTitle,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.fredoka(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: rarity.color,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            description,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.nunito(
+              fontSize: 13,
+              color: AppColors.textDark,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: rarity.backgroundColor,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+            ),
+            child: Text(
+              'Raridade: ${rarity.label}',
+              style: GoogleFonts.nunito(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: rarity.color,
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        if (onShare != null)
+          TextButton.icon(
+            onPressed: () {
+              Navigator.pop(ctx);
+              onShare();
+            },
+            icon: const Icon(LucideIcons.share2, size: 16),
+            label: const Text('Compartilhar'),
+          ),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Continuar'),
+        ),
+      ],
+    ),
+  );
 }
 
 /// An animated trophy or badge icon.
@@ -496,8 +618,10 @@ class GatalogoXPBar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          runSpacing: 2,
           children: [
             Text(
               'Nível $currentLevel',

@@ -267,11 +267,11 @@ O relatório aponta que existem widgets de gamificação prontos, mas XP/Níveis
 
 ### 6.1 Fundamento de XP
 
-- [ ] Criar modelo de XP.
-- [ ] Persistir XP localmente.
-- [ ] Criar sincronização/API.
-- [ ] Ativar `GatalogoXPBar`.
-- [ ] Criar níveis:
+- [x] Criar modelo de XP.
+- [x] Persistir XP localmente.
+- [x] Criar sincronização/API.
+- [x] Ativar `GatalogoXPBar`.
+- [x] Criar níveis:
   - Curioso;
   - Explorador;
   - Observador;
@@ -279,35 +279,35 @@ O relatório aponta que existem widgets de gamificação prontos, mas XP/Níveis
   - Guardião;
   - Protetor;
   - Lenda Felina.
-- [ ] Definir recompensas por nível.
+- [x] Definir recompensas por nível.
 
 ### 6.2 Streaks
 
-- [ ] Criar streak diário.
-- [ ] Ações qualificadoras:
+- [x] Criar streak diário.
+- [x] Ações qualificadoras:
   - fotografar;
   - registrar avistamento;
   - interagir no feed.
-- [ ] Multiplicador progressivo.
-- [ ] Escudo/congelamento semanal.
-- [ ] Exibir streak na Home e perfil.
+- [x] Multiplicador progressivo.
+- [x] Escudo/congelamento semanal.
+- [x] Exibir streak na Home e perfil.
 
 ### 6.3 Missões
 
-- [ ] 3 missões diárias.
-- [ ] 1 missão semanal.
-- [ ] Missão bônus eventual.
-- [ ] Recompensar principalmente comportamentos que alimentam o matching/resgate.
+- [x] 3 missões diárias.
+- [x] 1 missão semanal.
+- [x] Missão bônus eventual.
+- [x] Recompensar principalmente comportamentos que alimentam o matching/resgate.
 
 ### 6.4 Conquistas
 
-- [ ] Corrigir progresso local da conquista `helper`.
-- [ ] Adicionar celebração instantânea.
-- [ ] Exibir `unlocked_at`.
-- [ ] Permitir curtidas/comentários em conquistas publicadas.
-- [ ] Criar compartilhamento visual.
-- [ ] Expandir de 6 para 25+ conquistas.
-- [ ] Criar conquistas para:
+- [x] Corrigir progresso local da conquista `helper`.
+- [x] Adicionar celebração instantânea.
+- [x] Exibir `unlocked_at`.
+- [x] Permitir curtidas/comentários em conquistas publicadas.
+- [x] Criar compartilhamento visual.
+- [x] Expandir de 6 para 25+ conquistas.
+- [x] Criar conquistas para:
   - coleção;
   - consistência;
   - social;

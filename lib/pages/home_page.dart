@@ -8,6 +8,7 @@ import '../stores/session_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/active_search_proximity_card.dart';
 import '../widgets/app_widgets.dart';
+import '../widgets/gatalogo_gamification.dart';
 import '../widgets/inbox_button.dart';
 import '../widgets/chat_icon_button.dart';
 import 'cat_details_page.dart';
@@ -104,6 +105,19 @@ class HomePage extends StatelessWidget {
                   sessionStore: sessionStore,
                   catStore: catStore,
                 ),
+
+                const SizedBox(height: 14),
+
+                // Card de Gamificação: Nível, XP, Streak & Escudo (Etapa 6.1 e 6.2)
+                _HomeGamificationBanner(
+                  catStore: catStore,
+                  onTap: () => _open(
+                    context,
+                    JourneyPage(store: catStore),
+                  ),
+                ),
+
+                const SizedBox(height: 18),
 
                 // Card Destaque: Sua Coleção (conforme Figma Tela 2)
                 GestureDetector(
@@ -261,7 +275,14 @@ class HomePage extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 24),
+                const SizedBox(height: 20),
+
+                // Missões Diárias (Etapa 6.3)
+                _HomeDailyMissionsCard(
+                  catStore: catStore,
+                ),
+
+                const SizedBox(height: 24),
 
                 // Seção: Descobertas Recentes (sem "Ver tudo" conforme Figma Tela 2)
                 Text(
@@ -636,6 +657,326 @@ class _ShortcutCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _HomeGamificationBanner extends StatelessWidget {
+  const _HomeGamificationBanner({
+    required this.catStore,
+    required this.onTap,
+  });
+
+  final CatStore catStore;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final gamification = catStore.gamification;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.25),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                runSpacing: 6,
+                spacing: 8,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primarySoftBg,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(LucideIcons.sparkles, size: 14, color: AppColors.primary),
+                        const SizedBox(width: 6),
+                        Text(
+                          gamification.levelTitle,
+                          style: GoogleFonts.fredoka(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primaryDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF3E0),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          border: Border.all(color: const Color(0xFFFFB74D).withValues(alpha: 0.5)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(LucideIcons.flame, size: 14, color: Color(0xFFE65100)),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${gamification.streak}d',
+                              style: GoogleFonts.nunito(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFFE65100),
+                              ),
+                            ),
+                            if (gamification.multiplier > 1.0) ...[
+                              const SizedBox(width: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE65100),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  '${gamification.multiplier.toStringAsFixed(1)}x',
+                                  style: GoogleFonts.nunito(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE0F2F1),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          border: Border.all(color: const Color(0xFF4DB6AC).withValues(alpha: 0.5)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(LucideIcons.shieldCheck, size: 14, color: Color(0xFF00796B)),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${gamification.freezeShields}',
+                              style: GoogleFonts.nunito(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF00796B),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              GatalogoXPBar(
+                currentLevel: gamification.level,
+                currentXP: gamification.xp,
+                targetXP: gamification.targetXp,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeDailyMissionsCard extends StatelessWidget {
+  const _HomeDailyMissionsCard({
+    required this.catStore,
+  });
+
+  final CatStore catStore;
+
+  @override
+  Widget build(BuildContext context) {
+    final missions = catStore.gamification.dailyMissions;
+    final completedCount = missions.where((m) => m.completed).length;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.borderLight, width: 1.2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            runSpacing: 6,
+            spacing: 8,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: AppColors.primarySoftBg,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(LucideIcons.target, size: 18, color: AppColors.primary),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Missões de Hoje',
+                    style: GoogleFonts.fredoka(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textTitle,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: completedCount == missions.length && missions.isNotEmpty
+                      ? AppColors.greenLight
+                      : AppColors.cardAltBackground,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  border: Border.all(
+                    color: completedCount == missions.length && missions.isNotEmpty
+                        ? AppColors.green.withValues(alpha: 0.3)
+                        : AppColors.borderLight,
+                  ),
+                ),
+                child: Text(
+                  '$completedCount / ${missions.length}',
+                  style: GoogleFonts.nunito(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: completedCount == missions.length && missions.isNotEmpty
+                        ? AppColors.greenLink
+                        : AppColors.textMedium,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...missions.map((m) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: m.completed
+                      ? AppColors.greenLight.withValues(alpha: 0.4)
+                      : AppColors.cardBackground,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: m.completed
+                        ? AppColors.greenProgress.withValues(alpha: 0.3)
+                        : AppColors.borderLight,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      m.completed ? LucideIcons.checkCircle2 : LucideIcons.circle,
+                      size: 18,
+                      color: m.completed ? AppColors.greenProgress : AppColors.textLight,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            m.title,
+                            style: GoogleFonts.nunito(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: m.completed ? AppColors.textMedium : AppColors.textDark,
+                              decoration: m.completed ? TextDecoration.lineThrough : null,
+                            ),
+                          ),
+                          if (!m.completed && m.target > 1) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              '${m.progress} de ${m.target}',
+                              style: GoogleFonts.nunito(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textLight,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: m.completed
+                            ? AppColors.greenProgress.withValues(alpha: 0.15)
+                            : AppColors.achievementBg,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            LucideIcons.sparkles,
+                            size: 11,
+                            color: m.completed ? AppColors.greenProgress : AppColors.achievementDark,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            '+${m.xpReward} XP',
+                            style: GoogleFonts.nunito(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: m.completed ? AppColors.greenProgress : AppColors.achievementDark,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }

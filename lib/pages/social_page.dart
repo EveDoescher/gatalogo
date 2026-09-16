@@ -211,6 +211,10 @@ class _SocialPageState extends State<SocialPage> {
       payload['likes_count'] = newLikes;
     });
 
+    if (newLiked) {
+      widget.catStore?.recordGamificationAction('like');
+    }
+
     try {
       final result = await _api.toggleLike(itemId);
       if (mounted) {
@@ -393,6 +397,7 @@ class _SocialPageState extends State<SocialPage> {
 
                           try {
                             final updatedComments = await _api.addComment(itemId, text);
+                            widget.catStore?.recordGamificationAction('comment');
                             if (context.mounted) {
                               setModalState(() {
                                 comments = updatedComments;
@@ -745,6 +750,7 @@ class _SocialPageState extends State<SocialPage> {
                                 photoUrl: photoUrl,
                                 isPublic: true,
                               );
+                              widget.catStore?.recordGamificationAction('post');
                               if (context.mounted) {
                                 Navigator.pop(ctx);
                                 showMessage(context, 'Publicação compartilhada com a comunidade.');
