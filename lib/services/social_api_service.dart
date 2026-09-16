@@ -44,9 +44,35 @@ class SocialApiService {
     );
   }
 
+  Future<void> acceptInvite(String id) => decideInvite(id, true);
+  Future<void> rejectInvite(String id) => decideInvite(id, false);
+
   Future<void> removeFriend(String id) async {
     await _request('DELETE', '/social/friends/$id', null, accepted: {204});
   }
+
+  Future<void> cancelInvite(String id) async {
+    await _request('DELETE', '/social/invites/$id', null, accepted: {204});
+  }
+
+  Future<List<Map<String, dynamic>>> searchUsers(String query) =>
+      _list('/social/users/search?q=${Uri.encodeComponent(query)}');
+
+  Future<List<Map<String, dynamic>>> getSuggestions({bool nearby = false}) =>
+      _list('/social/suggestions?nearby=$nearby');
+
+  Future<Map<String, dynamic>> getPublicProfile(String username) async {
+    final response = await _request(
+      'GET',
+      '/social/profiles/${Uri.encodeComponent(username.toLowerCase())}',
+      null,
+      accepted: {200},
+    );
+    return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+  }
+
+  Future<List<Map<String, dynamic>>> getWeeklyLeaderboard() =>
+      _list('/social/leaderboard/weekly');
 
   Future<void> registerDeviceToken(String token) async {
     final platform = defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android';

@@ -22,6 +22,7 @@ import 'auth_page.dart';
 import 'friends_page.dart';
 import 'inbox_page.dart';
 import 'journey_page.dart';
+import 'public_profile_page.dart';
 
 class SocialPage extends StatefulWidget {
   const SocialPage({
@@ -318,19 +319,34 @@ class _SocialPageState extends State<SocialPage> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.pets, size: 14, color: AppColors.primary),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          '@$author',
-                                          style: GoogleFonts.fredoka(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColors.textTitle,
+                                    GestureDetector(
+                                      behavior: HitTestBehavior.opaque,
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => PublicProfilePage(
+                                              username: author,
+                                              sessionStore: widget.sessionStore,
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                        );
+                                      },
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.pets, size: 14, color: AppColors.primary),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            '@$author',
+                                            style: GoogleFonts.fredoka(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.textTitle,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
@@ -1600,49 +1616,63 @@ class _SocialPageState extends State<SocialPage> {
                               final title = payload['title']?.toString() ?? 'Nova Conquista!';
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 14),
-                                child: Container(
-                                  padding: const EdgeInsets.all(14),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.achievementBg,
-                                    borderRadius: BorderRadius.circular(18),
-                                    border: Border.all(color: AppColors.achievement.withValues(alpha: 0.4)),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(10),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.achievement.withValues(alpha: 0.3),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(LucideIcons.trophy, size: 20, color: AppColors.achievementDark),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              '@$author desbloqueou um marco!',
-                                              style: GoogleFonts.fredoka(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColors.achievementText,
-                                              ),
-                                            ),
-                                            Text(
-                                              title,
-                                              style: GoogleFonts.nunito(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w700,
-                                                color: AppColors.textDark,
-                                              ),
-                                            ),
-                                          ],
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(18),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => PublicProfilePage(
+                                          username: author,
+                                          sessionStore: widget.sessionStore,
                                         ),
                                       ),
-                                      const Icon(Icons.pets, size: 16, color: AppColors.achievementText),
-                                    ],
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(14),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.achievementBg,
+                                      borderRadius: BorderRadius.circular(18),
+                                      border: Border.all(color: AppColors.achievement.withValues(alpha: 0.4)),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.achievement.withValues(alpha: 0.3),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(LucideIcons.trophy, size: 20, color: AppColors.achievementDark),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                '@$author desbloqueou um marco!',
+                                                style: GoogleFonts.fredoka(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AppColors.achievementText,
+                                                ),
+                                              ),
+                                              Text(
+                                                title,
+                                                style: GoogleFonts.nunito(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: AppColors.textDark,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const Icon(Icons.pets, size: 16, color: AppColors.achievementText),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               );
@@ -1659,6 +1689,12 @@ class _SocialPageState extends State<SocialPage> {
                             final hasLiked = payload['has_liked'] == true;
                             final likesCount = (payload['likes_count'] as num?)?.toInt() ?? 0;
                             final commentsList = payload['comments'] as List? ?? [];
+                            final rawAvatar = item['author_avatar_url']?.toString();
+                            final authorAvatarUrl = rawAvatar != null && rawAvatar.isNotEmpty
+                                ? (rawAvatar.startsWith('http')
+                                    ? rawAvatar
+                                    : '${ApiConfig.baseUrl}$rawAvatar${widget.sessionStore.session?.accessToken != null ? '?token=${widget.sessionStore.session!.accessToken}' : ''}')
+                                : null;
 
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 18),
@@ -1672,58 +1708,88 @@ class _SocialPageState extends State<SocialPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     // Header: Autor e Local
-                                    Padding(
-                                      padding: const EdgeInsets.all(14),
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            width: 40,
-                                            height: 40,
-                                            decoration: BoxDecoration(
-                                              color: AppColors.primarySoftBg,
-                                              shape: BoxShape.circle,
-                                              border: Border.all(color: AppColors.borderProfile, width: 1.2),
+                                    InkWell(
+                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => PublicProfilePage(
+                                              username: author,
+                                              sessionStore: widget.sessionStore,
                                             ),
-                                            child: const Icon(LucideIcons.user, size: 20, color: AppColors.primaryDark),
                                           ),
-                                          const SizedBox(width: 10),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  '@$author',
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: GoogleFonts.fredoka(
-                                                    fontSize: 15,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: AppColors.textTitle,
+                                        );
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(14),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 40,
+                                              height: 40,
+                                              decoration: BoxDecoration(
+                                                color: AppColors.primarySoftBg,
+                                                shape: BoxShape.circle,
+                                                border: Border.all(color: AppColors.borderProfile, width: 1.2),
+                                              ),
+                                              child: ClipOval(
+                                                child: authorAvatarUrl != null
+                                                    ? Image.network(
+                                                        authorAvatarUrl,
+                                                        fit: BoxFit.cover,
+                                                        errorBuilder: (_, _, _) => const Icon(
+                                                          LucideIcons.user,
+                                                          size: 20,
+                                                          color: AppColors.primaryDark,
+                                                        ),
+                                                      )
+                                                    : const Icon(
+                                                        LucideIcons.user,
+                                                        size: 20,
+                                                        color: AppColors.primaryDark,
+                                                      ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    '@$author',
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: GoogleFonts.fredoka(
+                                                      fontSize: 15,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: AppColors.textTitle,
+                                                    ),
                                                   ),
-                                                ),
-                                                if (location != null && location.isNotEmpty)
-                                                  Row(
-                                                    children: [
-                                                      const Icon(LucideIcons.mapPin, size: 11, color: AppColors.textLight),
-                                                      const SizedBox(width: 3),
-                                                      Expanded(
-                                                        child: Text(
-                                                          location,
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow.ellipsis,
-                                                          style: GoogleFonts.nunito(
-                                                            fontSize: 11,
-                                                            color: AppColors.textLight,
-                                                            fontWeight: FontWeight.w600,
+                                                  if (location != null && location.isNotEmpty)
+                                                    Row(
+                                                      children: [
+                                                        const Icon(LucideIcons.mapPin, size: 11, color: AppColors.textLight),
+                                                        const SizedBox(width: 3),
+                                                        Expanded(
+                                                          child: Text(
+                                                            location,
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                            style: GoogleFonts.nunito(
+                                                              fontSize: 11,
+                                                              color: AppColors.textLight,
+                                                              fontWeight: FontWeight.w600,
+                                                            ),
                                                           ),
                                                         ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                              ],
+                                                      ],
+                                                    ),
+                                                ],
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
                                     ),
 

@@ -66,6 +66,8 @@ class AppColors {
   static const Color achievementBg = Color(0xFFFEF9E7);
   static const Color achievementText = Color(0xFF8B6914);
   static const Color achievementDark = Color(0xFFD4A828);
+  static const Color amberDark = Color(0xFFD48B28);
+  static const Color amberBorder = Color(0xFFF3D298);
 
   // ─── Social (amigos e interação) ─────────────────────────────
   static const Color socialPurple = Color(0xFFB39DDB);
