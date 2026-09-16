@@ -142,12 +142,18 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
             'Gato #${cat.captureNumber.toString().padLeft(3, '0')}';
 
         // Localização formatada
-        final locationParts = (cat.locationName ?? 'Centro, Limeira - SP')
-            .split(',');
-        final locationDistrict = locationParts.first.trim();
-        final locationCity = locationParts.length > 1
+        final rawLocation = cat.locationName?.trim();
+        final hasLocation = rawLocation != null && rawLocation.isNotEmpty;
+        final locationParts = hasLocation ? rawLocation.split(',') : <String>[];
+        final locationDistrict = hasLocation
+            ? locationParts.first.trim()
+            : 'Localização não informada';
+        final locationCity = hasLocation && locationParts.length > 1
             ? locationParts.sublist(1).join(',').trim()
-            : 'Limeira - SP';
+            : '';
+        final locationDisplay = locationCity.isNotEmpty
+            ? '$locationDistrict,\n$locationCity'
+            : locationDistrict;
 
 
         return Scaffold(
@@ -476,7 +482,7 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                                   ),
                                                   const SizedBox(height: 2),
                                                   Text(
-                                                    '$locationDistrict,\n$locationCity',
+                                                    locationDisplay,
                                                     style: GoogleFonts.nunito(
                                                       fontSize: 11,
                                                       fontWeight:

@@ -1108,9 +1108,12 @@ class _CollectionCatCardState extends State<_CollectionCatCard> with SingleTicke
         : 'Gato';
     final catCode =
         'Gato #${widget.cat.captureNumber.toString().padLeft(3, '0')}';
-    final locationText = widget.cat.locationName?.isNotEmpty == true
-        ? widget.cat.locationName!.split(',').take(2).join(',').trim()
-        : 'Centro,\nLimeira - SP';
+    final rawLocation = widget.cat.locationName?.trim();
+    final locationText = rawLocation != null && rawLocation.isNotEmpty
+        ? (rawLocation.contains(',')
+            ? rawLocation.replaceFirst(',', ',\n')
+            : rawLocation)
+        : 'Localização\nnão informada';
 
     return GestureDetector(
       onTap: widget.onTap,

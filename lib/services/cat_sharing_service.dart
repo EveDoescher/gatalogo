@@ -66,4 +66,70 @@ class CatSharingService {
       return false;
     }
   }
+
+  static String buildMissingPosterText({
+    required Cat cat,
+    required Map<String, dynamic> report,
+    String? locationName,
+  }) {
+    final buffer = StringBuffer();
+    buffer.writeln('ALERTA DE DESAPARECIMENTO — GATÁLOGO');
+    buffer.writeln('PROCURA-SE: ${cat.displayName}');
+    if (locationName != null && locationName.trim().isNotEmpty) {
+      buffer.writeln('Último local visto: $locationName');
+    }
+    if (cat.collar != null && cat.collar!.trim().isNotEmpty) {
+      buffer.writeln('Coleira: ${cat.collar!.trim()}');
+    }
+    if (cat.distinguishingMarks != null &&
+        cat.distinguishingMarks!.trim().isNotEmpty) {
+      buffer.writeln('Marcas características: ${cat.distinguishingMarks!.trim()}');
+    }
+    if (cat.microchip != null && cat.microchip!.trim().isNotEmpty) {
+      buffer.writeln('Microchip: ${cat.microchip!.trim()}');
+    }
+    buffer.writeln('');
+    buffer.writeln(
+      'Se você viu este gato na região, fotografe pelo aplicativo Gatálogo para alertar o tutor imediatamente.',
+    );
+    return buffer.toString().trim();
+  }
+
+  static Future<bool> shareMissingPoster({
+    required Cat cat,
+    required Map<String, dynamic> report,
+    String? locationName,
+  }) async {
+    final text = buildMissingPosterText(
+      cat: cat,
+      report: report,
+      locationName: locationName,
+    );
+    try {
+      final file = File(cat.photoPath);
+      if (await file.exists()) {
+        final result = await SharePlus.instance.share(
+          ShareParams(
+            files: [XFile(file.path)],
+            text: text,
+            subject: 'PROCURA-SE: ${cat.displayName}',
+          ),
+        );
+        return result.status == ShareResultStatus.success ||
+            result.status == ShareResultStatus.dismissed;
+      } else {
+        final result = await SharePlus.instance.share(
+          ShareParams(
+            text: text,
+            subject: 'PROCURA-SE: ${cat.displayName}',
+          ),
+        );
+        return result.status == ShareResultStatus.success ||
+            result.status == ShareResultStatus.dismissed;
+      }
+    } catch (e) {
+      debugPrint('Erro ao compartilhar cartaz: $e');
+      return false;
+    }
+  }
 }

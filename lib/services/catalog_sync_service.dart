@@ -260,6 +260,9 @@ class CatalogSyncService {
       localUpdatedAt: DateTime.parse(record['updated_at'] as String).toUtc(),
       syncDeviceId: record['device_id'] as String? ?? deviceId,
       syncRevision: revision,
+      microchip: payload['microchip'] as String?,
+      collar: payload['collar'] as String?,
+      distinguishingMarks: payload['distinguishing_marks'] as String?,
     );
     CatAnalysis? analysis;
     final analysisRaw = record['analysis'];

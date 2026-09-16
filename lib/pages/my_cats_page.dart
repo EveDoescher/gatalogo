@@ -164,6 +164,62 @@ class _MyCatsPageState extends State<MyCatsPage> {
                       ),
                     ),
 
+                    // Ação de Emergência Rápida: Perdi meu gato agora
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.xs),
+                        child: InkWell(
+                          onTap: () => _open(CreateMissingReportPage(store: widget.store)),
+                          borderRadius: BorderRadius.circular(AppRadius.card),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: AppColors.errorBg,
+                              borderRadius: BorderRadius.circular(AppRadius.card),
+                              border: Border.all(color: AppColors.error.withValues(alpha: 0.35)),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.error,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(LucideIcons.alertTriangle, color: Colors.white, size: 18),
+                                ),
+                                const SizedBox(width: AppSpacing.md),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Perdi meu gato agora',
+                                        style: GoogleFonts.fredoka(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.errorText,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Ative um alerta de busca comunitária imediato',
+                                        style: GoogleFonts.nunito(
+                                          fontSize: 12,
+                                          color: AppColors.errorText.withValues(alpha: 0.9),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(LucideIcons.chevronRight, color: AppColors.error, size: 18),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
                     // Card explicativo sobre a importância das fotos para proteção
                     SliverToBoxAdapter(
                       child: Padding(
@@ -346,6 +402,9 @@ class AddPetPage extends StatefulWidget {
 class _AddPetPageState extends State<AddPetPage> {
   final _preflight = CatPreflightService();
   final _name = TextEditingController();
+  final _collar = TextEditingController();
+  final _distinguishingMarks = TextEditingController();
+  final _microchip = TextEditingController();
   String? _photo;
   bool _busy = false;
 
@@ -353,6 +412,9 @@ class _AddPetPageState extends State<AddPetPage> {
   void dispose() {
     _preflight.dispose();
     _name.dispose();
+    _collar.dispose();
+    _distinguishingMarks.dispose();
+    _microchip.dispose();
     super.dispose();
   }
 
@@ -399,6 +461,9 @@ class _AddPetPageState extends State<AddPetPage> {
         _photo!,
         isOwned: true,
         name: _name.text,
+        collar: _collar.text.trim(),
+        distinguishingMarks: _distinguishingMarks.text.trim(),
+        microchip: _microchip.text.trim(),
       );
       if (mounted) {
         Navigator.pushReplacement(
@@ -448,6 +513,43 @@ class _AddPetPageState extends State<AddPetPage> {
             prefixIcon: Icon(Icons.pets, size: 18),
           ),
         ),
+        const SizedBox(height: AppSpacing.sm),
+        TextField(
+          controller: _collar,
+          maxLength: 50,
+          textCapitalization: TextCapitalization.sentences,
+          style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textDark),
+          decoration: const InputDecoration(
+            labelText: 'Coleira (opcional)',
+            hintText: 'ex: Vermelha com guizo, azul reflexiva',
+            prefixIcon: Icon(LucideIcons.tag, size: 18),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        TextField(
+          controller: _distinguishingMarks,
+          maxLength: 120,
+          maxLines: 2,
+          textCapitalization: TextCapitalization.sentences,
+          style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textDark),
+          decoration: const InputDecoration(
+            labelText: 'Marcas características (opcional)',
+            hintText: 'ex: Mancha branca no peito, orelha cortada, rabo curto',
+            prefixIcon: Icon(LucideIcons.sparkles, size: 18),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        TextField(
+          controller: _microchip,
+          maxLength: 30,
+          keyboardType: TextInputType.text,
+          style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textDark),
+          decoration: const InputDecoration(
+            labelText: 'Microchip (opcional)',
+            hintText: 'Código ou número do microchip',
+            prefixIcon: Icon(LucideIcons.cpu, size: 18),
+          ),
+        ),
         const SizedBox(height: AppSpacing.md),
         if (_photo != null) ...[
           CatPhotoView(_photo!, height: 260, borderRadius: AppRadius.card),
@@ -486,7 +588,7 @@ class _AddPetPageState extends State<AddPetPage> {
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
-                  'Depois de salvar, você poderá adicionar fotos dos lados, costas e rosto para reforçar a identificação.',
+                  'Depois de salvar, você poderá adicionar fotos de diferentes ângulos para mapear toda a pelagem e reforçar a identificação.',
                   style: GoogleFonts.nunito(fontSize: 12, color: AppColors.textMedium),
                 ),
               ),
@@ -679,6 +781,66 @@ class PetProfilePage extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(height: AppSpacing.md),
+
+            // Card de Identificação para Busca
+            GatalogoCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Identificação para Busca',
+                          style: GoogleFonts.fredoka(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textTitle,
+                          ),
+                        ),
+                      ),
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        icon: const Icon(LucideIcons.pencil, size: 14, color: AppColors.primary),
+                        label: Text(
+                          'Editar',
+                          style: GoogleFonts.nunito(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        onPressed: () => _editCatDetailsModal(context, cat, store),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  _buildDetailRow(
+                    icon: LucideIcons.tag,
+                    label: 'Coleira',
+                    value: cat.collar?.isNotEmpty == true ? cat.collar! : 'Não informada',
+                  ),
+                  const SizedBox(height: 8),
+                  _buildDetailRow(
+                    icon: LucideIcons.sparkles,
+                    label: 'Marcas',
+                    value: cat.distinguishingMarks?.isNotEmpty == true
+                        ? cat.distinguishingMarks!
+                        : 'Nenhuma informada',
+                  ),
+                  const SizedBox(height: 8),
+                  _buildDetailRow(
+                    icon: LucideIcons.cpu,
+                    label: 'Microchip',
+                    value: cat.microchip?.isNotEmpty == true ? cat.microchip! : 'Não informado',
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: AppSpacing.lg),
             Container(
               padding: const EdgeInsets.all(AppSpacing.lg),
@@ -800,5 +962,150 @@ class PetProfilePage extends StatelessWidget {
         ),
       );
     },
+  );
+}
+
+Widget _buildDetailRow({
+  required IconData icon,
+  required String label,
+  required String value,
+}) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Icon(icon, size: 16, color: AppColors.textMedium),
+      const SizedBox(width: 8),
+      Text(
+        '$label: ',
+        style: GoogleFonts.nunito(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textDark,
+        ),
+      ),
+      Expanded(
+        child: Text(
+          value,
+          style: GoogleFonts.nunito(
+            fontSize: 13,
+            color: AppColors.textMedium,
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+void _editCatDetailsModal(BuildContext context, Cat cat, CatStore store) {
+  final nameController = TextEditingController(text: cat.name ?? '');
+  final collarController = TextEditingController(text: cat.collar ?? '');
+  final marksController =
+      TextEditingController(text: cat.distinguishingMarks ?? '');
+  final microchipController = TextEditingController(text: cat.microchip ?? '');
+  bool saving = false;
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: AppColors.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
+    ),
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setModalState) => Padding(
+        padding: EdgeInsets.only(
+          left: AppSpacing.xl,
+          right: AppSpacing.xl,
+          top: AppSpacing.lg,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + AppSpacing.xl,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Editar Dados de Identificação',
+                  style: GoogleFonts.fredoka(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textTitle,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(LucideIcons.x, size: 20),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'Nome do gato',
+                prefixIcon: Icon(Icons.pets, size: 18),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            TextField(
+              controller: collarController,
+              decoration: const InputDecoration(
+                labelText: 'Coleira',
+                hintText: 'ex: Vermelha com guizo',
+                prefixIcon: Icon(LucideIcons.tag, size: 18),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            TextField(
+              controller: marksController,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: 'Marcas características',
+                hintText: 'ex: Mancha no peito, orelha cortada',
+                prefixIcon: Icon(LucideIcons.sparkles, size: 18),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            TextField(
+              controller: microchipController,
+              decoration: const InputDecoration(
+                labelText: 'Microchip',
+                hintText: 'Código do microchip',
+                prefixIcon: Icon(LucideIcons.cpu, size: 18),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            GatalogoButton(
+              text: saving ? 'Salvando…' : 'Salvar Alterações',
+              isLoading: saving,
+              onPressed: saving
+                  ? null
+                  : () async {
+                      setModalState(() => saving = true);
+                      try {
+                        await store.updateCatDetails(
+                          cat.id,
+                          name: nameController.text.trim(),
+                          collar: collarController.text.trim(),
+                          distinguishingMarks: marksController.text.trim(),
+                          microchip: microchipController.text.trim(),
+                        );
+                        if (ctx.mounted) {
+                          Navigator.pop(ctx);
+                          showMessage(context, 'Dados atualizados com sucesso.');
+                        }
+                      } catch (e) {
+                        if (ctx.mounted) showMessage(ctx, e);
+                      } finally {
+                        if (ctx.mounted) setModalState(() => saving = false);
+                      }
+                    },
+            ),
+          ],
+        ),
+      ),
+    ),
   );
 }

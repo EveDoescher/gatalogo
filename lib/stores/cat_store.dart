@@ -133,6 +133,9 @@ class CatStore extends ChangeNotifier {
     bool isOwned = false,
     String? name,
     DateTime? capturedAt,
+    String? microchip,
+    String? collar,
+    String? distinguishingMarks,
   }) async {
     const uuid = Uuid();
 
@@ -172,6 +175,11 @@ class CatStore extends ChangeNotifier {
       status: 'pending_analysis',
       ownerId: ownerId,
       syncDeviceId: deviceId,
+      microchip: microchip?.trim().isEmpty == true ? null : microchip?.trim(),
+      collar: collar?.trim().isEmpty == true ? null : collar?.trim(),
+      distinguishingMarks: distinguishingMarks?.trim().isEmpty == true
+          ? null
+          : distinguishingMarks?.trim(),
     );
 
     final analysis = CatAnalysis(catId: id, status: AnalysisStatus.pending);
@@ -454,6 +462,46 @@ class CatStore extends ChangeNotifier {
 
     notifyListeners();
     unawaited(syncCatalog());
+  }
+
+  Future<void> updateCatDetails(
+    String id, {
+    String? name,
+    String? microchip,
+    String? collar,
+    String? distinguishingMarks,
+  }) async {
+    final normalizedName = name?.trim();
+    final savedName = normalizedName == null || normalizedName.isEmpty
+        ? null
+        : normalizedName;
+    final savedMicrochip =
+        microchip?.trim().isEmpty == true ? null : microchip?.trim();
+    final savedCollar =
+        collar?.trim().isEmpty == true ? null : collar?.trim();
+    final savedMarks = distinguishingMarks?.trim().isEmpty == true
+        ? null
+        : distinguishingMarks?.trim();
+
+    await _database.updateCatDetails(
+      id,
+      name: savedName,
+      microchip: savedMicrochip,
+      collar: savedCollar,
+      distinguishingMarks: savedMarks,
+    );
+
+    final index = _cats.indexWhere((cat) => cat.id == id);
+    if (index != -1) {
+      _cats[index] = _cats[index].withDetails(
+        name: savedName,
+        microchip: savedMicrochip,
+        collar: savedCollar,
+        distinguishingMarks: savedMarks,
+      );
+      notifyListeners();
+      unawaited(syncCatalog());
+    }
   }
 
   Future<void> updateCatLocation(

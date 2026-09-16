@@ -33,7 +33,7 @@ class CatDatabase {
 
     return openDatabase(
       path,
-      version: 12,
+      version: 13,
 
       onCreate: (db, version) async {
         await db.execute('''
@@ -55,6 +55,9 @@ class CatDatabase {
         ,sync_device_id TEXT
         ,sync_revision INTEGER NOT NULL DEFAULT 0
         ,deleted_at TEXT
+        ,microchip TEXT
+        ,collar TEXT
+        ,distinguishing_marks TEXT
       )
     ''');
         await db.execute('''
@@ -81,6 +84,19 @@ class CatDatabase {
       },
 
       onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 13) {
+          final columns = await db.rawQuery('PRAGMA table_info(cats)');
+          final names = columns.map((c) => c['name'] as String).toSet();
+          if (!names.contains('microchip')) {
+            await db.execute('ALTER TABLE cats ADD COLUMN microchip TEXT');
+          }
+          if (!names.contains('collar')) {
+            await db.execute('ALTER TABLE cats ADD COLUMN collar TEXT');
+          }
+          if (!names.contains('distinguishing_marks')) {
+            await db.execute('ALTER TABLE cats ADD COLUMN distinguishing_marks TEXT');
+          }
+        }
         if (oldVersion < 12) {
           final columns = await db.rawQuery(
             'PRAGMA table_info(cat_analyses)',
@@ -317,6 +333,30 @@ class CatDatabase {
       'cats',
       {
         'name': name,
+        'sync_state': 'dirty',
+        'local_updated_at': DateTime.now().toUtc().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> updateCatDetails(
+    String id, {
+    String? name,
+    String? microchip,
+    String? collar,
+    String? distinguishingMarks,
+  }) async {
+    final db = await database;
+
+    await db.update(
+      'cats',
+      {
+        'name': name,
+        'microchip': microchip,
+        'collar': collar,
+        'distinguishing_marks': distinguishingMarks,
         'sync_state': 'dirty',
         'local_updated_at': DateTime.now().toUtc().toIso8601String(),
       },

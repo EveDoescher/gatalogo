@@ -55,27 +55,24 @@ class LocationService {
       final place = placemarks.first;
 
       final streetName = place.thoroughfare?.trim();
-      final streetNumber = place.subThoroughfare?.trim();
-
       final neighborhood = place.subLocality?.trim();
       final city = place.locality?.trim();
       final state = place.administrativeArea?.trim();
 
       final parts = <String>[];
 
-      // Rua + número
+      // Rua (omitindo propositalmente o número residencial para proteger a privacidade)
       if (streetName != null && streetName.isNotEmpty) {
-        if (streetNumber != null && streetNumber.isNotEmpty) {
-          parts.add('$streetName, $streetNumber');
-        } else {
-          parts.add(streetName);
-        }
+        parts.add(streetName);
       } else {
         // Fallback caso o sistema não retorne "thoroughfare"
         final street = place.street?.trim();
-
         if (street != null && street.isNotEmpty) {
-          parts.add(street);
+          // Se o campo street contiver vírgula com número, removemos o número
+          final cleanStreet = street.split(',').first.trim();
+          if (cleanStreet.isNotEmpty) {
+            parts.add(cleanStreet);
+          }
         }
       }
 
@@ -102,6 +99,19 @@ class LocationService {
     } catch (e) {
       debugPrint('Erro ao obter endereço: $e');
       return null;
+    }
+  }
+
+  /// Geocodificação direta: busca latitude e longitude a partir de um texto de endereço/bairro.
+  static Future<List<Location>> searchAddress(String query) async {
+    final cleanQuery = query.trim();
+    if (cleanQuery.isEmpty) return [];
+
+    try {
+      return await _geocoding.locationFromAddress(cleanQuery);
+    } catch (e) {
+      debugPrint('Erro ao buscar endereço por texto: $e');
+      return [];
     }
   }
 }

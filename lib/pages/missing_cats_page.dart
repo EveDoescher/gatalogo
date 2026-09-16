@@ -2,9 +2,11 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../models/cat.dart';
+import '../services/cat_preflight_service.dart';
 import '../services/product_api_service.dart';
 import '../stores/cat_store.dart';
 import '../stores/session_store.dart';
@@ -14,8 +16,9 @@ import '../widgets/gatalogo_components.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'location_page.dart';
 import 'conversation_page.dart';
-import 'my_cats_page.dart';
 import 'auth_page.dart';
+import 'missing_cat_poster_page.dart';
+import 'missing_map_consolidated_page.dart';
 
 class MissingCatsPage extends StatefulWidget {
   const MissingCatsPage({
@@ -193,32 +196,121 @@ class CreateMissingReportPage extends StatefulWidget {
 }
 
 class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
+  final _preflight = CatPreflightService();
+  final _quickName = TextEditingController();
+  final _quickCollar = TextEditingController();
+  final _quickMarks = TextEditingController();
+
   String? _catId;
+  String? _quickPhoto;
+  bool _quickMode = false;
   LocationSelection? _location;
   bool _saving = false;
+  bool _busyPhoto = false;
+
   @override
   void initState() {
     super.initState();
     _catId = widget.initialCat?.id;
+    if (widget.initialCat == null && widget.store.pets.isEmpty) {
+      _quickMode = true;
+    }
+  }
+
+  @override
+  void dispose() {
+    _preflight.dispose();
+    _quickName.dispose();
+    _quickCollar.dispose();
+    _quickMarks.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickQuickPhoto(ImageSource source) async {
+    setState(() => _busyPhoto = true);
+    try {
+      final photo = await ImagePicker().pickImage(
+        source: source,
+        imageQuality: 90,
+        maxWidth: 1920,
+        maxHeight: 1920,
+      );
+      if (photo == null) return;
+      final result = await _preflight
+          .validate(photo.path)
+          .timeout(
+            const Duration(seconds: 20),
+            onTimeout: () => const CapturePreflightResult.accepted(),
+          );
+      if (!mounted) return;
+      if (!result.accepted) {
+        showMessage(
+          context,
+          result.message ?? 'Escolha uma foto onde o gato apareça com clareza.',
+        );
+        return;
+      }
+      setState(() => _quickPhoto = photo.path);
+    } catch (_) {
+      if (mounted) showMessage(context, 'Não foi possível carregar a foto.');
+    } finally {
+      if (mounted) setState(() => _busyPhoto = false);
+    }
   }
 
   Future<void> _create() async {
-    if (_catId == null || _location == null) {
-      showMessage(context, 'Escolha o gato e o último ponto conhecido.');
+    if (_location == null) {
+      showMessage(context, 'Escolha o último ponto conhecido no mapa.');
       return;
     }
+
+    if (_quickMode) {
+      if (_quickPhoto == null) {
+        showMessage(context, 'Adicione uma foto recente do gato.');
+        return;
+      }
+    } else {
+      if (_catId == null) {
+        showMessage(context, 'Selecione o gato para o alerta.');
+        return;
+      }
+    }
+
     setState(() => _saving = true);
     try {
+      String catClientId = _catId ?? '';
+      String catName = 'Gato Desaparecido';
+
+      if (_quickMode) {
+        final assignedName = _quickName.text.trim().isNotEmpty
+            ? _quickName.text.trim()
+            : 'Gato Desaparecido';
+        final saved = await widget.store.addFromTempPhoto(
+          _quickPhoto!,
+          isOwned: true,
+          name: assignedName,
+          collar: _quickCollar.text.trim(),
+          distinguishingMarks: _quickMarks.text.trim(),
+          latitude: _location!.point.latitude,
+          longitude: _location!.point.longitude,
+        );
+        catClientId = saved.cat.id;
+        catName = saved.cat.displayName;
+      } else {
+        final cat = widget.store.pets.firstWhere((c) => c.id == _catId);
+        catName = cat.displayName;
+      }
+
       await widget.store.syncCatalog();
       final data = await ProductApiService(widget.store.sessionStore)
           .post('/vision/missing-reports', {
-            'cat_client_id': _catId,
+            'cat_client_id': catClientId,
             'latitude': _location!.point.latitude,
             'longitude': _location!.point.longitude,
             'radius_meters': _location!.radius,
           });
-      final cat = widget.store.pets.firstWhere((cat) => cat.id == _catId);
-      data['name'] = cat.displayName;
+      data['name'] = catName;
+
       if (mounted) {
         Navigator.pushReplacement(
           context,
@@ -237,73 +329,251 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Criar alerta')),
+    backgroundColor: AppColors.background,
+    appBar: AppBar(
+      backgroundColor: AppColors.background,
+      elevation: 0,
+      leading: GestureDetector(
+        onTap: () => Navigator.maybePop(context),
+        child: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.borderLight, width: 1.2),
+          ),
+          child: const Icon(
+            LucideIcons.chevronLeft,
+            color: AppColors.textDark,
+            size: 22,
+          ),
+        ),
+      ),
+      title: Text(
+        'Criar Alerta de Busca',
+        style: GoogleFonts.fredoka(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textTitle,
+        ),
+      ),
+    ),
     body: AnimatedBuilder(
       animation: widget.store,
       builder: (context, _) {
         final pets = widget.store.pets;
-        if (pets.isEmpty) {
-          return EmptyContent(
-            'Cadastre seu gato primeiro',
-            'Os alertas usam o perfil de um gato da área Meus gatos.',
-            action: FilledButton(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => AddPetPage(store: widget.store),
+
+        return ListView(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          children: [
+            // Alternador de modo se o usuário já tiver pets
+            if (pets.isNotEmpty) ...[
+              SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(
+                    value: false,
+                    label: Text('Gato Cadastrado'),
+                    icon: Icon(Icons.pets, size: 16),
+                  ),
+                  ButtonSegment(
+                    value: true,
+                    label: Text('Alerta Rápido'),
+                    icon: Icon(LucideIcons.zap, size: 16),
+                  ),
+                ],
+                selected: {_quickMode},
+                onSelectionChanged: _saving
+                    ? null
+                    : (val) => setState(() {
+                        _quickMode = val.first;
+                        _location = null;
+                      }),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+            ],
+
+            if (_quickMode) ...[
+              // Modo Alerta Rápido de Emergência
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.errorBg,
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(LucideIcons.alertTriangle, color: AppColors.error, size: 22),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        'Alerta Imediato: Adicione a melhor foto recente que tiver e indique onde o gato sumiu.',
+                        style: GoogleFonts.nunito(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.errorText,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: const Text('Adicionar meu gato'),
-            ),
-          );
-        }
-        final selected = pets.where((cat) => cat.id == _catId);
-        final cat = selected.isEmpty ? null : selected.first;
-        return ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            DropdownButtonFormField<String>(
-              initialValue: cat?.id,
-              decoration: const InputDecoration(labelText: 'Meu gato'),
-              items: pets
-                  .map(
-                    (cat) => DropdownMenuItem(
-                      value: cat.id,
-                      child: Text(cat.displayName),
-                    ),
-                  )
-                  .toList(),
-              onChanged: _saving
-                  ? null
-                  : (value) => setState(() {
-                      _catId = value;
-                      _location = null;
-                    }),
-            ),
-            if (cat != null) ...[
-              const SizedBox(height: 16),
-              CatPhotoView(cat.photoPath, height: 220),
-              Text(
-                '${widget.store.referencePhotosFor(cat.id).length + 1} foto(s) no perfil',
+              const SizedBox(height: AppSpacing.md),
+
+              TextField(
+                controller: _quickName,
+                maxLength: 30,
+                textCapitalization: TextCapitalization.words,
+                style: GoogleFonts.nunito(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textDark),
+                decoration: const InputDecoration(
+                  labelText: 'Nome do gato (ou deixe provisório)',
+                  hintText: 'ex: Pipoca, Amarelinho',
+                  prefixIcon: Icon(Icons.pets, size: 18),
+                ),
               ),
+              const SizedBox(height: AppSpacing.sm),
+
+              TextField(
+                controller: _quickCollar,
+                maxLength: 50,
+                textCapitalization: TextCapitalization.sentences,
+                style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textDark),
+                decoration: const InputDecoration(
+                  labelText: 'Coleira (opcional)',
+                  hintText: 'ex: Vermelha com sino, azul reflexiva',
+                  prefixIcon: Icon(LucideIcons.tag, size: 18),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+
+              TextField(
+                controller: _quickMarks,
+                maxLength: 120,
+                maxLines: 2,
+                textCapitalization: TextCapitalization.sentences,
+                style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textDark),
+                decoration: const InputDecoration(
+                  labelText: 'Marcas características (opcional)',
+                  hintText: 'ex: Mancha no peito, orelha cortada, rabo curto',
+                  prefixIcon: Icon(LucideIcons.sparkles, size: 18),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              if (_quickPhoto != null) ...[
+                CatPhotoView(_quickPhoto!, height: 220, borderRadius: AppRadius.card),
+                const SizedBox(height: AppSpacing.md),
+              ],
+
+              Row(
+                children: [
+                  Expanded(
+                    child: GatalogoSecondaryButton(
+                      text: 'Tirar Foto',
+                      icon: LucideIcons.camera,
+                      onPressed: _busyPhoto || _saving ? null : () => _pickQuickPhoto(ImageSource.camera),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: GatalogoSecondaryButton(
+                      text: 'Escolher da Galeria',
+                      icon: LucideIcons.image,
+                      onPressed: _busyPhoto || _saving ? null : () => _pickQuickPhoto(ImageSource.gallery),
+                    ),
+                  ),
+                ],
+              ),
+            ] else ...[
+              // Modo Pet Cadastrado
+              DropdownButtonFormField<String>(
+                initialValue: pets.any((c) => c.id == _catId) ? _catId : pets.first.id,
+                decoration: const InputDecoration(
+                  labelText: 'Selecione o gato',
+                  prefixIcon: Icon(Icons.pets, size: 18),
+                ),
+                items: pets
+                    .map(
+                      (cat) => DropdownMenuItem(
+                        value: cat.id,
+                        child: Text(cat.displayName),
+                      ),
+                    )
+                    .toList(),
+                onChanged: _saving
+                    ? null
+                    : (value) => setState(() {
+                        _catId = value;
+                        _location = null;
+                      }),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              () {
+                final cat = pets.firstWhere(
+                  (c) => c.id == (_catId ?? pets.first.id),
+                  orElse: () => pets.first,
+                );
+                return Column(
+                  children: [
+                    CatPhotoView(cat.photoPath, height: 220, borderRadius: AppRadius.card),
+                    const SizedBox(height: 6),
+                    Text(
+                      '${widget.store.referencePhotosFor(cat.id).length + 1} foto(s) no perfil de identificação',
+                      style: GoogleFonts.nunito(fontSize: 12, color: AppColors.textMedium),
+                    ),
+                  ],
+                );
+              }(),
             ],
-            const SizedBox(height: 20),
-            const Text(
-              'Escolha o último local onde seu gato foi visto e a área de busca.',
+
+            const SizedBox(height: AppSpacing.xl),
+
+            // Seleção de Local e Raio
+            Text(
+              'Onde ele foi visto pela última vez?',
+              style: GoogleFonts.fredoka(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textTitle,
+              ),
             ),
+            const SizedBox(height: 4),
+            Text(
+              'Defina o ponto e o raio aproximado da busca. O endereço exato não é exposto publicamente para proteger sua privacidade.',
+              style: GoogleFonts.nunito(fontSize: 12, color: AppColors.textMedium),
+            ),
+            const SizedBox(height: AppSpacing.md),
+
             OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.textDark,
+                side: BorderSide(
+                  color: _location == null ? AppColors.primary : AppColors.border,
+                  width: _location == null ? 1.5 : 1.0,
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                ),
+              ),
               onPressed: _saving
                   ? null
                   : () async {
+                      LatLng? initialPoint;
+                      if (_location != null) {
+                        initialPoint = _location!.point;
+                      } else if (!_quickMode && _catId != null) {
+                        final cat = pets.firstWhere((c) => c.id == _catId, orElse: () => pets.first);
+                        if (cat.latitude != null && cat.longitude != null) {
+                          initialPoint = LatLng(cat.latitude!, cat.longitude!);
+                        }
+                      }
+
                       final location = await Navigator.push<LocationSelection>(
                         context,
                         MaterialPageRoute(
                           builder: (_) => LocationPage(
-                            initial:
-                                _location?.point ??
-                                (cat?.latitude == null || cat?.longitude == null
-                                    ? null
-                                    : LatLng(cat!.latitude!, cat.longitude!)),
+                            initial: initialPoint,
                             radius: _location?.radius ?? 2000,
                           ),
                         ),
@@ -312,21 +582,28 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
                         setState(() => _location = location);
                       }
                     },
-              icon: const Icon(Icons.map_outlined),
+              icon: Icon(
+                _location == null ? LucideIcons.mapPin : LucideIcons.checkCircle,
+                size: 20,
+                color: _location == null ? AppColors.primary : AppColors.greenProgress,
+              ),
               label: Text(
                 _location == null
-                    ? 'Escolher local e raio'
-                    : 'Área escolhida: ${(_location!.radius / 1000).toStringAsFixed(1)} km',
+                    ? 'Toque para escolher local e raio no mapa'
+                    : 'Área definida: ${(_location!.radius / 1000).toStringAsFixed(1)} km de raio',
+                style: GoogleFonts.nunito(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'Você receberá possíveis pistas de gatos vistos na região. A localização exata fica reservada ao acompanhamento do caso.',
-            ),
-            const SizedBox(height: 24),
-            FilledButton(
+
+            const SizedBox(height: AppSpacing.xxl),
+
+            GatalogoButton(
+              text: _saving ? 'Ativando alerta…' : 'Ativar Alerta de Busca',
+              isLoading: _saving,
               onPressed: _saving ? null : _create,
-              child: Text(_saving ? 'Criando alerta…' : 'Ativar alerta'),
             ),
           ],
         );
@@ -661,30 +938,138 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
                   'A inteligência do Gatálogo cruza fotos registradas na região para encontrar semelhanças com o seu gato.',
                   style: GoogleFonts.nunito(fontSize: 13, color: AppColors.textMedium),
                 ),
-                const SizedBox(height: AppSpacing.md),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => CluesPage(report: _report, store: widget.store),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => CluesPage(report: _report, store: widget.store),
+                          ),
+                        ),
+                        icon: const Icon(Icons.pets, size: 16),
+                        label: const Text('Explorar Avistamentos'),
                       ),
                     ),
-                    icon: const Icon(Icons.pets, size: 16),
-                    label: const Text('Explorar Avistamentos Recebidos'),
-                  ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.textDark,
+                          side: const BorderSide(color: AppColors.border),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        onPressed: () async {
+                          try {
+                            final clues = await ProductApiService(widget.store.sessionStore)
+                                .list('/app/reports/${_report['id']}/clues');
+                            if (context.mounted) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => MissingMapConsolidatedPage(
+                                    report: _report,
+                                    clues: clues,
+                                    store: widget.store,
+                                    cat: cat,
+                                  ),
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) showMessage(context, e);
+                          }
+                        },
+                        icon: const Icon(LucideIcons.map, size: 16),
+                        label: const Text('Mapa Consolidado'),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
+
+          // Card 4: Cartaz Digital de Busca
+          if (cat != null) ...[
+            const SizedBox(height: AppSpacing.md),
+            GatalogoCard(
+              backgroundColor: AppColors.surface,
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.errorBg,
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                    ),
+                    child: const Icon(LucideIcons.fileText, size: 22, color: AppColors.error),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Cartaz Digital de Busca',
+                          style: GoogleFonts.fredoka(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textTitle,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Cartaz com QR code para compartilhar no WhatsApp e redes sociais.',
+                          style: GoogleFonts.nunito(
+                            fontSize: 12,
+                            color: AppColors.textMedium,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    ),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => MissingCatPosterPage(
+                          cat: cat,
+                          report: _report,
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      'Gerar',
+                      style: GoogleFonts.nunito(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
 
           if (isActive) ...[
             const SizedBox(height: AppSpacing.xl),
@@ -727,6 +1112,8 @@ class _CluesPageState extends State<CluesPage> {
   List<Map<String, dynamic>> _clues = [];
   bool _loading = true, _opened = false;
   String? _error;
+  String _filter = 'all'; // 'all', 'confirmed', 'pending', 'dismissed'
+
   @override
   void initState() {
     super.initState();
@@ -768,68 +1155,507 @@ class _CluesPageState extends State<CluesPage> {
     if (mounted) _load();
   }
 
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text('Possíveis avistamentos'),
-      actions: [
-        IconButton(
-          tooltip: 'Atualizar',
-          onPressed: _load,
-          icon: const Icon(Icons.refresh),
-        ),
-      ],
-    ),
-    body: ListView(
-      padding: const EdgeInsets.all(16),
-              children: [
-        if (_loading) LinearProgressIndicator(borderRadius: BorderRadius.circular(AppRadius.sm)),
-        if (_error != null)
-          EmptyContent(
-            'Não foi possível carregar',
-            _error!,
-            action: TextButton(
-              onPressed: _load,
-              child: const Text('Tentar novamente'),
-            ),
+  Future<void> _reopenClue(Map<String, dynamic> clue) async {
+    try {
+      await ProductApiService(widget.store.sessionStore)
+          .post('/vision/matches/${clue['id']}/reopen');
+      if (mounted) {
+        showMessage(context, 'Pista reaberta com sucesso.');
+        _load();
+      }
+    } catch (e) {
+      if (mounted) showMessage(context, e);
+    }
+  }
+
+  Future<void> _addManualSighting() async {
+    final noteController = TextEditingController();
+    LocationSelection? selectedLocation;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: EdgeInsets.only(
+            left: AppSpacing.lg,
+            right: AppSpacing.lg,
+            top: AppSpacing.lg,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + AppSpacing.xl,
           ),
-        if (!_loading && _error == null && _clues.isEmpty)
-          const EmptyContent(
-            'Ainda sem pistas',
-            'Os possíveis avistamentos desta busca aparecerão aqui.',
-          ),
-        ..._clues.map(
-          (clue) => Card(
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: () => _open(clue),
-              child: Column(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  PrivateCluePhoto(
-                    path: clue['photo_url'] as String,
-                    session: widget.store.sessionStore,
+                  Text(
+                    'Registrar Avistamento Manual',
+                    style: GoogleFonts.fredoka(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textTitle,
+                    ),
                   ),
-                  ListTile(
-                    title: Text(
-                      clue['status'] == 'dismissed'
-                          ? 'Pista descartada'
-                          : clue['status'] == 'confirmed'
-                          ? 'Pista reconhecida'
-                          : 'Gato visto na região',
-                    ),
-                    subtitle: Text(
-                      '${displayDate(clue['created_at'])} · cerca de ${((clue['distance_meters'] as num) / 1000).toStringAsFixed(1)} km do ponto informado',
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
+                  IconButton(
+                    icon: const Icon(LucideIcons.x, size: 20),
+                    onPressed: () => Navigator.pop(ctx),
                   ),
                 ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Registre um avistamento mesmo sem foto recente para enriquecer o mapa de buscas.',
+                style: GoogleFonts.nunito(fontSize: 12, color: AppColors.textMedium),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.textDark,
+                  side: BorderSide(
+                    color: selectedLocation == null ? AppColors.primary : AppColors.border,
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.card),
+                  ),
+                ),
+                onPressed: () async {
+                  final loc = await Navigator.push<LocationSelection>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => LocationPage(
+                        initial: LatLng(
+                          (widget.report['latitude'] as num).toDouble(),
+                          (widget.report['longitude'] as num).toDouble(),
+                        ),
+                        radius: 500,
+                      ),
+                    ),
+                  );
+                  if (loc != null) {
+                    setSheetState(() => selectedLocation = loc);
+                  }
+                },
+                icon: Icon(
+                  selectedLocation == null ? LucideIcons.mapPin : LucideIcons.checkCircle,
+                  size: 18,
+                  color: selectedLocation == null ? AppColors.primary : AppColors.greenProgress,
+                ),
+                label: Text(
+                  selectedLocation == null
+                      ? 'Marcar local no mapa'
+                      : 'Local selecionado no mapa',
+                  style: GoogleFonts.nunito(fontWeight: FontWeight.w700),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TextField(
+                controller: noteController,
+                maxLength: 300,
+                maxLines: 3,
+                style: GoogleFonts.nunito(fontSize: 14, color: AppColors.textDark),
+                decoration: const InputDecoration(
+                  labelText: 'Observação do avistamento',
+                  hintText: 'ex: Visto atravessando a rua perto da praça às 17h.',
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              GatalogoButton(
+                text: 'Salvar Avistamento',
+                onPressed: () async {
+                  if (selectedLocation == null) {
+                    showMessage(context, 'Escolha o local do avistamento no mapa.');
+                    return;
+                  }
+                  final catId = widget.report['cat_client_id'] as String;
+                  try {
+                    await widget.store.recordSighting(
+                      catId,
+                      latitude: selectedLocation!.point.latitude,
+                      longitude: selectedLocation!.point.longitude,
+                      note: noteController.text.trim().isEmpty
+                          ? 'Avistamento manual informado pelo tutor'
+                          : noteController.text.trim(),
+                      observedAt: DateTime.now(),
+                    );
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    if (mounted) {
+                      showMessage(context, 'Avistamento registrado com sucesso.');
+                      _load();
+                    }
+                  } catch (e) {
+                    if (ctx.mounted) showMessage(ctx, e);
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cats = widget.store.cats.where(
+      (c) => c.id == widget.report['cat_client_id'],
+    );
+    final cat = cats.isEmpty ? null : cats.first;
+
+    final confirmedList =
+        _clues.where((c) => c['status'] == 'confirmed').toList();
+    final pendingList =
+        _clues.where((c) => c['status'] == 'pending').toList();
+    final dismissedList =
+        _clues.where((c) => c['status'] == 'dismissed').toList();
+
+    List<Map<String, dynamic>> filteredList;
+    if (_filter == 'confirmed') {
+      filteredList = confirmedList;
+    } else if (_filter == 'pending') {
+      filteredList = pendingList;
+    } else if (_filter == 'dismissed') {
+      filteredList = dismissedList;
+    } else {
+      filteredList = _clues;
+    }
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        leading: GestureDetector(
+          onTap: () => Navigator.maybePop(context),
+          child: Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.borderLight, width: 1.2),
+            ),
+            child: const Icon(
+              LucideIcons.chevronLeft,
+              color: AppColors.textDark,
+              size: 22,
+            ),
+          ),
+        ),
+        title: Text(
+          'Pistas e Avistamentos',
+          style: GoogleFonts.fredoka(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textTitle,
+          ),
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'Mapa Consolidado',
+            icon: const Icon(LucideIcons.map, color: AppColors.textDark),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => MissingMapConsolidatedPage(
+                  report: widget.report,
+                  clues: _clues,
+                  store: widget.store,
+                  cat: cat,
+                ),
+              ),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Atualizar',
+            onPressed: _load,
+            icon: const Icon(LucideIcons.refreshCw, size: 20, color: AppColors.textDark),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Barra de Filtros
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildFilterChip('all', 'Todas (${_clues.length})'),
+                  const SizedBox(width: 8),
+                  _buildFilterChip('pending', 'Pendentes (${pendingList.length})'),
+                  const SizedBox(width: 8),
+                  _buildFilterChip('confirmed', 'Reconhecidas (${confirmedList.length})'),
+                  const SizedBox(width: 8),
+                  _buildFilterChip('dismissed', 'Descartadas (${dismissedList.length})'),
+                ],
+              ),
+            ),
+          ),
+
+          // Botão Registrar Avistamento Manual
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  side: const BorderSide(color: AppColors.primary),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                ),
+                onPressed: _addManualSighting,
+                icon: const Icon(LucideIcons.plusCircle, size: 16),
+                label: Text(
+                  'Registrar Avistamento Manual (sem foto)',
+                  style: GoogleFonts.nunito(fontSize: 13, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+          ),
+
+          Expanded(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                : _error != null
+                    ? EmptyContent(
+                        'Não foi possível carregar',
+                        _error!,
+                        action: TextButton(
+                          onPressed: _load,
+                          child: const Text('Tentar novamente'),
+                        ),
+                      )
+                    : filteredList.isEmpty
+                        ? EmptyContent(
+                            _filter == 'all'
+                                ? 'Ainda sem pistas'
+                                : 'Nenhuma pista neste filtro',
+                            _filter == 'all'
+                                ? 'Os possíveis avistamentos cruzados pela inteligência artificial aparecerão aqui.'
+                                : 'Não há registros com o status selecionado no momento.',
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                            itemCount: filteredList.length,
+                            itemBuilder: (context, index) {
+                              final clue = filteredList[index];
+                              return _buildTimelineItem(clue, index == filteredList.length - 1);
+                            },
+                          ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String key, String label) {
+    final isSelected = _filter == key;
+    return GestureDetector(
+      onTap: () => setState(() => _filter = key),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: Border.all(
+            color: isSelected ? AppColors.primaryDark : AppColors.borderLight,
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.nunito(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+            color: isSelected ? Colors.white : AppColors.textDark,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimelineItem(Map<String, dynamic> clue, bool isLast) {
+    final status = clue['status'] as String? ?? 'pending';
+    Color statusColor;
+    String statusLabel;
+    IconData statusIcon;
+
+    if (status == 'confirmed') {
+      statusColor = AppColors.greenProgress;
+      statusLabel = 'Pista reconhecida';
+      statusIcon = LucideIcons.checkCircle;
+    } else if (status == 'dismissed') {
+      statusColor = AppColors.textLight;
+      statusLabel = 'Pista descartada';
+      statusIcon = LucideIcons.xCircle;
+    } else {
+      statusColor = AppColors.primary;
+      statusLabel = 'Pendente de análise';
+      statusIcon = LucideIcons.clock;
+    }
+
+    final distanceKm = ((clue['distance_meters'] as num? ?? 0) / 1000).toStringAsFixed(1);
+    final dateStr = displayDate(clue['created_at']);
+    final note = clue['note'] as String?;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Coluna da Timeline (ponto + linha conectora)
+        Column(
+          children: [
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+                border: Border.all(color: statusColor, width: 2),
+              ),
+              child: Icon(statusIcon, size: 12, color: statusColor),
+            ),
+            if (!isLast)
+              Container(
+                width: 2,
+                height: 110,
+                color: AppColors.borderLight,
+              ),
+          ],
+        ),
+        const SizedBox(width: 12),
+
+        // Conteúdo do Card
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: InkWell(
+              onTap: () => _open(clue),
+              borderRadius: BorderRadius.circular(AppRadius.card),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  border: Border.all(color: AppColors.borderLight),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: statusColor.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                          ),
+                          child: Text(
+                            statusLabel,
+                            style: GoogleFonts.nunito(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: statusColor,
+                            ),
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          dateStr,
+                          style: GoogleFonts.nunito(
+                            fontSize: 11,
+                            color: AppColors.textLight,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+
+                    Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(AppRadius.photo),
+                          child: SizedBox(
+                            width: 62,
+                            height: 62,
+                            child: PrivateCluePhoto(
+                              path: clue['photo_url'] as String,
+                              session: widget.store.sessionStore,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Aprox. $distanceKm km do local de busca',
+                                style: GoogleFonts.nunito(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textDark,
+                                ),
+                              ),
+                              if (note != null && note.trim().isNotEmpty) ...[
+                                const SizedBox(height: 3),
+                                Text(
+                                  '"$note"',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.nunito(
+                                    fontSize: 12,
+                                    fontStyle: FontStyle.italic,
+                                    color: AppColors.textMedium,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const Icon(LucideIcons.chevronRight, size: 18, color: AppColors.textLight),
+                      ],
+                    ),
+
+                    if (status == 'dismissed') ...[
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            visualDensity: VisualDensity.compact,
+                          ),
+                          onPressed: () => _reopenClue(clue),
+                          icon: const Icon(LucideIcons.undo, size: 14, color: AppColors.primary),
+                          label: Text(
+                            'Desfazer descarte',
+                            style: GoogleFonts.nunito(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ],
-    ),
-  );
+    );
+  }
 }
 
 class PrivateCluePhoto extends StatefulWidget {
@@ -949,12 +1775,69 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
   }
 
   Future<void> _decide(bool confirm) async {
+    if (!confirm) {
+      final shouldDismiss = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.card),
+          ),
+          title: Text(
+            'Descartar avistamento?',
+            style: GoogleFonts.fredoka(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textTitle,
+            ),
+          ),
+          content: Text(
+            'Tem certeza de que este avistamento não é do seu gato? Você poderá desfazer e reabrir a pista a qualquer momento.',
+            style: GoogleFonts.nunito(
+              fontSize: 14,
+              color: AppColors.textDark,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primaryDark,
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Sim, descartar'),
+            ),
+          ],
+        ),
+      );
+      if (shouldDismiss != true) return;
+    }
+
     setState(() => _busy = true);
     try {
       final result = await ProductApiService(widget.store.sessionStore).post(
         '/vision/matches/${_clue['id']}/${confirm ? 'confirm' : 'dismiss'}',
       );
       if (mounted) setState(() => _clue.addAll(result));
+    } catch (error) {
+      if (mounted) showMessage(context, error);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _reopen() async {
+    setState(() => _busy = true);
+    try {
+      final result = await ProductApiService(widget.store.sessionStore).post(
+        '/vision/matches/${_clue['id']}/reopen',
+      );
+      if (mounted) {
+        setState(() => _clue.addAll(result));
+        showMessage(context, 'Pista reaberta com sucesso.');
+      }
     } catch (error) {
       if (mounted) showMessage(context, error);
     } finally {
@@ -970,6 +1853,8 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
     final myCat = cats.isEmpty ? null : cats.first;
     final isFriendSighting = widget.clue['conversation_id'] != null;
     final isPending = _clue['status'] == 'pending' && widget.report['status'] == 'active';
+    final isConfirmed = _clue['status'] == 'confirmed';
+    final isDismissed = _clue['status'] == 'dismissed';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -1323,6 +2208,106 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
                   ),
                 ),
               ],
+            ),
+          ],
+          if (isDismissed) ...[
+            const SizedBox(height: AppSpacing.lg),
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.cardBackground,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                border: Border.all(color: AppColors.borderLight),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(LucideIcons.xCircle, size: 20, color: AppColors.textMedium),
+                      const SizedBox(width: AppSpacing.xs),
+                      Text(
+                        'Pista Descartada',
+                        style: GoogleFonts.fredoka(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'Você indicou anteriormente que este gato não é o seu. Se mudou de ideia ou quer reavaliar com mais calma, você pode desfazer o descarte a qualquer momento.',
+                    style: GoogleFonts.nunito(fontSize: 12, color: AppColors.textMedium),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      onPressed: _busy ? null : _reopen,
+                      icon: const Icon(LucideIcons.undo, size: 16),
+                      label: const Text('Desfazer descarte / Reabrir pista'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (isConfirmed) ...[
+            const SizedBox(height: AppSpacing.lg),
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.greenLight,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                border: Border.all(color: AppColors.greenProgress.withValues(alpha: 0.4)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(LucideIcons.checkCircle, size: 20, color: AppColors.greenProgress),
+                      const SizedBox(width: AppSpacing.xs),
+                      Text(
+                        'Pista Reconhecida',
+                        style: GoogleFonts.fredoka(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.greenProgress,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'Você confirmou que este avistamento é do seu gato. O ponto foi registrado no histórico e mapa consolidado da busca.',
+                    style: GoogleFonts.nunito(fontSize: 12, color: AppColors.textDark),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.textMedium,
+                      ),
+                      onPressed: _busy ? null : _reopen,
+                      icon: const Icon(LucideIcons.undo, size: 14),
+                      label: const Text('Mudar de ideia / Reabrir análise'),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ],

@@ -6,6 +6,7 @@ import '../models/cat.dart';
 import '../stores/cat_store.dart';
 import '../stores/session_store.dart';
 import '../theme/app_theme.dart';
+import '../widgets/active_search_proximity_card.dart';
 import '../widgets/app_widgets.dart';
 import '../widgets/inbox_button.dart';
 import 'cat_details_page.dart';
@@ -94,6 +95,12 @@ class HomePage extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 18),
+
+                // Card de Proximidade / Geofencing da Busca Ativa (Etapa 3.4)
+                ActiveSearchProximityCard(
+                  sessionStore: sessionStore,
+                  catStore: catStore,
+                ),
 
                 // Card Destaque: Sua Coleção (conforme Figma Tela 2)
                 GestureDetector(

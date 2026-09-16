@@ -43,10 +43,12 @@ class LocationPage extends StatefulWidget {
 class _LocationPageState extends State<LocationPage> {
   final _map = MapController();
   final _note = TextEditingController();
+  final _searchController = TextEditingController();
   LatLng? _point;
   late double _radius;
   bool _saving = false;
   bool _locating = false;
+  bool _searchingAddress = false;
   final DateTime _observedAt = DateTime.now();
   Cat? _selectedCat;
 
@@ -54,7 +56,11 @@ class _LocationPageState extends State<LocationPage> {
   void initState() {
     super.initState();
     _point = widget.initial;
-    _radius = (widget.radius ?? 2000).toDouble();
+    _radius = (widget.radius ?? 500).toDouble();
+
+    _searchController.addListener(() {
+      if (mounted) setState(() {});
+    });
 
     if (_point != null) {
       // Ponto inicial fornecido
@@ -142,7 +148,37 @@ class _LocationPageState extends State<LocationPage> {
   void dispose() {
     _map.dispose();
     _note.dispose();
+    _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _performAddressSearch() async {
+    final query = _searchController.text.trim();
+    if (query.isEmpty) return;
+
+    FocusScope.of(context).unfocus();
+    setState(() => _searchingAddress = true);
+    try {
+      final results = await LocationService.searchAddress(query);
+      if (!mounted) return;
+      if (results.isNotEmpty) {
+        final loc = results.first;
+        final targetPoint = LatLng(loc.latitude, loc.longitude);
+        setState(() {
+          if (!widget.readOnly) {
+            _point = targetPoint;
+          }
+        });
+        _map.move(targetPoint, 15);
+        showMessage(context, 'Endereço localizado no mapa.');
+      } else {
+        showMessage(context, 'Nenhum local encontrado para a busca informada.');
+      }
+    } catch (_) {
+      if (mounted) showMessage(context, 'Erro ao buscar o endereço.');
+    } finally {
+      if (mounted) setState(() => _searchingAddress = false);
+    }
   }
 
   Future<void> _locate({bool silent = false, bool autoSelect = false}) async {
@@ -259,8 +295,8 @@ class _LocationPageState extends State<LocationPage> {
       );
     }
 
-    // Ponto padrão central se ainda não houver GPS
-    LatLng defaultCenter = const LatLng(-22.5645, -47.4019); // Limeira / SP centro
+    // Ponto padrao central se ainda nao houver GPS
+    LatLng defaultCenter = const LatLng(-14.2350, -51.9253);
     if (widget.initial != null) {
       defaultCenter = widget.initial!;
     } else if (widget.catStore != null && widget.catStore!.cats.any((c) => c.latitude != null)) {
@@ -544,6 +580,78 @@ class _LocationPageState extends State<LocationPage> {
               ),
             ),
 
+          // Barra flutuante de busca de endereço por texto
+          Positioned(
+            top: widget.readOnly && catsWithLoc.isNotEmpty ? 66 : 16,
+            left: 16,
+            right: 68,
+            child: Container(
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+                border: Border.all(color: AppColors.borderLight, width: 1.2),
+              ),
+              child: Row(
+                children: [
+                  const SizedBox(width: 12),
+                  const Icon(LucideIcons.search, size: 18, color: AppColors.textMedium),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      textInputAction: TextInputAction.search,
+                      onSubmitted: (_) => _performAddressSearch(),
+                      style: GoogleFonts.nunito(fontSize: 13, color: AppColors.textDark),
+                      decoration: InputDecoration(
+                        hintText: 'Buscar rua, bairro ou cidade...',
+                        hintStyle: GoogleFonts.nunito(fontSize: 13, color: AppColors.textLight),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ),
+                  if (_searchingAddress)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      child: SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    )
+                  else if (_searchController.text.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(LucideIcons.x, size: 16, color: AppColors.textMedium),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() {});
+                      },
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    ),
+                  IconButton(
+                    icon: const Icon(LucideIcons.arrowRight, size: 18, color: AppColors.primary),
+                    onPressed: _performAddressSearch,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
           // Botão flutuante para centralizar no GPS
           Positioned(
             top: widget.readOnly && catsWithLoc.isNotEmpty ? 66 : 16,
@@ -618,7 +726,7 @@ class _LocationPageState extends State<LocationPage> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            _selectedCat!.locationName ?? 'Limeira - SP',
+                            _selectedCat!.locationName ?? 'Localização não informada',
                             style: GoogleFonts.nunito(
                               fontSize: 12,
                               color: AppColors.textMedium,

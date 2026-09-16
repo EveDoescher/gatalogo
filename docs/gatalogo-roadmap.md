@@ -128,35 +128,35 @@ Esta etapa transforma o principal propósito social do app em um fluxo de emerg�
 
 ### 3.1 Localização
 
-- [ ] Implementar **busca de endereço por texto / geocodificação direta**.
-- [ ] Remover o fallback geográfico hardcoded em Limeira/SP.
-- [ ] Usar localização aproximada por GPS/IP/cidade do perfil quando necessário.
-- [ ] Omitir número residencial da geocodificação exibida.
-- [ ] Garantir que o endereço exibido privilegie rua/bairro em vez do endereço exato.
+- [x] Implementar **busca de endereço por texto / geocodificação direta**.
+- [x] Remover o fallback geográfico hardcoded em Limeira/SP.
+- [x] Usar localização aproximada por GPS/IP/cidade do perfil quando necessário.
+- [x] Omitir número residencial da geocodificação exibida.
+- [x] Garantir que o endereço exibido privilegie rua/bairro em vez do endereço exato.
 
 ### 3.2 Alerta de gato perdido
 
-- [ ] Criar **fluxo simplificado de emergência**.
-- [ ] Permitir iniciar alerta rapidamente com foto, mesmo sem pet totalmente cadastrado.
-- [ ] Manter opção de completar informações depois.
-- [ ] Adicionar informações úteis ao perfil do pet:
-  - [ ] microchip;
-  - [ ] coleira;
-  - [ ] marcas características.
+- [x] Criar **fluxo simplificado de emergência**.
+- [x] Permitir iniciar alerta rapidamente com foto, mesmo sem pet totalmente cadastrado.
+- [x] Manter opção de completar informações depois.
+- [x] Adicionar informações úteis ao perfil do pet:
+  - [x] microchip;
+  - [x] coleira;
+  - [x] marcas características.
 
 ### 3.3 Gestão das pistas
 
-- [ ] Criar **mapa consolidado de todas as pistas**.
-- [ ] Adicionar timeline dos avistamentos.
-- [ ] Permitir registrar avistamento manual sem foto.
-- [ ] Adicionar desfazer/confirmação antes de descartar uma pista.
+- [x] Criar **mapa consolidado de todas as pistas**.
+- [x] Adicionar timeline dos avistamentos.
+- [x] Permitir registrar avistamento manual sem foto.
+- [x] Adicionar desfazer/confirmação antes de descartar uma pista.
 
 ### 3.4 Mobilização
 
-- [ ] Criar **cartaz/panfleto digital**.
-- [ ] Incluir foto, nome, contato e QR Code.
-- [ ] Permitir compartilhar/imprimir.
-- [ ] Implementar geofencing para alertas de proximidade.
+- [x] Criar **cartaz/panfleto digital**.
+- [x] Incluir foto, nome, contato e QR Code.
+- [x] Permitir compartilhar/imprimir.
+- [x] Implementar geofencing para alertas de proximidade.
 
 ### 3.5 Critério de conclusão
 

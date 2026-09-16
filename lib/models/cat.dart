@@ -23,6 +23,9 @@ class Cat {
   final String? syncDeviceId;
   final int syncRevision;
   final DateTime? deletedAt;
+  final String? microchip;
+  final String? collar;
+  final String? distinguishingMarks;
 
   const Cat({
     this.isOwned = false,
@@ -42,6 +45,9 @@ class Cat {
     this.syncDeviceId,
     this.syncRevision = 0,
     this.deletedAt,
+    this.microchip,
+    this.collar,
+    this.distinguishingMarks,
   }) : localUpdatedAt = localUpdatedAt ?? capturedAt;
 
   Map<String, dynamic> toMap() {
@@ -63,6 +69,9 @@ class Cat {
       'sync_device_id': syncDeviceId,
       'sync_revision': syncRevision,
       'deleted_at': deletedAt?.toUtc().toIso8601String(),
+      'microchip': microchip,
+      'collar': collar,
+      'distinguishing_marks': distinguishingMarks,
     };
   }
 
@@ -89,6 +98,9 @@ class Cat {
       deletedAt: map['deleted_at'] == null
           ? null
           : DateTime.parse(map['deleted_at'] as String).toUtc(),
+      microchip: map['microchip'] as String?,
+      collar: map['collar'] as String?,
+      distinguishingMarks: map['distinguishing_marks'] as String?,
     );
   }
 
@@ -111,6 +123,39 @@ class Cat {
       syncDeviceId: syncDeviceId,
       syncRevision: syncRevision,
       deletedAt: deletedAt,
+      microchip: microchip,
+      collar: collar,
+      distinguishingMarks: distinguishingMarks,
+    );
+  }
+
+  Cat withDetails({
+    String? name,
+    String? microchip,
+    String? collar,
+    String? distinguishingMarks,
+  }) {
+    return Cat(
+      isOwned: isOwned,
+      id: id,
+      captureNumber: captureNumber,
+      name: name ?? this.name,
+      photoPath: photoPath,
+      capturedAt: capturedAt,
+      latitude: latitude,
+      longitude: longitude,
+      locationName: locationName,
+      status: status,
+      automaticRetryCount: automaticRetryCount,
+      ownerId: ownerId,
+      syncState: 'dirty',
+      localUpdatedAt: DateTime.now().toUtc(),
+      syncDeviceId: syncDeviceId,
+      syncRevision: syncRevision,
+      deletedAt: deletedAt,
+      microchip: microchip ?? this.microchip,
+      collar: collar ?? this.collar,
+      distinguishingMarks: distinguishingMarks ?? this.distinguishingMarks,
     );
   }
 
@@ -137,6 +182,9 @@ class Cat {
       syncDeviceId: syncDeviceId,
       syncRevision: syncRevision,
       deletedAt: deletedAt,
+      microchip: microchip,
+      collar: collar,
+      distinguishingMarks: distinguishingMarks,
     );
   }
 
@@ -163,6 +211,9 @@ class Cat {
       syncDeviceId: syncDeviceId,
       syncRevision: syncRevision,
       deletedAt: deletedAt,
+      microchip: microchip,
+      collar: collar,
+      distinguishingMarks: distinguishingMarks,
     );
   }
 
@@ -178,6 +229,9 @@ class Cat {
     String? name,
     String? status,
     bool? isOwned,
+    String? microchip,
+    String? collar,
+    String? distinguishingMarks,
   }) {
     return Cat(
       isOwned: isOwned ?? this.isOwned,
@@ -197,6 +251,9 @@ class Cat {
       syncDeviceId: syncDeviceId ?? this.syncDeviceId,
       syncRevision: syncRevision ?? this.syncRevision,
       deletedAt: clearDeletedAt ? null : (deletedAt ?? this.deletedAt),
+      microchip: microchip ?? this.microchip,
+      collar: collar ?? this.collar,
+      distinguishingMarks: distinguishingMarks ?? this.distinguishingMarks,
     );
   }
 }
