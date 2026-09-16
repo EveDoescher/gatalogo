@@ -67,7 +67,18 @@ class SocialApiService {
 
   Future<List<Map<String, dynamic>>> invites() => _list('/social/invites');
   Future<List<Map<String, dynamic>>> friends() => _list('/social/friends');
-  Future<List<Map<String, dynamic>>> feed() => _list('/social/feed');
+  Future<List<Map<String, dynamic>>> feed({
+    int limit = 20,
+    String? cursor,
+    String mode = 'all',
+  }) {
+    final params = <String>[
+      'limit=$limit',
+      'mode=$mode',
+      if (cursor != null && cursor.isNotEmpty) 'cursor=${Uri.encodeComponent(cursor)}',
+    ];
+    return _list('/social/feed?${params.join('&')}');
+  }
   Future<List<Map<String, dynamic>>> conversations() => _list('/social/conversations');
 
   Future<Map<String, dynamic>> conversationDetails(String conversationId) async {
@@ -197,11 +208,29 @@ class SocialApiService {
     return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
   }
 
+  Future<String?> uploadPostPhoto(List<int> imageBytes, String filename) async {
+    final token = await _sessionStore.accessToken();
+    if (token == null) return null;
+    final uri = Uri.parse('${ApiConfig.baseUrl}/social/posts/photo');
+    final request = http.MultipartRequest('POST', uri)
+      ..headers['Authorization'] = 'Bearer $token'
+      ..files.add(http.MultipartFile.fromBytes('file', imageBytes, filename: filename));
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final decoded = jsonDecode(response.body) as Map;
+      return decoded['photo_url'] as String?;
+    }
+    return null;
+  }
+
   Future<Map<String, dynamic>> createPost({
     required String catName,
     String note = '',
     String? locationName,
     String? photoBase64,
+    String? photoUrl,
+    bool isPublic = true,
   }) async {
     final response = await _request(
       'POST',
@@ -209,8 +238,10 @@ class SocialApiService {
       {
         'cat_name': catName,
         'note': note,
-        'location_name': locationName,
-        'photo_base64': photoBase64,
+        'location_name': ?locationName,
+        'photo_base64': ?photoBase64,
+        'photo_url': ?photoUrl,
+        'is_public': isPublic,
       },
       accepted: {201},
     );

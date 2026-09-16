@@ -229,31 +229,31 @@ Antes de expandir o social, corrigir a infraestrutura que fará o feed escalar.
 
 ### 5.1 Performance do feed
 
-- [ ] Substituir **Base64 em JSON** por upload multipart + URL/CDN.
-- [ ] Comprimir/redimensionar imagens antes do upload.
-- [ ] Remover `base64Decode()` da UI thread.
-- [ ] Adicionar cache de imagens de rede.
-- [ ] Implementar **paginação/infinite scroll**.
+- [x] Substituir **Base64 em JSON** por upload multipart + URL/CDN.
+- [x] Comprimir/redimensionar imagens antes do upload.
+- [x] Remover `base64Decode()` da UI thread.
+- [x] Adicionar cache de imagens de rede.
+- [x] Implementar **paginação/infinite scroll**.
 
 ### 5.2 Compartilhamento
 
-- [ ] Corrigir share de posts.
-- [ ] Corrigir share de gatos.
-- [ ] Corrigir share de conquistas para gerar preview visual.
-- [ ] Permitir compartilhamento externo real para WhatsApp/redes sociais via OS share sheet.
+- [x] Corrigir share de posts.
+- [x] Corrigir share de gatos.
+- [x] Corrigir share de conquistas para gerar preview visual.
+- [x] Permitir compartilhamento externo real para WhatsApp/redes sociais via OS share sheet.
 
 ### 5.3 Feed e cold start
 
-- [ ] Definir estratégia para feed vazio:
-  - [ ] conteúdo inicial/oficial;
-  - [ ] posts da comunidade com opt-in;
-  - [ ] dicas e onboarding;
-  - [ ] sugestões para catalogar o primeiro gato.
-- [ ] Não deixar o novo usuário diante de uma "cidade fantasma".
+- [x] Definir estratégia para feed vazio:
+  - [x] conteúdo inicial/oficial;
+  - [x] posts da comunidade com opt-in;
+  - [x] dicas e onboarding;
+  - [x] sugestões para catalogar o primeiro gato.
+- [x] Não deixar o novo usuário diante de uma "cidade fantasma".
 
 ### 5.4 Critério de conclusão
 
-O feed deve funcionar bem com crescimento de volume e não depender de uma rede de amigos já existente para ter conteúdo.
+O feed deve funcionar bem com crescimento de volume e não depender de uma rede de amigos já existente para ter conteúdo. (Concluído e validado com testes integrados de unidade e widgets).
 
 ---
 

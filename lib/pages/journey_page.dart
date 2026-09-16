@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../services/cat_sharing_service.dart';
 import '../services/product_api_service.dart';
 import '../stores/cat_store.dart';
 import '../theme/app_theme.dart';
@@ -417,41 +418,65 @@ class _JourneyPageState extends State<JourneyPage> {
                                   if (isUnlocked && widget.store.sessionStore.isSignedIn)
                                     Padding(
                                       padding: const EdgeInsets.only(top: 4, right: 8),
-                                      child: Align(
-                                        alignment: Alignment.centerRight,
-                                        child: TextButton.icon(
-                                          onPressed: _busy
-                                              ? null
-                                              : () async {
-                                                  setState(() => _busy = true);
-                                                  try {
-                                                    await ProductApiService(
-                                                      widget.store.sessionStore,
-                                                    ).post('/app/journey/${item['id']}/share');
-                                                    if (context.mounted) {
-                                                      showMessage(
-                                                        context,
-                                                        'Conquista compartilhada com seus amigos.',
-                                                      );
-                                                    }
-                                                  } catch (error) {
-                                                    if (context.mounted) {
-                                                      showMessage(context, error);
-                                                    }
-                                                  } finally {
-                                                    if (mounted) setState(() => _busy = false);
-                                                  }
-                                                },
-                                          icon: const Icon(LucideIcons.share2, size: 14, color: AppColors.greenLink),
-                                          label: Text(
-                                            'Compartilhar com amigos',
-                                            style: GoogleFonts.nunito(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w700,
-                                              color: AppColors.greenLink,
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+                                          TextButton.icon(
+                                            onPressed: () {
+                                              final title = item['title']?.toString() ?? 'Nova Conquista';
+                                              final description = item['description']?.toString();
+                                              final rarity = item['rarity']?.toString();
+                                              CatSharingService.shareAchievement(
+                                                title: title,
+                                                description: description,
+                                                rarity: rarity,
+                                              );
+                                            },
+                                            icon: const Icon(LucideIcons.share, size: 14, color: AppColors.primary),
+                                            label: Text(
+                                              'Redes',
+                                              style: GoogleFonts.nunito(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppColors.primary,
+                                              ),
                                             ),
                                           ),
-                                        ),
+                                          const SizedBox(width: 4),
+                                          TextButton.icon(
+                                            onPressed: _busy
+                                                ? null
+                                                : () async {
+                                                    setState(() => _busy = true);
+                                                    try {
+                                                      await ProductApiService(
+                                                        widget.store.sessionStore,
+                                                      ).post('/app/journey/${item['id']}/share');
+                                                      if (context.mounted) {
+                                                        showMessage(
+                                                          context,
+                                                          'Conquista compartilhada com seus amigos.',
+                                                        );
+                                                      }
+                                                    } catch (error) {
+                                                      if (context.mounted) {
+                                                        showMessage(context, error);
+                                                      }
+                                                    } finally {
+                                                      if (mounted) setState(() => _busy = false);
+                                                    }
+                                                  },
+                                            icon: const Icon(LucideIcons.share2, size: 14, color: AppColors.greenLink),
+                                            label: Text(
+                                              'No feed',
+                                              style: GoogleFonts.nunito(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppColors.greenLink,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                 ],
