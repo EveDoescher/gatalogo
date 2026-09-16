@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -34,6 +33,7 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
   void initState() {
     super.initState();
     _favoritesManager.initialize();
+    widget.catStore.loadReferencePhotos(widget.cat.id);
   }
 
   String _formatFullDate(DateTime date) {
@@ -92,27 +92,203 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
     }
   }
 
-  Future<void> _addPhoto(Cat cat) async {
-    final photo = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 88,
-      maxWidth: 1920,
-      maxHeight: 1920,
+  Future<void> _openGallery(Cat cat) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CatGalleryPage(
+          cat: cat,
+          store: widget.catStore,
+        ),
+      ),
     );
-    if (photo == null) return;
-    setState(() => _busy = true);
-    try {
-      await widget.catStore.addReferencePhoto(cat.id, 'detail', photo.path);
-      if (mounted) {
-        showMessage(context, 'Foto adicional adicionada com sucesso!');
-      }
-    } catch (_) {
-      if (mounted) {
-        showMessage(context, 'Não foi possível salvar a foto adicional.');
-      }
-    } finally {
-      if (mounted) setState(() => _busy = false);
+    if (mounted) {
+      await widget.catStore.loadReferencePhotos(cat.id);
+      setState(() {});
     }
+  }
+
+  int? _resolveConfidence(CatAnalysis? analysis) {
+    if (analysis?.confidence == null) return null;
+    final val = analysis!.confidence!;
+    if (val <= 1.0 && val > 0) return (val * 100).round();
+    return val.round().clamp(1, 100);
+  }
+
+  String _formatPercentage(double value) {
+    final normalized = value <= 1.0 && value > 0 ? value * 100 : value;
+    return '${normalized.round()}%';
+  }
+
+  String _formatHairType(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return 'Curto';
+    final normalized = raw.trim().toLowerCase();
+    if (normalized.contains('curt') || normalized.contains('short')) return 'Curto';
+    if (normalized.contains('méd') || normalized.contains('med') || normalized.contains('medium')) return 'Médio';
+    if (normalized.contains('long') || normalized.contains('comprid')) return 'Longo';
+    if (normalized.contains('sem') || normalized.contains('hairless') || normalized.contains('careca')) return 'Sem pelo';
+    if (normalized.contains('ondul') || normalized.contains('wavy') || normalized.contains('curly') || normalized.contains('cresp')) return 'Ondulado';
+    return raw.trim();
+  }
+
+  void _showConfidenceModal(BuildContext context, String confidenceDisplay) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.background,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(22, 20, 22, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD5CDC3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withAlpha(25),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      LucideIcons.sparkles,
+                      size: 20,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Confiança da IA ($confidenceDisplay)',
+                          style: GoogleFonts.nunito(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                        Text(
+                          'Como funciona a estimativa visual',
+                          style: GoogleFonts.nunito(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textMedium,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'O índice de confiança representa a certeza dos modelos de visão computacional na identificação das cores, padrão e pelagem do gato.',
+                style: GoogleFonts.nunito(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textDark,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.cardBackground,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Critérios avaliados:',
+                      style: GoogleFonts.nunito(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildConfidenceBullet('Iluminação adequada e nitidez da fotografia'),
+                    _buildConfidenceBullet('Visibilidade dos padrões e contraste da pelagem'),
+                    _buildConfidenceBullet('Enquadramento do corpo e ângulos de referência'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                ),
+                child: Text(
+                  'Entendi',
+                  style: GoogleFonts.nunito(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+  Widget _buildConfidenceBullet(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 6, right: 8),
+            child: Icon(
+              Icons.circle,
+              size: 5,
+              color: AppColors.primary,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.nunito(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textMedium,
+                height: 1.3,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _shareCat(Cat cat, [CatAnalysis? analysis]) async {
@@ -191,11 +367,12 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
               ),
 
               // Conteúdo Rolável
-              CustomScrollView(
-                slivers: [
-                  // Foto Grande de Capa com Botões Flutuantes
-                  SliverToBoxAdapter(
-                    child: Stack(
+              SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Foto Grande de Capa com Botões Flutuantes
+                    Stack(
                       children: [
                         SizedBox(
                           height: 330,
@@ -310,11 +487,9 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                         ),
                       ],
                     ),
-                  ),
 
-                  // Cards de Conteúdo
-                  SliverToBoxAdapter(
-                    child: Transform.translate(
+                    // Cards de Conteúdo (Sobreposição garantida sobre a foto)
+                    Transform.translate(
                       offset: const Offset(0, -26),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -327,6 +502,13 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                               decoration: BoxDecoration(
                                 color: AppColors.cardBackground,
                                 borderRadius: BorderRadius.circular(26),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x0D000000),
+                                    blurRadius: 10,
+                                    offset: Offset(0, -2),
+                                  ),
+                                ],
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -543,19 +725,13 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                       ),
                                       const SizedBox(width: 8),
                                       GestureDetector(
-                                        onTap: () => Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => CatGalleryPage(
-                                              cat: cat,
-                                              store: widget.catStore,
-                                            ),
-                                          ),
-                                        ),
+                                        onTap: () => _openGallery(cat),
                                         child: Row(
                                           children: [
                                             Text(
-                                              '${referencePhotos.length} Fotos',
+                                              referencePhotos.length == 1
+                                                  ? '1 Foto'
+                                                  : '${referencePhotos.length} Fotos',
                                               style: GoogleFonts.nunito(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w700,
@@ -587,23 +763,26 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                           (photo) => Padding(
                                             padding: const EdgeInsets.only(
                                                 right: 12),
-                                            child: ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(14),
-                                              child: SizedBox(
-                                                width: 88,
-                                                height: 88,
-                                                child: Image.file(
-                                                  File(photo.localPath),
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder: (_, _, _) =>
-                                                      Container(
-                                                    color: const Color(
-                                                        0xFFEAE6DC),
-                                                    child: const Icon(
-                                                      LucideIcons.image,
-                                                      color:
-                                                          AppColors.textLight,
+                                            child: GestureDetector(
+                                              onTap: () => _openGallery(cat),
+                                              child: ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                                child: SizedBox(
+                                                  width: 88,
+                                                  height: 88,
+                                                  child: Image.file(
+                                                    File(photo.localPath),
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder: (_, _, _) =>
+                                                        Container(
+                                                      color: const Color(
+                                                          0xFFEAE6DC),
+                                                      child: const Icon(
+                                                        LucideIcons.image,
+                                                        color:
+                                                            AppColors.textLight,
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
@@ -616,21 +795,24 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                           Padding(
                                             padding: const EdgeInsets.only(
                                                 right: 12),
-                                            child: ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(14),
-                                              child: SizedBox(
-                                                width: 88,
-                                                height: 88,
-                                                child: CatPhotoView(
-                                                    cat.photoPath),
+                                            child: GestureDetector(
+                                              onTap: () => _openGallery(cat),
+                                              child: ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                                child: SizedBox(
+                                                  width: 88,
+                                                  height: 88,
+                                                  child: CatPhotoView(
+                                                      cat.photoPath),
+                                                ),
                                               ),
                                             ),
                                           ),
 
                                         // Botão Adicionar fotos
                                         GestureDetector(
-                                          onTap: () => _addPhoto(cat),
+                                          onTap: () => _openGallery(cat),
                                           child: Container(
                                             width: 88,
                                             height: 88,
@@ -676,8 +858,8 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
 
               // Barra de Ações Inferior Fixa
@@ -1015,11 +1197,10 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
       );
     }
 
-    final confidenceInt = analysis?.confidence != null
-        ? (analysis!.confidence! * 100).round()
-        : 95;
+    final confVal = _resolveConfidence(analysis);
+    final confidenceDisplay = confVal != null ? '$confVal%' : '92%';
     final coatType = analysis?.coatType ?? 'Tricolor';
-    final hairType = analysis?.primaryColor ?? 'Curta';
+    final hairType = _formatHairType(analysis?.hairType);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1051,20 +1232,32 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                'Confiança: $confidenceInt%',
-                style: GoogleFonts.nunito(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textMedium,
-                  decoration: TextDecoration.underline,
+              InkWell(
+                onTap: () => _showConfidenceModal(context, confidenceDisplay),
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Confiança: $confidenceDisplay',
+                        style: GoogleFonts.nunito(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textMedium,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        LucideIcons.helpCircle,
+                        size: 15,
+                        color: AppColors.textMedium,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              const Icon(
-                LucideIcons.helpCircle,
-                size: 15,
-                color: AppColors.textMedium,
               ),
             ],
           ),
@@ -1089,7 +1282,7 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                       ...analysis!.colors.take(3).map(
                             (c) => _ColorItem(
                               label: c.name,
-                              percentage: '${(c.percentage * 100).round()}%',
+                              percentage: _formatPercentage(c.percentage),
                             ),
                           )
                     else
@@ -1157,13 +1350,72 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
 }
 
 class _ColorItem extends StatelessWidget {
-  const _ColorItem({required this.label, required this.percentage});
+  const _ColorItem({
+    required this.label,
+    required this.percentage,
+  });
 
   final String label;
   final String percentage;
 
+  Color _resolveColor(String name) {
+    final normalized = name.trim().toLowerCase();
+    if (normalized.contains('pret') || normalized.contains('black')) {
+      return const Color(0xFF242424);
+    }
+    if (normalized.contains('branc') || normalized.contains('white')) {
+      return const Color(0xFFFAF9F6);
+    }
+    if (normalized.contains('laranj') ||
+        normalized.contains('orange') ||
+        normalized.contains('ruiv') ||
+        normalized.contains('red') ||
+        normalized.contains('vermelh')) {
+      return const Color(0xFFE27238);
+    }
+    if (normalized.contains('cinz') ||
+        normalized.contains('gray') ||
+        normalized.contains('grey') ||
+        normalized.contains('azul') ||
+        normalized.contains('blue')) {
+      return const Color(0xFF8A939E);
+    }
+    if (normalized.contains('crem') ||
+        normalized.contains('cream') ||
+        normalized.contains('beg') ||
+        normalized.contains('beige')) {
+      return const Color(0xFFF3E7D3);
+    }
+    if (normalized.contains('marr') ||
+        normalized.contains('brown') ||
+        normalized.contains('chocolat')) {
+      return const Color(0xFF6E4A35);
+    }
+    if (normalized.contains('canel') || normalized.contains('cinnamon')) {
+      return const Color(0xFF9E5B32);
+    }
+    if (normalized.contains('fawn') || normalized.contains('fulv')) {
+      return const Color(0xFFCCA98A);
+    }
+    if (normalized.contains('lil') ||
+        normalized.contains('lilac') ||
+        normalized.contains('lavend')) {
+      return const Color(0xFFB5A8B2);
+    }
+    if (normalized.contains('dourad') ||
+        normalized.contains('gold') ||
+        normalized.contains('amarel') ||
+        normalized.contains('yellow')) {
+      return const Color(0xFFE5B548);
+    }
+    return const Color(0xFFB0A89F);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final circleColor = _resolveColor(label);
+    final isVeryLight = circleColor.computeLuminance() > 0.72;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
@@ -1171,9 +1423,15 @@ class _ColorItem extends StatelessWidget {
           Container(
             width: 14,
             height: 14,
-            decoration: const BoxDecoration(
-              color: Color(0xFFD6CEC5),
+            decoration: BoxDecoration(
+              color: circleColor,
               shape: BoxShape.circle,
+              border: Border.all(
+                color: isVeryLight
+                    ? const Color(0xFFD5CDC3)
+                    : Colors.black.withAlpha(20),
+                width: 1.0,
+              ),
             ),
           ),
           const SizedBox(width: 8),
