@@ -114,4 +114,41 @@ void main() {
     store.dispose();
     session.dispose();
   });
+
+  testWidgets('CatDetailsPage exibe 0 Fotos e orientacao quando nao ha fotos adicionais', (tester) async {
+    final cat = Cat(
+      id: 'cat-test-2',
+      captureNumber: 7,
+      photoPath: 'main_cat.jpg',
+      capturedAt: DateTime(2026, 9, 11),
+      name: 'Tom',
+      status: 'completed',
+      locationName: 'Rua Professor Rui Corte Brilho, 1161, Chácara Antonieta, Limeira, São Paulo',
+    );
+
+    final session = SessionStore();
+    final store = _FakeCatStore(session, cat, null, const []);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CatDetailsPage(cat: cat, catStore: store),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // 1. Sanitizacao do endereco: remove numero residual '1161'
+    expect(find.textContaining('1161'), findsNothing);
+    expect(find.textContaining('Rua Professor Rui Corte Brilho'), findsOneWidget);
+    expect(find.textContaining('Limeira'), findsOneWidget);
+
+    // 2. Contador de fotos adicionais deve ser 0 Fotos
+    await tester.ensureVisible(find.text('0 Fotos'));
+    expect(find.text('0 Fotos'), findsOneWidget);
+
+    // 3. Orientacao para fotos adicionais deve estar presente
+    expect(find.textContaining('Adicione fotos de diferentes'), findsOneWidget);
+
+    store.dispose();
+    session.dispose();
+  });
 }

@@ -1,6 +1,9 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 
 class LocationService {
   static final Geocoding _geocoding = Geocoding();
@@ -38,6 +41,16 @@ class LocationService {
     return Geolocator.getCurrentPosition(locationSettings: locationSettings);
   }
 
+  static String? _cleanStreet(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    var s = raw.trim();
+    // Remove numero apos virgula: "Rua Professor Rui Corte Brilho, 1161" -> "Rua Professor Rui Corte Brilho"
+    s = s.split(',').first.trim();
+    // Remove numero solto no fim: "Rua X 1161" -> "Rua X"
+    s = s.replaceFirst(RegExp(r'\s+\d+.*$'), '').trim();
+    return s.isNotEmpty ? s : null;
+  }
+
   static Future<String?> getLocationName(
     double latitude,
     double longitude,
@@ -48,40 +61,101 @@ class LocationService {
         longitude,
       );
 
-      if (placemarks.isEmpty) {
-        return null;
+      String? street;
+      String? neighborhood;
+      String? city;
+      String? state;
+
+      if (placemarks.isNotEmpty) {
+        final place = placemarks.first;
+
+        street = _cleanStreet(place.thoroughfare) ?? _cleanStreet(place.street);
+        neighborhood = place.subLocality?.trim();
+        final rawState = place.administrativeArea?.trim();
+        final subAdmin = place.subAdministrativeArea?.trim();
+        final locality = place.locality?.trim();
+
+        // Resolucao de Municipio/Cidade no Brasil:
+        // subAdministrativeArea armazena o municipio (ex: Limeira)
+        // locality pode conter a regiao/estado ou ser nulo
+        // administrativeArea armazena o estado (ex: Sao Paulo)
+        if (subAdmin != null &&
+            subAdmin.isNotEmpty &&
+            (rawState == null ||
+                subAdmin.toLowerCase() != rawState.toLowerCase())) {
+          city = subAdmin;
+        } else if (locality != null &&
+            locality.isNotEmpty &&
+            (rawState == null ||
+                locality.toLowerCase() != rawState.toLowerCase())) {
+          city = locality;
+        } else if (subAdmin != null && subAdmin.isNotEmpty) {
+          city = subAdmin;
+        } else if (locality != null && locality.isNotEmpty) {
+          city = locality;
+        }
+
+        state = rawState;
       }
 
-      final place = placemarks.first;
+      // Se a cidade estiver nula ou foi identificada apenas como o estado (ex: "Sao Paulo"),
+      // fazemos uma consulta complementar ao OpenStreetMap Nominatim para obter o municipio exato
+      if (city == null ||
+          (state != null && city.toLowerCase() == state.toLowerCase())) {
+        try {
+          final uri = Uri.parse(
+            'https://nominatim.openstreetmap.org/reverse?lat=$latitude&lon=$longitude&format=json&addressdetails=1',
+          );
+          final response = await http.get(
+            uri,
+            headers: {'User-Agent': 'GatalogoApp/2.0 (contato@gatalogo.app)'},
+          ).timeout(const Duration(seconds: 4));
 
-      final streetName = place.thoroughfare?.trim();
-      final neighborhood = place.subLocality?.trim();
-      final city = place.locality?.trim();
-      final state = place.administrativeArea?.trim();
-
-      final parts = <String>[];
-
-      // Rua (omitindo propositalmente o número residencial para proteger a privacidade)
-      if (streetName != null && streetName.isNotEmpty) {
-        parts.add(streetName);
-      } else {
-        // Fallback caso o sistema não retorne "thoroughfare"
-        final street = place.street?.trim();
-        if (street != null && street.isNotEmpty) {
-          // Se o campo street contiver vírgula com número, removemos o número
-          final cleanStreet = street.split(',').first.trim();
-          if (cleanStreet.isNotEmpty) {
-            parts.add(cleanStreet);
+          if (response.statusCode == 200) {
+            final data = jsonDecode(response.body) as Map<String, dynamic>;
+            final addr = data['address'] as Map<String, dynamic>?;
+            if (addr != null) {
+              final nomCity = addr['city'] as String? ??
+                  addr['town'] as String? ??
+                  addr['municipality'] as String? ??
+                  addr['village'] as String?;
+              if (nomCity != null && nomCity.trim().isNotEmpty) {
+                city = nomCity.trim();
+              }
+              if (street == null || street.isEmpty) {
+                street = _cleanStreet(addr['road'] as String?);
+              }
+              if (neighborhood == null || neighborhood.isEmpty) {
+                neighborhood = (addr['suburb'] as String? ??
+                        addr['neighbourhood'] as String? ??
+                        addr['city_district'] as String?)
+                    ?.trim();
+              }
+              if (state == null || state.isEmpty) {
+                state = (addr['state'] as String?)?.trim();
+              }
+            }
           }
+        } catch (_) {
+          // Ignora erro de rede mantendo os dados locais
         }
       }
 
+      final parts = <String>[];
+
+      // Rua (omitindo numero residencial para proteger privacidade)
+      if (street != null && street.isNotEmpty) {
+        parts.add(street);
+      }
+
       // Bairro
-      if (neighborhood != null && neighborhood.isNotEmpty) {
+      if (neighborhood != null &&
+          neighborhood.isNotEmpty &&
+          neighborhood.toLowerCase() != city?.toLowerCase()) {
         parts.add(neighborhood);
       }
 
-      // Cidade
+      // Cidade (Municipio)
       if (city != null && city.isNotEmpty) {
         parts.add(city);
       }

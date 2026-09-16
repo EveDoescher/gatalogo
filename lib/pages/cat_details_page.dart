@@ -9,6 +9,7 @@ import '../models/cat.dart';
 import '../models/cat_analysis.dart';
 import '../services/cat_sharing_service.dart';
 import '../services/favorites_manager.dart';
+import '../services/location_service.dart';
 import '../stores/cat_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_widgets.dart';
@@ -34,6 +35,32 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
     super.initState();
     _favoritesManager.initialize();
     widget.catStore.loadReferencePhotos(widget.cat.id);
+    _checkAndEnrichLocation(widget.cat);
+  }
+
+  Future<void> _checkAndEnrichLocation(Cat cat) async {
+    if (cat.latitude == null || cat.longitude == null) return;
+    final current = cat.locationName?.trim() ?? '';
+    final hasNumber = RegExp(r'\b\d+\b').hasMatch(current);
+    final partsCount = current.split(',').length;
+    // Se o endereco atual contiver numero ou faltar municipio
+    if (current.isEmpty || hasNumber || partsCount <= 3) {
+      final enriched = await LocationService.getLocationName(
+        cat.latitude!,
+        cat.longitude!,
+      );
+      if (enriched != null &&
+          enriched.isNotEmpty &&
+          enriched != current &&
+          mounted) {
+        await widget.catStore.updateCatLocation(
+          cat.id,
+          latitude: cat.latitude!,
+          longitude: cat.longitude!,
+          locationName: enriched,
+        );
+      }
+    }
   }
 
   String _formatFullDate(DateTime date) {
@@ -317,19 +344,25 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
         final catCode =
             'Gato #${cat.captureNumber.toString().padLeft(3, '0')}';
 
-        // Localização formatada
+        // Localização formatada e sanitizada
         final rawLocation = cat.locationName?.trim();
         final hasLocation = rawLocation != null && rawLocation.isNotEmpty;
-        final locationParts = hasLocation ? rawLocation.split(',') : <String>[];
-        final locationDistrict = hasLocation
-            ? locationParts.first.trim()
+        final rawParts = hasLocation ? rawLocation.split(',') : <String>[];
+        // Remove partes que sejam puramente números (resquícios de números de residência)
+        final locationParts = rawParts
+            .map((p) => p.trim())
+            .where((p) => p.isNotEmpty && !RegExp(r'^\d+$').hasMatch(p))
+            .toList();
+
+        final locationStreet = locationParts.isNotEmpty
+            ? locationParts.first.replaceFirst(RegExp(r'\s+\d+.*$'), '').trim()
             : 'Localização não informada';
-        final locationCity = hasLocation && locationParts.length > 1
-            ? locationParts.sublist(1).join(',').trim()
+        final locationCity = locationParts.length > 1
+            ? locationParts.sublist(1).join(', ')
             : '';
         final locationDisplay = locationCity.isNotEmpty
-            ? '$locationDistrict,\n$locationCity'
-            : locationDistrict;
+            ? '$locationStreet,\n$locationCity'
+            : locationStreet;
 
 
         return Scaffold(
@@ -790,25 +823,6 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                             ),
                                           ),
                                         ),
-                                        // Se não tiver fotos adicionais, exibe uma miniatura da foto principal
-                                        if (referencePhotos.isEmpty)
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                                right: 12),
-                                            child: GestureDetector(
-                                              onTap: () => _openGallery(cat),
-                                              child: ClipRRect(
-                                                borderRadius:
-                                                    BorderRadius.circular(14),
-                                                child: SizedBox(
-                                                  width: 88,
-                                                  height: 88,
-                                                  child: CatPhotoView(
-                                                      cat.photoPath),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
 
                                         // Botão Adicionar fotos
                                         GestureDetector(
@@ -846,6 +860,22 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                             ),
                                           ),
                                         ),
+                                        // Mensagem discreta quando ainda não há fotos adicionais de poses
+                                        if (referencePhotos.isEmpty)
+                                          Padding(
+                                            padding: const EdgeInsets.only(left: 14),
+                                            child: Center(
+                                              child: Text(
+                                                'Adicione fotos de diferentes\nângulos para enriquecer o perfil.',
+                                                style: GoogleFonts.nunito(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AppColors.textMedium,
+                                                  height: 1.3,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
                                       ],
                                     ),
                                   ),
@@ -1266,6 +1296,7 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
+                flex: 11,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1299,7 +1330,9 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                   ],
                 ),
               ),
+              const SizedBox(width: 24),
               Expanded(
+                flex: 9,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
