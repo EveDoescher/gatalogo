@@ -357,17 +357,25 @@ class _MyCatsPageState extends State<MyCatsPage> {
                                                 color: AppColors.textMedium,
                                               ),
                                             ),
-                                            if (refCount < 3) ...[
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                '💡 Adicione mais ângulos para proteção',
-                                                style: GoogleFonts.nunito(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: AppColors.greenProgress,
-                                                ),
-                                              ),
-                                            ],
+                                             if (refCount < 3) ...[
+                                               const SizedBox(height: 2),
+                                               Row(
+                                                 children: [
+                                                   const Icon(LucideIcons.lightbulb, size: 11, color: AppColors.greenProgress),
+                                                   const SizedBox(width: 4),
+                                                   Expanded(
+                                                     child: Text(
+                                                       'Adicione mais ângulos para proteção',
+                                                       style: GoogleFonts.nunito(
+                                                         fontSize: 11,
+                                                         fontWeight: FontWeight.w600,
+                                                         color: AppColors.greenProgress,
+                                                       ),
+                                                     ),
+                                                   ),
+                                                 ],
+                                               ),
+                                             ],
                                           ],
                                         ),
                                       ),

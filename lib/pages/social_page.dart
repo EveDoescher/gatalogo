@@ -16,6 +16,7 @@ import '../widgets/app_widgets.dart';
 import '../widgets/gatalogo_components.dart';
 import 'auth_page.dart';
 import 'friends_page.dart';
+import 'inbox_page.dart';
 import 'journey_page.dart';
 
 class SocialPage extends StatefulWidget {
@@ -23,10 +24,12 @@ class SocialPage extends StatefulWidget {
     super.key,
     required this.sessionStore,
     this.catStore,
+    this.initialTab = 0,
   });
 
   final SessionStore sessionStore;
   final CatStore? catStore;
+  final int initialTab;
 
   @override
   State<SocialPage> createState() => _SocialPageState();
@@ -38,18 +41,40 @@ class _SocialPageState extends State<SocialPage> {
   String? _error;
   List<Map<String, dynamic>> _feed = [];
   StreamSubscription? _wsSub;
+  StreamSubscription? _msgSub;
+  StreamSubscription? _readSub;
+  int _currentTab = 0;
+  int _unreadMessages = 0;
 
   @override
   void initState() {
     super.initState();
+    _currentTab = widget.initialTab;
     _api = SocialApiService(widget.sessionStore);
     _load();
+    _fetchUnread();
     _wsSub = widget.sessionStore.webSocket.onFeedUpdate.listen(_handleFeedUpdate);
+    _msgSub = widget.sessionStore.webSocket.onMessage.listen((_) => _fetchUnread());
+    _readSub = widget.sessionStore.webSocket.onMessagesRead.listen((_) => _fetchUnread());
+  }
+
+  Future<void> _fetchUnread() async {
+    if (!widget.sessionStore.isSignedIn) return;
+    try {
+      final list = await _api.conversations();
+      int count = 0;
+      for (final item in list) {
+        count += (item['unread_count'] as num?)?.toInt() ?? 0;
+      }
+      if (mounted) setState(() => _unreadMessages = count);
+    } catch (_) {}
   }
 
   @override
   void dispose() {
     _wsSub?.cancel();
+    _msgSub?.cancel();
+    _readSub?.cancel();
     super.dispose();
   }
 
@@ -718,12 +743,120 @@ class _SocialPageState extends State<SocialPage> {
                     ),
                   ),
 
-                  // Barra de Ação: Botão Postar Gato
+                  // Segmented Bar: Feed Social vs Conversas (com badge de não lidas)
                   SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        border: Border.all(color: AppColors.borderLight),
+                      ),
                       child: Row(
                         children: [
+                          Expanded(
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(AppRadius.pill),
+                              onTap: () => setState(() => _currentTab = 0),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: _currentTab == 0 ? AppColors.primary : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      LucideIcons.newspaper,
+                                      size: 16,
+                                      color: _currentTab == 0 ? Colors.white : AppColors.textMedium,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Feed Social',
+                                      style: GoogleFonts.fredoka(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: _currentTab == 0 ? Colors.white : AppColors.textMedium,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(AppRadius.pill),
+                              onTap: () => setState(() => _currentTab = 1),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: _currentTab == 1 ? AppColors.primary : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      LucideIcons.messageSquare,
+                                      size: 16,
+                                      color: _currentTab == 1 ? Colors.white : AppColors.textMedium,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Conversas',
+                                      style: GoogleFonts.fredoka(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: _currentTab == 1 ? Colors.white : AppColors.textMedium,
+                                      ),
+                                    ),
+                                    if (_unreadMessages > 0) ...[
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                        decoration: BoxDecoration(
+                                          color: _currentTab == 1 ? Colors.white : AppColors.primary,
+                                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                                        ),
+                                        child: Text(
+                                          '$_unreadMessages',
+                                          style: GoogleFonts.fredoka(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w700,
+                                            color: _currentTab == 1 ? AppColors.primary : Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  if (_currentTab == 1)
+                    SliverFillRemaining(
+                      hasScrollBody: true,
+                      child: InboxPage(
+                        sessionStore: widget.sessionStore,
+                        embedded: true,
+                      ),
+                    )
+                  else ...[
+                    // Barra de Ação: Botão Postar Gato
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
+                        child: Row(
+                          children: [
                           Expanded(
                             child: Text(
                               'Feed de Amigos',
@@ -1162,6 +1295,7 @@ class _SocialPageState extends State<SocialPage> {
                         ),
                       ),
                     ),
+                  ],
 
                   const SliverToBoxAdapter(
                     child: SizedBox(height: 32),

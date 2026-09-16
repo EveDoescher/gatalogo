@@ -9,6 +9,7 @@ import '../theme/app_theme.dart';
 import '../widgets/active_search_proximity_card.dart';
 import '../widgets/app_widgets.dart';
 import '../widgets/inbox_button.dart';
+import '../widgets/chat_icon_button.dart';
 import 'cat_details_page.dart';
 import 'friends_page.dart';
 import 'journey_page.dart';
@@ -60,7 +61,9 @@ class HomePage extends StatelessWidget {
                     ),
                     const Spacer(),
                     InboxButton(store: catStore, size: 42),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 8),
+                    ChatIconButton(sessionStore: sessionStore, size: 42),
+                    const SizedBox(width: 8),
                     UserAvatarButton(
                       sessionStore: sessionStore,
                       catStore: catStore,

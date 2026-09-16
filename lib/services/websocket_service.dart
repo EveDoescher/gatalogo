@@ -28,12 +28,25 @@ class WebSocketService extends ChangeNotifier with WidgetsBindingObserver {
       StreamController<Map<String, dynamic>>.broadcast();
   final _clueController = StreamController<Map<String, dynamic>>.broadcast();
   final _feedController = StreamController<Map<String, dynamic>>.broadcast();
+  final _typingController = StreamController<Map<String, dynamic>>.broadcast();
+  final _readController = StreamController<Map<String, dynamic>>.broadcast();
+  final _presenceController = StreamController<Map<String, dynamic>>.broadcast();
+  final _reactionController = StreamController<Map<String, dynamic>>.broadcast();
+  final _editedController = StreamController<Map<String, dynamic>>.broadcast();
+  final _deletedController = StreamController<Map<String, dynamic>>.broadcast();
 
   Stream<Map<String, dynamic>> get onMessage => _messageController.stream;
+  Stream<Map<String, dynamic>> get onNewMessage => _messageController.stream;
   Stream<Map<String, dynamic>> get onNotification =>
       _notificationController.stream;
   Stream<Map<String, dynamic>> get onClue => _clueController.stream;
   Stream<Map<String, dynamic>> get onFeedUpdate => _feedController.stream;
+  Stream<Map<String, dynamic>> get onTyping => _typingController.stream;
+  Stream<Map<String, dynamic>> get onMessagesRead => _readController.stream;
+  Stream<Map<String, dynamic>> get onPresence => _presenceController.stream;
+  Stream<Map<String, dynamic>> get onMessageReaction => _reactionController.stream;
+  Stream<Map<String, dynamic>> get onMessageEdited => _editedController.stream;
+  Stream<Map<String, dynamic>> get onMessageDeleted => _deletedController.stream;
   bool get isConnected => _connected;
 
   void _onSessionChanged() {
@@ -114,6 +127,24 @@ class WebSocketService extends ChangeNotifier with WidgetsBindingObserver {
         case 'new_message':
           _messageController.add(data);
           break;
+        case 'user_typing':
+          _typingController.add(data);
+          break;
+        case 'messages_read':
+          _readController.add(data);
+          break;
+        case 'user_presence':
+          _presenceController.add(data);
+          break;
+        case 'message_reaction':
+          _reactionController.add(data);
+          break;
+        case 'message_edited':
+          _editedController.add(data);
+          break;
+        case 'message_deleted':
+          _deletedController.add(data);
+          break;
         case 'new_notification':
           _notificationController.add(data);
           break;
@@ -126,6 +157,29 @@ class WebSocketService extends ChangeNotifier with WidgetsBindingObserver {
       }
     } catch (e) {
       debugPrint('Erro ao processar mensagem do WebSocket: $e');
+    }
+  }
+
+  void sendTyping(String conversationId, bool isTyping) {
+    if (_connected && _channel != null) {
+      try {
+        _channel!.sink.add(jsonEncode({
+          'type': 'typing',
+          'conversation_id': conversationId,
+          'is_typing': isTyping,
+        }));
+      } catch (_) {}
+    }
+  }
+
+  void sendRead(String conversationId) {
+    if (_connected && _channel != null) {
+      try {
+        _channel!.sink.add(jsonEncode({
+          'type': 'read',
+          'conversation_id': conversationId,
+        }));
+      } catch (_) {}
     }
   }
 
@@ -176,6 +230,12 @@ class WebSocketService extends ChangeNotifier with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _disconnect();
     _messageController.close();
+    _typingController.close();
+    _readController.close();
+    _presenceController.close();
+    _reactionController.close();
+    _editedController.close();
+    _deletedController.close();
     _notificationController.close();
     _clueController.close();
     _feedController.close();

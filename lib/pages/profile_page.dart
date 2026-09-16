@@ -775,13 +775,20 @@ class _ProfilePageState extends State<ProfilePage> {
                                   color: AppColors.achievementText,
                                 ),
                               ),
-                              Text(
-                                'Conquistas ➔',
-                                style: GoogleFonts.nunito(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.achievementText,
-                                ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Conquistas',
+                                    style: GoogleFonts.nunito(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.achievementText,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  const Icon(LucideIcons.chevronRight, size: 10, color: AppColors.achievementText),
+                                ],
                               ),
                             ],
                           ),
@@ -819,18 +826,25 @@ class _ProfilePageState extends State<ProfilePage> {
                               Text(
                                 '$_friendsCount',
                                 style: GoogleFonts.fredoka(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.socialPurpleText,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.socialPurpleText,
                                 ),
                               ),
-                              Text(
-                                'Amigos ➔',
-                                style: GoogleFonts.nunito(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.socialPurpleText,
-                                ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Amigos',
+                                    style: GoogleFonts.nunito(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.socialPurpleText,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  const Icon(LucideIcons.chevronRight, size: 10, color: AppColors.socialPurpleText),
+                                ],
                               ),
                             ],
                           ),

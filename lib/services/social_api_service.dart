@@ -68,16 +68,133 @@ class SocialApiService {
   Future<List<Map<String, dynamic>>> invites() => _list('/social/invites');
   Future<List<Map<String, dynamic>>> friends() => _list('/social/friends');
   Future<List<Map<String, dynamic>>> feed() => _list('/social/feed');
+  Future<List<Map<String, dynamic>>> conversations() => _list('/social/conversations');
+
+  Future<Map<String, dynamic>> conversationDetails(String conversationId) async {
+    final response = await _request(
+      'GET',
+      '/social/conversations/$conversationId',
+      null,
+      accepted: {200},
+    );
+    return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+  }
+
   Future<List<Map<String, dynamic>>> messages(String conversationId) =>
       _list('/social/conversations/$conversationId/messages');
 
-  Future<void> sendMessage(String conversationId, String body) async {
-    await _request(
+  Future<Map<String, dynamic>> sendMessage(
+    String conversationId, {
+    String body = '',
+    String type = 'text',
+    String? mediaUrl,
+    double? locationLat,
+    double? locationLng,
+    String? locationTitle,
+    Map<String, dynamic>? catData,
+    String? replyToId,
+  }) async {
+    final payload = <String, dynamic>{
+      'body': body,
+      'type': type,
+      'media_url': ?mediaUrl,
+      'location_lat': ?locationLat,
+      'location_lng': ?locationLng,
+      'location_title': ?locationTitle,
+      'cat_data': ?catData,
+      'reply_to_id': ?replyToId,
+    };
+    final response = await _request(
       'POST',
       '/social/conversations/$conversationId/messages',
-      {'body': body},
+      payload,
       accepted: {201},
     );
+    return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+  }
+
+  Future<String?> uploadChatPhoto(
+    String conversationId,
+    List<int> imageBytes,
+    String filename,
+  ) async {
+    final token = await _sessionStore.accessToken();
+    if (token == null) return null;
+    final uri = Uri.parse(
+      '${ApiConfig.baseUrl}/social/conversations/$conversationId/photo',
+    );
+    final request = http.MultipartRequest('POST', uri)
+      ..headers['Authorization'] = 'Bearer $token'
+      ..files.add(
+        http.MultipartFile.fromBytes('file', imageBytes, filename: filename),
+      );
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final decoded = jsonDecode(response.body) as Map;
+      return decoded['media_url'] as String?;
+    }
+    return null;
+  }
+
+  Future<void> markRead(String conversationId) async {
+    try {
+      await _request(
+        'POST',
+        '/social/conversations/$conversationId/read',
+        {},
+        accepted: {200},
+      );
+    } catch (_) {
+      // Ignora falhas de rede em leituras pontuais
+    }
+  }
+
+  Future<Map<String, dynamic>> toggleMessageReaction(
+    String conversationId,
+    String messageId,
+    String emoji,
+  ) async {
+    final response = await _request(
+      'POST',
+      '/social/conversations/$conversationId/messages/$messageId/reactions',
+      {'emoji': emoji},
+      accepted: {200},
+    );
+    return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+  }
+
+  Future<Map<String, dynamic>> editMessage(
+    String conversationId,
+    String messageId,
+    String newBody,
+  ) async {
+    final response = await _request(
+      'PUT',
+      '/social/conversations/$conversationId/messages/$messageId',
+      {'body': newBody},
+      accepted: {200},
+    );
+    return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+  }
+
+  Future<void> deleteMessage(String conversationId, String messageId) async {
+    await _request(
+      'DELETE',
+      '/social/conversations/$conversationId/messages/$messageId',
+      null,
+      accepted: {200, 204},
+    );
+  }
+
+  Future<Map<String, dynamic>> getUserPresence(String userId) async {
+    final response = await _request(
+      'GET',
+      '/social/users/$userId/presence',
+      null,
+      accepted: {200},
+    );
+    return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
   }
 
   Future<Map<String, dynamic>> createPost({

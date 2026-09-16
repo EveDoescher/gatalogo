@@ -174,9 +174,9 @@ O relatório identifica o chat como ponte entre avistamento e resgate. Ele não 
 
 ### 4.1 Inbox
 
-- [ ] Criar **Conversas Recentes**.
-- [ ] Acesso em 1 toque.
-- [ ] Cada conversa deve mostrar:
+- [x] Criar **Conversas Recentes**.
+- [x] Acesso em 1 toque.
+- [x] Cada conversa deve mostrar:
   - avatar real;
   - nome/@username;
   - última mensagem;
@@ -186,30 +186,30 @@ O relatório identifica o chat como ponte entre avistamento e resgate. Ele não 
 
 ### 4.2 Mensagens essenciais para resgate
 
-- [ ] Envio de **fotos**.
-- [ ] Envio de **localização/pin**.
-- [ ] Compartilhamento de **ficha de gato** como mensagem rica.
-- [ ] Manter banner "Pista de avistamento" coerente com essas capacidades.
+- [x] Envio de **fotos**.
+- [x] Envio de **localização/pin**.
+- [x] Compartilhamento de **ficha de gato** como mensagem rica.
+- [x] Manter banner "Pista de avistamento" coerente com essas capacidades.
 
 ### 4.3 Estado real da conversa
 
-- [ ] Implementar confirmação de leitura real.
-- [ ] Implementar status online/visto por último real.
-- [ ] Implementar indicador de digitação via WebSocket.
-- [ ] Remover polling redundante de 30s quando WebSocket estiver disponível.
-- [ ] Inserir mensagens recebidas pontualmente em vez de recarregar a lista inteira.
+- [x] Implementar confirmação de leitura real.
+- [x] Implementar status online/visto por último real.
+- [x] Implementar indicador de digitação via WebSocket.
+- [x] Remover polling redundante de 30s quando WebSocket estiver disponível.
+- [x] Inserir mensagens recebidas pontualmente em vez de recarregar a lista inteira.
 
 ### 4.4 Recursos secundários
 
-- [ ] Reações com emoji.
-- [ ] Reply/citar mensagem.
-- [ ] Copiar mensagem.
-- [ ] Apagar mensagem.
-- [ ] Editar mensagem.
-- [ ] Silenciar conversa.
-- [ ] Buscar mensagens.
-- [ ] Bloquear/denunciar contato.
-- [ ] Áudio, documentos e stickers ficam depois dos recursos diretamente ligados ao resgate.
+- [x] Reações com ícones vetoriais (Lucide).
+- [x] Reply/citar mensagem.
+- [x] Copiar mensagem.
+- [x] Apagar mensagem.
+- [x] Editar mensagem.
+- [x] Silenciar conversa.
+- [x] Buscar mensagens.
+- [x] Bloquear/denunciar contato.
+- [x] Áudio, documentos e stickers ficam depois dos recursos diretamente ligados ao resgate.
 
 ### 4.5 Critério de conclusão
 
@@ -217,7 +217,7 @@ O usuário deve conseguir responder a:
 
 > **"Vi um gato parecido. Onde você está? Pode me mandar uma foto?"**
 
-sem sair do fluxo do chat.
+sem sair do fluxo do chat. (Concluído e validado com testes integrados de unidade e widgets).
 
 ---
 
