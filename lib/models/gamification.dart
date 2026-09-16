@@ -39,6 +39,24 @@ class Mission {
 
   double get progressFraction =>
       target > 0 ? (progress / target).clamp(0.0, 1.0) : 0.0;
+
+  Mission copyWith({
+    String? id,
+    String? title,
+    int? target,
+    int? progress,
+    int? xpReward,
+    bool? completed,
+  }) {
+    return Mission(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      target: target ?? this.target,
+      progress: progress ?? this.progress,
+      xpReward: xpReward ?? this.xpReward,
+      completed: completed ?? this.completed,
+    );
+  }
 }
 
 class GamificationState {
@@ -151,7 +169,9 @@ class GamificationState {
         : null;
 
     return GamificationState(
-      xp: (map['xp'] as num?)?.toInt() ?? 0,
+      xp: (map['xp'] as num?)?.toInt() ??
+          (map['new_xp'] as num?)?.toInt() ??
+          0,
       level: (map['level'] as num?)?.toInt() ?? 1,
       levelTitle: map['level_title']?.toString() ?? 'Curioso',
       levelMinXp: (map['level_min_xp'] as num?)?.toInt() ?? 0,

@@ -638,6 +638,7 @@ class CatStore extends ChangeNotifier {
     notifyListeners();
     unawaited(syncCatalog());
     unawaited(syncPendingAnalyses());
+    unawaited(recordGamificationAction('photo', contextId: catId));
   }
 
   Future<void> _addReferencePhoto(
@@ -673,6 +674,7 @@ class CatStore extends ChangeNotifier {
     _referencePhotos[catId] = existing;
     notifyListeners();
     unawaited(syncCatalog());
+    unawaited(recordGamificationAction('photo', contextId: catId));
   }
 
   Future<void> deleteReferencePhoto(String catId, String kind) async {

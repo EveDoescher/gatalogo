@@ -6,6 +6,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../models/cat.dart';
 import '../services/cat_sharing_service.dart';
+import '../stores/cat_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_widgets.dart';
 
@@ -15,11 +16,13 @@ class MissingCatPosterPage extends StatelessWidget {
     required this.cat,
     required this.report,
     this.locationName,
+    this.catStore,
   });
 
   final Cat cat;
   final Map<String, dynamic> report;
   final String? locationName;
+  final CatStore? catStore;
 
   String get _qrPayload {
     final reportId = report['id'] ?? '';
@@ -65,11 +68,14 @@ class MissingCatPosterPage extends StatelessWidget {
           IconButton(
             tooltip: 'Compartilhar',
             icon: const Icon(LucideIcons.share2, color: AppColors.textDark),
-            onPressed: () => CatSharingService.shareMissingPoster(
-              cat: cat,
-              report: report,
-              locationName: locStr,
-            ),
+            onPressed: () {
+              CatSharingService.shareMissingPoster(
+                cat: cat,
+                report: report,
+                locationName: locStr,
+              );
+              catStore?.recordGamificationAction('share');
+            },
           ),
         ],
       ),
@@ -246,11 +252,14 @@ class MissingCatPosterPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
             ),
-            onPressed: () => CatSharingService.shareMissingPoster(
-              cat: cat,
-              report: report,
-              locationName: locStr,
-            ),
+            onPressed: () {
+              CatSharingService.shareMissingPoster(
+                cat: cat,
+                report: report,
+                locationName: locStr,
+              );
+              catStore?.recordGamificationAction('share');
+            },
             icon: const Icon(LucideIcons.share2, size: 18),
             label: Text(
               'Compartilhar no WhatsApp / Redes',

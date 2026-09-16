@@ -64,7 +64,25 @@ class GamificationService {
           },
         );
 
-        final updatedState = await loadGamification();
+        GamificationState updatedState;
+        if (response.containsKey('daily_missions') ||
+            response.containsKey('xp') ||
+            response.containsKey('new_xp')) {
+          final merged = {
+            ..._cachedState?.toMap() ?? {},
+            ...response,
+            'xp': (response['xp'] as num?)?.toInt() ??
+                (response['new_xp'] as num?)?.toInt() ??
+                _cachedState?.xp ??
+                0,
+          };
+          updatedState = GamificationState.fromMap(merged);
+          _cachedState = updatedState;
+          await _persistLocally(updatedState);
+        } else {
+          updatedState = await loadGamification();
+        }
+
         final missions = (response['missions_completed'] as List?)
                 ?.map((e) => e.toString())
                 .toList() ??
@@ -96,8 +114,40 @@ class GamificationService {
                     ? 15
                     : action == 'share'
                         ? 25
-                        : 5);
-    final newXp = current.xp + earned;
+                        : action == 'care'
+                            ? 25
+                            : 10);
+    var bonusFromMissions = 0;
+    final completedMissions = <String>[];
+    final updatedDaily = current.dailyMissions.map((m) {
+      var advances = false;
+      if (m.id == 'daily_photo' && (action == 'photo')) advances = true;
+      if (m.id == 'daily_social' && (action == 'like' || action == 'comment' || action == 'post')) advances = true;
+      if (m.id == 'daily_care' && (action == 'sighting' || action == 'photo' || action == 'share' || action == 'care')) advances = true;
+      if (advances && !m.completed) {
+        final newProg = (m.progress + 1).clamp(0, m.target);
+        final isDone = newProg >= m.target;
+        if (isDone) {
+          bonusFromMissions += m.xpReward;
+          completedMissions.add(m.title);
+        }
+        return m.copyWith(progress: newProg, completed: isDone);
+      }
+      return m;
+    }).toList();
+
+    var updatedBonus = current.bonusMission;
+    if (action == 'share' && updatedBonus != null && !updatedBonus.completed) {
+      final newProg = (updatedBonus.progress + 1).clamp(0, updatedBonus.target);
+      final isDone = newProg >= updatedBonus.target;
+      if (isDone) {
+        bonusFromMissions += updatedBonus.xpReward;
+        completedMissions.add(updatedBonus.title);
+      }
+      updatedBonus = updatedBonus.copyWith(progress: newProg, completed: isDone);
+    }
+
+    final newXp = current.xp + earned + bonusFromMissions;
     final offlineState = GamificationState(
       xp: newXp,
       level: current.level,
@@ -109,9 +159,9 @@ class GamificationService {
       longestStreak: current.longestStreak > 0 ? current.longestStreak : 1,
       multiplier: current.multiplier,
       freezeShields: current.freezeShields,
-      dailyMissions: current.dailyMissions,
+      dailyMissions: updatedDaily,
       weeklyMission: current.weeklyMission,
-      bonusMission: current.bonusMission,
+      bonusMission: updatedBonus,
       unlockedAchievements: current.unlockedAchievements,
       totalAchievements: current.totalAchievements,
     );
@@ -121,12 +171,12 @@ class GamificationService {
 
     return GamificationActionResult(
       state: offlineState,
-      earnedXp: earned,
+      earnedXp: earned + bonusFromMissions,
       multiplier: current.multiplier,
       levelUp: false,
       level: offlineState.level,
       levelTitle: offlineState.levelTitle,
-      missionsCompleted: const [],
+      missionsCompleted: completedMissions,
     );
   }
 

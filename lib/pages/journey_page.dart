@@ -361,6 +361,7 @@ class _JourneyPageState extends State<JourneyPage> {
       await widget.store.syncCatalog();
       final data = await ProductApiService(widget.store.sessionStore)
           .list('/app/journey');
+      await widget.store.refreshGamification();
       if (mounted) setState(() => _remote = data);
     } catch (_) {
       /* Local collection progress remains available offline. */
@@ -750,6 +751,7 @@ class _JourneyPageState extends State<JourneyPage> {
                                               description: item['description']?.toString(),
                                               rarity: rarity.label,
                                             );
+                                            widget.store.recordGamificationAction('share');
                                           },
                                         );
                                       } else {
@@ -839,6 +841,7 @@ class _JourneyPageState extends State<JourneyPage> {
                                                 description: description,
                                                 rarity: rarity,
                                               );
+                                              widget.store.recordGamificationAction('share');
                                             },
                                             icon: const Icon(LucideIcons.share, size: 14, color: AppColors.primary),
                                             label: Text(

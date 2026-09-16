@@ -844,6 +844,7 @@ class _HomeDailyMissionsCard extends StatelessWidget {
             spacing: 8,
             children: [
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
                     padding: const EdgeInsets.all(6),

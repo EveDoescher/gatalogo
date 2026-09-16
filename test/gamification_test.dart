@@ -74,6 +74,42 @@ void main() {
       expect(roundtrip.progressFraction, equals(1.0));
     });
 
+    test('Mission.copyWith correctly updates attributes', () {
+      const mission = Mission(
+        id: 'daily_photo',
+        title: 'Fotografar 1 gato',
+        target: 1,
+        progress: 0,
+        xpReward: 60,
+        completed: false,
+      );
+
+      final updated = mission.copyWith(
+        progress: 1,
+        completed: true,
+      );
+
+      expect(updated.id, equals('daily_photo'));
+      expect(updated.progress, equals(1));
+      expect(updated.completed, isTrue);
+      expect(updated.xpReward, equals(60));
+    });
+
+    test('GamificationState.fromMap supports new_xp and xp keys', () {
+      final stateFromNewXp = GamificationState.fromMap({
+        'new_xp': 250,
+        'level': 2,
+        'level_title': 'Explorador',
+      });
+      expect(stateFromNewXp.xp, equals(250));
+
+      final stateFromXp = GamificationState.fromMap({
+        'xp': 180,
+        'level': 1,
+      });
+      expect(stateFromXp.xp, equals(180));
+    });
+
     test('GamificationState fromMap and toMap roundtrip preserves data', () {
       final original = GamificationState(
         xp: 350,

@@ -51,6 +51,7 @@ class _MissingCatsPageState extends State<MissingCatsPage> {
       final items = await ProductApiService(widget.sessionStore)
           .list('/app/reports');
       if (mounted) setState(() => _reports = items);
+      widget.catStore.recordGamificationAction('care');
     } catch (error) {
       if (mounted) setState(() => _error = error.toString());
     } finally {
@@ -1055,6 +1056,7 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
                         builder: (_) => MissingCatPosterPage(
                           cat: cat,
                           report: _report,
+                          catStore: widget.store,
                         ),
                       ),
                     ),

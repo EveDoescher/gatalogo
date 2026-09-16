@@ -322,6 +322,8 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
     final shared = await CatSharingService.shareCat(cat: cat, analysis: analysis);
     if (!shared && mounted) {
       showMessage(context, 'Não foi possível abrir o compartilhamento.');
+    } else if (shared) {
+      widget.catStore.recordGamificationAction('share');
     }
   }
 

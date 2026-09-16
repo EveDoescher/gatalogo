@@ -1058,6 +1058,7 @@ class _SocialPageState extends State<SocialPage> {
                         author: 'gatalogo_oficial',
                         note: note,
                       );
+                      widget.catStore?.recordGamificationAction('share');
                     },
                   ),
                 ],
@@ -1843,6 +1844,7 @@ class _SocialPageState extends State<SocialPage> {
                                                 note: note,
                                                 location: location,
                                               );
+                                              widget.catStore?.recordGamificationAction('share');
                                             },
                                           ),
                                         ],
