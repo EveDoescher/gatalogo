@@ -318,6 +318,91 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
     );
   }
 
+  Future<void> _editNotes(Cat cat) async {
+    final controller = TextEditingController(text: cat.notes ?? '');
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.dialog),
+        ),
+        title: Row(
+          children: [
+            const Icon(LucideIcons.bookOpen, color: AppColors.primary, size: 22),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Diario do Gato',
+                style: GoogleFonts.fredoka(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textDark,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Anotacoes e lembretes sobre este gatinho (habitos, local preferido, comida, etc.):',
+                style: GoogleFonts.nunito(
+                  fontSize: 13,
+                  color: AppColors.textMedium,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  hintText: 'Escreva suas observacoes...',
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Cancelar',
+              style: GoogleFonts.nunito(
+                color: AppColors.textMedium,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final newNotes = controller.text.trim();
+              Navigator.pop(ctx);
+              await widget.catStore.updateCatNotes(
+                cat.id,
+                newNotes.isEmpty ? null : newNotes,
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+              ),
+            ),
+            child: Text(
+              'Salvar',
+              style: GoogleFonts.nunito(fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _shareCat(Cat cat, [CatAnalysis? analysis]) async {
     final shared = await CatSharingService.shareCat(cat: cat, analysis: analysis);
     if (!shared && mounted) {
@@ -364,6 +449,9 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
             : '';
         final locationDisplay = locationCity.isNotEmpty
             ? '$locationStreet,\n$locationCity'
+            : locationStreet;
+        final sanitizedLocation = locationCity.isNotEmpty
+            ? '$locationStreet, $locationCity'
             : locationStreet;
 
 
@@ -452,6 +540,7 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                           child: PopupMenuButton<String>(
                             enabled: !_busy,
                             onSelected: (value) {
+                              if (value == 'notes') _editNotes(cat);
                               if (value == 'rename') _rename(cat);
                               if (value == 'delete') _delete(cat);
                             },
@@ -459,6 +548,25 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                               borderRadius: BorderRadius.circular(16),
                             ),
                             itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: 'notes',
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      LucideIcons.bookOpen,
+                                      size: 18,
+                                      color: AppColors.textDark,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      'Anotacoes do diario',
+                                      style: GoogleFonts.nunito(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                               PopupMenuItem(
                                 value: 'rename',
                                 child: Row(
@@ -592,7 +700,7 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                       ),
                                       // Botão Favorito Circular
                                       GestureDetector(
-                                        onTap: () => _favoritesManager
+                                        onTap: () => widget.catStore
                                             .toggleFavorite(cat.id),
                                         child: Container(
                                           width: 40,
@@ -606,12 +714,10 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                             ),
                                           ),
                                           child: Icon(
-                                            isFavorite
-                                                ? Icons.favorite
-                                                : LucideIcons.heart,
+                                            LucideIcons.heart,
                                             size: 18,
                                             color: isFavorite
-                                                ? AppColors.primary
+                                                ? AppColors.error
                                                 : AppColors.textMedium,
                                           ),
                                         ),
@@ -881,6 +987,296 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                       ],
                                     ),
                                   ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            // Card 4: Diario & Anotacoes (Etapa 8)
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: AppColors.cardBackground,
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        LucideIcons.bookOpen,
+                                        size: 18,
+                                        color: AppColors.textDark,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'Diario & Anotacoes',
+                                          style: GoogleFonts.nunito(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w800,
+                                            color: AppColors.textTitle,
+                                          ),
+                                        ),
+                                      ),
+                                      GestureDetector(
+                                        onTap: () => _editNotes(cat),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primaryLight,
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(
+                                                LucideIcons.edit3,
+                                                size: 14,
+                                                color: AppColors.primary,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                cat.notes?.trim().isNotEmpty == true
+                                                    ? 'Editar'
+                                                    : 'Adicionar',
+                                                style: GoogleFonts.nunito(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: AppColors.primary,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  if (cat.notes != null &&
+                                      cat.notes!.trim().isNotEmpty)
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(
+                                          color: AppColors.borderLight,
+                                          width: 1.0,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        cat.notes!.trim(),
+                                        style: GoogleFonts.nunito(
+                                          fontSize: 13,
+                                          color: AppColors.textDark,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    )
+                                  else
+                                    GestureDetector(
+                                      onTap: () => _editNotes(cat),
+                                      child: Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withValues(alpha: 0.6),
+                                          borderRadius:
+                                              BorderRadius.circular(14),
+                                          border: Border.all(
+                                            color: AppColors.borderLight,
+                                            width: 1.0,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            const Icon(
+                                              LucideIcons.circlePlus,
+                                              size: 16,
+                                              color: AppColors.textMedium,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                'Registre habitos, locais favoritos ou lembretes...',
+                                                style: GoogleFonts.nunito(
+                                                  fontSize: 12,
+                                                  color: AppColors.textMedium,
+                                                  fontStyle: FontStyle.italic,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            // Card 5: Historico de Avistamentos (Etapa 8)
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: AppColors.cardBackground,
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        LucideIcons.history,
+                                        size: 18,
+                                        color: AppColors.textDark,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'Historico de Avistamentos',
+                                          style: GoogleFonts.nunito(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w800,
+                                            color: AppColors.textTitle,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 14),
+                                  // Registro inicial
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        margin: const EdgeInsets.only(top: 4),
+                                        width: 10,
+                                        height: 10,
+                                        decoration: const BoxDecoration(
+                                          color: AppColors.primary,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Flexible(
+                                                  child: Text(
+                                                    'Primeiro Registro',
+                                                    style: GoogleFonts.nunito(
+                                                      fontSize: 13,
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      color: AppColors.textDark,
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 1,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: AppColors.greenLight,
+                                                    borderRadius:
+                                                        BorderRadius.circular(6),
+                                                  ),
+                                                  child: Text(
+                                                    'Original',
+                                                    style: GoogleFonts.nunito(
+                                                      fontSize: 10,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      color: AppColors.greenLink,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              '${_formatFullDate(cat.capturedAt)} • ${hasLocation ? sanitizedLocation : "Localizacao salva"}',
+                                              style: GoogleFonts.nunito(
+                                                fontSize: 11,
+                                                color: AppColors.textMedium,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (referencePhotos.isNotEmpty) ...[
+                                    const SizedBox(height: 12),
+                                    for (final photo in referencePhotos) ...[
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Container(
+                                            margin:
+                                                const EdgeInsets.only(top: 4),
+                                            width: 10,
+                                            height: 10,
+                                            decoration: BoxDecoration(
+                                              color: AppColors.primaryLight,
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: AppColors.primary,
+                                                width: 1.5,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Foto de Referencia (${photo.kind})',
+                                                  style: GoogleFonts.nunito(
+                                                    fontSize: 12,
+                                                    fontWeight:
+                                                        FontWeight.w700,
+                                                    color: AppColors.textDark,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  'Atualizado em ${_formatFullDate(photo.updatedAt)}',
+                                                  style: GoogleFonts.nunito(
+                                                    fontSize: 11,
+                                                    color:
+                                                        AppColors.textMedium,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                    ],
+                                  ],
                                 ],
                               ),
                             ),

@@ -261,6 +261,21 @@ class SessionStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateEmail(String newEmail) async {
+    if (_session == null) return;
+    _session = AuthSession(
+      userId: _session!.userId,
+      email: newEmail,
+      accessToken: _session!.accessToken,
+      refreshToken: _session!.refreshToken,
+    );
+    await _secureStorage.write(
+      key: _profileKey,
+      value: jsonEncode({'user_id': _session!.userId, 'email': newEmail}),
+    );
+    notifyListeners();
+  }
+
   Future<void> syncAccountDetails() async {
     if (_session == null) return;
     try {

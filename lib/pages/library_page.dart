@@ -27,6 +27,7 @@ class _LibraryPageState extends State<LibraryPage> {
   String? _selectedColor;
   String? _selectedCoatPattern;
   String? _selectedNeighborhood;
+  bool _isPokedexMode = false;
   final FavoritesManager _favoritesManager = FavoritesManager.instance;
 
   @override
@@ -370,6 +371,8 @@ class _LibraryPageState extends State<LibraryPage> {
                         physics: const BouncingScrollPhysics(),
                         child: Row(
                           children: [
+                            _buildViewModeToggle(),
+                            const SizedBox(width: 8),
                             _buildFilterChip(
                               label: 'Todos (${allDiscoveries.length})',
                               key: 'todos',
@@ -462,96 +465,116 @@ class _LibraryPageState extends State<LibraryPage> {
 
                     const SizedBox(height: 8),
 
-                    // Grid de Gatos
+                    // Grid de Gatos / Pokédex com Pull to Refresh
                     Expanded(
-                      child: widget.catStore.isLoading
-                          ? const Center(
-                              child: CircularProgressIndicator(
-                                color: AppColors.primary,
-                              ),
-                            )
-                          : filteredCats.isEmpty
-                              ? Center(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(32),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Image.asset(
-                                          'assets/images/gato_2.png',
-                                          height: 100,
-                                          fit: BoxFit.contain,
-                                        ),
-                                        const SizedBox(height: 16),
-                                        Text(
-                                          'Nenhum gato encontrado',
-                                          style: GoogleFonts.fredoka(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColors.textDark,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          'Fotografe novos gatos na rua para expandir seu herbário felino!',
-                                          textAlign: TextAlign.center,
-                                          style: GoogleFonts.nunito(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w500,
-                                            color: AppColors.textMedium,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                )
-                              : GridView.builder(
-                                  physics: const BouncingScrollPhysics(),
-                                  padding: const EdgeInsets.fromLTRB(20, 6, 20, 24),
-                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 2,
-                                    crossAxisSpacing: 14,
-                                    mainAxisSpacing: 16,
-                                    childAspectRatio: 0.74,
-                                  ),
-                                  itemCount: filteredCats.length,
-                                  itemBuilder: (context, index) {
-                                    final cat = filteredCats[index];
-                                    final isFav = _favoritesManager.isFavorite(cat.id);
-
-                                    // Staggered animated entrance for items
-                                    return TweenAnimationBuilder<double>(
-                                      duration: Duration(milliseconds: 250 + (index % 6) * 50),
-                                      curve: Curves.easeOutCubic,
-                                      tween: Tween(begin: 0.0, end: 1.0),
-                                      builder: (context, val, child) {
-                                        return Opacity(
-                                          opacity: val,
-                                          child: Transform.translate(
-                                            offset: Offset(0, (1.0 - val) * 20),
-                                            child: child,
-                                          ),
-                                        );
-                                      },
-                                      child: _CollectionCatCard(
-                                        cat: cat,
-                                        analysis: widget.catStore.analysisFor(cat.id),
-                                        isFavorite: isFav,
-                                        formattedDate: _formatDate(cat.capturedAt),
-                                        onToggleFavorite: () => _favoritesManager.toggleFavorite(cat.id),
-                                        onTap: () => Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => CatDetailsPage(
-                                              cat: cat,
-                                              catStore: widget.catStore,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
+                      child: RefreshIndicator(
+                        color: AppColors.primary,
+                        onRefresh: () async {
+                          await widget.catStore.syncCatalog();
+                        },
+                        child: widget.catStore.isLoading
+                            ? const Center(
+                                child: CircularProgressIndicator(
+                                  color: AppColors.primary,
                                 ),
+                              )
+                            : _isPokedexMode
+                                ? _buildPokedexGrid(allDiscoveries)
+                                : filteredCats.isEmpty
+                                    ? Center(
+                                        child: SingleChildScrollView(
+                                          physics: const AlwaysScrollableScrollPhysics(),
+                                          padding: const EdgeInsets.all(32),
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Image.asset(
+                                                'assets/images/gato_2.png',
+                                                height: 100,
+                                                fit: BoxFit.contain,
+                                              ),
+                                              const SizedBox(height: 16),
+                                              Text(
+                                                'Nenhum gato encontrado',
+                                                style: GoogleFonts.fredoka(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AppColors.textDark,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 6),
+                                              Text(
+                                                'Fotografe novos gatos na rua para expandir seu herbário felino!',
+                                                textAlign: TextAlign.center,
+                                                style: GoogleFonts.nunito(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: AppColors.textMedium,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      )
+                                    : GridView.builder(
+                                        physics: const AlwaysScrollableScrollPhysics(
+                                          parent: BouncingScrollPhysics(),
+                                        ),
+                                        padding: const EdgeInsets.fromLTRB(20, 6, 20, 24),
+                                        gridDelegate:
+                                            const SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 2,
+                                          crossAxisSpacing: 14,
+                                          mainAxisSpacing: 16,
+                                          childAspectRatio: 0.74,
+                                        ),
+                                        itemCount: filteredCats.length,
+                                        itemBuilder: (context, index) {
+                                          final cat = filteredCats[index];
+                                          final isFav =
+                                              _favoritesManager.isFavorite(cat.id);
+
+                                          // Staggered animated entrance for items
+                                          return TweenAnimationBuilder<double>(
+                                            duration: Duration(
+                                                milliseconds:
+                                                    250 + (index % 6) * 50),
+                                            curve: Curves.easeOutCubic,
+                                            tween: Tween(begin: 0.0, end: 1.0),
+                                            builder: (context, val, child) {
+                                              return Opacity(
+                                                opacity: val,
+                                                child: Transform.translate(
+                                                  offset:
+                                                      Offset(0, (1.0 - val) * 20),
+                                                  child: child,
+                                                ),
+                                              );
+                                            },
+                                            child: _CollectionCatCard(
+                                              cat: cat,
+                                              analysis: widget.catStore
+                                                  .analysisFor(cat.id),
+                                              isFavorite: isFav,
+                                              formattedDate:
+                                                  _formatDate(cat.capturedAt),
+                                              onToggleFavorite: () => widget
+                                                  .catStore
+                                                  .toggleFavorite(cat.id),
+                                              onTap: () => Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) => CatDetailsPage(
+                                                    cat: cat,
+                                                    catStore: widget.catStore,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                      ),
                     ),
                   ],
                 );
@@ -1049,6 +1072,106 @@ class _LibraryPageState extends State<LibraryPage> {
       ),
     );
   }
+
+  Widget _buildViewModeToggle() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border, width: 1.0),
+      ),
+      padding: const EdgeInsets.all(3),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildToggleOption(
+            icon: LucideIcons.layoutGrid,
+            tooltip: 'Grade',
+            isSelected: !_isPokedexMode,
+            onTap: () => setState(() => _isPokedexMode = false),
+          ),
+          const SizedBox(width: 2),
+          _buildToggleOption(
+            icon: LucideIcons.bookOpen,
+            tooltip: 'Pokédex Felina',
+            isSelected: _isPokedexMode,
+            onTap: () => setState(() => _isPokedexMode = true),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToggleOption({
+    required IconData icon,
+    required String tooltip,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Icon(
+            icon,
+            size: 16,
+            color: isSelected ? Colors.white : AppColors.textMedium,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPokedexGrid(List<Cat> discoveries) {
+    final mapByNumber = <int, Cat>{};
+    int maxNumber = 60;
+    for (final cat in discoveries) {
+      mapByNumber[cat.captureNumber] = cat;
+      if (cat.captureNumber > maxNumber) {
+        maxNumber = cat.captureNumber;
+      }
+    }
+
+    final totalSlots = maxNumber;
+
+    return GridView.builder(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 80),
+      physics: const AlwaysScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.72,
+      ),
+      itemCount: totalSlots,
+      itemBuilder: (context, index) {
+        final slotNumber = index + 1;
+        final cat = mapByNumber[slotNumber];
+        return _PokedexSlotCard(
+          slotNumber: slotNumber,
+          cat: cat,
+          onTap: cat != null
+              ? () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CatDetailsPage(
+                        cat: cat,
+                        catStore: widget.catStore,
+                      ),
+                    ),
+                  )
+              : null,
+        );
+      },
+    );
+  }
 }
 
 class _CollectionCatCard extends StatefulWidget {
@@ -1395,3 +1518,130 @@ class _CardImageClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
+
+class _PokedexSlotCard extends StatelessWidget {
+  const _PokedexSlotCard({
+    required this.slotNumber,
+    this.cat,
+    this.onTap,
+  });
+
+  final int slotNumber;
+  final Cat? cat;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDiscovered = cat != null;
+    final formattedNumber = '#${slotNumber.toString().padLeft(3, '0')}';
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDiscovered
+              ? AppColors.cardBackground
+              : AppColors.cardBackground.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDiscovered
+                ? AppColors.primary.withValues(alpha: 0.3)
+                : AppColors.border,
+            width: 1.0,
+          ),
+          boxShadow: isDiscovered
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : null,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(15),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Badge do número
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 6, 8, 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      formattedNumber,
+                      style: GoogleFonts.nunito(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: isDiscovered
+                            ? AppColors.primary
+                            : AppColors.textLight,
+                      ),
+                    ),
+                    if (isDiscovered)
+                      const Icon(
+                        LucideIcons.check,
+                        size: 11,
+                        color: AppColors.success,
+                      )
+                    else
+                      const Icon(
+                        LucideIcons.lock,
+                        size: 11,
+                        color: AppColors.textLight,
+                      ),
+                  ],
+                ),
+              ),
+
+              // Área da foto ou silhueta
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: isDiscovered
+                        ? CatPhotoView(
+                            cat!.photoPath,
+                            fit: BoxFit.cover,
+                            borderRadius: 10,
+                          )
+                        : Container(
+                            color: AppColors.border.withValues(alpha: 0.35),
+                            child: Center(
+                              child: Icon(
+                                LucideIcons.pawPrint,
+                                size: 30,
+                                color: AppColors.textLight.withValues(alpha: 0.4),
+                              ),
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+
+              // Nome do gato
+              Padding(
+                padding: const EdgeInsets.fromLTRB(6, 5, 6, 6),
+                child: Text(
+                  isDiscovered ? cat!.displayName : '???',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.fredoka(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isDiscovered ? AppColors.textDark : AppColors.textLight,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+

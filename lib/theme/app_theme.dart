@@ -96,6 +96,21 @@ class AppColors {
   // ─── Sombras tonais (café sutil, NUNCA preto) ────────────────
   static const Color shadowWarm = Color(0x14382923);
   static const Color shadowMedium = Color(0x28382923);
+
+  // ─── Superfícies Dark Mode (Espresso Aconchegante) ───────────
+  static const Color darkBackground = Color(0xFF181412);
+  static const Color darkSurface = Color(0xFF231E1B);
+  static const Color darkCardBackground = Color(0xFF2E2724);
+  static const Color darkCardAltBackground = Color(0xFF362E2A);
+  static const Color darkBorder = Color(0xFF3D3531);
+  static const Color darkBorderLight = Color(0xFF4A403A);
+  static const Color darkInputBg = Color(0xFF28221F);
+
+  // ─── Textos Dark Mode (off-white quente, nunca branco puro) ──
+  static const Color darkTextDark = Color(0xFFF5EFEB);
+  static const Color darkTextTitle = Color(0xFFFAF6F2);
+  static const Color darkTextMedium = Color(0xFFD4C9C1);
+  static const Color darkTextLight = Color(0xFFA89F99);
 }
 
 /// Escala de espaçamento padronizada (base 4px)
@@ -421,6 +436,229 @@ class AppTheme {
       // ─── BottomSheet ─────────────────────────────────────────
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: AppColors.background,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xxl),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static ThemeData get darkTheme {
+    final baseTextTheme = GoogleFonts.nunitoTextTheme();
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: AppColors.darkBackground,
+      colorScheme: const ColorScheme.dark(
+        primary: AppColors.primary,
+        onPrimary: Colors.white,
+        secondary: AppColors.green,
+        onSecondary: Colors.white,
+        surface: AppColors.darkSurface,
+        onSurface: AppColors.darkTextDark,
+        error: AppColors.error,
+      ),
+      textTheme: baseTextTheme.copyWith(
+        displayLarge: GoogleFonts.fredoka(
+          fontSize: 32,
+          fontWeight: FontWeight.w700,
+          color: AppColors.darkTextDark,
+          height: 1.1,
+        ),
+        displayMedium: GoogleFonts.fredoka(
+          fontSize: 26,
+          fontWeight: FontWeight.w700,
+          color: AppColors.darkTextDark,
+          height: 1.15,
+        ),
+        titleLarge: GoogleFonts.fredoka(
+          fontSize: 22,
+          fontWeight: FontWeight.w600,
+          color: AppColors.darkTextDark,
+          height: 1.1,
+        ),
+        titleMedium: GoogleFonts.fredoka(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: AppColors.darkTextDark,
+        ),
+        titleSmall: GoogleFonts.fredoka(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: AppColors.darkTextDark,
+        ),
+        bodyLarge: GoogleFonts.nunito(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: AppColors.darkTextDark,
+          height: 1.3,
+        ),
+        bodyMedium: GoogleFonts.nunito(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: AppColors.darkTextMedium,
+          height: 1.3,
+        ),
+        bodySmall: GoogleFonts.nunito(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          color: AppColors.darkTextLight,
+          height: 1.2,
+        ),
+        labelLarge: GoogleFonts.nunito(
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+        ),
+        labelMedium: GoogleFonts.nunito(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: AppColors.darkTextDark,
+        ),
+        labelSmall: GoogleFonts.nunito(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: AppColors.darkTextMedium,
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.darkInputBg,
+        hintStyle: GoogleFonts.nunito(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: AppColors.darkTextLight,
+        ),
+        prefixIconColor: AppColors.darkTextMedium,
+        suffixIconColor: AppColors.darkTextMedium,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 16,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.input),
+          borderSide: const BorderSide(color: AppColors.darkBorder, width: 1.2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.input),
+          borderSide: const BorderSide(color: AppColors.darkBorder, width: 1.2),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.input),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.6),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.input),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.2),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.input),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.6),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(
+            vertical: 16,
+            horizontal: AppSpacing.xl,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.button),
+          ),
+          textStyle: GoogleFonts.nunito(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.darkTextTitle,
+          elevation: 0,
+          side: const BorderSide(color: AppColors.darkBorder, width: 1.2),
+          padding: const EdgeInsets.symmetric(
+            vertical: 12,
+            horizontal: AppSpacing.xl,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.button),
+          ),
+          textStyle: GoogleFonts.nunito(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.green,
+          textStyle: GoogleFonts.nunito(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      cardTheme: CardThemeData(
+        color: AppColors.darkSurface,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          side: const BorderSide(color: AppColors.darkBorderLight, width: 1),
+        ),
+      ),
+      dividerTheme: const DividerThemeData(
+        color: AppColors.darkBorder,
+        thickness: 1,
+        space: AppSpacing.xl,
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        titleTextStyle: GoogleFonts.fredoka(
+          fontSize: 22,
+          fontWeight: FontWeight.w600,
+          color: AppColors.darkTextDark,
+        ),
+        iconTheme: const IconThemeData(color: AppColors.darkTextDark, size: 24),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return AppColors.green;
+          return AppColors.darkTextLight;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return AppColors.green.withValues(alpha: 0.3);
+          return AppColors.darkBorderLight;
+        }),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColors.darkBackground,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.dialog),
+        ),
+        titleTextStyle: GoogleFonts.fredoka(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: AppColors.darkTextDark,
+        ),
+        contentTextStyle: GoogleFonts.nunito(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: AppColors.darkTextMedium,
+        ),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.darkBackground,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(

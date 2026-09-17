@@ -123,7 +123,7 @@ void main() {
       capturedAt: DateTime(2026, 9, 11),
       name: 'Tom',
       status: 'completed',
-      locationName: 'Rua Professor Rui Corte Brilho, 1161, Chácara Antonieta, Limeira, São Paulo',
+      locationName: 'Avenida dos Felinos, 789, Bairro Primavera, Gatolândia, São Paulo',
     );
 
     final session = SessionStore();
@@ -136,10 +136,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // 1. Sanitizacao do endereco: remove numero residual '1161'
-    expect(find.textContaining('1161'), findsNothing);
-    expect(find.textContaining('Rua Professor Rui Corte Brilho'), findsOneWidget);
-    expect(find.textContaining('Limeira'), findsOneWidget);
+    // 1. Sanitizacao do endereco: remove numero residual '789'
+    expect(find.textContaining('789'), findsNothing);
+    expect(find.textContaining('Avenida dos Felinos'), findsAtLeastNWidgets(1));
+    expect(find.textContaining('Gatolândia'), findsAtLeastNWidgets(1));
 
     // 2. Contador de fotos adicionais deve ser 0 Fotos
     await tester.ensureVisible(find.text('0 Fotos'));

@@ -331,38 +331,42 @@ O gargalo social identificado é exigir username exato. O relatório também apo
 
 ### 7.1 Descoberta de amigos
 
-- [ ] QR Code de perfil.
-- [ ] Link de convite compartilhável.
-- [ ] Busca por nome parcial/autocomplete.
-- [ ] Mostrar convites enviados.
-- [ ] Sugestões de pessoas.
-- [ ] "Exploradores perto de você" de forma anônima/opt-in.
-- [ ] Amigos em comum.
+- [x] QR Code de perfil.
+- [x] Link de convite compartilhável.
+- [x] Busca por nome parcial/autocomplete.
+- [x] Mostrar convites enviados.
+- [x] Sugestões de pessoas.
+- [x] "Exploradores perto de você" de forma anônima/opt-in.
+- [x] Amigos em comum.
 
 ### 7.2 Perfis públicos
 
-- [ ] Criar perfil público.
-- [ ] Avatar.
-- [ ] Bio.
-- [ ] Nível/XP.
-- [ ] Quantidade de gatos.
-- [ ] Conquistas.
-- [ ] Streak.
-- [ ] Galeria pública com consentimento.
-- [ ] Botão de mensagem.
+- [x] Criar perfil público.
+- [x] Avatar.
+- [x] Bio.
+- [x] Nível/XP.
+- [x] Quantidade de gatos.
+- [x] Conquistas.
+- [x] Streak.
+- [x] Galeria pública com consentimento.
+- [x] Botão de mensagem.
 
 ### 7.3 Prova social
 
-- [ ] Permitir interação em conquistas.
-- [ ] Mostrar badges de raridade.
-- [ ] Mostrar progresso relevante no perfil.
-- [ ] Criar leaderboard semanal entre amigos somente após a base social estar funcionando.
+- [x] Permitir interação em conquistas.
+- [x] Mostrar badges de raridade.
+- [x] Mostrar progresso relevante no perfil.
+- [x] Criar leaderboard semanal entre amigos somente após a base social estar funcionando.
 
 ### 7.4 Feed global
 
-- [ ] Criar feed comunitário/global com opt-in.
-- [ ] Definir privacidade e exposição de conteúdo.
-- [ ] Criar conteúdo inicial para evitar cold start.
+- [x] Criar feed comunitário/global com opt-in.
+- [x] Definir privacidade e exposição de conteúdo.
+- [x] Criar conteúdo inicial para evitar cold start.
+
+### 7.5 Critério de conclusão
+
+O usuário deve conseguir encontrar amigos por busca/sugestão/QR Code, visualizar perfis públicos completos com conquistas e galeria, competir no ranking semanal e interagir via feed de amigos e comunidade. (Concluído e validado com testes integrados de unidade e widgets).
 
 ---
 
@@ -374,44 +378,48 @@ Aqui entram melhorias importantes, mas que não devem bloquear o núcleo do prod
 
 ### 8.1 Navegação
 
-- [ ] Dar acesso direto a conversas.
-- [ ] Separar Perfil de Configurações.
-- [ ] Adicionar badges na navegação.
-- [ ] Dar destaque visual ao botão central **Gatalogar**.
-- [ ] Reduzir caminhos de 3–5 toques para ações frequentes.
+- [x] Dar acesso direto a conversas.
+- [x] Separar Perfil de Configurações.
+- [x] Adicionar badges na navegação.
+- [x] Dar destaque visual ao botão central **Gatalogar**.
+- [x] Reduzir caminhos de 3–5 toques para ações frequentes.
 
 ### 8.2 Perfil e configurações
 
-- [ ] Troca de senha logado.
-- [ ] Troca de e-mail.
-- [ ] Exportação de dados.
-- [ ] Suporte/feedback/bug report.
-- [ ] CTA claro de login para guest.
-- [ ] Versão dinâmica via `package_info_plus`.
+- [x] Troca de senha logado.
+- [x] Troca de e-mail.
+- [x] Exportação de dados.
+- [x] Suporte/feedback/bug report.
+- [x] CTA claro de login para guest.
+- [x] Versão dinâmica via `package_info_plus`.
 
 ### 8.3 Feedback e atualização
 
-- [ ] Pull-to-refresh em Home, Perfil, Feed, Notificações e Pistas.
-- [ ] Tratamento global de erros.
-- [ ] Retry consistente em operações de rede.
-- [ ] Remover catches silenciosos.
+- [x] Pull-to-refresh em Home, Perfil, Feed, Notificações e Pistas.
+- [x] Tratamento global de erros.
+- [x] Retry consistente em operações de rede.
+- [x] Remover catches silenciosos.
 
 ### 8.4 Catálogo e coleção
 
-- [ ] Filtros avançados.
-- [ ] Favoritos sincronizados na nuvem.
-- [ ] Notas/diário do gato.
-- [ ] Histórico de reavistamentos.
-- [ ] Reidentificação automática de gatos já catalogados.
-- [ ] Visualização Pokédex com slots preenchidos/vazios.
+- [x] Filtros avançados.
+- [x] Favoritos sincronizados na nuvem.
+- [x] Notas/diário do gato.
+- [x] Histórico de reavistamentos.
+- [x] Reidentificação automática de gatos já catalogados.
+- [x] Visualização Pokédex com slots preenchidos/vazios.
 
 ### 8.5 Diferenciação visual
 
-- [ ] Dark Mode.
-- [ ] Saudação personalizada.
-- [ ] "Gato do Dia".
-- [ ] Cards colecionáveis com molduras de raridade.
-- [ ] Avatar 3D quando a infraestrutura estiver pronta.
+- [x] Dark Mode.
+- [x] Saudação personalizada.
+- [x] "Gato do Dia".
+- [x] Cards colecionáveis com molduras de raridade.
+- [x] Avatar 3D quando a infraestrutura estiver pronta (preparado para integração na Etapa 9).
+
+### 8.6 Critério de conclusão
+
+A navegação deve ser fluida e direta, com Dark Mode aconchegante, favoritos em nuvem, diário e histórico de avistamentos, Pokédex felina visual, e fluxos completos de segurança e configurações do usuário. (Concluído e validado com testes integrados de unidade e widgets).
 
 ---
 

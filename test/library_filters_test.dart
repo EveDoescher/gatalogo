@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:catlogue/models/cat.dart';
 import 'package:catlogue/models/cat_analysis.dart';
@@ -18,7 +18,7 @@ class FilterTestStore extends CatStore {
       photoPath: 'test1.jpg',
       capturedAt: DateTime(2026, 9, 1),
       name: 'Mingau',
-      locationName: 'Rua das Flores, Centro, Limeira - SP',
+      locationName: 'Rua das Flores, Centro, Gatolândia - SP',
       status: 'completed',
     ),
     Cat(
@@ -36,7 +36,7 @@ class FilterTestStore extends CatStore {
       photoPath: 'test3.jpg',
       capturedAt: DateTime(2026, 9, 3),
       name: 'Frajola',
-      locationName: 'Rua do Porto, Centro, Limeira - SP',
+      locationName: 'Rua do Porto, Bairro Felino, Gatolândia - SP',
       status: 'failed',
     ),
   ];

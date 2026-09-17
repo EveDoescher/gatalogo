@@ -11,7 +11,7 @@ void main() {
       photoPath: 'photo.jpg',
       capturedAt: DateTime(2026, 9, 15),
       name: 'Frajola',
-      locationName: 'Centro, Limeira - SP',
+      locationName: 'Centro, Gatolândia - SP',
       status: 'completed',
     );
 
@@ -30,7 +30,7 @@ void main() {
     expect(text.contains('Padrão: Bicolor'), isTrue);
     expect(text.contains('Pelagem: Preto e Branco'), isTrue);
     expect(text.contains('Confiança da IA: 96%'), isTrue);
-    expect(text.contains('Local: Centro, Limeira - SP'), isTrue);
+    expect(text.contains('Local: Centro, Gatolândia - SP'), isTrue);
     expect(text.contains('Identificado e protegido no Gatálogo.'), isTrue);
   });
 

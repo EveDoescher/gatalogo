@@ -36,7 +36,10 @@ class GatalogoCard extends StatelessWidget {
           width: 1.2,
         ),
       ),
-      child: child,
+      child: Material(
+        color: Colors.transparent,
+        child: child,
+      ),
     );
 
     if (onTap != null) {

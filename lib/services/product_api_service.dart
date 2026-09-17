@@ -79,6 +79,16 @@ class ProductApiService {
         : Map<String, dynamic>.from(jsonDecode(response.body) as Map);
   }
 
+  Future<Map<String, dynamic>> put(
+    String path, [
+    Map<String, dynamic>? body,
+  ]) async {
+    final response = await request('PUT', path, body ?? {});
+    return response.body.isEmpty
+        ? {}
+        : Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+  }
+
   Future<Uint8List> photo(String path) async =>
       (await request('GET', path)).bodyBytes;
 }

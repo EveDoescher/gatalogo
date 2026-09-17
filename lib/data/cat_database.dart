@@ -33,7 +33,7 @@ class CatDatabase {
 
     return openDatabase(
       path,
-      version: 13,
+      version: 14,
 
       onCreate: (db, version) async {
         await db.execute('''
@@ -58,6 +58,8 @@ class CatDatabase {
         ,microchip TEXT
         ,collar TEXT
         ,distinguishing_marks TEXT
+        ,is_favorite INTEGER NOT NULL DEFAULT 0
+        ,notes TEXT
       )
     ''');
         await db.execute('''
@@ -84,6 +86,16 @@ class CatDatabase {
       },
 
       onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 14) {
+          final columns = await db.rawQuery('PRAGMA table_info(cats)');
+          final names = columns.map((c) => c['name'] as String).toSet();
+          if (!names.contains('is_favorite')) {
+            await db.execute('ALTER TABLE cats ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0');
+          }
+          if (!names.contains('notes')) {
+            await db.execute('ALTER TABLE cats ADD COLUMN notes TEXT');
+          }
+        }
         if (oldVersion < 13) {
           final columns = await db.rawQuery('PRAGMA table_info(cats)');
           final names = columns.map((c) => c['name'] as String).toSet();
@@ -400,6 +412,34 @@ class CatDatabase {
         ...?automaticRetryCount == null
             ? null
             : {'automatic_retry_count': automaticRetryCount},
+        'sync_state': 'dirty',
+        'local_updated_at': DateTime.now().toUtc().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> updateCatFavorite(String id, bool isFavorite) async {
+    final db = await database;
+    await db.update(
+      'cats',
+      {
+        'is_favorite': isFavorite ? 1 : 0,
+        'sync_state': 'dirty',
+        'local_updated_at': DateTime.now().toUtc().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> updateCatNotes(String id, String? notes) async {
+    final db = await database;
+    await db.update(
+      'cats',
+      {
+        'notes': notes,
         'sync_state': 'dirty',
         'local_updated_at': DateTime.now().toUtc().toIso8601String(),
       },

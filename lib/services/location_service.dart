@@ -44,9 +44,9 @@ class LocationService {
   static String? _cleanStreet(String? raw) {
     if (raw == null || raw.trim().isEmpty) return null;
     var s = raw.trim();
-    // Remove numero apos virgula: "Rua Professor Rui Corte Brilho, 1161" -> "Rua Professor Rui Corte Brilho"
+    // Remove numero apos virgula: "Avenida das Palmeiras, 1234" -> "Avenida das Palmeiras"
     s = s.split(',').first.trim();
-    // Remove numero solto no fim: "Rua X 1161" -> "Rua X"
+    // Remove numero solto no fim: "Rua X 1234" -> "Rua X"
     s = s.replaceFirst(RegExp(r'\s+\d+.*$'), '').trim();
     return s.isNotEmpty ? s : null;
   }
@@ -76,7 +76,7 @@ class LocationService {
         final locality = place.locality?.trim();
 
         // Resolucao de Municipio/Cidade no Brasil:
-        // subAdministrativeArea armazena o municipio (ex: Limeira)
+        // subAdministrativeArea armazena o municipio (ex: Campinas)
         // locality pode conter a regiao/estado ou ser nulo
         // administrativeArea armazena o estado (ex: Sao Paulo)
         if (subAdmin != null &&

@@ -14,6 +14,7 @@ import '../models/cat_reference_photo.dart';
 import '../models/gamification.dart';
 import '../services/analysis_api_service.dart';
 import '../services/catalog_sync_service.dart';
+import '../services/favorites_manager.dart';
 import '../services/gamification_service.dart';
 import '../services/location_service.dart';
 import '../services/vision_api_service.dart';
@@ -715,6 +716,25 @@ class CatStore extends ChangeNotifier {
     }
   }
 
+  Future<void> toggleFavorite(String catId) async {
+    await FavoritesManager.instance.toggleFavorite(catId, sessionStore: _sessionStore);
+    final index = _cats.indexWhere((c) => c.id == catId);
+    if (index != -1) {
+      final isFav = FavoritesManager.instance.isFavorite(catId);
+      _cats[index] = _cats[index].withFavorite(isFav);
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateCatNotes(String catId, String? notes) async {
+    await _database.updateCatNotes(catId, notes);
+    final index = _cats.indexWhere((c) => c.id == catId);
+    if (index != -1) {
+      _cats[index] = _cats[index].withNotes(notes);
+      notifyListeners();
+    }
+  }
+
   Future<void> syncCatalog() async {
     try {
       if (_isLoading ||
@@ -725,6 +745,7 @@ class CatStore extends ChangeNotifier {
       final synced = await _catalogSync.sync();
       if (!synced) return;
       await _sendQueuedSightings();
+      await FavoritesManager.instance.syncWithServer(_sessionStore);
       final cats = await _database.getCats(
         ownerId: _sessionStore.session?.userId,
       );
@@ -743,7 +764,7 @@ class CatStore extends ChangeNotifier {
       }
       notifyListeners();
     } catch (error, stackTrace) {
-      debugPrint('Sincronização do catálogo adiada: $error');
+      debugPrint('Sincronizacao do catalogo adiada: $error');
       debugPrintStack(stackTrace: stackTrace);
     }
   }

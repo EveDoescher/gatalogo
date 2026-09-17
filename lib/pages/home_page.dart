@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../models/cat.dart';
+import '../models/cat_analysis.dart';
 import '../stores/cat_store.dart';
 import '../stores/session_store.dart';
 import '../theme/app_theme.dart';
@@ -32,6 +33,13 @@ class HomePage extends StatelessWidget {
   void _open(BuildContext context, Widget page) =>
       Navigator.push(context, MaterialPageRoute(builder: (_) => page));
 
+  String _getTimeBasedGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) return 'Bom dia';
+    if (hour >= 12 && hour < 18) return 'Boa tarde';
+    return 'Boa noite';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,83 +54,107 @@ class HomePage extends StatelessWidget {
                 ? 10
                 : ((catCount ~/ 10) + 1) * 10;
             final progress = (catCount / nextMilestone).clamp(0.0, 1.0);
+            final greeting = _getTimeBasedGreeting();
+            final name = sessionStore.session?.email.split('@').first ?? 'Explorador';
 
-            return ListView(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              children: [
-                // Header: Logo, Notificações e Botão de Perfil
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Image.asset(
-                      'assets/images/Logo.png',
-                      height: 40,
-                      fit: BoxFit.contain,
-                    ),
-                    const Spacer(),
-                    InboxButton(store: catStore, size: 42),
-                    const SizedBox(width: 8),
-                    ChatIconButton(sessionStore: sessionStore, size: 42),
-                    const SizedBox(width: 8),
-                    UserAvatarButton(
-                      sessionStore: sessionStore,
-                      catStore: catStore,
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 18),
-
-                // Saudação
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Bem-vindo de volta!',
-                      style: GoogleFonts.nunito(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
+            return RefreshIndicator(
+              color: AppColors.primary,
+              onRefresh: () async {
+                await catStore.syncCatalog();
+                await catStore.refreshGamification();
+              },
+              child: ListView(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                children: [
+                  // Header: Logo, Notificações e Botão de Perfil
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/images/Logo.png',
+                        height: 40,
+                        fit: BoxFit.contain,
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Bora explorar?',
-                      style: GoogleFonts.nunito(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textTitle,
+                      const Spacer(),
+                      InboxButton(store: catStore, size: 42),
+                      const SizedBox(width: 8),
+                      ChatIconButton(sessionStore: sessionStore, size: 42),
+                      const SizedBox(width: 8),
+                      UserAvatarButton(
+                        sessionStore: sessionStore,
+                        catStore: catStore,
                       ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 18),
-
-                // Card de Proximidade / Geofencing da Busca Ativa (Etapa 3.4)
-                ActiveSearchProximityCard(
-                  sessionStore: sessionStore,
-                  catStore: catStore,
-                ),
-
-                const SizedBox(height: 14),
-
-                // Card de Gamificação: Nível, XP, Streak & Escudo (Etapa 6.1 e 6.2)
-                _HomeGamificationBanner(
-                  catStore: catStore,
-                  onTap: () => _open(
-                    context,
-                    JourneyPage(store: catStore),
+                    ],
                   ),
-                ),
 
-                const SizedBox(height: 18),
+                  const SizedBox(height: 18),
 
-                // Card Destaque: Sua Coleção (conforme Figma Tela 2)
-                GestureDetector(
-                  onTap: () => onNavigate(3),
-                  child: Container(
+                  // Saudação Personalizada
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$greeting, $name!',
+                        style: GoogleFonts.nunito(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Bora explorar?',
+                        style: GoogleFonts.nunito(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textTitle,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  // Card de Proximidade / Geofencing da Busca Ativa (Etapa 3.4)
+                  ActiveSearchProximityCard(
+                    sessionStore: sessionStore,
+                    catStore: catStore,
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Card de Gamificação: Nível, XP, Streak & Escudo (Etapa 6.1 e 6.2)
+                  _HomeGamificationBanner(
+                    catStore: catStore,
+                    onTap: () => _open(
+                      context,
+                      JourneyPage(store: catStore),
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Card Gato do Dia (Etapa 8.5)
+                  _CatOfTheDayCard(
+                    catStore: catStore,
+                    onTap: () {
+                      final dayIndex = DateTime.now().difference(DateTime(2026, 1, 1)).inDays.abs();
+                      if (discoveries.isNotEmpty) {
+                        final cat = discoveries[dayIndex % discoveries.length];
+                        _open(context, CatDetailsPage(cat: cat, catStore: catStore));
+                      } else {
+                        onNavigate(2);
+                      }
+                    },
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  // Card Destaque: Sua Coleção (conforme Figma Tela 2)
+                  GestureDetector(
+                    onTap: () => onNavigate(3),
+                    child: Container(
                     clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(
                       color: AppColors.primarySoftBg,
@@ -349,6 +381,7 @@ class HomePage extends StatelessWidget {
                         final cat = discoveries[index];
                         return _RecentCatCard(
                           cat: cat,
+                          analysis: catStore.analysisFor(cat.id),
                           onTap: () => _open(
                             context,
                             CatDetailsPage(cat: cat, catStore: catStore),
@@ -512,22 +545,47 @@ class HomePage extends StatelessWidget {
 
                 const SizedBox(height: 20),
               ],
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _RecentCatCard extends StatelessWidget {
-  const _RecentCatCard({required this.cat, required this.onTap});
+  const _RecentCatCard({
+    required this.cat,
+    this.analysis,
+    required this.onTap,
+  });
 
   final Cat cat;
+  final CatAnalysis? analysis;
   final VoidCallback onTap;
+
+  RarityLevel _determineRarity() {
+    if (analysis == null) return RarityLevel.common;
+    if (analysis!.colors.length >= 3) return RarityLevel.legendary;
+    final coat = (analysis!.coatType ?? '').toLowerCase();
+    if (coat.contains('carey') || coat.contains('calico') || coat.contains('quimera')) {
+      return RarityLevel.legendary;
+    }
+    if (analysis!.colors.length == 2 || coat.contains('bicolor') || coat.contains('point')) {
+      return RarityLevel.rare;
+    }
+    if (coat.contains('tabby') || coat.contains('tigrado')) {
+      return RarityLevel.uncommon;
+    }
+    return RarityLevel.common;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final rarity = _determineRarity();
+    final isSpecial = rarity != RarityLevel.common;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -536,26 +594,58 @@ class _RecentCatCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: AppColors.borderLight,
-            width: 1.2,
+            color: isSpecial ? rarity.color : AppColors.borderLight,
+            width: isSpecial ? 2.0 : 1.2,
           ),
+          boxShadow: isSpecial
+              ? [
+                  BoxShadow(
+                    color: rarity.color.withValues(alpha: 0.18),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         padding: const EdgeInsets.fromLTRB(6, 6, 6, 4),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Foto com cantos arredondados
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              child: SizedBox(
-                height: 90,
-                width: double.infinity,
-                child: CatPhotoView(cat.photoPath, fit: BoxFit.cover),
-              ),
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  child: SizedBox(
+                    height: 90,
+                    width: double.infinity,
+                    child: CatPhotoView(cat.photoPath, fit: BoxFit.cover),
+                  ),
+                ),
+                if (isSpecial)
+                  Positioned(
+                    top: 4,
+                    left: 4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                      decoration: BoxDecoration(
+                        color: rarity.backgroundColor.withValues(alpha: 0.92),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: rarity.color, width: 0.8),
+                      ),
+                      child: Text(
+                        rarity.label,
+                        style: TextStyle(
+                          fontSize: 8,
+                          fontWeight: FontWeight.w800,
+                          color: rarity.color,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 4),
-            // Rodapé com Nome e Patinha vazada rosa
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Row(
@@ -573,10 +663,190 @@ class _RecentCatCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(
-                    Icons.pets,
-                    size: 16,
+                  Icon(
+                    LucideIcons.pawPrint,
+                    size: 15,
+                    color: isSpecial ? rarity.color : AppColors.primary,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CatOfTheDayCard extends StatelessWidget {
+  const _CatOfTheDayCard({
+    required this.catStore,
+    required this.onTap,
+  });
+
+  final CatStore catStore;
+  final VoidCallback onTap;
+
+  static const List<String> _catCuriosities = [
+    'Gatos passam cerca de 70% da sua vida dormindo e economizando energia para explorar!',
+    'O ronronar de um gato vibra entre 20 e 140 Hz, frequencia ligada ao relaxamento e bem-estar.',
+    'O focinho de cada gato tem um padrao unico de marcas, assim como as impressoes digitais humanas.',
+    'Gatos conseguem girar as orelhas em 180 graus de forma independente.',
+    'Ao caminhar, gatos pisam quase exatamente no mesmo lugar com as patas traseiras e dianteiras.',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final discoveries = catStore.discoveries;
+    final dayIndex = DateTime.now().difference(DateTime(2026, 1, 1)).inDays.abs();
+    final curiosity = _catCuriosities[dayIndex % _catCuriosities.length];
+
+    if (discoveries.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.borderLight, width: 1.2),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: const BoxDecoration(
+                    color: AppColors.primaryLight,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    LucideIcons.sparkles,
                     color: AppColors.primary,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Gato do Dia: Curiosidade Felina',
+                    style: GoogleFonts.fredoka(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              curiosity,
+              style: GoogleFonts.nunito(
+                fontSize: 13,
+                color: AppColors.textMedium,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final cat = discoveries[dayIndex % discoveries.length];
+    final analysis = catStore.analysisFor(cat.id);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.primaryLight, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              color: AppColors.primarySoftBg,
+              child: Row(
+                children: [
+                  const Icon(LucideIcons.sparkles, color: AppColors.primary, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Gato do Dia em Destaque',
+                      style: GoogleFonts.fredoka(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                  ),
+                  const Icon(LucideIcons.chevronRight, color: AppColors.primary, size: 16),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: SizedBox(
+                      width: 72,
+                      height: 72,
+                      child: CatPhotoView(cat.photoPath, fit: BoxFit.cover),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          cat.displayName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.nunito(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                        if (analysis?.coatType != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            analysis!.coatType!,
+                            style: GoogleFonts.nunito(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 4),
+                        Text(
+                          curiosity,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.nunito(
+                            fontSize: 11,
+                            color: AppColors.textMedium,
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
