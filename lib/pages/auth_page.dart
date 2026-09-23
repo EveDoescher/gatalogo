@@ -254,8 +254,9 @@ class _AuthPageState extends State<AuthPage> {
       return;
     }
     if (_mode == _AuthMode.register && !_agreeTerms) {
-      setState(() => _error =
-          'Aceite os Termos de Servico e Politica de Privacidade para continuar.');
+      setState(
+        () => _error = 'Aceite os Termos de Servico e Politica de Privacidade para continuar.',
+      );
       return;
     }
     if (_needsCode && _otpCode.length != 6) {
@@ -350,7 +351,8 @@ class _AuthPageState extends State<AuthPage> {
     _AuthMode.resetRequest => 'Informe o e-mail cadastrado na sua conta.',
     _AuthMode.resetVerify =>
       'Digite o código que enviamos para ${_maskedEmail(_email.text)}.',
-    _AuthMode.resetConfirm => 'Crie uma senha segura com pelo menos 12 dígitos.',
+    _AuthMode.resetConfirm =>
+      'Crie uma senha segura com pelo menos 12 dígitos.',
   };
 
   String get _buttonLabel => switch (_mode) {
@@ -434,7 +436,10 @@ class _AuthPageState extends State<AuthPage> {
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 36,
+                  vertical: 12,
+                ),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 340),
                   child: AnimatedBuilder(
@@ -638,7 +643,8 @@ class _AuthPageState extends State<AuthPage> {
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
-                              onPressed: _resendSeconds > 0 ||
+                              onPressed:
+                                  _resendSeconds > 0 ||
                                       widget.sessionStore.isBusy
                                   ? null
                                   : _resend,
@@ -839,7 +845,9 @@ class _AuthPageState extends State<AuthPage> {
                         SizedBox(
                           height: 48,
                           child: ElevatedButton(
-                            onPressed: widget.sessionStore.isBusy ? null : _submit,
+                            onPressed: widget.sessionStore.isBusy
+                                ? null
+                                : _submit,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               elevation: 0,
@@ -932,8 +940,7 @@ class _AuthPageState extends State<AuthPage> {
                                       } catch (_) {
                                         if (mounted) {
                                           setState(
-                                            () => _error =
-                                                'Não foi possível entrar com Google.',
+                                            () => _error = 'Não foi possível entrar com Google.',
                                           );
                                         }
                                       }
@@ -975,67 +982,47 @@ class _AuthPageState extends State<AuthPage> {
                             ),
                           ),
 
-                          const SizedBox(height: 10),
-
-                          // Botão Continuar com a Apple
-                          SizedBox(
-                            height: 42,
-                            child: ElevatedButton(
+                          if (!kIsWeb &&
+                              defaultTargetPlatform == TargetPlatform.iOS) ...[
+                            const SizedBox(height: 10),
+                            ElevatedButton(
                               onPressed: widget.sessionStore.isBusy
                                   ? null
-                                  : () async {
-                                      try {
-                                        if (defaultTargetPlatform == TargetPlatform.iOS ||
-                                            defaultTargetPlatform == TargetPlatform.macOS) {
-                                          setState(
-                                            () => _error = 'Servico Apple Sign-In em inicializacao.',
-                                          );
-                                        } else {
-                                          setState(
-                                            () => _error = 'O login com a Apple esta disponivel em dispositivos Apple.',
-                                          );
-                                        }
-                                      } catch (_) {
-                                        if (mounted) {
-                                          setState(
-                                            () => _error = 'Nao foi possivel entrar com a Apple.',
-                                          );
-                                        }
-                                      }
-                                    },
+                                  : () => setState(
+                                      () => _error = 'Servico Apple Sign-In em inicializacao.',
+                                    ),
                               style: ElevatedButton.styleFrom(
+                                minimumSize: const Size(double.infinity, 48),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
                                 backgroundColor: Colors.black,
                                 foregroundColor: Colors.white,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(21),
+                                  borderRadius: BorderRadius.circular(24),
                                 ),
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(
-                                    LucideIcons.apple,
-                                    size: 19,
-                                    color: Colors.white,
-                                  ),
+                                  const Icon(LucideIcons.apple, size: 19),
                                   const SizedBox(width: 8),
                                   Flexible(
                                     child: Text(
                                       'Continuar com a Apple',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
                                       style: GoogleFonts.nunito(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w700,
-                                        color: Colors.white,
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                          ),
+                          ],
                         ],
 
                         const SizedBox(height: 12),
@@ -1217,4 +1204,3 @@ class _OtpCodeInput extends StatelessWidget {
     );
   }
 }
-
