@@ -69,7 +69,7 @@ class FilterTestStore extends CatStore {
 }
 
 void main() {
-  testWidgets('LibraryPage exibe gatos e abre modal de filtros avançados', (tester) async {
+  testWidgets('LibraryPage mantém filtros nas pills e filtra por status', (tester) async {
     tester.view.physicalSize = const Size(800, 1200);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -91,8 +91,9 @@ void main() {
     expect(find.text('Soneca'), findsOneWidget);
     expect(find.text('Frajola'), findsOneWidget);
 
-    // Abre o modal de filtros avançados pelo botão da barra de pesquisa
-    final filterButton = find.byTooltip('Filtros avançados');
+    // Abre o modal de filtros avançados pela pill abaixo da pesquisa
+    expect(find.byTooltip('Filtros avançados'), findsNothing);
+    final filterButton = find.text('Filtros avançados');
     expect(filterButton, findsOneWidget);
     await tester.tap(filterButton);
     await tester.pumpAndSettle();

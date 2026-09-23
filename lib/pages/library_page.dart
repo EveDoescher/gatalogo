@@ -27,7 +27,6 @@ class _LibraryPageState extends State<LibraryPage> {
   String? _selectedColor;
   String? _selectedCoatPattern;
   String? _selectedNeighborhood;
-  bool _isPokedexMode = false;
   final FavoritesManager _favoritesManager = FavoritesManager.instance;
 
   @override
@@ -54,7 +53,7 @@ class _LibraryPageState extends State<LibraryPage> {
       'set.',
       'out.',
       'nov.',
-      'dez.'
+      'dez.',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
@@ -148,23 +147,28 @@ class _LibraryPageState extends State<LibraryPage> {
                     case 'recentes':
                       break;
                     case 'com_nome':
-                      if (cat.name == null || cat.name!.trim().isEmpty) return false;
+                      if (cat.name == null || cat.name!.trim().isEmpty) {
+                        return false;
+                      }
                       break;
                     case 'favoritos':
                       if (!_favoritesManager.isFavorite(cat.id)) return false;
                       break;
                   }
 
-                  if (_selectedAnalysisStatus != null && _selectedAnalysisStatus != 'all') {
+                  if (_selectedAnalysisStatus != null &&
+                      _selectedAnalysisStatus != 'all') {
                     final effectiveStatus = analysis?.status.name ?? cat.status;
                     switch (_selectedAnalysisStatus) {
                       case 'completed':
-                        if (effectiveStatus != 'completed' && cat.status != 'completed') {
+                        if (effectiveStatus != 'completed' &&
+                            cat.status != 'completed') {
                           return false;
                         }
                         break;
                       case 'pending':
-                        final isPending = effectiveStatus == 'pending' ||
+                        final isPending =
+                            effectiveStatus == 'pending' ||
                             effectiveStatus == 'pending_analysis' ||
                             effectiveStatus == 'analyzing' ||
                             cat.status == 'pending_analysis' ||
@@ -173,7 +177,8 @@ class _LibraryPageState extends State<LibraryPage> {
                         if (!isPending) return false;
                         break;
                       case 'failed':
-                        if (effectiveStatus != 'failed' && cat.status != 'failed') {
+                        if (effectiveStatus != 'failed' &&
+                            cat.status != 'failed') {
                           return false;
                         }
                         break;
@@ -184,24 +189,31 @@ class _LibraryPageState extends State<LibraryPage> {
                     final targetColor = _selectedColor!.toLowerCase();
                     final primaryMatch =
                         analysis?.primaryColor?.toLowerCase() == targetColor;
-                    final listMatch = analysis?.colors.any(
+                    final listMatch =
+                        analysis?.colors.any(
                           (c) => c.name.toLowerCase().contains(targetColor),
                         ) ==
                         true;
                     if (!primaryMatch && !listMatch) return false;
                   }
 
-                  if (_selectedCoatPattern != null && _selectedCoatPattern != 'all') {
+                  if (_selectedCoatPattern != null &&
+                      _selectedCoatPattern != 'all') {
                     final targetPattern = _selectedCoatPattern!.toLowerCase();
                     final patternMatch =
-                        analysis?.coatType?.toLowerCase().contains(targetPattern) == true;
+                        analysis?.coatType?.toLowerCase().contains(
+                          targetPattern,
+                        ) ==
+                        true;
                     if (!patternMatch) return false;
                   }
 
-                  if (_selectedNeighborhood != null && _selectedNeighborhood != 'all') {
+                  if (_selectedNeighborhood != null &&
+                      _selectedNeighborhood != 'all') {
                     final targetNeigh = _selectedNeighborhood!.toLowerCase();
                     final neighMatch =
-                        cat.locationName?.toLowerCase().contains(targetNeigh) == true;
+                        cat.locationName?.toLowerCase().contains(targetNeigh) ==
+                        true;
                     if (!neighMatch) return false;
                   }
 
@@ -209,7 +221,9 @@ class _LibraryPageState extends State<LibraryPage> {
                 }).toList();
 
                 if (_selectedFilter == 'recentes') {
-                  filteredCats.sort((a, b) => b.capturedAt.compareTo(a.capturedAt));
+                  filteredCats.sort(
+                    (a, b) => b.capturedAt.compareTo(a.capturedAt),
+                  );
                 }
 
                 return Column(
@@ -253,7 +267,8 @@ class _LibraryPageState extends State<LibraryPage> {
                               child: SizedBox(
                                 height: 48,
                                 child: TextField(
-                                  onChanged: (val) => setState(() => _query = val),
+                                  onChanged: (val) =>
+                                      setState(() => _query = val),
                                   style: GoogleFonts.nunito(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
@@ -272,48 +287,6 @@ class _LibraryPageState extends State<LibraryPage> {
                                       LucideIcons.search,
                                       size: 19,
                                       color: AppColors.textLight,
-                                    ),
-                                    suffixIcon: IconButton(
-                                      icon: Stack(
-                                        clipBehavior: Clip.none,
-                                        children: [
-                                          Icon(
-                                            LucideIcons.slidersHorizontal,
-                                            size: 19,
-                                            color: _activeFiltersCount > 0
-                                                ? AppColors.primary
-                                                : AppColors.textDark,
-                                          ),
-                                          if (_activeFiltersCount > 0)
-                                            Positioned(
-                                              top: -4,
-                                              right: -4,
-                                              child: Container(
-                                                padding: const EdgeInsets.all(3),
-                                                decoration: const BoxDecoration(
-                                                  color: AppColors.primary,
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                constraints: const BoxConstraints(
-                                                  minWidth: 14,
-                                                  minHeight: 14,
-                                                ),
-                                                child: Text(
-                                                  '$_activeFiltersCount',
-                                                  textAlign: TextAlign.center,
-                                                  style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 9,
-                                                    fontWeight: FontWeight.w800,
-                                                    height: 1,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                      onPressed: () => _openAdvancedFiltersModal(allDiscoveries),
-                                      tooltip: 'Filtros avançados',
                                     ),
                                     contentPadding: const EdgeInsets.symmetric(
                                       horizontal: 16,
@@ -351,7 +324,7 @@ class _LibraryPageState extends State<LibraryPage> {
                               child: IgnorePointer(
                                 child: Image.asset(
                                   'assets/images/gato_3.png',
-                                  width: 130,
+                                  width: 76,
                                   fit: BoxFit.contain,
                                 ),
                               ),
@@ -371,8 +344,6 @@ class _LibraryPageState extends State<LibraryPage> {
                         physics: const BouncingScrollPhysics(),
                         child: Row(
                           children: [
-                            _buildViewModeToggle(),
-                            const SizedBox(width: 8),
                             _buildFilterChip(
                               label: 'Todos (${allDiscoveries.length})',
                               key: 'todos',
@@ -396,7 +367,8 @@ class _LibraryPageState extends State<LibraryPage> {
                             _buildFilterActionChip(
                               label: 'Filtros avançados',
                               count: _activeFiltersCount,
-                              onTap: () => _openAdvancedFiltersModal(allDiscoveries),
+                              onTap: () =>
+                                  _openAdvancedFiltersModal(allDiscoveries),
                             ),
                             const SizedBox(width: 20),
                           ],
@@ -419,29 +391,36 @@ class _LibraryPageState extends State<LibraryPage> {
                                     if (_selectedAnalysisStatus != null &&
                                         _selectedAnalysisStatus != 'all')
                                       _buildActiveFilterBadge(
-                                        label: _analysisStatusLabel(_selectedAnalysisStatus!),
-                                        onRemove: () =>
-                                            setState(() => _selectedAnalysisStatus = null),
+                                        label: _analysisStatusLabel(
+                                          _selectedAnalysisStatus!,
+                                        ),
+                                        onRemove: () => setState(
+                                          () => _selectedAnalysisStatus = null,
+                                        ),
                                       ),
                                     if (_selectedCoatPattern != null &&
                                         _selectedCoatPattern != 'all')
                                       _buildActiveFilterBadge(
                                         label: 'Padrão: $_selectedCoatPattern',
-                                        onRemove: () =>
-                                            setState(() => _selectedCoatPattern = null),
+                                        onRemove: () => setState(
+                                          () => _selectedCoatPattern = null,
+                                        ),
                                       ),
-                                    if (_selectedColor != null && _selectedColor != 'all')
+                                    if (_selectedColor != null &&
+                                        _selectedColor != 'all')
                                       _buildActiveFilterBadge(
                                         label: 'Cor: $_selectedColor',
-                                        onRemove: () =>
-                                            setState(() => _selectedColor = null),
+                                        onRemove: () => setState(
+                                          () => _selectedColor = null,
+                                        ),
                                       ),
                                     if (_selectedNeighborhood != null &&
                                         _selectedNeighborhood != 'all')
                                       _buildActiveFilterBadge(
                                         label: 'Bairro: $_selectedNeighborhood',
-                                        onRemove: () =>
-                                            setState(() => _selectedNeighborhood = null),
+                                        onRemove: () => setState(
+                                          () => _selectedNeighborhood = null,
+                                        ),
                                       ),
                                   ],
                                 ),
@@ -470,7 +449,7 @@ class _LibraryPageState extends State<LibraryPage> {
                       child: RefreshIndicator(
                         color: AppColors.primary,
                         onRefresh: () async {
-                          await widget.catStore.syncCatalog();
+                          await widget.catStore.syncCatalog(manual: true);
                         },
                         child: widget.catStore.isLoading
                             ? const Center(
@@ -478,102 +457,107 @@ class _LibraryPageState extends State<LibraryPage> {
                                   color: AppColors.primary,
                                 ),
                               )
-                            : _isPokedexMode
-                                ? _buildPokedexGrid(allDiscoveries)
-                                : filteredCats.isEmpty
-                                    ? Center(
-                                        child: SingleChildScrollView(
-                                          physics: const AlwaysScrollableScrollPhysics(),
-                                          padding: const EdgeInsets.all(32),
-                                          child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Image.asset(
-                                                'assets/images/gato_2.png',
-                                                height: 100,
-                                                fit: BoxFit.contain,
-                                              ),
-                                              const SizedBox(height: 16),
-                                              Text(
-                                                'Nenhum gato encontrado',
-                                                style: GoogleFonts.fredoka(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: AppColors.textDark,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 6),
-                                              Text(
-                                                'Fotografe novos gatos na rua para expandir seu herbário felino!',
-                                                textAlign: TextAlign.center,
-                                                style: GoogleFonts.nunito(
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w500,
-                                                  color: AppColors.textMedium,
-                                                ),
-                                              ),
-                                            ],
+                            : filteredCats.isEmpty
+                            ? Center(
+                                child: SingleChildScrollView(
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  padding: const EdgeInsets.all(32),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Image.asset(
+                                        'assets/images/gato_2.png',
+                                        height: 100,
+                                        fit: BoxFit.contain,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'Nenhum gato encontrado',
+                                        style: GoogleFonts.fredoka(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.textDark,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        'Fotografe novos gatos na rua para expandir seu herbário felino!',
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.nunito(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppColors.textMedium,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            : GridView.builder(
+                                physics: const AlwaysScrollableScrollPhysics(
+                                  parent: BouncingScrollPhysics(),
+                                ),
+                                padding: const EdgeInsets.fromLTRB(
+                                  20,
+                                  6,
+                                  20,
+                                  24,
+                                ),
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
+                                      crossAxisSpacing: 14,
+                                      mainAxisSpacing: 16,
+                                      childAspectRatio: 0.74,
+                                    ),
+                                itemCount: filteredCats.length,
+                                itemBuilder: (context, index) {
+                                  final cat = filteredCats[index];
+                                  final isFav = _favoritesManager.isFavorite(
+                                    cat.id,
+                                  );
+
+                                  // Staggered animated entrance for items
+                                  return TweenAnimationBuilder<double>(
+                                    duration: Duration(
+                                      milliseconds: 250 + (index % 6) * 50,
+                                    ),
+                                    curve: Curves.easeOutCubic,
+                                    tween: Tween(begin: 0.0, end: 1.0),
+                                    builder: (context, val, child) {
+                                      return Opacity(
+                                        opacity: val,
+                                        child: Transform.translate(
+                                          offset: Offset(0, (1.0 - val) * 20),
+                                          child: child,
+                                        ),
+                                      );
+                                    },
+                                    child: _CollectionCatCard(
+                                      cat: cat,
+                                      analysis: widget.catStore.analysisFor(
+                                        cat.id,
+                                      ),
+                                      isFavorite: isFav,
+                                      formattedDate: _formatDate(
+                                        cat.capturedAt,
+                                      ),
+                                      onToggleFavorite: () => widget.catStore
+                                          .toggleFavorite(cat.id),
+                                      onTap: () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => CatDetailsPage(
+                                            cat: cat,
+                                            catStore: widget.catStore,
                                           ),
                                         ),
-                                      )
-                                    : GridView.builder(
-                                        physics: const AlwaysScrollableScrollPhysics(
-                                          parent: BouncingScrollPhysics(),
-                                        ),
-                                        padding: const EdgeInsets.fromLTRB(20, 6, 20, 24),
-                                        gridDelegate:
-                                            const SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 2,
-                                          crossAxisSpacing: 14,
-                                          mainAxisSpacing: 16,
-                                          childAspectRatio: 0.74,
-                                        ),
-                                        itemCount: filteredCats.length,
-                                        itemBuilder: (context, index) {
-                                          final cat = filteredCats[index];
-                                          final isFav =
-                                              _favoritesManager.isFavorite(cat.id);
-
-                                          // Staggered animated entrance for items
-                                          return TweenAnimationBuilder<double>(
-                                            duration: Duration(
-                                                milliseconds:
-                                                    250 + (index % 6) * 50),
-                                            curve: Curves.easeOutCubic,
-                                            tween: Tween(begin: 0.0, end: 1.0),
-                                            builder: (context, val, child) {
-                                              return Opacity(
-                                                opacity: val,
-                                                child: Transform.translate(
-                                                  offset:
-                                                      Offset(0, (1.0 - val) * 20),
-                                                  child: child,
-                                                ),
-                                              );
-                                            },
-                                            child: _CollectionCatCard(
-                                              cat: cat,
-                                              analysis: widget.catStore
-                                                  .analysisFor(cat.id),
-                                              isFavorite: isFav,
-                                              formattedDate:
-                                                  _formatDate(cat.capturedAt),
-                                              onToggleFavorite: () => widget
-                                                  .catStore
-                                                  .toggleFavorite(cat.id),
-                                              onTap: () => Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (_) => CatDetailsPage(
-                                                    cat: cat,
-                                                    catStore: widget.catStore,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          );
-                                        },
                                       ),
+                                    ),
+                                  );
+                                },
+                              ),
                       ),
                     ),
                   ],
@@ -677,7 +661,14 @@ class _LibraryPageState extends State<LibraryPage> {
         }
       }
     }
-    const baseColors = ['Preto', 'Branco', 'Laranja', 'Cinza', 'Marrom', 'Creme'];
+    const baseColors = [
+      'Preto',
+      'Branco',
+      'Laranja',
+      'Cinza',
+      'Marrom',
+      'Creme',
+    ];
     for (final c in baseColors) {
       colors.add(c);
     }
@@ -777,23 +768,29 @@ class _LibraryPageState extends State<LibraryPage> {
                             children: [
                               _buildModalFilterChip(
                                 label: 'Todas',
-                                isSelected: tempStatus == null || tempStatus == 'all',
-                                onTap: () => setModalState(() => tempStatus = null),
+                                isSelected:
+                                    tempStatus == null || tempStatus == 'all',
+                                onTap: () =>
+                                    setModalState(() => tempStatus = null),
                               ),
                               _buildModalFilterChip(
                                 label: 'Concluídas',
                                 isSelected: tempStatus == 'completed',
-                                onTap: () => setModalState(() => tempStatus = 'completed'),
+                                onTap: () => setModalState(
+                                  () => tempStatus = 'completed',
+                                ),
                               ),
                               _buildModalFilterChip(
                                 label: 'Pendentes',
                                 isSelected: tempStatus == 'pending',
-                                onTap: () => setModalState(() => tempStatus = 'pending'),
+                                onTap: () =>
+                                    setModalState(() => tempStatus = 'pending'),
                               ),
                               _buildModalFilterChip(
                                 label: 'Com falha',
                                 isSelected: tempStatus == 'failed',
-                                onTap: () => setModalState(() => tempStatus = 'failed'),
+                                onTap: () =>
+                                    setModalState(() => tempStatus = 'failed'),
                               ),
                             ],
                           ),
@@ -805,15 +802,19 @@ class _LibraryPageState extends State<LibraryPage> {
                             children: [
                               _buildModalFilterChip(
                                 label: 'Todos',
-                                isSelected: tempPattern == null || tempPattern == 'all',
-                                onTap: () => setModalState(() => tempPattern = null),
+                                isSelected:
+                                    tempPattern == null || tempPattern == 'all',
+                                onTap: () =>
+                                    setModalState(() => tempPattern = null),
                               ),
                               ...sortedPatterns.map(
                                 (p) => _buildModalFilterChip(
                                   label: p,
                                   isSelected: tempPattern == p,
                                   onTap: () => setModalState(
-                                    () => tempPattern = tempPattern == p ? null : p,
+                                    () => tempPattern = tempPattern == p
+                                        ? null
+                                        : p,
                                   ),
                                 ),
                               ),
@@ -827,8 +828,10 @@ class _LibraryPageState extends State<LibraryPage> {
                             children: [
                               _buildModalFilterChip(
                                 label: 'Todas',
-                                isSelected: tempColor == null || tempColor == 'all',
-                                onTap: () => setModalState(() => tempColor = null),
+                                isSelected:
+                                    tempColor == null || tempColor == 'all',
+                                onTap: () =>
+                                    setModalState(() => tempColor = null),
                               ),
                               ...sortedColors.map(
                                 (c) => _buildModalFilterChip(
@@ -862,15 +865,18 @@ class _LibraryPageState extends State<LibraryPage> {
                               children: [
                                 _buildModalFilterChip(
                                   label: 'Todos',
-                                  isSelected: tempNeigh == null || tempNeigh == 'all',
-                                  onTap: () => setModalState(() => tempNeigh = null),
+                                  isSelected:
+                                      tempNeigh == null || tempNeigh == 'all',
+                                  onTap: () =>
+                                      setModalState(() => tempNeigh = null),
                                 ),
                                 ...sortedNeighborhoods.map(
                                   (n) => _buildModalFilterChip(
                                     label: n,
                                     isSelected: tempNeigh == n,
                                     onTap: () => setModalState(
-                                      () => tempNeigh = tempNeigh == n ? null : n,
+                                      () =>
+                                          tempNeigh = tempNeigh == n ? null : n,
                                     ),
                                   ),
                                 ),
@@ -1072,106 +1078,6 @@ class _LibraryPageState extends State<LibraryPage> {
       ),
     );
   }
-
-  Widget _buildViewModeToggle() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border, width: 1.0),
-      ),
-      padding: const EdgeInsets.all(3),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildToggleOption(
-            icon: LucideIcons.layoutGrid,
-            tooltip: 'Grade',
-            isSelected: !_isPokedexMode,
-            onTap: () => setState(() => _isPokedexMode = false),
-          ),
-          const SizedBox(width: 2),
-          _buildToggleOption(
-            icon: LucideIcons.bookOpen,
-            tooltip: 'Pokédex Felina',
-            isSelected: _isPokedexMode,
-            onTap: () => setState(() => _isPokedexMode = true),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildToggleOption({
-    required IconData icon,
-    required String tooltip,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return Tooltip(
-      message: tooltip,
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Icon(
-            icon,
-            size: 16,
-            color: isSelected ? Colors.white : AppColors.textMedium,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPokedexGrid(List<Cat> discoveries) {
-    final mapByNumber = <int, Cat>{};
-    int maxNumber = 60;
-    for (final cat in discoveries) {
-      mapByNumber[cat.captureNumber] = cat;
-      if (cat.captureNumber > maxNumber) {
-        maxNumber = cat.captureNumber;
-      }
-    }
-
-    final totalSlots = maxNumber;
-
-    return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 80),
-      physics: const AlwaysScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.72,
-      ),
-      itemCount: totalSlots,
-      itemBuilder: (context, index) {
-        final slotNumber = index + 1;
-        final cat = mapByNumber[slotNumber];
-        return _PokedexSlotCard(
-          slotNumber: slotNumber,
-          cat: cat,
-          onTap: cat != null
-              ? () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => CatDetailsPage(
-                        cat: cat,
-                        catStore: widget.catStore,
-                      ),
-                    ),
-                  )
-              : null,
-        );
-      },
-    );
-  }
 }
 
 class _CollectionCatCard extends StatefulWidget {
@@ -1195,7 +1101,8 @@ class _CollectionCatCard extends StatefulWidget {
   State<_CollectionCatCard> createState() => _CollectionCatCardState();
 }
 
-class _CollectionCatCardState extends State<_CollectionCatCard> with SingleTickerProviderStateMixin {
+class _CollectionCatCardState extends State<_CollectionCatCard>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _heartController;
   late final Animation<double> _heartScale;
   bool _isPressed = false;
@@ -1208,8 +1115,20 @@ class _CollectionCatCardState extends State<_CollectionCatCard> with SingleTicke
       duration: const Duration(milliseconds: 300),
     );
     _heartScale = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.35).chain(CurveTween(curve: Curves.easeOutBack)), weight: 50),
-      TweenSequenceItem(tween: Tween(begin: 1.35, end: 1.0).chain(CurveTween(curve: Curves.easeIn)), weight: 50),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 1.0,
+          end: 1.35,
+        ).chain(CurveTween(curve: Curves.easeOutBack)),
+        weight: 50,
+      ),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 1.35,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeIn)),
+        weight: 50,
+      ),
     ]).animate(_heartController);
   }
 
@@ -1234,8 +1153,8 @@ class _CollectionCatCardState extends State<_CollectionCatCard> with SingleTicke
     final rawLocation = widget.cat.locationName?.trim();
     final locationText = rawLocation != null && rawLocation.isNotEmpty
         ? (rawLocation.contains(',')
-            ? rawLocation.replaceFirst(',', ',\n')
-            : rawLocation)
+              ? rawLocation.replaceFirst(',', ',\n')
+              : rawLocation)
         : 'Localização\nnão informada';
 
     return GestureDetector(
@@ -1251,10 +1170,7 @@ class _CollectionCatCardState extends State<_CollectionCatCard> with SingleTicke
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: AppColors.border,
-              width: 1.0,
-            ),
+            border: Border.all(color: AppColors.border, width: 1.0),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1364,138 +1280,139 @@ class _CollectionCatCardState extends State<_CollectionCatCard> with SingleTicke
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                      // Nome do Gato em Fredoka
-                      Text(
-                        catName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.fredoka(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textTitle,
+                        // Nome do Gato em Fredoka
+                        Text(
+                          catName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.fredoka(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textTitle,
+                          ),
                         ),
-                      ),
-                      // Código / Identificador
-                      Text(
-                        catCode,
-                        style: GoogleFonts.nunito(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textLight,
+                        // Código / Identificador
+                        Text(
+                          catCode,
+                          style: GoogleFonts.nunito(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textLight,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 6),
+                        const SizedBox(height: 6),
 
-                      // Linha com Data, Local e Botão de Favoritar
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Data
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      LucideIcons.calendar,
-                                      size: 11,
-                                      color: AppColors.textLight,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Expanded(
-                                      child: Text(
-                                        widget.formattedDate,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: GoogleFonts.nunito(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.textMedium,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 2),
-                                // Localização
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Padding(
-                                      padding: EdgeInsets.only(top: 1),
-                                      child: Icon(
-                                        LucideIcons.mapPin,
+                        // Linha com Data, Local e Botão de Favoritar
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Data
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        LucideIcons.calendar,
                                         size: 11,
                                         color: AppColors.textLight,
                                       ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Expanded(
-                                      child: Text(
-                                        locationText,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: GoogleFonts.nunito(
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.textMedium,
-                                          height: 1.15,
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          widget.formattedDate,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.nunito(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.textMedium,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  // Localização
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Padding(
+                                        padding: EdgeInsets.only(top: 1),
+                                        child: Icon(
+                                          LucideIcons.mapPin,
+                                          size: 11,
+                                          color: AppColors.textLight,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          locationText,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.nunito(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.textMedium,
+                                            height: 1.15,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          // Botão de Favoritar Animado
-                          GestureDetector(
-                            onTap: _handleHeartTap,
-                            behavior: HitTestBehavior.opaque,
-                            child: ScaleTransition(
-                              scale: _heartScale,
-                              child: Container(
-                                width: 34,
-                                height: 34,
-                                decoration: BoxDecoration(
-                                  color: widget.isFavorite
-                                      ? AppColors.primaryLight
-                                      : AppColors.cardBackground,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
+                            // Botão de Favoritar Animado
+                            GestureDetector(
+                              onTap: _handleHeartTap,
+                              behavior: HitTestBehavior.opaque,
+                              child: ScaleTransition(
+                                scale: _heartScale,
+                                child: Container(
+                                  width: 34,
+                                  height: 34,
+                                  decoration: BoxDecoration(
+                                    color: widget.isFavorite
+                                        ? AppColors.primaryLight
+                                        : AppColors.cardBackground,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: widget.isFavorite
+                                          ? AppColors.primary
+                                          : AppColors.border,
+                                      width: 1.0,
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    widget.isFavorite
+                                        ? Icons.favorite
+                                        : LucideIcons.heart,
+                                    size: 16,
                                     color: widget.isFavorite
                                         ? AppColors.primary
-                                        : AppColors.border,
-                                    width: 1.0,
+                                        : AppColors.textMedium,
                                   ),
-                                ),
-                                child: Icon(
-                                  widget.isFavorite
-                                      ? Icons.favorite
-                                      : LucideIcons.heart,
-                                  size: 16,
-                                  color: widget.isFavorite
-                                      ? AppColors.primary
-                                      : AppColors.textMedium,
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
 
 class _CardImageClipper extends CustomClipper<Path> {
@@ -1518,130 +1435,3 @@ class _CardImageClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
-
-class _PokedexSlotCard extends StatelessWidget {
-  const _PokedexSlotCard({
-    required this.slotNumber,
-    this.cat,
-    this.onTap,
-  });
-
-  final int slotNumber;
-  final Cat? cat;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDiscovered = cat != null;
-    final formattedNumber = '#${slotNumber.toString().padLeft(3, '0')}';
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDiscovered
-              ? AppColors.cardBackground
-              : AppColors.cardBackground.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isDiscovered
-                ? AppColors.primary.withValues(alpha: 0.3)
-                : AppColors.border,
-            width: 1.0,
-          ),
-          boxShadow: isDiscovered
-              ? [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.06),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ]
-              : null,
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(15),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Badge do número
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 6, 8, 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      formattedNumber,
-                      style: GoogleFonts.nunito(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: isDiscovered
-                            ? AppColors.primary
-                            : AppColors.textLight,
-                      ),
-                    ),
-                    if (isDiscovered)
-                      const Icon(
-                        LucideIcons.check,
-                        size: 11,
-                        color: AppColors.success,
-                      )
-                    else
-                      const Icon(
-                        LucideIcons.lock,
-                        size: 11,
-                        color: AppColors.textLight,
-                      ),
-                  ],
-                ),
-              ),
-
-              // Área da foto ou silhueta
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: isDiscovered
-                        ? CatPhotoView(
-                            cat!.photoPath,
-                            fit: BoxFit.cover,
-                            borderRadius: 10,
-                          )
-                        : Container(
-                            color: AppColors.border.withValues(alpha: 0.35),
-                            child: Center(
-                              child: Icon(
-                                LucideIcons.pawPrint,
-                                size: 30,
-                                color: AppColors.textLight.withValues(alpha: 0.4),
-                              ),
-                            ),
-                          ),
-                  ),
-                ),
-              ),
-
-              // Nome do gato
-              Padding(
-                padding: const EdgeInsets.fromLTRB(6, 5, 6, 6),
-                child: Text(
-                  isDiscovered ? cat!.displayName : '???',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.fredoka(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: isDiscovered ? AppColors.textDark : AppColors.textLight,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
