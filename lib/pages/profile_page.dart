@@ -77,7 +77,6 @@ class _ProfilePageState extends State<ProfilePage> {
         }
       }
     } catch (_) {
-      // Offline mode
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -476,7 +475,6 @@ class _ProfilePageState extends State<ProfilePage> {
     final discoveries = widget.catStore?.discoveries ?? [];
     final totalCats = discoveries.length;
 
-    // Conquistas reais da jornada
     final journeyList = widget.catStore != null
         ? localJourney(widget.catStore!)
         : [];
@@ -542,7 +540,6 @@ class _ProfilePageState extends State<ProfilePage> {
           : ListView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               children: [
-                // 1. Avatar Central
                 Center(
                   child: Column(
                     children: [
@@ -623,7 +620,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       const SizedBox(height: 10),
 
-                      // Nome de Usuário (@username)
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -669,8 +665,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
 
                 const SizedBox(height: 16),
-
-                // Card de Gamificação, Nível e Streak (Etapa 6.1 e 6.2)
                 if (widget.catStore != null) ...[
                   GatalogoGamificationCard(
                     gamification: widget.catStore!.gamification,
@@ -684,7 +678,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   const SizedBox(height: 16),
                 ],
 
-                // 2. Card de Bio / Status (Salvo na API)
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -771,7 +764,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 const SizedBox(height: 28),
 
-                // 4. Suas Descobertas Recentes
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [

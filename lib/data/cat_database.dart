@@ -6,7 +6,6 @@ import 'package:uuid/uuid.dart';
 
 import '../models/cat.dart';
 import '../models/cat_analysis.dart';
-import '../models/cat_avatar.dart';
 import '../models/cat_reference_photo.dart';
 
 class CatDatabase {
@@ -82,7 +81,7 @@ class CatDatabase {
     value TEXT NOT NULL
   )
 ''');
-        await _createAvatarTables(db);
+        await _createReferencePhotoTable(db);
       },
 
       onUpgrade: (db, oldVersion, newVersion) async {
@@ -90,7 +89,9 @@ class CatDatabase {
           final columns = await db.rawQuery('PRAGMA table_info(cats)');
           final names = columns.map((c) => c['name'] as String).toSet();
           if (!names.contains('is_favorite')) {
-            await db.execute('ALTER TABLE cats ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0');
+            await db.execute(
+              'ALTER TABLE cats ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0',
+            );
           }
           if (!names.contains('notes')) {
             await db.execute('ALTER TABLE cats ADD COLUMN notes TEXT');
@@ -106,13 +107,13 @@ class CatDatabase {
             await db.execute('ALTER TABLE cats ADD COLUMN collar TEXT');
           }
           if (!names.contains('distinguishing_marks')) {
-            await db.execute('ALTER TABLE cats ADD COLUMN distinguishing_marks TEXT');
+            await db.execute(
+              'ALTER TABLE cats ADD COLUMN distinguishing_marks TEXT',
+            );
           }
         }
         if (oldVersion < 12) {
-          final columns = await db.rawQuery(
-            'PRAGMA table_info(cat_analyses)',
-          );
+          final columns = await db.rawQuery('PRAGMA table_info(cat_analyses)');
           final hasHairType = columns.any(
             (column) => column['name'] == 'hair_type',
           );
@@ -219,25 +220,13 @@ class CatDatabase {
           ''');
         }
         if (oldVersion < 10) {
-          await _createAvatarTables(db);
+          await _createReferencePhotoTable(db);
         }
       },
     );
   }
 
-  Future<void> _createAvatarTables(DatabaseExecutor db) async {
-    await db.execute('''
-      CREATE TABLE IF NOT EXISTS cat_avatars (
-        cat_id TEXT PRIMARY KEY,
-        version INTEGER NOT NULL DEFAULT 0,
-        status TEXT NOT NULL DEFAULT 'pending',
-        preview_path TEXT,
-        texture_paths_json TEXT NOT NULL DEFAULT '{}',
-        coat_map_json TEXT,
-        error_message TEXT,
-        updated_at TEXT NOT NULL
-      )
-    ''');
+  Future<void> _createReferencePhotoTable(DatabaseExecutor db) async {
     await db.execute('''
       CREATE TABLE IF NOT EXISTS cat_reference_photos (
         cat_id TEXT NOT NULL,
@@ -605,26 +594,6 @@ class CatDatabase {
         );
       }
     });
-  }
-
-  Future<CatAvatar?> getAvatar(String catId) async {
-    final db = await database;
-    final rows = await db.query(
-      'cat_avatars',
-      where: 'cat_id = ?',
-      whereArgs: [catId],
-      limit: 1,
-    );
-    return rows.isEmpty ? null : CatAvatar.fromMap(rows.first);
-  }
-
-  Future<void> upsertAvatar(CatAvatar avatar) async {
-    final db = await database;
-    await db.insert(
-      'cat_avatars',
-      avatar.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
   }
 
   Future<List<CatReferencePhoto>> getReferencePhotos(String catId) async {

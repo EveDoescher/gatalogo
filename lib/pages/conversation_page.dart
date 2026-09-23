@@ -963,7 +963,7 @@ class _ConversationPageState extends State<ConversationPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Barra de reações com emojis comuns
+              // A API armazena os identificadores das reações como texto.
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 padding: const EdgeInsets.symmetric(
@@ -1142,10 +1142,10 @@ class _ConversationPageState extends State<ConversationPage> {
     );
   }
 
-  Future<void> _toggleReaction(ChatMessage msg, String emoji) async {
+  Future<void> _toggleReaction(ChatMessage msg, String reaction) async {
     // Atualização otimista
     final myId = _myUserId ?? 'me';
-    final currentList = List<String>.from(msg.reactions[emoji] ?? []);
+    final currentList = List<String>.from(msg.reactions[reaction] ?? []);
     final alreadyReacted = currentList.contains(myId);
 
     if (alreadyReacted) {
@@ -1156,9 +1156,9 @@ class _ConversationPageState extends State<ConversationPage> {
 
     final newReactions = Map<String, List<String>>.from(msg.reactions);
     if (currentList.isEmpty) {
-      newReactions.remove(emoji);
+      newReactions.remove(reaction);
     } else {
-      newReactions[emoji] = currentList;
+      newReactions[reaction] = currentList;
     }
 
     setState(() {
@@ -1168,7 +1168,7 @@ class _ConversationPageState extends State<ConversationPage> {
     });
 
     try {
-      await _api.toggleMessageReaction(widget.conversationId, msg.id, emoji);
+      await _api.toggleMessageReaction(widget.conversationId, msg.id, reaction);
     } catch (_) {
       // Reverte em caso de falha de rede
       if (mounted) {

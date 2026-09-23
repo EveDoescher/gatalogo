@@ -69,7 +69,6 @@ class HomePage extends StatelessWidget {
                   vertical: 16,
                 ),
                 children: [
-                  // Header: Logo, Notificações e Botão de Perfil
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -90,7 +89,6 @@ class HomePage extends StatelessWidget {
 
                   const SizedBox(height: 18),
 
-                  // Saudação Personalizada
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -144,15 +142,12 @@ class HomePage extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 24),
-                  // Card de Proximidade / Geofencing da Busca Ativa (Etapa 3.4)
                   ActiveSearchProximityCard(
                     sessionStore: sessionStore,
                     catStore: catStore,
                   ),
 
                   const SizedBox(height: 14),
-
-                  // Card de Gamificação: Nível, XP, Streak & Escudo (Etapa 6.1 e 6.2)
                   GatalogoGamificationCard(
                     gamification: catStore.gamification,
                     onTapJourney: () =>
@@ -160,8 +155,6 @@ class HomePage extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 14),
-
-                  // Card Destaque: Sua Coleção (conforme Figma Tela 2)
                   GestureDetector(
                     onTap: () => onNavigate(3),
                     child: Container(
@@ -172,7 +165,6 @@ class HomePage extends StatelessWidget {
                       ),
                       child: Stack(
                         children: [
-                          // Raminho de folhas decorativas saindo do lado direito superior apontando para dentro
                           Positioned(
                             right: -10,
                             top: -6,
@@ -187,7 +179,6 @@ class HomePage extends StatelessWidget {
                               ),
                             ),
                           ),
-                          // Raminho verde saindo da base entre o texto e o gato
                           Positioned(
                             left: 122,
                             bottom: -12,
@@ -205,7 +196,6 @@ class HomePage extends StatelessWidget {
                               ),
                             ),
                           ),
-                          // Conteúdo interno do Card
                           Padding(
                             padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
                             child: Column(
@@ -223,7 +213,6 @@ class HomePage extends StatelessWidget {
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
-                                    // Número grande e rótulo
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment:
@@ -253,7 +242,6 @@ class HomePage extends StatelessWidget {
                                       ),
                                     ),
                                     const SizedBox(width: 8),
-                                    // Gatinho dormindo
                                     Image.asset(
                                       'assets/images/gato_2.png',
                                       height: 80,
@@ -262,7 +250,6 @@ class HomePage extends StatelessWidget {
                                   ],
                                 ),
                                 const SizedBox(height: 14),
-                                // Barra de progresso com borda e preenchimento verde conforme Figma Tela 2
                                 Row(
                                   children: [
                                     const Spacer(),
@@ -330,8 +317,6 @@ class HomePage extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 20),
-
-                  // Seção: Descobertas Recentes (sem "Ver tudo" conforme Figma Tela 2)
                   Text(
                     'Descobertas Recentes',
                     style: GoogleFonts.nunito(
@@ -342,7 +327,6 @@ class HomePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
 
-                  // Lista Horizontal de Descobertas
                   if (discoveries.isEmpty)
                     Container(
                       padding: const EdgeInsets.symmetric(

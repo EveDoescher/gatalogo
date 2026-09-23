@@ -65,7 +65,6 @@ class _LibraryPageState extends State<LibraryPage> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Folhagens decorativas das bordas (Figma Tela 4)
             Positioned(
               left: -15,
               top: 40,
@@ -118,7 +117,6 @@ class _LibraryPageState extends State<LibraryPage> {
               ),
             ),
 
-            // Conteúdo principal
             AnimatedBuilder(
               animation: Listenable.merge([widget.catStore, _favoritesManager]),
               builder: (context, _) {
@@ -228,7 +226,6 @@ class _LibraryPageState extends State<LibraryPage> {
 
                 return Column(
                   children: [
-                    // Topo: Barra com Logo + Avatar
                     Padding(
                       padding: const EdgeInsets.fromLTRB(20, 10, 20, 4),
                       child: Row(
@@ -251,7 +248,6 @@ class _LibraryPageState extends State<LibraryPage> {
                       ),
                     ),
 
-                    // Barra de Busca com o Gatinho debruçado com micro-animação
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: SizedBox(
@@ -259,7 +255,6 @@ class _LibraryPageState extends State<LibraryPage> {
                         child: Stack(
                           clipBehavior: Clip.none,
                           children: [
-                            // Campo de Busca
                             Positioned(
                               left: 0,
                               right: 0,
@@ -317,7 +312,6 @@ class _LibraryPageState extends State<LibraryPage> {
                                 ),
                               ),
                             ),
-                            // Gatinho ilustrado
                             Positioned(
                               right: 28,
                               bottom: 32,
@@ -336,7 +330,6 @@ class _LibraryPageState extends State<LibraryPage> {
 
                     const SizedBox(height: 10),
 
-                    // Filtros horizontais em estilo cápsula (Pills)
                     Padding(
                       padding: const EdgeInsets.only(left: 20, bottom: 8),
                       child: SingleChildScrollView(
@@ -376,7 +369,6 @@ class _LibraryPageState extends State<LibraryPage> {
                       ),
                     ),
 
-                    // Chips ativos de filtros avançados
                     if (_activeFiltersCount > 0)
                       Padding(
                         padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
@@ -444,7 +436,6 @@ class _LibraryPageState extends State<LibraryPage> {
 
                     const SizedBox(height: 8),
 
-                    // Grid de Gatos / Pokédex com Pull to Refresh
                     Expanded(
                       child: RefreshIndicator(
                         color: AppColors.primary,
@@ -518,7 +509,6 @@ class _LibraryPageState extends State<LibraryPage> {
                                     cat.id,
                                   );
 
-                                  // Staggered animated entrance for items
                                   return TweenAnimationBuilder<double>(
                                     duration: Duration(
                                       milliseconds: 250 + (index % 6) * 50,
@@ -1175,7 +1165,6 @@ class _CollectionCatCardState extends State<_CollectionCatCard>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Imagem do Gato com recorte suave diagonal e badge de status
               Stack(
                 children: [
                   ClipRRect(
@@ -1271,7 +1260,6 @@ class _CollectionCatCardState extends State<_CollectionCatCard>
                 ],
               ),
 
-              // Informações do Card
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
@@ -1280,7 +1268,6 @@ class _CollectionCatCardState extends State<_CollectionCatCard>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Nome do Gato em Fredoka
                         Text(
                           catName,
                           maxLines: 1,
@@ -1291,7 +1278,6 @@ class _CollectionCatCardState extends State<_CollectionCatCard>
                             color: AppColors.textTitle,
                           ),
                         ),
-                        // Código / Identificador
                         Text(
                           catCode,
                           style: GoogleFonts.nunito(
@@ -1302,7 +1288,6 @@ class _CollectionCatCardState extends State<_CollectionCatCard>
                         ),
                         const SizedBox(height: 6),
 
-                        // Linha com Data, Local e Botão de Favoritar
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
@@ -1311,7 +1296,6 @@ class _CollectionCatCardState extends State<_CollectionCatCard>
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  // Data
                                   Row(
                                     children: [
                                       const Icon(
@@ -1335,7 +1319,6 @@ class _CollectionCatCardState extends State<_CollectionCatCard>
                                     ],
                                   ),
                                   const SizedBox(height: 2),
-                                  // Localização
                                   Row(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -1367,7 +1350,6 @@ class _CollectionCatCardState extends State<_CollectionCatCard>
                                 ],
                               ),
                             ),
-                            // Botão de Favoritar Animado
                             GestureDetector(
                               onTap: _handleHeartTap,
                               behavior: HitTestBehavior.opaque,
@@ -1420,7 +1402,6 @@ class _CardImageClipper extends CustomClipper<Path> {
   Path getClip(Size size) {
     final path = Path();
     path.lineTo(0, size.height);
-    // Curva sutil da esquerda descendo suavemente para a direita como no Figma
     path.quadraticBezierTo(
       size.width * 0.45,
       size.height - 12,

@@ -463,7 +463,6 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
             : 'Gato';
         final catCode = 'Gato #${cat.captureNumber.toString().padLeft(3, '0')}';
 
-        // Localização formatada e sanitizada
         final rawLocation = cat.locationName?.trim();
         final hasLocation = rawLocation != null && rawLocation.isNotEmpty;
         final rawParts = hasLocation ? rawLocation.split(',') : <String>[];
@@ -490,7 +489,6 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
           backgroundColor: AppColors.background,
           body: Stack(
             children: [
-              // Folhas decorativas sutis no fundo
               Positioned(
                 right: -25,
                 bottom: 80,
@@ -520,12 +518,10 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                 ),
               ),
 
-              // Conteúdo Rolável
               SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Foto Grande de Capa com Botões Flutuantes
                     Stack(
                       children: [
                         SizedBox(
@@ -537,7 +533,6 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                             fit: BoxFit.cover,
                           ),
                         ),
-                        // Botão Voltar (topo esquerdo)
                         Positioned(
                           top: MediaQuery.of(context).padding.top + 10,
                           left: 16,
@@ -569,7 +564,6 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                           right: 66,
                           child: AppHeaderActions(store: widget.catStore),
                         ),
-                        // Botão Opções (topo direito)
                         Positioned(
                           top: MediaQuery.of(context).padding.top + 10,
                           right: 16,
@@ -648,7 +642,6 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                       ],
                     ),
 
-                    // Cards de Conteúdo (Sobreposição garantida sobre a foto)
                     Transform.translate(
                       offset: const Offset(0, -26),
                       child: Padding(
@@ -656,7 +649,6 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // Card 1: Informações Principais (fundo #FAF3F0, raio 26)
                             Container(
                               padding: const EdgeInsets.all(22),
                               decoration: BoxDecoration(
@@ -673,7 +665,6 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Nome + Folha decorativa + Botão de Favorito
                                   Row(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -716,7 +707,6 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                           ],
                                         ),
                                       ),
-                                      // Botão Favorito Circular
                                       GestureDetector(
                                         onTap: () => widget.catStore
                                             .toggleFavorite(cat.id),
@@ -745,12 +735,10 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
 
                                   const SizedBox(height: 20),
 
-                                  // Grade 2 Colunas: Primeiro avistamento e Localização
                                   Row(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      // Coluna 1: Primeiro avistamento
                                       Expanded(
                                         child: Row(
                                           crossAxisAlignment:
@@ -797,7 +785,6 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                         ),
                                       ),
                                       const SizedBox(width: 10),
-                                      // Coluna 2: Localização
                                       Expanded(
                                         child: Row(
                                           crossAxisAlignment:
@@ -849,12 +836,10 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
 
                             const SizedBox(height: 18),
 
-                            // Card 2: Análise da Pelagem com estados reais (analisando, erro com retry, pendente e concluído)
                             _buildAnalysisCard(cat, analysis),
 
                             const SizedBox(height: 16),
 
-                            // Card 3: Fotos Adicionais
                             Container(
                               padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
@@ -864,7 +849,6 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Cabeçalho
                                   Row(
                                     children: [
                                       const Icon(
@@ -914,13 +898,11 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
 
                                   const SizedBox(height: 14),
 
-                                  // Miniaturas e Botão de Adicionar
                                   SizedBox(
                                     height: 88,
                                     child: ListView(
                                       scrollDirection: Axis.horizontal,
                                       children: [
-                                        // Fotos existentes
                                         ...referencePhotos.map(
                                           (photo) => Padding(
                                             padding: const EdgeInsets.only(
@@ -955,7 +937,6 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                           ),
                                         ),
 
-                                        // Botão Adicionar fotos
                                         GestureDetector(
                                           onTap: () => _openGallery(cat),
                                           child: Container(
@@ -992,7 +973,6 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                             ),
                                           ),
                                         ),
-                                        // Mensagem discreta quando ainda não há fotos adicionais de poses
                                         if (referencePhotos.isEmpty)
                                           Padding(
                                             padding: const EdgeInsets.only(
@@ -1018,8 +998,6 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                             ),
 
                             const SizedBox(height: 16),
-
-                            // Card 4: Diario & Anotacoes (Etapa 8)
                             Container(
                               padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
@@ -1154,8 +1132,6 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                             ),
 
                             const SizedBox(height: 16),
-
-                            // Card 5: Historico de Avistamentos (Etapa 8)
                             Container(
                               padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
@@ -1186,7 +1162,6 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                     ],
                                   ),
                                   const SizedBox(height: 14),
-                                  // Registro inicial
                                   Row(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -1325,7 +1300,6 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                 ),
               ),
 
-              // Barra de Ações Inferior Fixa
               Positioned(
                 bottom: 0,
                 left: 0,
@@ -1345,7 +1319,6 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                   ),
                   child: Row(
                     children: [
-                      // Botão Ver no mapa
                       Expanded(
                         child: SizedBox(
                           height: 48,
@@ -1402,7 +1375,6 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      // Botao Compartilhar
                       Expanded(
                         child: SizedBox(
                           height: 48,

@@ -4,7 +4,6 @@ import 'package:catlogue/models/chat_message.dart';
 import 'package:catlogue/models/conversation_summary.dart';
 import 'package:catlogue/pages/conversation_page.dart';
 import 'package:catlogue/stores/session_store.dart';
-import 'package:catlogue/widgets/chat_icon_button.dart';
 
 void main() {
   group('ChatMessage model tests', () {
@@ -162,28 +161,6 @@ void main() {
       expect(summary.matchSuggestionId, 'sugg-99');
       expect(summary.lastMessage?.body, 'Acabei de avistar!');
       expect(summary.formattedTime, isNotEmpty);
-    });
-  });
-
-  group('ChatIconButton widget tests', () {
-    testWidgets('renders icon and badge when unreadCount > 0', (tester) async {
-      final session = SessionStore();
-      addTearDown(session.dispose);
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            appBar: AppBar(
-              actions: [
-                ChatIconButton(sessionStore: session),
-              ],
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.byType(ChatIconButton), findsOneWidget);
     });
   });
 

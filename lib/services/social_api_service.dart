@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
 import '../stores/session_store.dart';
+import 'authenticated_api_client.dart';
 
 class SocialApiException implements Exception {
   const SocialApiException(this.message);
@@ -75,7 +76,9 @@ class SocialApiService {
       _list('/social/leaderboard/weekly');
 
   Future<void> registerDeviceToken(String token) async {
-    final platform = defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android';
+    final platform = defaultTargetPlatform == TargetPlatform.iOS
+        ? 'ios'
+        : 'android';
     await _request(
       'PUT',
       '/social/device-token',
@@ -101,13 +104,18 @@ class SocialApiService {
     final params = <String>[
       'limit=$limit',
       'mode=$mode',
-      if (cursor != null && cursor.isNotEmpty) 'cursor=${Uri.encodeComponent(cursor)}',
+      if (cursor != null && cursor.isNotEmpty)
+        'cursor=${Uri.encodeComponent(cursor)}',
     ];
     return _list('/social/feed?${params.join('&')}');
   }
-  Future<List<Map<String, dynamic>>> conversations() => _list('/social/conversations');
 
-  Future<Map<String, dynamic>> conversationDetails(String conversationId) async {
+  Future<List<Map<String, dynamic>>> conversations() =>
+      _list('/social/conversations');
+
+  Future<Map<String, dynamic>> conversationDetails(
+    String conversationId,
+  ) async {
     final response = await _request(
       'GET',
       '/social/conversations/$conversationId',
@@ -190,12 +198,12 @@ class SocialApiService {
   Future<Map<String, dynamic>> toggleMessageReaction(
     String conversationId,
     String messageId,
-    String emoji,
+    String reaction,
   ) async {
     final response = await _request(
       'POST',
       '/social/conversations/$conversationId/messages/$messageId/reactions',
-      {'emoji': emoji},
+      {'reaction': reaction},
       accepted: {200},
     );
     return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
@@ -240,7 +248,9 @@ class SocialApiService {
     final uri = Uri.parse('${ApiConfig.baseUrl}/social/posts/photo');
     final request = http.MultipartRequest('POST', uri)
       ..headers['Authorization'] = 'Bearer $token'
-      ..files.add(http.MultipartFile.fromBytes('file', imageBytes, filename: filename));
+      ..files.add(
+        http.MultipartFile.fromBytes('file', imageBytes, filename: filename),
+      );
     final streamed = await request.send();
     final response = await http.Response.fromStream(streamed);
     if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -284,7 +294,10 @@ class SocialApiService {
     return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
   }
 
-  Future<List<Map<String, dynamic>>> addComment(String itemId, String text) async {
+  Future<List<Map<String, dynamic>>> addComment(
+    String itemId,
+    String text,
+  ) async {
     final response = await _request(
       'POST',
       '/social/feed/$itemId/comments',
@@ -292,10 +305,15 @@ class SocialApiService {
       accepted: {200},
     );
     final decoded = jsonDecode(response.body) as List<dynamic>;
-    return decoded.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+    return decoded
+        .map((item) => Map<String, dynamic>.from(item as Map))
+        .toList();
   }
 
-  Future<Map<String, dynamic>> updateAccount({String? username, String? bio}) async {
+  Future<Map<String, dynamic>> updateAccount({
+    String? username,
+    String? bio,
+  }) async {
     final response = await _request(
       'PUT',
       '/app/account',
@@ -314,7 +332,9 @@ class SocialApiService {
     final uri = Uri.parse('${ApiConfig.baseUrl}/app/account/avatar');
     final request = http.MultipartRequest('POST', uri)
       ..headers['Authorization'] = 'Bearer $token'
-      ..files.add(http.MultipartFile.fromBytes('file', imageBytes, filename: filename));
+      ..files.add(
+        http.MultipartFile.fromBytes('file', imageBytes, filename: filename),
+      );
     final streamed = await request.send();
     final response = await http.Response.fromStream(streamed);
     if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -337,52 +357,15 @@ class SocialApiService {
     String path,
     Map<String, dynamic>? body, {
     required Set<int> accepted,
-    bool retried = false,
   }) async {
-    final token = await _sessionStore.accessToken();
-    if (token == null) {
-      throw const SocialApiException('Entre na sua conta para usar amigos.');
-    }
-    final request = http.Request(method, Uri.parse('${ApiConfig.baseUrl}$path'))
-      ..headers.addAll({
-        'Authorization': 'Bearer $token',
-        if (body != null) 'Content-Type': 'application/json',
-      });
-    if (body != null) request.body = jsonEncode(body);
-    try {
-      final response = await http.Response.fromStream(
-        await request.send().timeout(const Duration(seconds: 25)),
-      ).timeout(const Duration(seconds: 25));
-      if (response.statusCode == 401 && !retried) {
-        final refreshed = await _sessionStore.accessToken(refresh: true);
-        if (refreshed != null) {
-          return await _request(
-            method,
-            path,
-            body,
-            accepted: accepted,
-            retried: true,
-          );
-        }
-      }
-      if (!accepted.contains(response.statusCode)) {
-        throw SocialApiException(_message(response));
-      }
-      return response;
-    } on SocialApiException {
-      rethrow;
-    } catch (_) {
-      throw const SocialApiException('Não foi possível acessar amigos agora.');
-    }
-  }
-
-  String _message(http.Response response) {
-    try {
-      final map = Map<String, dynamic>.from(jsonDecode(response.body) as Map);
-      return map['detail']?.toString() ??
-          'Não foi possível concluir esta operação.';
-    } catch (_) {
-      return 'Não foi possível concluir esta operação.';
-    }
+    return AuthenticatedApiClient(_sessionStore).request(
+      method,
+      path,
+      body,
+      accepted: accepted,
+      error: SocialApiException.new,
+      signInMessage: 'Entre na sua conta para usar amigos.',
+      connectionMessage: 'Não foi possível acessar amigos agora.',
+    );
   }
 }
