@@ -1,3 +1,5 @@
+import '../widgets/app_header_actions.dart';
+
 import 'dart:async';
 import 'dart:io';
 
@@ -197,8 +199,9 @@ class _ConversationPageState extends State<ConversationPage> {
           final updatedReactions = <String, List<String>>{};
           rawMap.forEach((k, v) {
             if (v is List) {
-              updatedReactions[k.toString()] =
-                  v.map((e) => e.toString()).toList();
+              updatedReactions[k.toString()] = v
+                  .map((e) => e.toString())
+                  .toList();
             }
           });
           setState(() {
@@ -302,9 +305,7 @@ class _ConversationPageState extends State<ConversationPage> {
           }
           _sightingContext = details['sighting_context'] == true;
 
-          _messages = rawMessages
-              .map((m) => ChatMessage.fromMap(m))
-              .toList();
+          _messages = rawMessages.map((m) => ChatMessage.fromMap(m)).toList();
           _error = null;
         });
 
@@ -362,7 +363,9 @@ class _ConversationPageState extends State<ConversationPage> {
     Map<String, dynamic>? catData,
   }) async {
     final trimmedBody = body.trim();
-    if (type == 'text' && trimmedBody.isEmpty && _editingMessage == null) return;
+    if (type == 'text' && trimmedBody.isEmpty && _editingMessage == null) {
+      return;
+    }
     if (_sending) return;
 
     // Se estiver no modo de edição de mensagem
@@ -429,7 +432,9 @@ class _ConversationPageState extends State<ConversationPage> {
       if (mounted) {
         setState(() {
           _optimisticIds.remove(tempId);
-          _messages = _messages.map((m) => m.id == tempId ? realMsg : m).toList();
+          _messages = _messages
+              .map((m) => m.id == tempId ? realMsg : m)
+              .toList();
         });
       }
     } on SocialApiException catch (error) {
@@ -441,7 +446,11 @@ class _ConversationPageState extends State<ConversationPage> {
     }
   }
 
-  void _rollbackOptimistic(String tempId, String originalText, String errorMsg) {
+  void _rollbackOptimistic(
+    String tempId,
+    String originalText,
+    String errorMsg,
+  ) {
     if (!mounted) return;
     setState(() {
       _messages = _messages.where((m) => m.id != tempId).toList();
@@ -450,7 +459,8 @@ class _ConversationPageState extends State<ConversationPage> {
         _controller.text = originalText;
       }
     });
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMsg)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(errorMsg)));
   }
 
   Future<void> _commitEdit(String newBody) async {
@@ -479,9 +489,9 @@ class _ConversationPageState extends State<ConversationPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao editar mensagem: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erro ao editar mensagem: $e')));
       }
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -509,11 +519,7 @@ class _ConversationPageState extends State<ConversationPage> {
       );
 
       if (mediaUrl != null) {
-        await _sendMessage(
-          body: '',
-          type: 'photo',
-          mediaUrl: mediaUrl,
-        );
+        await _sendMessage(body: '', type: 'photo', mediaUrl: mediaUrl);
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -523,9 +529,9 @@ class _ConversationPageState extends State<ConversationPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Falha ao processar foto: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Falha ao processar foto: $e')));
       }
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -591,7 +597,10 @@ class _ConversationPageState extends State<ConversationPage> {
         builder: (ctx) => AlertDialog(
           title: Text(
             'Nenhum gato cadastrado',
-            style: GoogleFonts.fredoka(fontSize: 18, fontWeight: FontWeight.w600),
+            style: GoogleFonts.fredoka(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           content: Text(
             'Você ainda não registrou nenhum pet ou avistamento no Gatálogo para compartilhar.',
@@ -622,7 +631,10 @@ class _ConversationPageState extends State<ConversationPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: Text(
                   'Selecione uma Ficha de Gato',
                   style: GoogleFonts.fredoka(
@@ -671,7 +683,11 @@ class _ConversationPageState extends State<ConversationPage> {
                         '#${cat.captureNumber.toString().padLeft(3, '0')} • ${cat.isOwned ? 'Meu Pet' : 'Avistamento'}',
                         style: GoogleFonts.nunito(fontSize: 12),
                       ),
-                      trailing: const Icon(LucideIcons.send, size: 18, color: AppColors.primary),
+                      trailing: const Icon(
+                        LucideIcons.send,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
                       onTap: () {
                         Navigator.pop(ctx);
                         _sendCatCard(cat, analysis);
@@ -771,7 +787,10 @@ class _ConversationPageState extends State<ConversationPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 6,
+                ),
                 child: Text(
                   'Respostas Rapidas de Resgate',
                   style: GoogleFonts.fredoka(
@@ -790,13 +809,24 @@ class _ConversationPageState extends State<ConversationPage> {
                       color: AppColors.primarySoftBg,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(item.$2, size: 18, color: AppColors.primaryDark),
+                    child: Icon(
+                      item.$2,
+                      size: 18,
+                      color: AppColors.primaryDark,
+                    ),
                   ),
                   title: Text(
                     item.$1,
-                    style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600),
+                    style: GoogleFonts.nunito(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  trailing: const Icon(LucideIcons.arrowUpRight, size: 16, color: AppColors.textLight),
+                  trailing: const Icon(
+                    LucideIcons.arrowUpRight,
+                    size: 16,
+                    color: AppColors.textLight,
+                  ),
                   onTap: () {
                     Navigator.pop(ctx);
                     _controller.text = item.$1;
@@ -897,7 +927,10 @@ class _ConversationPageState extends State<ConversationPage> {
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.12),
               shape: BoxShape.circle,
-              border: Border.all(color: color.withValues(alpha: 0.35), width: 1.2),
+              border: Border.all(
+                color: color.withValues(alpha: 0.35),
+                width: 1.2,
+              ),
             ),
             child: Icon(icon, color: color, size: 26),
           ),
@@ -933,7 +966,10 @@ class _ConversationPageState extends State<ConversationPage> {
               // Barra de reações com emojis comuns
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.background,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -941,49 +977,88 @@ class _ConversationPageState extends State<ConversationPage> {
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    ('heart', LucideIcons.heart, const Color(0xFFEF4444), 'Amei'),
-                    ('paw', Icons.pets, AppColors.primary, 'Patinha'),
-                    ('like', LucideIcons.thumbsUp, const Color(0xFF3B82F6), 'Legal'),
-                    ('check', LucideIcons.badgeCheck, AppColors.greenProgress, 'Confirmado'),
-                    ('search', LucideIcons.search, const Color(0xFF8B5CF6), 'Buscando'),
-                    ('alert', LucideIcons.alertTriangle, const Color(0xFFF59E0B), 'Atenção'),
-                  ].map((item) {
-                    final key = item.$1;
-                    final icon = item.$2;
-                    final color = item.$3;
-                    final label = item.$4;
-                    final hasReacted = msg.reactions[key]?.contains(_myUserId) ?? false;
-                    return Tooltip(
-                      message: label,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(20),
-                        onTap: () {
-                          Navigator.pop(ctx);
-                          _toggleReaction(msg, key);
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: hasReacted ? color.withValues(alpha: 0.15) : Colors.transparent,
-                            shape: BoxShape.circle,
-                            border: hasReacted
-                                ? Border.all(color: color.withValues(alpha: 0.4), width: 1.2)
-                                : null,
-                          ),
-                          child: Icon(icon, size: 20, color: color),
+                  children:
+                      [
+                        (
+                          'heart',
+                          LucideIcons.heart,
+                          const Color(0xFFEF4444),
+                          'Amei',
                         ),
-                      ),
-                    );
-                  }).toList(),
+                        ('paw', Icons.pets, AppColors.primary, 'Patinha'),
+                        (
+                          'like',
+                          LucideIcons.thumbsUp,
+                          const Color(0xFF3B82F6),
+                          'Legal',
+                        ),
+                        (
+                          'check',
+                          LucideIcons.badgeCheck,
+                          AppColors.greenProgress,
+                          'Confirmado',
+                        ),
+                        (
+                          'search',
+                          LucideIcons.search,
+                          const Color(0xFF8B5CF6),
+                          'Buscando',
+                        ),
+                        (
+                          'alert',
+                          LucideIcons.alertTriangle,
+                          const Color(0xFFF59E0B),
+                          'Atenção',
+                        ),
+                      ].map((item) {
+                        final key = item.$1;
+                        final icon = item.$2;
+                        final color = item.$3;
+                        final label = item.$4;
+                        final hasReacted =
+                            msg.reactions[key]?.contains(_myUserId) ?? false;
+                        return Tooltip(
+                          message: label,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(20),
+                            onTap: () {
+                              Navigator.pop(ctx);
+                              _toggleReaction(msg, key);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: hasReacted
+                                    ? color.withValues(alpha: 0.15)
+                                    : Colors.transparent,
+                                shape: BoxShape.circle,
+                                border: hasReacted
+                                    ? Border.all(
+                                        color: color.withValues(alpha: 0.4),
+                                        width: 1.2,
+                                      )
+                                    : null,
+                              ),
+                              child: Icon(icon, size: 20, color: color),
+                            ),
+                          ),
+                        );
+                      }).toList(),
                 ),
               ),
               const Divider(height: 1),
 
               // Responder
               ListTile(
-                leading: const Icon(LucideIcons.reply, size: 20, color: AppColors.textDark),
-                title: Text('Responder', style: GoogleFonts.nunito(fontWeight: FontWeight.w600)),
+                leading: const Icon(
+                  LucideIcons.reply,
+                  size: 20,
+                  color: AppColors.textDark,
+                ),
+                title: Text(
+                  'Responder',
+                  style: GoogleFonts.nunito(fontWeight: FontWeight.w600),
+                ),
                 onTap: () {
                   Navigator.pop(ctx);
                   setState(() {
@@ -996,13 +1071,24 @@ class _ConversationPageState extends State<ConversationPage> {
               // Copiar
               if (msg.body.isNotEmpty)
                 ListTile(
-                  leading: const Icon(LucideIcons.copy, size: 20, color: AppColors.textDark),
-                  title: Text('Copiar texto', style: GoogleFonts.nunito(fontWeight: FontWeight.w600)),
+                  leading: const Icon(
+                    LucideIcons.copy,
+                    size: 20,
+                    color: AppColors.textDark,
+                  ),
+                  title: Text(
+                    'Copiar texto',
+                    style: GoogleFonts.nunito(fontWeight: FontWeight.w600),
+                  ),
                   onTap: () {
                     Navigator.pop(ctx);
                     Clipboard.setData(ClipboardData(text: msg.body));
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Mensagem copiada para a área de transferência.')),
+                      const SnackBar(
+                        content: Text(
+                          'Mensagem copiada para a área de transferência.',
+                        ),
+                      ),
                     );
                   },
                 ),
@@ -1010,8 +1096,15 @@ class _ConversationPageState extends State<ConversationPage> {
               // Editar (somente mensagens próprias de texto)
               if (isMine && msg.isText && !msg.isDeleted)
                 ListTile(
-                  leading: const Icon(LucideIcons.edit2, size: 20, color: AppColors.primary),
-                  title: Text('Editar mensagem', style: GoogleFonts.nunito(fontWeight: FontWeight.w600)),
+                  leading: const Icon(
+                    LucideIcons.edit2,
+                    size: 20,
+                    color: AppColors.primary,
+                  ),
+                  title: Text(
+                    'Editar mensagem',
+                    style: GoogleFonts.nunito(fontWeight: FontWeight.w600),
+                  ),
                   onTap: () {
                     Navigator.pop(ctx);
                     setState(() {
@@ -1025,10 +1118,17 @@ class _ConversationPageState extends State<ConversationPage> {
               // Apagar (somente mensagens próprias)
               if (isMine && !msg.isDeleted)
                 ListTile(
-                  leading: const Icon(LucideIcons.trash2, size: 20, color: AppColors.error),
+                  leading: const Icon(
+                    LucideIcons.trash2,
+                    size: 20,
+                    color: AppColors.error,
+                  ),
                   title: Text(
                     'Apagar mensagem',
-                    style: GoogleFonts.nunito(fontWeight: FontWeight.w600, color: AppColors.error),
+                    style: GoogleFonts.nunito(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.error,
+                    ),
                   ),
                   onTap: () {
                     Navigator.pop(ctx);
@@ -1062,7 +1162,9 @@ class _ConversationPageState extends State<ConversationPage> {
     }
 
     setState(() {
-      _messages = _messages.map((m) => m.id == msg.id ? m.copyWith(reactions: newReactions) : m).toList();
+      _messages = _messages
+          .map((m) => m.id == msg.id ? m.copyWith(reactions: newReactions) : m)
+          .toList();
     });
 
     try {
@@ -1099,9 +1201,14 @@ class _ConversationPageState extends State<ConversationPage> {
               Navigator.pop(ctx);
               setState(() {
                 _messages = _messages
-                    .map((m) => m.id == msg.id
-                        ? m.copyWith(isDeleted: true, body: 'Mensagem apagada')
-                        : m)
+                    .map(
+                      (m) => m.id == msg.id
+                          ? m.copyWith(
+                              isDeleted: true,
+                              body: 'Mensagem apagada',
+                            )
+                          : m,
+                    )
                     .toList();
               });
               try {
@@ -1114,7 +1221,10 @@ class _ConversationPageState extends State<ConversationPage> {
                 }
               }
             },
-            child: const Text('Apagar', style: TextStyle(color: AppColors.error)),
+            child: const Text(
+              'Apagar',
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),
@@ -1132,6 +1242,7 @@ class _ConversationPageState extends State<ConversationPage> {
         builder: (_) => Scaffold(
           backgroundColor: Colors.black,
           appBar: AppBar(
+            actions: const [AppHeaderActions()],
             backgroundColor: Colors.black.withValues(alpha: 0.7),
             elevation: 0,
             leading: IconButton(
@@ -1153,7 +1264,11 @@ class _ConversationPageState extends State<ConversationPage> {
                 errorBuilder: (_, _, _) => const Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(LucideIcons.alertCircle, color: Colors.white70, size: 40),
+                    Icon(
+                      LucideIcons.alertCircle,
+                      color: Colors.white70,
+                      size: 40,
+                    ),
                     SizedBox(height: 8),
                     Text(
                       'Não foi possível carregar a imagem',
@@ -1186,7 +1301,11 @@ class _ConversationPageState extends State<ConversationPage> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               child: Row(
                 children: [
-                  const Icon(LucideIcons.mapPin, color: AppColors.primary, size: 22),
+                  const Icon(
+                    LucideIcons.mapPin,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
@@ -1221,13 +1340,11 @@ class _ConversationPageState extends State<ConversationPage> {
             const Divider(height: 1),
             Expanded(
               child: FlutterMap(
-                options: MapOptions(
-                  initialCenter: point,
-                  initialZoom: 15,
-                ),
+                options: MapOptions(initialCenter: point, initialZoom: 15),
                 children: [
                   TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     userAgentPackageName: 'com.example.catlogue',
                   ),
                   MarkerLayer(
@@ -1269,14 +1386,14 @@ class _ConversationPageState extends State<ConversationPage> {
   void _openCatDetails(Map<String, dynamic> catData) {
     final catId = catData['id']?.toString();
     if (widget.catStore != null && catId != null) {
-      final localCat = widget.catStore!.cats.where((c) => c.id == catId).firstOrNull;
+      final localCat = widget.catStore!.cats
+          .where((c) => c.id == catId)
+          .firstOrNull;
       if (localCat != null) {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => CatDetailsPage(
-              cat: localCat,
-              catStore: widget.catStore!,
-            ),
+            builder: (_) =>
+                CatDetailsPage(cat: localCat, catStore: widget.catStore!),
           ),
         );
         return;
@@ -1293,7 +1410,10 @@ class _ConversationPageState extends State<ConversationPage> {
             const SizedBox(width: 8),
             Text(
               catData['name']?.toString() ?? 'Ficha do Pet',
-              style: GoogleFonts.fredoka(fontSize: 18, fontWeight: FontWeight.w600),
+              style: GoogleFonts.fredoka(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
@@ -1301,7 +1421,8 @@ class _ConversationPageState extends State<ConversationPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (catData['photo_path'] != null && File(catData['photo_path'].toString()).existsSync())
+            if (catData['photo_path'] != null &&
+                File(catData['photo_path'].toString()).existsSync())
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.file(
@@ -1312,11 +1433,23 @@ class _ConversationPageState extends State<ConversationPage> {
                 ),
               ),
             const SizedBox(height: 12),
-            Text('• Número: #${catData['capture_number'] ?? '000'}', style: GoogleFonts.nunito(fontSize: 14)),
-            Text('• Pelagem: ${catData['coat'] ?? 'Não especificada'}', style: GoogleFonts.nunito(fontSize: 14)),
-            Text('• Cor Primária: ${catData['color'] ?? 'Não especificada'}', style: GoogleFonts.nunito(fontSize: 14)),
+            Text(
+              '• Número: #${catData['capture_number'] ?? '000'}',
+              style: GoogleFonts.nunito(fontSize: 14),
+            ),
+            Text(
+              '• Pelagem: ${catData['coat'] ?? 'Não especificada'}',
+              style: GoogleFonts.nunito(fontSize: 14),
+            ),
+            Text(
+              '• Cor Primária: ${catData['color'] ?? 'Não especificada'}',
+              style: GoogleFonts.nunito(fontSize: 14),
+            ),
             if (catData['location_name'] != null)
-              Text('• Local de Origem: ${catData['location_name']}', style: GoogleFonts.nunito(fontSize: 14)),
+              Text(
+                '• Local de Origem: ${catData['location_name']}',
+                style: GoogleFonts.nunito(fontSize: 14),
+              ),
           ],
         ),
         actions: [
@@ -1339,7 +1472,9 @@ class _ConversationPageState extends State<ConversationPage> {
   String _formatDate(DateTime dt) {
     final local = dt.toLocal();
     final now = DateTime.now();
-    if (local.year == now.year && local.month == now.month && local.day == now.day) {
+    if (local.year == now.year &&
+        local.month == now.month &&
+        local.day == now.day) {
       return 'Hoje';
     }
     final yesterday = now.subtract(const Duration(days: 1));
@@ -1349,8 +1484,18 @@ class _ConversationPageState extends State<ConversationPage> {
       return 'Ontem';
     }
     const months = [
-      'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
-      'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez',
+      'Jan',
+      'Fev',
+      'Mar',
+      'Abr',
+      'Mai',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Set',
+      'Out',
+      'Nov',
+      'Dez',
     ];
     return '${local.day} de ${months[local.month - 1]}';
   }
@@ -1361,7 +1506,9 @@ class _ConversationPageState extends State<ConversationPage> {
     final h = local.hour.toString().padLeft(2, '0');
     final m = local.minute.toString().padLeft(2, '0');
 
-    if (local.year == now.year && local.month == now.month && local.day == now.day) {
+    if (local.year == now.year &&
+        local.month == now.month &&
+        local.day == now.day) {
       return 'hoje às $h:$m';
     }
     final yesterday = now.subtract(const Duration(days: 1));
@@ -1371,8 +1518,18 @@ class _ConversationPageState extends State<ConversationPage> {
       return 'ontem às $h:$m';
     }
     const months = [
-      'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
-      'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez',
+      'Jan',
+      'Fev',
+      'Mar',
+      'Abr',
+      'Mai',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Set',
+      'Out',
+      'Nov',
+      'Dez',
     ];
     return '${local.day} de ${months[local.month - 1]} às $h:$m';
   }
@@ -1521,13 +1678,15 @@ class _ConversationPageState extends State<ConversationPage> {
     final filteredMessages = _searchQuery.isEmpty
         ? _messages
         : _messages
-            .where((m) =>
-                m.body.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                (m.locationTitle != null &&
-                    m.locationTitle!
-                        .toLowerCase()
-                        .contains(_searchQuery.toLowerCase())))
-            .toList();
+              .where(
+                (m) =>
+                    m.body.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                    (m.locationTitle != null &&
+                        m.locationTitle!.toLowerCase().contains(
+                          _searchQuery.toLowerCase(),
+                        )),
+              )
+              .toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -1563,7 +1722,11 @@ class _ConversationPageState extends State<ConversationPage> {
                   hintStyle: GoogleFonts.nunito(color: AppColors.textLight),
                   border: InputBorder.none,
                   suffixIcon: IconButton(
-                    icon: const Icon(LucideIcons.x, size: 18, color: AppColors.textLight),
+                    icon: const Icon(
+                      LucideIcons.x,
+                      size: 18,
+                      color: AppColors.textLight,
+                    ),
                     onPressed: () {
                       _searchController.clear();
                       setState(() => _searchQuery = '');
@@ -1597,14 +1760,23 @@ class _ConversationPageState extends State<ConversationPage> {
                 ],
               ),
         actions: [
+          const AppHeaderActions(),
           if (!_isSearching)
             IconButton(
               tooltip: 'Buscar mensagens',
-              icon: const Icon(LucideIcons.search, color: AppColors.textDark, size: 20),
+              icon: const Icon(
+                LucideIcons.search,
+                color: AppColors.textDark,
+                size: 20,
+              ),
               onPressed: () => setState(() => _isSearching = true),
             ),
           PopupMenuButton<String>(
-            icon: const Icon(LucideIcons.moreVertical, color: AppColors.textDark, size: 20),
+            icon: const Icon(
+              LucideIcons.moreVertical,
+              color: AppColors.textDark,
+              size: 20,
+            ),
             onSelected: (action) {
               if (action == 'search') {
                 setState(() => _isSearching = true);
@@ -1640,9 +1812,16 @@ class _ConversationPageState extends State<ConversationPage> {
                 value: 'mute',
                 child: Row(
                   children: [
-                    Icon(_isMuted ? LucideIcons.bell : LucideIcons.bellOff, size: 18),
+                    Icon(
+                      _isMuted ? LucideIcons.bell : LucideIcons.bellOff,
+                      size: 18,
+                    ),
                     const SizedBox(width: 8),
-                    Text(_isMuted ? 'Reativar notificações' : 'Silenciar notificações'),
+                    Text(
+                      _isMuted
+                          ? 'Reativar notificações'
+                          : 'Silenciar notificações',
+                    ),
                   ],
                 ),
               ),
@@ -1652,7 +1831,10 @@ class _ConversationPageState extends State<ConversationPage> {
                   children: [
                     Icon(LucideIcons.userX, size: 18, color: AppColors.error),
                     SizedBox(width: 8),
-                    Text('Bloquear contato', style: TextStyle(color: AppColors.error)),
+                    Text(
+                      'Bloquear contato',
+                      style: TextStyle(color: AppColors.error),
+                    ),
                   ],
                 ),
               ),
@@ -1711,7 +1893,11 @@ class _ConversationPageState extends State<ConversationPage> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.pets, size: 20, color: AppColors.greenLink),
+                          const Icon(
+                            Icons.pets,
+                            size: 20,
+                            color: AppColors.greenLink,
+                          ),
                           const SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: Column(
@@ -1773,12 +1959,19 @@ class _ConversationPageState extends State<ConversationPage> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(LucideIcons.alertCircle, size: 18, color: AppColors.error),
+                      const Icon(
+                        LucideIcons.alertCircle,
+                        size: 18,
+                        color: AppColors.error,
+                      ),
                       const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: Text(
                           _error!,
-                          style: GoogleFonts.nunito(fontSize: 12, color: AppColors.errorText),
+                          style: GoogleFonts.nunito(
+                            fontSize: 12,
+                            color: AppColors.errorText,
+                          ),
                         ),
                       ),
                       IconButton(
@@ -1792,129 +1985,172 @@ class _ConversationPageState extends State<ConversationPage> {
               // Lista de Mensagens
               Expanded(
                 child: _loading
-                    ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                        ),
+                      )
                     : filteredMessages.isEmpty
-                        ? Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(AppSpacing.xl),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Image.asset('assets/images/gato_1.png', width: 85),
-                                  const SizedBox(height: AppSpacing.sm),
-                                  Text(
-                                    _searchQuery.isNotEmpty
-                                        ? 'Nenhuma mensagem encontrada'
-                                        : 'Inicie a conversa',
-                                    style: GoogleFonts.fredoka(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textTitle,
-                                    ),
-                                  ),
-                                  const SizedBox(height: AppSpacing.xs),
-                                  Text(
-                                    _searchQuery.isNotEmpty
-                                        ? 'Tente buscar com outros termos.'
-                                        : 'Envie a primeira mensagem para começar a conversar.',
-                                    style: GoogleFonts.nunito(
-                                      fontSize: 13,
-                                      color: AppColors.textMedium,
-                                    ),
-                                  ),
-                                  if (_searchQuery.isEmpty) ...[
-                                    const SizedBox(height: 12),
-                                    OutlinedButton.icon(
-                                      onPressed: () {
-                                        _sendMessage(body: 'Olá! Tudo bem?');
-                                      },
-                                      icon: const Icon(Icons.pets, size: 16, color: AppColors.primary),
-                                      label: Text(
-                                        'Enviar saudação inicial',
-                                        style: GoogleFonts.nunito(
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.primaryDark,
-                                        ),
-                                      ),
-                                      style: OutlinedButton.styleFrom(
-                                        side: const BorderSide(color: AppColors.borderProfile),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(AppSpacing.xl),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Image.asset(
+                                'assets/images/gato_1.png',
+                                width: 85,
                               ),
-                            ),
-                          )
-                        : ListView.builder(
-                            controller: _scrollController,
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                            itemCount: filteredMessages.length,
-                            itemBuilder: (context, index) {
-                              final message = filteredMessages[index];
-                              final mine = message.isMine(_myUserId);
-                              final isOptimistic = _optimisticIds.contains(message.id);
-                              final showDateHeader = index == 0 ||
-                                  _isDifferentDay(
-                                    filteredMessages[index - 1].createdAt,
-                                    message.createdAt,
-                                  );
-
-                              return Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (showDateHeader)
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 10),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 4,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.cardBackground,
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(color: AppColors.borderLight),
-                                        ),
-                                        child: Text(
-                                          _formatDate(message.createdAt),
-                                          style: GoogleFonts.nunito(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppColors.textMedium,
-                                          ),
-                                        ),
-                                      ),
+                              const SizedBox(height: AppSpacing.sm),
+                              Text(
+                                _searchQuery.isNotEmpty
+                                    ? 'Nenhuma mensagem encontrada'
+                                    : 'Inicie a conversa',
+                                style: GoogleFonts.fredoka(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textTitle,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
+                              Text(
+                                _searchQuery.isNotEmpty
+                                    ? 'Tente buscar com outros termos.'
+                                    : 'Envie a primeira mensagem para começar a conversar.',
+                                style: GoogleFonts.nunito(
+                                  fontSize: 13,
+                                  color: AppColors.textMedium,
+                                ),
+                              ),
+                              if (_searchQuery.isEmpty) ...[
+                                const SizedBox(height: 12),
+                                OutlinedButton.icon(
+                                  onPressed: () {
+                                    _sendMessage(body: 'Olá! Tudo bem?');
+                                  },
+                                  icon: const Icon(
+                                    Icons.pets,
+                                    size: 16,
+                                    color: AppColors.primary,
+                                  ),
+                                  label: Text(
+                                    'Enviar saudação inicial',
+                                    style: GoogleFonts.nunito(
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.primaryDark,
                                     ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 3),
-                                    child: Align(
-                                      alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-                                      child: GestureDetector(
-                                        onLongPress: () => _showMessageContextMenu(message),
-                                        child: _buildMessageBubble(message, mine, isOptimistic),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(
+                                      color: AppColors.borderProfile,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.pill,
                                       ),
                                     ),
                                   ),
-                                ],
-                              );
-                            },
+                                ),
+                              ],
+                            ],
                           ),
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        itemCount: filteredMessages.length,
+                        itemBuilder: (context, index) {
+                          final message = filteredMessages[index];
+                          final mine = message.isMine(_myUserId);
+                          final isOptimistic = _optimisticIds.contains(
+                            message.id,
+                          );
+                          final showDateHeader =
+                              index == 0 ||
+                              _isDifferentDay(
+                                filteredMessages[index - 1].createdAt,
+                                message.createdAt,
+                              );
+
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (showDateHeader)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 10,
+                                  ),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.cardBackground,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: AppColors.borderLight,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      _formatDate(message.createdAt),
+                                      style: GoogleFonts.nunito(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.textMedium,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 3,
+                                ),
+                                child: Align(
+                                  alignment: mine
+                                      ? Alignment.centerRight
+                                      : Alignment.centerLeft,
+                                  child: GestureDetector(
+                                    onLongPress: () =>
+                                        _showMessageContextMenu(message),
+                                    child: _buildMessageBubble(
+                                      message,
+                                      mine,
+                                      isOptimistic,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
               ),
 
               // Barra de pré-visualização de Reply
               if (_replyingTo != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
                   decoration: const BoxDecoration(
                     color: AppColors.primarySoftBg,
-                    border: Border(top: BorderSide(color: AppColors.borderLight)),
+                    border: Border(
+                      top: BorderSide(color: AppColors.borderLight),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(LucideIcons.reply, size: 18, color: AppColors.primaryDark),
+                      const Icon(
+                        LucideIcons.reply,
+                        size: 18,
+                        color: AppColors.primaryDark,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Column(
@@ -1933,13 +2169,20 @@ class _ConversationPageState extends State<ConversationPage> {
                               _replyingTo!.previewText,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.nunito(fontSize: 12, color: AppColors.textDark),
+                              style: GoogleFonts.nunito(
+                                fontSize: 12,
+                                color: AppColors.textDark,
+                              ),
                             ),
                           ],
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(LucideIcons.x, size: 18, color: AppColors.textDark),
+                        icon: const Icon(
+                          LucideIcons.x,
+                          size: 18,
+                          color: AppColors.textDark,
+                        ),
                         onPressed: () => setState(() => _replyingTo = null),
                       ),
                     ],
@@ -1949,14 +2192,23 @@ class _ConversationPageState extends State<ConversationPage> {
               // Barra de pré-visualização de Edição
               if (_editingMessage != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.greenLight,
-                    border: const Border(top: BorderSide(color: AppColors.borderLight)),
+                    border: const Border(
+                      top: BorderSide(color: AppColors.borderLight),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(LucideIcons.edit2, size: 18, color: AppColors.greenLink),
+                      const Icon(
+                        LucideIcons.edit2,
+                        size: 18,
+                        color: AppColors.greenLink,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Column(
@@ -1975,13 +2227,20 @@ class _ConversationPageState extends State<ConversationPage> {
                               _editingMessage!.body,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.nunito(fontSize: 12, color: AppColors.textDark),
+                              style: GoogleFonts.nunito(
+                                fontSize: 12,
+                                color: AppColors.textDark,
+                              ),
                             ),
                           ],
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(LucideIcons.x, size: 18, color: AppColors.textDark),
+                        icon: const Icon(
+                          LucideIcons.x,
+                          size: 18,
+                          color: AppColors.textDark,
+                        ),
                         onPressed: () {
                           setState(() {
                             _editingMessage = null;
@@ -2000,7 +2259,9 @@ class _ConversationPageState extends State<ConversationPage> {
                   padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
                   decoration: const BoxDecoration(
                     color: AppColors.background,
-                    border: Border(top: BorderSide(color: AppColors.borderLight)),
+                    border: Border(
+                      top: BorderSide(color: AppColors.borderLight),
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -2011,11 +2272,18 @@ class _ConversationPageState extends State<ConversationPage> {
                         decoration: BoxDecoration(
                           color: AppColors.primarySoftBg,
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.borderProfile, width: 1.2),
+                          border: Border.all(
+                            color: AppColors.borderProfile,
+                            width: 1.2,
+                          ),
                         ),
                         child: IconButton(
                           tooltip: 'Anexar',
-                          icon: const Icon(LucideIcons.plus, size: 20, color: AppColors.primaryDark),
+                          icon: const Icon(
+                            LucideIcons.plus,
+                            size: 20,
+                            color: AppColors.primaryDark,
+                          ),
                           onPressed: _showAttachmentMenu,
                         ),
                       ),
@@ -2049,16 +2317,31 @@ class _ConversationPageState extends State<ConversationPage> {
                               vertical: 10,
                             ),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.pill),
-                              borderSide: const BorderSide(color: AppColors.borderLight, width: 1.2),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                              borderSide: const BorderSide(
+                                color: AppColors.borderLight,
+                                width: 1.2,
+                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.pill),
-                              borderSide: const BorderSide(color: AppColors.borderLight, width: 1.2),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                              borderSide: const BorderSide(
+                                color: AppColors.borderLight,
+                                width: 1.2,
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.pill),
-                              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                              borderSide: const BorderSide(
+                                color: AppColors.primary,
+                                width: 1.5,
+                              ),
                             ),
                           ),
                         ),
@@ -2072,11 +2355,18 @@ class _ConversationPageState extends State<ConversationPage> {
                         decoration: BoxDecoration(
                           color: AppColors.primarySoftBg,
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.borderProfile, width: 1.2),
+                          border: Border.all(
+                            color: AppColors.borderProfile,
+                            width: 1.2,
+                          ),
                         ),
                         child: IconButton(
                           tooltip: 'Respostas rápidas de resgate',
-                          icon: const Icon(Icons.pets, size: 18, color: AppColors.primary),
+                          icon: const Icon(
+                            Icons.pets,
+                            size: 18,
+                            color: AppColors.primary,
+                          ),
                           onPressed: _showQuickRescueReplies,
                         ),
                       ),
@@ -2093,7 +2383,9 @@ class _ConversationPageState extends State<ConversationPage> {
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(
-                          tooltip: _editingMessage != null ? 'Salvar edição' : 'Enviar',
+                          tooltip: _editingMessage != null
+                              ? 'Salvar edição'
+                              : 'Enviar',
                           onPressed: _sending
                               ? null
                               : () => _sendMessage(body: _controller.text),
@@ -2107,7 +2399,9 @@ class _ConversationPageState extends State<ConversationPage> {
                                   ),
                                 )
                               : Icon(
-                                  _editingMessage != null ? LucideIcons.check : LucideIcons.send,
+                                  _editingMessage != null
+                                      ? LucideIcons.check
+                                      : LucideIcons.send,
                                   color: Colors.white,
                                   size: 18,
                                 ),
@@ -2160,11 +2454,17 @@ class _ConversationPageState extends State<ConversationPage> {
     );
   }
 
-  Widget _buildMessageBubble(ChatMessage message, bool mine, bool isOptimistic) {
+  Widget _buildMessageBubble(
+    ChatMessage message,
+    bool mine,
+    bool isOptimistic,
+  ) {
     final timeStr = _formatTime(message.createdAt);
 
     return Column(
-      crossAxisAlignment: mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment: mine
+          ? CrossAxisAlignment.end
+          : CrossAxisAlignment.start,
       children: [
         Container(
           constraints: BoxConstraints(
@@ -2197,7 +2497,11 @@ class _ConversationPageState extends State<ConversationPage> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(LucideIcons.ban, size: 14, color: AppColors.textLight),
+                    const Icon(
+                      LucideIcons.ban,
+                      size: 14,
+                      color: AppColors.textLight,
+                    ),
                     const SizedBox(width: 5),
                     Text(
                       'Mensagem apagada',
@@ -2299,7 +2603,10 @@ class _ConversationPageState extends State<ConversationPage> {
               return GestureDetector(
                 onTap: () => _toggleReaction(message, key),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: hasReacted
                         ? iconColor.withValues(alpha: 0.14)
@@ -2344,7 +2651,9 @@ class _ConversationPageState extends State<ConversationPage> {
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(8),
-        border: const Border(left: BorderSide(color: AppColors.primary, width: 3.5)),
+        border: const Border(
+          left: BorderSide(color: AppColors.primary, width: 3.5),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2362,10 +2671,7 @@ class _ConversationPageState extends State<ConversationPage> {
             reply['body']?.toString() ?? '',
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.nunito(
-              fontSize: 12,
-              color: AppColors.textDark,
-            ),
+            style: GoogleFonts.nunito(fontSize: 12, color: AppColors.textDark),
           ),
         ],
       ),
@@ -2378,9 +2684,16 @@ class _ConversationPageState extends State<ConversationPage> {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(LucideIcons.imageOff, size: 16, color: AppColors.textLight),
+          const Icon(
+            LucideIcons.imageOff,
+            size: 16,
+            color: AppColors.textLight,
+          ),
           const SizedBox(width: 6),
-          Text('Foto não disponível', style: GoogleFonts.nunito(fontSize: 13, color: AppColors.textLight)),
+          Text(
+            'Foto não disponível',
+            style: GoogleFonts.nunito(fontSize: 13, color: AppColors.textLight),
+          ),
         ],
       );
     }
@@ -2470,7 +2783,11 @@ class _ConversationPageState extends State<ConversationPage> {
                       color: AppColors.primarySoftBg,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(LucideIcons.mapPin, size: 18, color: AppColors.primary),
+                    child: const Icon(
+                      LucideIcons.mapPin,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -2489,7 +2806,10 @@ class _ConversationPageState extends State<ConversationPage> {
                         ),
                         Text(
                           '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}',
-                          style: GoogleFonts.nunito(fontSize: 11, color: AppColors.textLight),
+                          style: GoogleFonts.nunito(
+                            fontSize: 11,
+                            color: AppColors.textLight,
+                          ),
                         ),
                       ],
                     ),
@@ -2504,7 +2824,10 @@ class _ConversationPageState extends State<ConversationPage> {
                   icon: const Icon(LucideIcons.map, size: 15),
                   label: Text(
                     'Abrir no Mapa',
-                    style: GoogleFonts.nunito(fontWeight: FontWeight.w700, fontSize: 12),
+                    style: GoogleFonts.nunito(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
@@ -2569,7 +2892,10 @@ class _ConversationPageState extends State<ConversationPage> {
                         width: 48,
                         height: 48,
                         color: AppColors.primarySoftBg,
-                        child: const Icon(Icons.pets, color: AppColors.primaryDark),
+                        child: const Icon(
+                          Icons.pets,
+                          color: AppColors.primaryDark,
+                        ),
                       ),
               ),
               const SizedBox(width: 10),
@@ -2590,7 +2916,10 @@ class _ConversationPageState extends State<ConversationPage> {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.primarySoftBg,
                             borderRadius: BorderRadius.circular(4),
@@ -2608,7 +2937,10 @@ class _ConversationPageState extends State<ConversationPage> {
                         Expanded(
                           child: Text(
                             '$coat • $color',
-                            style: GoogleFonts.nunito(fontSize: 11, color: AppColors.textLight),
+                            style: GoogleFonts.nunito(
+                              fontSize: 11,
+                              color: AppColors.textLight,
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -2672,7 +3004,10 @@ class _ConversationPageState extends State<ConversationPage> {
                 const SnackBar(content: Text('Contato bloqueado com sucesso.')),
               );
             },
-            child: const Text('Bloquear', style: TextStyle(color: AppColors.error)),
+            child: const Text(
+              'Bloquear',
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),
@@ -2718,11 +3053,16 @@ class _ConversationPageState extends State<ConversationPage> {
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Denúncia enviada para a equipe de moderação. Obrigado!'),
+                  content: Text(
+                    'Denúncia enviada para a equipe de moderação. Obrigado!',
+                  ),
                 ),
               );
             },
-            child: const Text('Enviar Denúncia', style: TextStyle(color: AppColors.error)),
+            child: const Text(
+              'Enviar Denúncia',
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),

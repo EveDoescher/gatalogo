@@ -1,3 +1,5 @@
+import '../widgets/app_header_actions.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -57,9 +59,9 @@ class _MissingMapConsolidatedPageState
   }
 
   LatLng get _reportPoint => LatLng(
-        (widget.report['latitude'] as num).toDouble(),
-        (widget.report['longitude'] as num).toDouble(),
-      );
+    (widget.report['latitude'] as num).toDouble(),
+    (widget.report['longitude'] as num).toDouble(),
+  );
 
   double get _reportRadius =>
       (widget.report['radius_meters'] as num?)?.toDouble() ?? 2000.0;
@@ -74,10 +76,12 @@ class _MissingMapConsolidatedPageState
     final points = <LatLng>[_reportPoint];
     for (final clue in _clues) {
       if (clue['latitude'] != null && clue['longitude'] != null) {
-        points.add(LatLng(
-          (clue['latitude'] as num).toDouble(),
-          (clue['longitude'] as num).toDouble(),
-        ));
+        points.add(
+          LatLng(
+            (clue['latitude'] as num).toDouble(),
+            (clue['longitude'] as num).toDouble(),
+          ),
+        );
       }
     }
     if (points.length == 1) {
@@ -117,11 +121,7 @@ class _MissingMapConsolidatedPageState
             ],
           ),
           child: const Center(
-            child: Icon(
-              LucideIcons.home,
-              size: 22,
-              color: Colors.white,
-            ),
+            child: Icon(LucideIcons.home, size: 22, color: Colors.white),
           ),
         ),
       ),
@@ -219,6 +219,7 @@ class _MissingMapConsolidatedPageState
           ),
         ),
         actions: [
+          const AppHeaderActions(),
           IconButton(
             tooltip: 'Enquadrar todos',
             icon: const Icon(LucideIcons.maximize2, color: AppColors.textDark),
@@ -339,8 +340,8 @@ class _MissingMapConsolidatedPageState
                             _selectedClue!['status'] == 'confirmed'
                                 ? 'Pista confirmada'
                                 : _selectedClue!['status'] == 'dismissed'
-                                    ? 'Pista descartada'
-                                    : 'Avistamento recebido',
+                                ? 'Pista descartada'
+                                : 'Avistamento recebido',
                             style: GoogleFonts.fredoka(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,

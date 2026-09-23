@@ -1,3 +1,5 @@
+import '../widgets/app_header_actions.dart';
+
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -136,8 +138,10 @@ class _LocationPageState extends State<LocationPage> {
           final angle = 2 * math.pi * i / n;
           final offsetLat = radiusDegrees * math.cos(angle);
           final offsetLng = radiusDegrees * math.sin(angle);
-          positions[cluster[i].id] =
-              LatLng(baseLat + offsetLat, baseLng + offsetLng);
+          positions[cluster[i].id] = LatLng(
+            baseLat + offsetLat,
+            baseLng + offsetLng,
+          );
         }
       }
     }
@@ -253,15 +257,16 @@ class _LocationPageState extends State<LocationPage> {
   Widget build(BuildContext context) {
     // Gatos avistados para renderizar pins no mapa
     final catMarkers = <Marker>[];
-    final catsWithLoc = widget.catStore?.cats
+    final catsWithLoc =
+        widget.catStore?.cats
             .where((c) => c.latitude != null && c.longitude != null)
             .toList() ??
         [];
     final markerPositions = _calculateMarkerPositions(catsWithLoc);
 
     for (final cat in catsWithLoc) {
-      final pos = markerPositions[cat.id] ??
-          LatLng(cat.latitude!, cat.longitude!);
+      final pos =
+          markerPositions[cat.id] ?? LatLng(cat.latitude!, cat.longitude!);
       final isSelected = _selectedCat?.id == cat.id;
       catMarkers.add(
         Marker(
@@ -299,20 +304,27 @@ class _LocationPageState extends State<LocationPage> {
     LatLng defaultCenter = const LatLng(-14.2350, -51.9253);
     if (widget.initial != null) {
       defaultCenter = widget.initial!;
-    } else if (widget.catStore != null && widget.catStore!.cats.any((c) => c.latitude != null)) {
-      final firstWithCoords = widget.catStore!.cats.firstWhere((c) => c.latitude != null);
-      defaultCenter = LatLng(firstWithCoords.latitude!, firstWithCoords.longitude!);
+    } else if (widget.catStore != null &&
+        widget.catStore!.cats.any((c) => c.latitude != null)) {
+      final firstWithCoords = widget.catStore!.cats.firstWhere(
+        (c) => c.latitude != null,
+      );
+      defaultCenter = LatLng(
+        firstWithCoords.latitude!,
+        firstWithCoords.longitude!,
+      );
     }
 
     final pageTitle = widget.catId != null
         ? 'Registrar Avistamento'
         : widget.readOnly && widget.catStore != null
-            ? 'Meus Avistamentos'
-            : 'Localização';
+        ? 'Meus Avistamentos'
+        : 'Localização';
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        actions: const [AppHeaderActions()],
         backgroundColor: AppColors.background,
         elevation: 0,
         leading: GestureDetector(
@@ -361,7 +373,8 @@ class _LocationPageState extends State<LocationPage> {
                   ),
                   children: [
                     TileLayer(
-                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                       userAgentPackageName: 'com.example.catlogue',
                     ),
                     if (_point != null && widget.radius != null)
@@ -378,10 +391,10 @@ class _LocationPageState extends State<LocationPage> {
                         ],
                       ),
                     // Pins dos gatos avistados
-                    if (catMarkers.isNotEmpty)
-                      MarkerLayer(markers: catMarkers),
+                    if (catMarkers.isNotEmpty) MarkerLayer(markers: catMarkers),
                     // Pin de seleção de local
-                    if (_point != null && (!widget.readOnly || widget.catStore == null))
+                    if (_point != null &&
+                        (!widget.readOnly || widget.catStore == null))
                       MarkerLayer(
                         markers: [
                           Marker(
@@ -411,7 +424,9 @@ class _LocationPageState extends State<LocationPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (widget.readOnly && widget.catStore != null && catMarkers.isEmpty)
+                      if (widget.readOnly &&
+                          widget.catStore != null &&
+                          catMarkers.isEmpty)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Text(
@@ -466,12 +481,20 @@ class _LocationPageState extends State<LocationPage> {
                               labelText: 'Observação (opcional)',
                               hintText: 'Ex.: visto perto da praça',
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.input),
-                                borderSide: const BorderSide(color: AppColors.border),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.input,
+                                ),
+                                borderSide: const BorderSide(
+                                  color: AppColors.border,
+                                ),
                               ),
                               enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.input),
-                                borderSide: const BorderSide(color: AppColors.border),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.input,
+                                ),
+                                borderSide: const BorderSide(
+                                  color: AppColors.border,
+                                ),
                               ),
                             ),
                           ),
@@ -485,7 +508,9 @@ class _LocationPageState extends State<LocationPage> {
                               foregroundColor: Colors.white,
                               elevation: 0,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.pill),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
+                                ),
                               ),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
@@ -494,8 +519,8 @@ class _LocationPageState extends State<LocationPage> {
                               _saving
                                   ? 'Salvando…'
                                   : widget.catId == null
-                                      ? 'Usar este ponto'
-                                      : 'Registrar avistamento',
+                                  ? 'Usar este ponto'
+                                  : 'Registrar avistamento',
                               style: GoogleFonts.nunito(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
@@ -602,17 +627,27 @@ class _LocationPageState extends State<LocationPage> {
               child: Row(
                 children: [
                   const SizedBox(width: 12),
-                  const Icon(LucideIcons.search, size: 18, color: AppColors.textMedium),
+                  const Icon(
+                    LucideIcons.search,
+                    size: 18,
+                    color: AppColors.textMedium,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
                       controller: _searchController,
                       textInputAction: TextInputAction.search,
                       onSubmitted: (_) => _performAddressSearch(),
-                      style: GoogleFonts.nunito(fontSize: 13, color: AppColors.textDark),
+                      style: GoogleFonts.nunito(
+                        fontSize: 13,
+                        color: AppColors.textDark,
+                      ),
                       decoration: InputDecoration(
                         hintText: 'Buscar rua, bairro ou cidade...',
-                        hintStyle: GoogleFonts.nunito(fontSize: 13, color: AppColors.textLight),
+                        hintStyle: GoogleFonts.nunito(
+                          fontSize: 13,
+                          color: AppColors.textLight,
+                        ),
                         border: InputBorder.none,
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
@@ -633,19 +668,33 @@ class _LocationPageState extends State<LocationPage> {
                     )
                   else if (_searchController.text.isNotEmpty)
                     IconButton(
-                      icon: const Icon(LucideIcons.x, size: 16, color: AppColors.textMedium),
+                      icon: const Icon(
+                        LucideIcons.x,
+                        size: 16,
+                        color: AppColors.textMedium,
+                      ),
                       onPressed: () {
                         _searchController.clear();
                         setState(() {});
                       },
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                        minHeight: 32,
+                      ),
                     ),
                   IconButton(
-                    icon: const Icon(LucideIcons.arrowRight, size: 18, color: AppColors.primary),
+                    icon: const Icon(
+                      LucideIcons.arrowRight,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
                     onPressed: _performAddressSearch,
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                    constraints: const BoxConstraints(
+                      minWidth: 36,
+                      minHeight: 36,
+                    ),
                   ),
                 ],
               ),
@@ -726,7 +775,8 @@ class _LocationPageState extends State<LocationPage> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            _selectedCat!.locationName ?? 'Localização não informada',
+                            _selectedCat!.locationName ??
+                                'Localização não informada',
                             style: GoogleFonts.nunito(
                               fontSize: 12,
                               color: AppColors.textMedium,

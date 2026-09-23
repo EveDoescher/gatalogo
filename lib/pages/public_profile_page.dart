@@ -1,3 +1,5 @@
+import '../widgets/app_header_actions.dart';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -73,7 +75,9 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
     setState(() => _busy = true);
     try {
       if (status == 'friends') {
-        final conv = await _productApi.post('/app/friends/$targetId/conversation');
+        final conv = await _productApi.post(
+          '/app/friends/$targetId/conversation',
+        );
         if (mounted) {
           Navigator.push(
             context,
@@ -89,7 +93,9 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
         await _socialApi.invite(widget.username);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Convite enviado para @${widget.username}!')),
+            SnackBar(
+              content: Text('Convite enviado para @${widget.username}!'),
+            ),
           );
           _loadProfile();
         }
@@ -99,15 +105,16 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
           (inv) =>
               inv['direction'] == 'sent' &&
               ((inv['to_user_id'] == targetId) ||
-                  (inv['username']?.toString().toLowerCase() == widget.username.toLowerCase())),
+                  (inv['username']?.toString().toLowerCase() ==
+                      widget.username.toLowerCase())),
           orElse: () => <String, dynamic>{},
         );
         if (match['id'] != null) {
           await _socialApi.cancelInvite(match['id'] as String);
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Convite cancelado.')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('Convite cancelado.')));
             _loadProfile();
           }
         }
@@ -117,21 +124,26 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
           (inv) =>
               inv['direction'] == 'received' &&
               ((inv['from_user_id'] == targetId) ||
-                  (inv['username']?.toString().toLowerCase() == widget.username.toLowerCase())),
+                  (inv['username']?.toString().toLowerCase() ==
+                      widget.username.toLowerCase())),
           orElse: () => <String, dynamic>{},
         );
         if (match['id'] != null) {
           await _socialApi.acceptInvite(match['id'] as String);
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Agora você e @${widget.username} são amigos!')),
+              SnackBar(
+                content: Text('Agora você e @${widget.username} são amigos!'),
+              ),
             );
             _loadProfile();
           }
         }
       }
     } catch (e) {
-      if (mounted) showMessage(context, 'Não foi possível completar a ação: $e');
+      if (mounted) {
+        showMessage(context, 'Não foi possível completar a ação: $e');
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -141,7 +153,8 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
     final url = 'https://gatalogo.app/u/${widget.username}';
     SharePlus.instance.share(
       ShareParams(
-        text: 'Veja o perfil de @${widget.username} no Gatálogo! Conheça suas descobertas felinas e conquistas: $url',
+        text:
+            'Veja o perfil de @${widget.username} no Gatálogo! Conheça suas descobertas felinas e conquistas: $url',
         subject: 'Perfil de @${widget.username} no Gatálogo',
       ),
     );
@@ -167,50 +180,67 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
           ),
         ),
         actions: [
+          const AppHeaderActions(),
           IconButton(
             tooltip: 'Compartilhar perfil',
-            icon: const Icon(LucideIcons.share2, size: 20, color: AppColors.textMedium),
+            icon: const Icon(
+              LucideIcons.share2,
+              size: 20,
+              color: AppColors.textMedium,
+            ),
             onPressed: _shareProfile,
           ),
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            )
           : _error != null
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(LucideIcons.alertCircle, size: 48, color: AppColors.error),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Perfil não encontrado',
-                          style: GoogleFonts.fredoka(fontSize: 18, color: AppColors.textTitle),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          _error!,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.nunito(fontSize: 13, color: AppColors.textMedium),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _loadProfile,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.pill),
-                            ),
-                          ),
-                          child: const Text('Tentar novamente'),
-                        ),
-                      ],
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      LucideIcons.alertCircle,
+                      size: 48,
+                      color: AppColors.error,
                     ),
-                  ),
-                )
-              : _buildProfileContent(),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Perfil não encontrado',
+                      style: GoogleFonts.fredoka(
+                        fontSize: 18,
+                        color: AppColors.textTitle,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _error!,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.nunito(
+                        fontSize: 13,
+                        color: AppColors.textMedium,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _loadProfile,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                      ),
+                      child: const Text('Tentar novamente'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : _buildProfileContent(),
     );
   }
 
@@ -226,12 +256,14 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
     final catsCount = p['cats_count'] as int? ?? 0;
     final mutualCount = p['mutual_friends_count'] as int? ?? 0;
     final friendshipStatus = p['friendship_status'] as String? ?? 'none';
-    final achievements = (p['achievements'] as List?)
+    final achievements =
+        (p['achievements'] as List?)
             ?.whereType<Map>()
             .map((e) => Map<String, dynamic>.from(e))
             .toList() ??
         [];
-    final publicCats = (p['public_cats'] as List?)
+    final publicCats =
+        (p['public_cats'] as List?)
             ?.whereType<Map>()
             .map((e) => Map<String, dynamic>.from(e))
             .toList() ??
@@ -262,18 +294,24 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: AppColors.primarySoftBg,
-                      border: Border.all(color: AppColors.borderProfile, width: 2.5),
+                      border: Border.all(
+                        color: AppColors.borderProfile,
+                        width: 2.5,
+                      ),
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: avatarUrl != null
                         ? Image.network(
-                            avatarUrl.startsWith('http') ? avatarUrl : '${ApiConfig.baseUrl}$avatarUrl',
+                            avatarUrl.startsWith('http')
+                                ? avatarUrl
+                                : '${ApiConfig.baseUrl}$avatarUrl',
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => const Icon(
-                              LucideIcons.user,
-                              size: 44,
-                              color: AppColors.primaryDark,
-                            ),
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(
+                                  LucideIcons.user,
+                                  size: 44,
+                                  color: AppColors.primaryDark,
+                                ),
                           )
                         : const Icon(
                             LucideIcons.user,
@@ -294,7 +332,10 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                 if (mutualCount > 0 && !isSelf) ...[
                   const SizedBox(height: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.cardAltBackground,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -303,7 +344,11 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(LucideIcons.users, size: 13, color: AppColors.textMedium),
+                        const Icon(
+                          LucideIcons.users,
+                          size: 13,
+                          color: AppColors.textMedium,
+                        ),
                         const SizedBox(width: 5),
                         Text(
                           '$mutualCount amigo(s) em comum',
@@ -340,10 +385,10 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                         backgroundColor: friendshipStatus == 'friends'
                             ? AppColors.primary
                             : friendshipStatus == 'pending_sent'
-                                ? AppColors.cardAltBackground
-                                : friendshipStatus == 'pending_received'
-                                    ? AppColors.greenLink
-                                    : AppColors.primary,
+                            ? AppColors.cardAltBackground
+                            : friendshipStatus == 'pending_received'
+                            ? AppColors.greenLink
+                            : AppColors.primary,
                         foregroundColor: friendshipStatus == 'pending_sent'
                             ? AppColors.textDark
                             : Colors.white,
@@ -360,20 +405,20 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                         friendshipStatus == 'friends'
                             ? LucideIcons.messageCircle
                             : friendshipStatus == 'pending_sent'
-                                ? LucideIcons.clock
-                                : friendshipStatus == 'pending_received'
-                                    ? LucideIcons.check
-                                    : LucideIcons.userPlus,
+                            ? LucideIcons.clock
+                            : friendshipStatus == 'pending_received'
+                            ? LucideIcons.check
+                            : LucideIcons.userPlus,
                         size: 18,
                       ),
                       label: Text(
                         friendshipStatus == 'friends'
                             ? 'Conversar'
                             : friendshipStatus == 'pending_sent'
-                                ? 'Convite Enviado (Cancelar)'
-                                : friendshipStatus == 'pending_received'
-                                    ? 'Aceitar Convite'
-                                    : 'Adicionar Conexão',
+                            ? 'Convite Enviado (Cancelar)'
+                            : friendshipStatus == 'pending_received'
+                            ? 'Aceitar Convite'
+                            : 'Adicionar Conexão',
                         style: GoogleFonts.nunito(
                           fontWeight: FontWeight.w800,
                           fontSize: 14,
@@ -441,14 +486,21 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.achievementBg,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Row(
                     children: [
-                      const Icon(LucideIcons.flame, size: 14, color: AppColors.amberDark),
+                      const Icon(
+                        LucideIcons.flame,
+                        size: 14,
+                        color: AppColors.amberDark,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         '$streak dias',
@@ -521,7 +573,10 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
               child: Center(
                 child: Text(
                   'Nenhuma conquista pública ainda.',
-                  style: GoogleFonts.nunito(fontSize: 12, color: AppColors.textMedium),
+                  style: GoogleFonts.nunito(
+                    fontSize: 12,
+                    color: AppColors.textMedium,
+                  ),
                 ),
               ),
             )
@@ -534,7 +589,10 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(16),
@@ -579,7 +637,10 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primarySoftBg,
                           borderRadius: BorderRadius.circular(8),
@@ -626,7 +687,8 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                 final cat = publicCats[index];
                 final catName = cat['name']?.toString() ?? 'Gato';
                 final coatType = cat['coat_type']?.toString() ?? 'curto';
-                final primaryColor = cat['primary_color']?.toString() ?? 'indefinida';
+                final primaryColor =
+                    cat['primary_color']?.toString() ?? 'indefinida';
                 final photoUrl = cat['photo_url']?.toString();
 
                 return Container(
@@ -642,20 +704,31 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                       Expanded(
                         child: photoUrl != null
                             ? Image.network(
-                                photoUrl.startsWith('http') ? photoUrl : '${ApiConfig.baseUrl}$photoUrl',
+                                photoUrl.startsWith('http')
+                                    ? photoUrl
+                                    : '${ApiConfig.baseUrl}$photoUrl',
                                 fit: BoxFit.cover,
                                 width: double.infinity,
-                                errorBuilder: (context, error, stackTrace) => Container(
-                                  color: AppColors.cardAltBackground,
-                                  child: const Center(
-                                    child: Icon(LucideIcons.pawPrint, color: AppColors.textLight, size: 28),
-                                  ),
-                                ),
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                      color: AppColors.cardAltBackground,
+                                      child: const Center(
+                                        child: Icon(
+                                          LucideIcons.pawPrint,
+                                          color: AppColors.textLight,
+                                          size: 28,
+                                        ),
+                                      ),
+                                    ),
                               )
                             : Container(
                                 color: AppColors.cardAltBackground,
                                 child: const Center(
-                                  child: Icon(LucideIcons.pawPrint, color: AppColors.textLight, size: 28),
+                                  child: Icon(
+                                    LucideIcons.pawPrint,
+                                    color: AppColors.textLight,
+                                    size: 28,
+                                  ),
                                 ),
                               ),
                       ),

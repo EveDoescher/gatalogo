@@ -1,3 +1,5 @@
+import '../widgets/app_header_actions.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -86,7 +88,9 @@ class _InboxPageState extends State<InboxPage> {
 
     try {
       final list = await _api.conversations();
-      final summaries = list.map((m) => ConversationSummary.fromMap(m)).toList();
+      final summaries = list
+          .map((m) => ConversationSummary.fromMap(m))
+          .toList();
       if (mounted) {
         setState(() {
           _conversations = summaries;
@@ -227,7 +231,8 @@ class _InboxPageState extends State<InboxPage> {
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => FriendsPage(sessionStore: widget.sessionStore),
+                    builder: (_) =>
+                        FriendsPage(sessionStore: widget.sessionStore),
                   ),
                 );
               },
@@ -242,7 +247,10 @@ class _InboxPageState extends State<InboxPage> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
               ),
             ),
           ],
@@ -254,171 +262,178 @@ class _InboxPageState extends State<InboxPage> {
   @override
   Widget build(BuildContext context) {
     final content = _loading && _conversations.isEmpty
-        ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+        ? const Center(
+            child: CircularProgressIndicator(color: AppColors.primary),
+          )
         : _error != null && _conversations.isEmpty
-            ? Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(_error!, style: GoogleFonts.nunito(color: AppColors.errorText)),
-                    const SizedBox(height: 12),
-                    ElevatedButton(
-                      onPressed: () => _load(),
-                      child: const Text('Tentar novamente'),
-                    ),
-                  ],
+        ? Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _error!,
+                  style: GoogleFonts.nunito(color: AppColors.errorText),
                 ),
-              )
-            : _conversations.isEmpty
-                ? _buildEmptyState()
-                : RefreshIndicator(
-                    onRefresh: () => _load(),
-                    color: AppColors.primary,
-                    child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
-                        vertical: AppSpacing.sm,
-                      ),
-                      itemCount: _conversations.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 8),
-                      itemBuilder: (context, index) {
-                        final conv = _conversations[index];
-                        final lastMsg = conv.lastMessage;
-                        final preview = lastMsg?.previewText ?? 'Conversa iniciada';
-                        final isUnread = conv.unreadCount > 0;
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: () => _load(),
+                  child: const Text('Tentar novamente'),
+                ),
+              ],
+            ),
+          )
+        : _conversations.isEmpty
+        ? _buildEmptyState()
+        : RefreshIndicator(
+            onRefresh: () => _load(),
+            color: AppColors.primary,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
+              itemCount: _conversations.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                final conv = _conversations[index];
+                final lastMsg = conv.lastMessage;
+                final preview = lastMsg?.previewText ?? 'Conversa iniciada';
+                final isUnread = conv.unreadCount > 0;
 
-                        return GatalogoCard(
-                          backgroundColor: isUnread
-                              ? AppColors.primarySoftBg.withValues(alpha: 0.35)
-                              : AppColors.surface,
-                          onTap: () => _openConversation(conv.id, conv),
-                          child: Row(
-                            children: [
-                              _buildAvatar(conv),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            '@${conv.otherUsername}',
-                                            style: GoogleFonts.fredoka(
-                                              fontSize: 16,
-                                              fontWeight: isUnread
-                                                  ? FontWeight.w700
-                                                  : FontWeight.w600,
-                                              color: AppColors.textTitle,
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        Text(
-                                          conv.formattedTime,
-                                          style: GoogleFonts.nunito(
-                                            fontSize: 11,
-                                            fontWeight: isUnread
-                                                ? FontWeight.w700
-                                                : FontWeight.w600,
-                                            color: isUnread
-                                                ? AppColors.primary
-                                                : AppColors.textLight,
-                                          ),
-                                        ),
-                                      ],
+                return GatalogoCard(
+                  backgroundColor: isUnread
+                      ? AppColors.primarySoftBg.withValues(alpha: 0.35)
+                      : AppColors.surface,
+                  onTap: () => _openConversation(conv.id, conv),
+                  child: Row(
+                    children: [
+                      _buildAvatar(conv),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    '@${conv.otherUsername}',
+                                    style: GoogleFonts.fredoka(
+                                      fontSize: 16,
+                                      fontWeight: isUnread
+                                          ? FontWeight.w700
+                                          : FontWeight.w600,
+                                      color: AppColors.textTitle,
                                     ),
-                                    const SizedBox(height: 3),
-                                    Row(
-                                      children: [
-                                        if (conv.sightingContext) ...[
-                                          Container(
-                                            margin: const EdgeInsets.only(right: 6),
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 6,
-                                              vertical: 2,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.greenLight,
-                                              borderRadius:
-                                                  BorderRadius.circular(AppRadius.xs),
-                                              border: Border.all(
-                                                color: AppColors.green
-                                                    .withValues(alpha: 0.3),
-                                              ),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                const Icon(
-                                                  Icons.pets,
-                                                  size: 10,
-                                                  color: AppColors.greenLink,
-                                                ),
-                                                const SizedBox(width: 3),
-                                                Text(
-                                                  'Pista',
-                                                  style: GoogleFonts.fredoka(
-                                                    fontSize: 10,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: AppColors.greenLink,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                        Expanded(
-                                          child: Text(
-                                            preview,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: GoogleFonts.nunito(
-                                              fontSize: 13,
-                                              fontWeight: isUnread
-                                                  ? FontWeight.w700
-                                                  : FontWeight.w500,
-                                              color: isUnread
-                                                  ? AppColors.textDark
-                                                  : AppColors.textMedium,
-                                            ),
-                                          ),
-                                        ),
-                                        if (isUnread) ...[
-                                          const SizedBox(width: 8),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 2,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.primary,
-                                              borderRadius: BorderRadius.circular(
-                                                AppRadius.pill,
-                                              ),
-                                            ),
-                                            child: Text(
-                                              conv.unreadCount.toString(),
-                                              style: GoogleFonts.fredoka(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w700,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  ],
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  );
+                                Text(
+                                  conv.formattedTime,
+                                  style: GoogleFonts.nunito(
+                                    fontSize: 11,
+                                    fontWeight: isUnread
+                                        ? FontWeight.w700
+                                        : FontWeight.w600,
+                                    color: isUnread
+                                        ? AppColors.primary
+                                        : AppColors.textLight,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 3),
+                            Row(
+                              children: [
+                                if (conv.sightingContext) ...[
+                                  Container(
+                                    margin: const EdgeInsets.only(right: 6),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.greenLight,
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.xs,
+                                      ),
+                                      border: Border.all(
+                                        color: AppColors.green.withValues(
+                                          alpha: 0.3,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.pets,
+                                          size: 10,
+                                          color: AppColors.greenLink,
+                                        ),
+                                        const SizedBox(width: 3),
+                                        Text(
+                                          'Pista',
+                                          style: GoogleFonts.fredoka(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.greenLink,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                                Expanded(
+                                  child: Text(
+                                    preview,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.nunito(
+                                      fontSize: 13,
+                                      fontWeight: isUnread
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
+                                      color: isUnread
+                                          ? AppColors.textDark
+                                          : AppColors.textMedium,
+                                    ),
+                                  ),
+                                ),
+                                if (isUnread) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary,
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.pill,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      conv.unreadCount.toString(),
+                                      style: GoogleFonts.fredoka(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          );
 
     if (widget.embedded) {
       return content;
@@ -442,13 +457,15 @@ class _InboxPageState extends State<InboxPage> {
           onPressed: () => Navigator.maybePop(context),
         ),
         actions: [
+          const AppHeaderActions(),
           IconButton(
             tooltip: 'Nova conversa com amigo',
             icon: const Icon(LucideIcons.userPlus, color: AppColors.primary),
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => FriendsPage(sessionStore: widget.sessionStore),
+                  builder: (_) =>
+                      FriendsPage(sessionStore: widget.sessionStore),
                 ),
               );
             },

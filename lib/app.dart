@@ -15,6 +15,7 @@ import 'services/social_api_service.dart';
 import 'stores/cat_store.dart';
 import 'stores/session_store.dart';
 import 'theme/app_theme.dart';
+import 'widgets/app_header_actions.dart';
 
 class CatlogueApp extends StatefulWidget {
   const CatlogueApp({super.key});
@@ -25,6 +26,7 @@ class CatlogueApp extends StatefulWidget {
 
 class _CatlogueAppState extends State<CatlogueApp> {
   late final SessionStore _sessionStore;
+  late final CatStore _catStore;
   final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
   StreamSubscription? _expiredSubscription;
   bool _offlineMode = false;
@@ -33,10 +35,13 @@ class _CatlogueAppState extends State<CatlogueApp> {
   void initState() {
     super.initState();
     _sessionStore = SessionStore()..initialize();
+    _catStore = CatStore(_sessionStore);
     _expiredSubscription = _sessionStore.onSessionExpired.listen((_) {
       _scaffoldMessengerKey.currentState?.showSnackBar(
         const SnackBar(
-          content: Text('Sua sessao expirou. Faca login novamente para continuar conectado.'),
+          content: Text(
+            'Sua sessao expirou. Faca login novamente para continuar conectado.',
+          ),
           behavior: SnackBarBehavior.floating,
           duration: Duration(seconds: 4),
         ),
@@ -47,43 +52,52 @@ class _CatlogueAppState extends State<CatlogueApp> {
   @override
   void dispose() {
     _expiredSubscription?.cancel();
+    _catStore.dispose();
     _sessionStore.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      scaffoldMessengerKey: _scaffoldMessengerKey,
-      debugShowCheckedModeBanner: false,
-      title: 'Gatálogo',
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      home: AnimatedBuilder(
-        animation: _sessionStore,
-        builder: (context, _) {
-          if (!_sessionStore.isReady) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
+    return AppStoreScope(
+      store: _catStore,
+      child: MaterialApp(
+        scaffoldMessengerKey: _scaffoldMessengerKey,
+        debugShowCheckedModeBanner: false,
+        title: 'Gatálogo',
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        // The screens use the warm light palette, including dialogs and inputs.
+        themeMode: ThemeMode.light,
+        home: AnimatedBuilder(
+          animation: _sessionStore,
+          builder: (context, _) {
+            if (!_sessionStore.isReady) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+            if (_sessionStore.isSignedIn || _offlineMode) {
+              return MainNavigation(
+                sessionStore: _sessionStore,
+                catStore: _catStore,
+              );
+            }
+            return AuthPage(
+              sessionStore: _sessionStore,
+              onContinueOffline: () => setState(() => _offlineMode = true),
             );
-          }
-          if (_sessionStore.isSignedIn || _offlineMode) {
-            return MainNavigation(sessionStore: _sessionStore);
-          }
-          return AuthPage(
-            sessionStore: _sessionStore,
-            onContinueOffline: () => setState(() => _offlineMode = true),
-          );
-        },
+          },
+        ),
       ),
     );
   }
 }
 
 class MainNavigation extends StatefulWidget {
-  const MainNavigation({super.key, required this.sessionStore});
+  const MainNavigation({super.key, required this.sessionStore, this.catStore});
   final SessionStore sessionStore;
+  final CatStore? catStore;
 
   @override
   State<MainNavigation> createState() => _MainNavigationState();
@@ -106,12 +120,16 @@ class _MainNavigationState extends State<MainNavigation>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    catStore = CatStore(widget.sessionStore);
+    catStore = widget.catStore ?? CatStore(widget.sessionStore);
     catStore.loadCats();
 
     _fetchUnread();
-    _msgSub = widget.sessionStore.webSocket.onMessage.listen((_) => _fetchUnread());
-    _readSub = widget.sessionStore.webSocket.onMessagesRead.listen((_) => _fetchUnread());
+    _msgSub = widget.sessionStore.webSocket.onMessage.listen(
+      (_) => _fetchUnread(),
+    );
+    _readSub = widget.sessionStore.webSocket.onMessagesRead.listen(
+      (_) => _fetchUnread(),
+    );
 
     _openedNotificationSubscription = widget
         .sessionStore
@@ -153,12 +171,26 @@ class _MainNavigationState extends State<MainNavigation>
         catStore: catStore,
         onNavigate: (index) => setState(() => currentIndex = index),
       ),
-      SocialPage(
-        sessionStore: widget.sessionStore,
-        catStore: catStore,
-      ),
+      SocialPage(sessionStore: widget.sessionStore, catStore: catStore),
       CapturePage(catStore: catStore),
       LibraryPage(catStore: catStore),
+      Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          title: const Text('Habitat'),
+          actions: [AppHeaderActions(store: catStore)],
+        ),
+        body: Center(
+          child: Text(
+            'Em breve',
+            style: GoogleFonts.nunito(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          ),
+        ),
+      ),
     ];
   }
 
@@ -181,7 +213,7 @@ class _MainNavigationState extends State<MainNavigation>
     _msgSub?.cancel();
     _readSub?.cancel();
     WidgetsBinding.instance.removeObserver(this);
-    catStore.dispose();
+    if (widget.catStore == null) catStore.dispose();
     super.dispose();
   }
 
@@ -203,6 +235,8 @@ class _MainNavigationState extends State<MainNavigation>
       unawaited(catStore.syncCatalog());
       unawaited(catStore.syncPendingAnalyses());
       _fetchUnread();
+      unawaited(catStore.refreshNotifications());
+      unawaited(catStore.refreshGamification());
     }
   }
 
@@ -224,10 +258,16 @@ class _MainNavigationState extends State<MainNavigation>
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                _buildNavItem(0, LucideIcons.home, 'Inicio'),
-                _buildNavItem(1, LucideIcons.users, 'Social', badgeCount: _unreadMessages),
-                _buildGatalogarItem(),
-                _buildNavItem(3, LucideIcons.library, 'Colecao'),
+                _buildNavItem(0, LucideIcons.home, 'Início'),
+                _buildNavItem(
+                  1,
+                  LucideIcons.users,
+                  'Social',
+                  badgeCount: _unreadMessages,
+                ),
+                _buildNavItem(2, LucideIcons.camera, 'Gatalogar'),
+                _buildNavItem(3, LucideIcons.library, 'Coleção'),
+                _buildNavItem(4, LucideIcons.map, 'Habitat'),
               ],
             ),
           ),
@@ -236,110 +276,91 @@ class _MainNavigationState extends State<MainNavigation>
     );
   }
 
-  Widget _buildGatalogarItem() {
-    final isSelected = currentIndex == 2;
-    return InkWell(
-      onTap: () => setState(() => currentIndex = 2),
-      borderRadius: BorderRadius.circular(28),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.primary, AppColors.primaryDark],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.38),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-                border: Border.all(
-                  color: isSelected ? Colors.white : AppColors.surface,
-                  width: 2.5,
-                ),
-              ),
-              child: const Icon(
-                LucideIcons.camera,
-                size: 26,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              'Gatalogar',
-              style: GoogleFonts.fredoka(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
-                color: isSelected ? AppColors.primary : AppColors.textMedium,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(int index, IconData icon, String label, {int badgeCount = 0}) {
+  Widget _buildNavItem(
+    int index,
+    IconData icon,
+    String label, {
+    int badgeCount = 0,
+  }) {
     final isSelected = currentIndex == index;
     final color = isSelected ? AppColors.primary : AppColors.textMedium;
 
-    return InkWell(
-      onTap: () => setState(() => currentIndex = index),
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
+    return Expanded(
+      child: Semantics(
+        selected: isSelected,
+        button: true,
+        child: InkWell(
+          onTap: () => setState(() => currentIndex = index),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, size: 26, color: color),
-                if (badgeCount > 0)
-                  Positioned(
-                    right: -8,
-                    top: -4,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 36,
                       decoration: BoxDecoration(
-                        color: AppColors.error,
-                        borderRadius: BorderRadius.circular(10),
+                        color: index == 2
+                            ? AppColors.greenButton
+                            : isSelected
+                            ? AppColors.primaryLight
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                      child: Text(
-                        badgeCount > 99 ? '99+' : badgeCount.toString(),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          height: 1,
-                        ),
+                      child: Icon(
+                        icon,
+                        size: 24,
+                        color: index == 2 ? Colors.white : color,
                       ),
                     ),
+                    if (badgeCount > 0)
+                      Positioned(
+                        right: -8,
+                        top: -4,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 1.5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.error,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            badgeCount > 99 ? '99+' : badgeCount.toString(),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              height: 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.nunito(
+                    fontSize: 11,
+                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                    color: color,
                   ),
+                ),
               ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: GoogleFonts.fredoka(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
-                color: color,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

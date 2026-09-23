@@ -6,6 +6,7 @@ import '../services/product_api_service.dart';
 import '../stores/cat_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_widgets.dart';
+import '../widgets/app_header_actions.dart';
 import '../widgets/gatalogo_components.dart';
 import 'missing_cats_page.dart';
 import 'conversation_page.dart';
@@ -41,7 +42,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   Future<void> _load() async {
     try {
-      final items = await _api.list('/vision/notifications');
+      await widget.store.notifications.refresh();
+      final items = widget.store.notifications.items;
       if (mounted) {
         setState(() {
           _items = items;
@@ -97,7 +99,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   Future<void> _open(Map<String, dynamic> item) async {
     try {
-      await _api.post('/app/notifications/${item['id']}/read');
+      await widget.store.notifications.markRead(item['id'].toString());
       final payload = Map<String, dynamic>.from(item['payload'] as Map? ?? {});
       Widget? page;
       if (item['type'] == 'message' && payload['conversation_id'] != null) {
@@ -181,34 +183,30 @@ class _NotificationsPageState extends State<NotificationsPage> {
               onRefresh: _load,
               color: AppColors.primary,
               child: CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
                 slivers: [
-                  // Cabeçalho
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.md),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       child: Row(
                         children: [
-                          IconButton(
-                            onPressed: () => Navigator.maybePop(context),
-                            icon: const Icon(LucideIcons.arrowLeft, color: AppColors.textDark),
-                            tooltip: 'Voltar',
-                          ),
-                          const SizedBox(width: AppSpacing.xs),
-                          Text(
-                            'Notificações',
-                            style: GoogleFonts.fredoka(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textTitle,
+                          const BackButton(),
+                          const Expanded(
+                            child: Text(
+                              'Notificações',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textTitle,
+                              ),
                             ),
                           ),
-                          const Spacer(),
-                          IconButton(
-                            tooltip: 'Atualizar',
-                            onPressed: _loading ? null : _load,
-                            icon: const Icon(LucideIcons.refreshCw, size: 18, color: AppColors.textMedium),
-                          ),
+                          AppHeaderActions(store: widget.store),
                         ],
                       ),
                     ),
@@ -217,8 +215,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   if (_loading)
                     const SliverToBoxAdapter(
                       child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-                        child: LinearProgressIndicator(color: AppColors.primary),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppSpacing.xl,
+                        ),
+                        child: LinearProgressIndicator(
+                          color: AppColors.primary,
+                        ),
                       ),
                     ),
 
@@ -230,7 +232,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
                           backgroundColor: AppColors.errorBg,
                           child: Column(
                             children: [
-                              const Icon(LucideIcons.alertCircle, size: 28, color: AppColors.error),
+                              const Icon(
+                                LucideIcons.alertCircle,
+                                size: 28,
+                                color: AppColors.error,
+                              ),
                               const SizedBox(height: AppSpacing.sm),
                               Text(
                                 'Não foi possível carregar',
@@ -244,14 +250,20 @@ class _NotificationsPageState extends State<NotificationsPage> {
                               Text(
                                 _error!,
                                 textAlign: TextAlign.center,
-                                style: GoogleFonts.nunito(fontSize: 12, color: AppColors.errorText),
+                                style: GoogleFonts.nunito(
+                                  fontSize: 12,
+                                  color: AppColors.errorText,
+                                ),
                               ),
                               const SizedBox(height: AppSpacing.md),
                               TextButton(
                                 onPressed: _load,
                                 child: Text(
                                   'Tentar novamente',
-                                  style: GoogleFonts.nunito(fontWeight: FontWeight.w700, color: AppColors.primary),
+                                  style: GoogleFonts.nunito(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primary,
+                                  ),
                                 ),
                               ),
                             ],
@@ -264,11 +276,17 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     SliverToBoxAdapter(
                       child: Center(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.xxxl),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.xl,
+                            vertical: AppSpacing.xxxl,
+                          ),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Image.asset('assets/images/gato_2.png', width: 120),
+                              Image.asset(
+                                'assets/images/gato_2.png',
+                                width: 120,
+                              ),
                               const SizedBox(height: AppSpacing.md),
                               Text(
                                 'Tudo calmo por aqui',
@@ -294,82 +312,95 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     )
                   else
                     SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.xs, AppSpacing.xl, AppSpacing.xxxl),
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.xl,
+                        AppSpacing.xs,
+                        AppSpacing.xl,
+                        AppSpacing.xxxl,
+                      ),
                       sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final item = _items[index];
-                            final isUnread = item['read_at'] == null;
-                            final type = item['type'] as String?;
-                            final icon = _iconForType(type);
-                            final color = _colorForType(type);
-                            final bgColor = _bgForType(type);
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final item = _items[index];
+                          final isUnread = item['read_at'] == null;
+                          final type = item['type'] as String?;
+                          final icon = _iconForType(type);
+                          final color = _colorForType(type);
+                          final bgColor = _bgForType(type);
 
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                              child: GatalogoCard(
-                                backgroundColor: isUnread ? AppColors.surface : AppColors.cardAltBackground,
-                                onTap: () => _open(item),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: BoxDecoration(
-                                        color: bgColor,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(icon, color: color, size: 20),
+                          return Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: AppSpacing.sm,
+                            ),
+                            child: GatalogoCard(
+                              backgroundColor: isUnread
+                                  ? AppColors.surface
+                                  : AppColors.cardAltBackground,
+                              onTap: () => _open(item),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: bgColor,
+                                      shape: BoxShape.circle,
                                     ),
-                                    const SizedBox(width: AppSpacing.md),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Expanded(
-                                                child: Text(
-                                                  _title(item),
-                                                  style: GoogleFonts.fredoka(
-                                                    fontSize: 15,
-                                                    fontWeight: isUnread ? FontWeight.w600 : FontWeight.w500,
-                                                    color: AppColors.textTitle,
-                                                  ),
+                                    child: Icon(icon, color: color, size: 20),
+                                  ),
+                                  const SizedBox(width: AppSpacing.md),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                _title(item),
+                                                style: GoogleFonts.fredoka(
+                                                  fontSize: 15,
+                                                  fontWeight: isUnread
+                                                      ? FontWeight.w600
+                                                      : FontWeight.w500,
+                                                  color: AppColors.textTitle,
                                                 ),
                                               ),
-                                              if (isUnread)
-                                                Container(
-                                                  width: 8,
-                                                  height: 8,
-                                                  decoration: const BoxDecoration(
-                                                    color: AppColors.primary,
-                                                    shape: BoxShape.circle,
-                                                  ),
-                                                ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            displayDate(item['created_at']),
-                                            style: GoogleFonts.nunito(
-                                              fontSize: 12,
-                                              color: AppColors.textLight,
                                             ),
+                                            if (isUnread)
+                                              Container(
+                                                width: 8,
+                                                height: 8,
+                                                decoration: const BoxDecoration(
+                                                  color: AppColors.primary,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          displayDate(item['created_at']),
+                                          style: GoogleFonts.nunito(
+                                            fontSize: 12,
+                                            color: AppColors.textLight,
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(width: AppSpacing.xs),
-                                    const Icon(LucideIcons.chevronRight, size: 16, color: AppColors.textLight),
-                                  ],
-                                ),
+                                  ),
+                                  const SizedBox(width: AppSpacing.xs),
+                                  const Icon(
+                                    LucideIcons.chevronRight,
+                                    size: 16,
+                                    color: AppColors.textLight,
+                                  ),
+                                ],
                               ),
-                            );
-                          },
-                          childCount: _items.length,
-                        ),
+                            ),
+                          );
+                        }, childCount: _items.length),
                       ),
                     ),
                 ],
