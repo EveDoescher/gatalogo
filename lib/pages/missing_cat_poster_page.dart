@@ -1,14 +1,17 @@
+import '../widgets/app_header_actions.dart';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../models/cat.dart';
+import '../models/missing_poster.dart';
 import '../services/cat_sharing_service.dart';
 import '../stores/cat_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_widgets.dart';
+import '../widgets/post_composer.dart';
 
 class MissingCatPosterPage extends StatelessWidget {
   const MissingCatPosterPage({
@@ -33,11 +36,17 @@ class MissingCatPosterPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final catName = cat.displayName;
     final dateStr = displayDate(report['created_at']);
-    final locStr = locationName ?? cat.locationName ?? 'Região monitorada';
+    final poster = MissingPoster(
+      cat: cat,
+      report: report,
+      locationName: locationName,
+    );
+    final locStr = poster.address ?? 'Endereço não informado';
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        actions: const [AppHeaderActions()],
         backgroundColor: AppColors.background,
         elevation: 0,
         leading: GestureDetector(
@@ -57,30 +66,21 @@ class MissingCatPosterPage extends StatelessWidget {
           ),
         ),
         title: Text(
-          'Cartaz Digital de Busca',
+          'Cartaz de busca',
           style: GoogleFonts.fredoka(
             fontSize: 20,
             fontWeight: FontWeight.w600,
             color: AppColors.textTitle,
           ),
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Compartilhar',
-            icon: const Icon(LucideIcons.share2, color: AppColors.textDark),
-            onPressed: () {
-              CatSharingService.shareMissingPoster(
-                cat: cat,
-                report: report,
-                locationName: locStr,
-              );
-              catStore?.recordGamificationAction('share');
-            },
-          ),
-        ],
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.xxl),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.sm,
+          AppSpacing.lg,
+          AppSpacing.xxl,
+        ),
         children: [
           // O Cartaz
           Container(
@@ -125,10 +125,7 @@ class MissingCatPosterPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                   child: AspectRatio(
                     aspectRatio: 1.15,
-                    child: CatPhotoView(
-                      cat.photoPath,
-                      fit: BoxFit.cover,
-                    ),
+                    child: CatPhotoView(cat.photoPath, fit: BoxFit.cover),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -163,28 +160,30 @@ class MissingCatPosterPage extends StatelessWidget {
                   title: 'Último local visto',
                   value: locStr,
                 ),
-                if (cat.collar?.isNotEmpty == true) ...[
+                for (final detail in poster.characteristics.entries) ...[
                   const SizedBox(height: 8),
                   _buildPosterField(
                     icon: LucideIcons.tag,
-                    title: 'Coleira',
-                    value: cat.collar!,
+                    title: detail.key,
+                    value: detail.value,
                   ),
                 ],
-                if (cat.distinguishingMarks?.isNotEmpty == true) ...[
+                for (final contact in poster.contacts) ...[
                   const SizedBox(height: 8),
                   _buildPosterField(
-                    icon: LucideIcons.sparkles,
-                    title: 'Marcas características',
-                    value: cat.distinguishingMarks!,
+                    icon: LucideIcons.phone,
+                    title: contact['whatsapp'] == true
+                        ? 'Telefone / WhatsApp'
+                        : 'Telefone',
+                    value: contact['phone'] as String,
                   ),
                 ],
-                if (cat.microchip?.isNotEmpty == true) ...[
+                if (poster.contacts.isEmpty) ...[
                   const SizedBox(height: 8),
                   _buildPosterField(
-                    icon: LucideIcons.cpu,
-                    title: 'Microchip',
-                    value: cat.microchip!,
+                    icon: LucideIcons.messageCircle,
+                    title: 'Contato',
+                    value: 'Pelo chat do app Gatálogo',
                   ),
                 ],
 
@@ -198,7 +197,10 @@ class MissingCatPosterPage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.borderLight, width: 1.2),
+                        border: Border.all(
+                          color: AppColors.borderLight,
+                          width: 1.2,
+                        ),
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       child: QrImageView(
@@ -252,17 +254,10 @@ class MissingCatPosterPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
             ),
-            onPressed: () {
-              CatSharingService.shareMissingPoster(
-                cat: cat,
-                report: report,
-                locationName: locStr,
-              );
-              catStore?.recordGamificationAction('share');
-            },
-            icon: const Icon(LucideIcons.share2, size: 18),
+            onPressed: () => _publishToCommunity(context, locStr),
+            icon: const Icon(LucideIcons.globe, size: 18),
             label: Text(
-              'Compartilhar no WhatsApp / Redes',
+              'Compartilhar na comunidade',
               style: GoogleFonts.nunito(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
@@ -274,25 +269,24 @@ class MissingCatPosterPage extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.textDark,
               side: const BorderSide(color: AppColors.border),
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
             ),
-            onPressed: () {
-              final text = CatSharingService.buildMissingPosterText(
+            onPressed: () async {
+              final shared = await CatSharingService.shareMissingPoster(
                 cat: cat,
                 report: report,
                 locationName: locStr,
               );
-              Clipboard.setData(ClipboardData(text: text));
-              showMessage(context, 'Texto do cartaz copiado para a área de transferência.');
+              if (shared) await catStore?.recordGamificationAction('share');
             },
-            icon: const Icon(LucideIcons.copy, size: 16),
+            icon: const Icon(LucideIcons.share2, size: 18),
             label: Text(
-              'Copiar Texto do Alerta',
+              'Compartilhar em outros apps',
               style: GoogleFonts.nunito(
-                fontSize: 14,
+                fontSize: 15,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -300,6 +294,28 @@ class MissingCatPosterPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _publishToCommunity(BuildContext context, String locStr) async {
+    final session = catStore?.sessionStore;
+    if (session == null) return;
+    final post = await showPostComposer(
+      context,
+      session: session,
+      initialCat: cat,
+      initialLocation: locStr,
+      initialNote: CatSharingService.buildMissingPosterText(
+        cat: cat,
+        report: report,
+        locationName: locStr,
+      ),
+    );
+    if (post != null) {
+      await catStore?.recordGamificationAction('post');
+      if (context.mounted) {
+        showMessage(context, 'Alerta compartilhado na comunidade.');
+      }
+    }
   }
 
   Widget _buildPosterField({

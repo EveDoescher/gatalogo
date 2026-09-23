@@ -1,3 +1,5 @@
+import '../widgets/app_header_actions.dart';
+
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -6,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../models/cat.dart';
+import '../services/location_service.dart';
 import '../services/cat_preflight_service.dart';
 import '../services/product_api_service.dart';
 import '../stores/cat_store.dart';
@@ -13,7 +16,9 @@ import '../stores/session_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_widgets.dart';
 import '../widgets/gatalogo_components.dart';
+
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+
 import 'location_page.dart';
 import 'conversation_page.dart';
 import 'auth_page.dart';
@@ -71,6 +76,7 @@ class _MissingCatsPageState extends State<MissingCatsPage> {
         ),
       ),
       actions: [
+        const AppHeaderActions(),
         IconButton(
           tooltip: 'Atualizar',
           onPressed: _loading ? null : _load,
@@ -108,7 +114,8 @@ class _MissingCatsPageState extends State<MissingCatsPage> {
                       await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => CreateMissingReportPage(store: widget.catStore),
+                          builder: (_) =>
+                              CreateMissingReportPage(store: widget.catStore),
                         ),
                       );
                       if (mounted) _load();
@@ -121,10 +128,16 @@ class _MissingCatsPageState extends State<MissingCatsPage> {
                       ),
                     ),
                     icon: const Icon(Icons.add, color: Colors.white),
-                    label: const Text('Criar alerta', style: TextStyle(color: Colors.white)),
+                    label: const Text(
+                      'Criar alerta',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                 ),
-                if (_loading) LinearProgressIndicator(borderRadius: BorderRadius.circular(AppRadius.sm)),
+                if (_loading)
+                  LinearProgressIndicator(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
                 if (_error != null)
                   EmptyContent(
                     'Não foi possível carregar',
@@ -188,9 +201,11 @@ class CreateMissingReportPage extends StatefulWidget {
     super.key,
     required this.store,
     this.initialCat,
+    this.quickMode = false,
   });
   final CatStore store;
   final Cat? initialCat;
+  final bool quickMode;
   @override
   State<CreateMissingReportPage> createState() =>
       _CreateMissingReportPageState();
@@ -201,6 +216,10 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
   final _quickName = TextEditingController();
   final _quickCollar = TextEditingController();
   final _quickMarks = TextEditingController();
+  final _quickMicrochip = TextEditingController();
+  final _address = TextEditingController();
+  final List<TextEditingController> _phones = [];
+  final List<bool> _whatsapp = [];
 
   String? _catId;
   String? _quickPhoto;
@@ -213,9 +232,8 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
   void initState() {
     super.initState();
     _catId = widget.initialCat?.id;
-    if (widget.initialCat == null && widget.store.pets.isEmpty) {
-      _quickMode = true;
-    }
+    _quickMode = widget.quickMode || widget.store.pets.isEmpty;
+    _catId ??= widget.store.pets.isEmpty ? null : widget.store.pets.first.id;
   }
 
   @override
@@ -224,6 +242,11 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
     _quickName.dispose();
     _quickCollar.dispose();
     _quickMarks.dispose();
+    _quickMicrochip.dispose();
+    _address.dispose();
+    for (final phone in _phones) {
+      phone.dispose();
+    }
     super.dispose();
   }
 
@@ -265,6 +288,23 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
       return;
     }
 
+    if (_address.text.trim().isEmpty) {
+      showMessage(context, 'Informe o endereço do último local visto.');
+      return;
+    }
+    if (_phones.any((phone) {
+      final digits = phone.text.replaceAll(RegExp(r'[^0-9]'), '').length;
+      return digits < 8 ||
+          digits > 15 ||
+          !RegExp(r'^[+0-9 ()\-]+$').hasMatch(phone.text.trim());
+    })) {
+      showMessage(
+        context,
+        'Informe um telefone válido ou remova o contato vazio.',
+      );
+      return;
+    }
+
     if (_quickMode) {
       if (_quickPhoto == null) {
         showMessage(context, 'Adicione uma foto recente do gato.');
@@ -291,6 +331,8 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
           isOwned: true,
           name: assignedName,
           collar: _quickCollar.text.trim(),
+          microchip: _quickMicrochip.text.trim(),
+          locationName: _address.text.trim(),
           distinguishingMarks: _quickMarks.text.trim(),
           latitude: _location!.point.latitude,
           longitude: _location!.point.longitude,
@@ -302,13 +344,18 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
         catName = cat.displayName;
       }
 
-      await widget.store.syncCatalog();
+      await widget.store.syncCatalog(manual: true);
       final data = await ProductApiService(widget.store.sessionStore)
           .post('/vision/missing-reports', {
             'cat_client_id': catClientId,
             'latitude': _location!.point.latitude,
             'longitude': _location!.point.longitude,
             'radius_meters': _location!.radius,
+            'last_seen_address': _address.text.trim(),
+            'contacts': [
+              for (var i = 0; i < _phones.length; i++)
+                {'phone': _phones[i].text.trim(), 'whatsapp': _whatsapp[i]},
+            ],
           });
       data['name'] = catName;
 
@@ -332,6 +379,7 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: AppColors.background,
     appBar: AppBar(
+      actions: const [AppHeaderActions()],
       backgroundColor: AppColors.background,
       elevation: 0,
       leading: GestureDetector(
@@ -351,7 +399,7 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
         ),
       ),
       title: Text(
-        'Criar Alerta de Busca',
+        'Criar alerta',
         style: GoogleFonts.fredoka(
           fontSize: 20,
           fontWeight: FontWeight.w600,
@@ -364,10 +412,26 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
       builder: (context, _) {
         final pets = widget.store.pets;
 
+        final inputDecoration = InputDecoration(
+          filled: true,
+          fillColor: AppColors.inputBg,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.borderLight),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.primary),
+          ),
+        );
+
         return ListView(
           padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
-            // Alternador de modo se o usuário já tiver pets
             if (pets.isNotEmpty) ...[
               SegmentedButton<bool>(
                 segments: const [
@@ -394,17 +458,22 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
             ],
 
             if (_quickMode) ...[
-              // Modo Alerta Rápido de Emergência
               Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
                   color: AppColors.errorBg,
                   borderRadius: BorderRadius.circular(AppRadius.card),
-                  border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: AppColors.error.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(LucideIcons.alertTriangle, color: AppColors.error, size: 22),
+                    const Icon(
+                      LucideIcons.alertTriangle,
+                      color: AppColors.error,
+                      size: 22,
+                    ),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Text(
@@ -425,11 +494,15 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
                 controller: _quickName,
                 maxLength: 30,
                 textCapitalization: TextCapitalization.words,
-                style: GoogleFonts.nunito(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textDark),
-                decoration: const InputDecoration(
+                style: GoogleFonts.nunito(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textDark,
+                ),
+                decoration: inputDecoration.copyWith(
                   labelText: 'Nome do gato (ou deixe provisório)',
                   hintText: 'ex: Pipoca, Amarelinho',
-                  prefixIcon: Icon(Icons.pets, size: 18),
+                  prefixIcon: const Icon(Icons.pets, size: 18),
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -438,11 +511,15 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
                 controller: _quickCollar,
                 maxLength: 50,
                 textCapitalization: TextCapitalization.sentences,
-                style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textDark),
-                decoration: const InputDecoration(
+                style: GoogleFonts.nunito(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textDark,
+                ),
+                decoration: inputDecoration.copyWith(
                   labelText: 'Coleira (opcional)',
                   hintText: 'ex: Vermelha com sino, azul reflexiva',
-                  prefixIcon: Icon(LucideIcons.tag, size: 18),
+                  prefixIcon: const Icon(LucideIcons.tag, size: 18),
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -452,17 +529,34 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
                 maxLength: 120,
                 maxLines: 2,
                 textCapitalization: TextCapitalization.sentences,
-                style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textDark),
-                decoration: const InputDecoration(
+                style: GoogleFonts.nunito(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textDark,
+                ),
+                decoration: inputDecoration.copyWith(
                   labelText: 'Marcas características (opcional)',
                   hintText: 'ex: Mancha no peito, orelha cortada, rabo curto',
-                  prefixIcon: Icon(LucideIcons.sparkles, size: 18),
+                  prefixIcon: const Icon(LucideIcons.sparkles, size: 18),
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
 
+              TextField(
+                controller: _quickMicrochip,
+                enabled: !_saving,
+                style: const TextStyle(color: AppColors.textDark),
+                decoration: inputDecoration.copyWith(
+                  labelText: 'Microchip (opcional)',
+                ),
+              ),
+              const SizedBox(height: 12),
               if (_quickPhoto != null) ...[
-                CatPhotoView(_quickPhoto!, height: 220, borderRadius: AppRadius.card),
+                CatPhotoView(
+                  _quickPhoto!,
+                  height: 220,
+                  borderRadius: AppRadius.card,
+                ),
                 const SizedBox(height: AppSpacing.md),
               ],
 
@@ -472,26 +566,37 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
                     child: GatalogoSecondaryButton(
                       text: 'Tirar Foto',
                       icon: LucideIcons.camera,
-                      onPressed: _busyPhoto || _saving ? null : () => _pickQuickPhoto(ImageSource.camera),
+                      onPressed: _busyPhoto || _saving
+                          ? null
+                          : () => _pickQuickPhoto(ImageSource.camera),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: GatalogoSecondaryButton(
-                      text: 'Escolher da Galeria',
+                      text: 'Galeria',
                       icon: LucideIcons.image,
-                      onPressed: _busyPhoto || _saving ? null : () => _pickQuickPhoto(ImageSource.gallery),
+                      onPressed: _busyPhoto || _saving
+                          ? null
+                          : () => _pickQuickPhoto(ImageSource.gallery),
                     ),
                   ),
                 ],
               ),
             ] else ...[
-              // Modo Pet Cadastrado
               DropdownButtonFormField<String>(
-                initialValue: pets.any((c) => c.id == _catId) ? _catId : pets.first.id,
-                decoration: const InputDecoration(
+                initialValue: pets.any((c) => c.id == _catId)
+                    ? _catId
+                    : pets.first.id,
+                decoration: inputDecoration.copyWith(
                   labelText: 'Selecione o gato',
-                  prefixIcon: Icon(Icons.pets, size: 18),
+                  prefixIcon: const Icon(Icons.pets, size: 18),
+                ),
+                dropdownColor: AppColors.inputBg,
+                style: GoogleFonts.nunito(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textDark,
                 ),
                 items: pets
                     .map(
@@ -516,11 +621,18 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
                 );
                 return Column(
                   children: [
-                    CatPhotoView(cat.photoPath, height: 220, borderRadius: AppRadius.card),
+                    CatPhotoView(
+                      cat.photoPath,
+                      height: 220,
+                      borderRadius: AppRadius.card,
+                    ),
                     const SizedBox(height: 6),
                     Text(
                       '${widget.store.referencePhotosFor(cat.id).length + 1} foto(s) no perfil de identificação',
-                      style: GoogleFonts.nunito(fontSize: 12, color: AppColors.textMedium),
+                      style: GoogleFonts.nunito(
+                        fontSize: 12,
+                        color: AppColors.textMedium,
+                      ),
                     ),
                   ],
                 );
@@ -540,8 +652,11 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Defina o ponto e o raio aproximado da busca. O endereço exato não é exposto publicamente para proteger sua privacidade.',
-              style: GoogleFonts.nunito(fontSize: 12, color: AppColors.textMedium),
+              'Defina o ponto e o raio da busca. O endereço informado abaixo será incluído no cartaz quando você compartilhar o alerta.',
+              style: GoogleFonts.nunito(
+                fontSize: 12,
+                color: AppColors.textMedium,
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
 
@@ -549,10 +664,15 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.textDark,
                 side: BorderSide(
-                  color: _location == null ? AppColors.primary : AppColors.border,
+                  color: _location == null
+                      ? AppColors.primary
+                      : AppColors.border,
                   width: _location == null ? 1.5 : 1.0,
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 14,
+                  horizontal: 16,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.card),
                 ),
@@ -564,7 +684,10 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
                       if (_location != null) {
                         initialPoint = _location!.point;
                       } else if (!_quickMode && _catId != null) {
-                        final cat = pets.firstWhere((c) => c.id == _catId, orElse: () => pets.first);
+                        final cat = pets.firstWhere(
+                          (c) => c.id == _catId,
+                          orElse: () => pets.first,
+                        );
                         if (cat.latitude != null && cat.longitude != null) {
                           initialPoint = LatLng(cat.latitude!, cat.longitude!);
                         }
@@ -580,13 +703,28 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
                         ),
                       );
                       if (location != null && mounted) {
+                        final previousAddress = _address.text;
                         setState(() => _location = location);
+                        final address = await LocationService.getLocationName(
+                          location.point.latitude,
+                          location.point.longitude,
+                        );
+                        if (mounted &&
+                            _location == location &&
+                            _address.text == previousAddress &&
+                            address != null) {
+                          setState(() => _address.text = address);
+                        }
                       }
                     },
               icon: Icon(
-                _location == null ? LucideIcons.mapPin : LucideIcons.checkCircle,
+                _location == null
+                    ? LucideIcons.mapPin
+                    : LucideIcons.checkCircle,
                 size: 20,
-                color: _location == null ? AppColors.primary : AppColors.greenProgress,
+                color: _location == null
+                    ? AppColors.primary
+                    : AppColors.greenProgress,
               ),
               label: Text(
                 _location == null
@@ -601,6 +739,79 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
 
             const SizedBox(height: AppSpacing.xxl),
 
+            TextField(
+              controller: _address,
+              enabled: !_saving,
+              maxLength: 500,
+              style: const TextStyle(color: AppColors.textDark),
+              decoration: inputDecoration.copyWith(
+                labelText: 'Endereço do último local visto',
+                hintText: 'Rua, número, bairro e cidade',
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Contatos no cartaz (opcional)',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: AppColors.textTitle,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Adicione somente os números que deseja divulgar no cartaz e ao compartilhar o alerta.',
+            ),
+            for (var i = 0; i < _phones.length; i++) ...[
+              const SizedBox(height: 12),
+              TextField(
+                key: ObjectKey(_phones[i]),
+                controller: _phones[i],
+                enabled: !_saving,
+                keyboardType: TextInputType.phone,
+                maxLength: 32,
+                style: const TextStyle(color: AppColors.textDark),
+                decoration: inputDecoration.copyWith(
+                  labelText: 'Telefone ${i + 1}',
+                  suffixIcon: IconButton(
+                    tooltip: 'Remover contato ${i + 1}',
+                    onPressed: _saving
+                        ? null
+                        : () {
+                            final removed = _phones[i];
+                            setState(() {
+                              _phones.removeAt(i);
+                              _whatsapp.removeAt(i);
+                            });
+                            WidgetsBinding.instance.addPostFrameCallback(
+                              (_) => removed.dispose(),
+                            );
+                          },
+                    icon: const Icon(Icons.close),
+                  ),
+                ),
+              ),
+              CheckboxListTile(
+                key: ValueKey('contact_whatsapp_$i'),
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Também atende pelo WhatsApp'),
+                value: _whatsapp[i],
+                onChanged: _saving
+                    ? null
+                    : (value) => setState(() => _whatsapp[i] = value ?? false),
+              ),
+            ],
+            if (_phones.length < 5)
+              TextButton.icon(
+                onPressed: _saving
+                    ? null
+                    : () => setState(() {
+                        _phones.add(TextEditingController());
+                        _whatsapp.add(false);
+                      }),
+                icon: const Icon(Icons.add),
+                label: const Text('Adicionar telefone'),
+              ),
+            const SizedBox(height: 20),
             GatalogoButton(
               text: _saving ? 'Ativando alerta…' : 'Ativar Alerta de Busca',
               isLoading: _saving,
@@ -651,7 +862,12 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
     if (selected == null || !mounted) return;
     setState(() => _busy = true);
     try {
+      final address = await LocationService.getLocationName(
+        selected.point.latitude,
+        selected.point.longitude,
+      );
       final data = {
+        'last_seen_address': address,
         'latitude': selected.point.latitude,
         'longitude': selected.point.longitude,
         'radius_meters': selected.radius,
@@ -664,6 +880,26 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<void> _openPoster(Cat cat) async {
+    String? address = _report['last_seen_address']?.toString();
+    address ??= await LocationService.getLocationName(
+      (_report['latitude'] as num).toDouble(),
+      (_report['longitude'] as num).toDouble(),
+    );
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MissingCatPosterPage(
+          cat: cat,
+          report: _report,
+          catStore: widget.store,
+          locationName: address,
+        ),
+      ),
+    );
   }
 
   Future<void> _resolve() async {
@@ -698,6 +934,7 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        actions: const [AppHeaderActions()],
         backgroundColor: AppColors.background,
         elevation: 0,
         leading: GestureDetector(
@@ -726,7 +963,12 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.xl),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.sm,
+          AppSpacing.lg,
+          AppSpacing.xl,
+        ),
         children: [
           // Card 1: Perfil do Gato e Status
           GatalogoCard(
@@ -748,39 +990,6 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
                           height: 200,
                           fit: BoxFit.cover,
                           borderRadius: AppRadius.photo,
-                        ),
-                        Positioned(
-                          right: 10,
-                          bottom: 10,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.5),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  LucideIcons.zoomIn,
-                                  size: 12,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Toque para ampliar',
-                                  style: GoogleFonts.nunito(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                         ),
                       ],
                     ),
@@ -812,12 +1021,19 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
-                        color: isActive ? AppColors.errorBg : AppColors.greenLight,
+                        color: isActive
+                            ? AppColors.errorBg
+                            : AppColors.greenLight,
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                         border: Border.all(
-                          color: isActive ? AppColors.error.withValues(alpha: 0.3) : AppColors.green.withValues(alpha: 0.3),
+                          color: isActive
+                              ? AppColors.error.withValues(alpha: 0.3)
+                              : AppColors.green.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Text(
@@ -825,7 +1041,9 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
                         style: GoogleFonts.nunito(
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
-                          color: isActive ? AppColors.error : AppColors.greenLink,
+                          color: isActive
+                              ? AppColors.error
+                              : AppColors.greenLink,
                         ),
                       ),
                     ),
@@ -845,7 +1063,11 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
               children: [
                 Row(
                   children: [
-                    const Icon(LucideIcons.mapPin, size: 18, color: AppColors.primaryDark),
+                    const Icon(
+                      LucideIcons.mapPin,
+                      size: 18,
+                      color: AppColors.primaryDark,
+                    ),
                     const SizedBox(width: AppSpacing.xs),
                     Text(
                       'Área de Monitoramento',
@@ -860,7 +1082,10 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   'Raio de busca: ${((_report['radius_meters'] as num) / 1000).toStringAsFixed(1)} km ao redor do ponto inicial.',
-                  style: GoogleFonts.nunito(fontSize: 13, color: AppColors.textMedium),
+                  style: GoogleFonts.nunito(
+                    fontSize: 13,
+                    color: AppColors.textMedium,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Row(
@@ -870,7 +1095,9 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.textDark,
                           side: const BorderSide(color: AppColors.border),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 10),
                         ),
                         onPressed: () => Navigator.push(
@@ -896,8 +1123,14 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
                         child: OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.primaryDark,
-                            side: const BorderSide(color: AppColors.borderProfile),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+                            side: const BorderSide(
+                              color: AppColors.borderProfile,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                            ),
                             padding: const EdgeInsets.symmetric(vertical: 10),
                           ),
                           onPressed: _busy ? null : _editArea,
@@ -916,13 +1149,17 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
 
           // Card 3: Pistas e Avistamentos
           GatalogoCard(
-            backgroundColor: AppColors.surface,
+            backgroundColor: AppColors.cardBackground,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
                   children: [
-                    const Icon(LucideIcons.search, size: 18, color: AppColors.greenLink),
+                    const Icon(
+                      LucideIcons.search,
+                      size: 18,
+                      color: AppColors.greenLink,
+                    ),
                     const SizedBox(width: AppSpacing.xs),
                     Text(
                       'Pistas e Avistamentos',
@@ -937,64 +1174,79 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   'A inteligência do Gatálogo cruza fotos registradas na região para encontrar semelhanças com o seu gato.',
-                  style: GoogleFonts.nunito(fontSize: 13, color: AppColors.textMedium),
+                  style: GoogleFonts.nunito(
+                    fontSize: 13,
+                    color: AppColors.textMedium,
+                  ),
                 ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        onPressed: () => Navigator.push(
+                const SizedBox(height: AppSpacing.md),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 48),
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          CluesPage(report: _report, store: widget.store),
+                    ),
+                  ),
+                  icon: const Icon(Icons.pets, size: 16),
+                  label: Text(
+                    'Explorar Avistamentos',
+                    style: GoogleFonts.nunito(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.textDark,
+                    side: const BorderSide(color: AppColors.border),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () async {
+                    try {
+                      final clues = await ProductApiService(
+                        widget.store.sessionStore,
+                      ).list('/app/reports/${_report['id']}/clues');
+                      if (context.mounted) {
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => CluesPage(report: _report, store: widget.store),
+                            builder: (_) => MissingMapConsolidatedPage(
+                              report: _report,
+                              clues: clues,
+                              store: widget.store,
+                              cat: cat,
+                            ),
                           ),
-                        ),
-                        icon: const Icon(Icons.pets, size: 16),
-                        label: const Text('Explorar Avistamentos'),
-                      ),
+                        );
+                      }
+                    } catch (error) {
+                      if (context.mounted) showMessage(context, error);
+                    }
+                  },
+                  icon: const Icon(LucideIcons.map, size: 16),
+                  label: Text(
+                    'Ver Mapa Consolidado',
+                    style: GoogleFonts.nunito(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
                     ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.textDark,
-                          side: const BorderSide(color: AppColors.border),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        onPressed: () async {
-                          try {
-                            final clues = await ProductApiService(widget.store.sessionStore)
-                                .list('/app/reports/${_report['id']}/clues');
-                            if (context.mounted) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => MissingMapConsolidatedPage(
-                                    report: _report,
-                                    clues: clues,
-                                    store: widget.store,
-                                    cat: cat,
-                                  ),
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            if (context.mounted) showMessage(context, e);
-                          }
-                        },
-                        icon: const Icon(LucideIcons.map, size: 16),
-                        label: const Text('Mapa Consolidado'),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -1013,7 +1265,11 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
                       color: AppColors.errorBg,
                       borderRadius: BorderRadius.circular(AppRadius.card),
                     ),
-                    child: const Icon(LucideIcons.fileText, size: 22, color: AppColors.error),
+                    child: const Icon(
+                      LucideIcons.fileText,
+                      size: 22,
+                      color: AppColors.error,
+                    ),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
@@ -1048,18 +1304,12 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    ),
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => MissingCatPosterPage(
-                          cat: cat,
-                          report: _report,
-                          catStore: widget.store,
-                        ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
                       ),
                     ),
+                    onPressed: () => _openPoster(cat),
                     child: Text(
                       'Gerar',
                       style: GoogleFonts.nunito(
@@ -1079,7 +1329,10 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
               child: TextButton.icon(
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.error,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                 ),
                 onPressed: _busy ? null : _resolve,
                 icon: const Icon(LucideIcons.checkCircle, size: 18),
@@ -1179,7 +1432,9 @@ class _CluesPageState extends State<CluesPage> {
       isScrollControlled: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.card),
+        ),
       ),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheetState) => Padding(
@@ -1213,16 +1468,24 @@ class _CluesPageState extends State<CluesPage> {
               const SizedBox(height: 4),
               Text(
                 'Registre um avistamento mesmo sem foto recente para enriquecer o mapa de buscas.',
-                style: GoogleFonts.nunito(fontSize: 12, color: AppColors.textMedium),
+                style: GoogleFonts.nunito(
+                  fontSize: 12,
+                  color: AppColors.textMedium,
+                ),
               ),
               const SizedBox(height: AppSpacing.md),
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.textDark,
                   side: BorderSide(
-                    color: selectedLocation == null ? AppColors.primary : AppColors.border,
+                    color: selectedLocation == null
+                        ? AppColors.primary
+                        : AppColors.border,
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 14,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.card),
                   ),
@@ -1245,9 +1508,13 @@ class _CluesPageState extends State<CluesPage> {
                   }
                 },
                 icon: Icon(
-                  selectedLocation == null ? LucideIcons.mapPin : LucideIcons.checkCircle,
+                  selectedLocation == null
+                      ? LucideIcons.mapPin
+                      : LucideIcons.checkCircle,
                   size: 18,
-                  color: selectedLocation == null ? AppColors.primary : AppColors.greenProgress,
+                  color: selectedLocation == null
+                      ? AppColors.primary
+                      : AppColors.greenProgress,
                 ),
                 label: Text(
                   selectedLocation == null
@@ -1261,10 +1528,14 @@ class _CluesPageState extends State<CluesPage> {
                 controller: noteController,
                 maxLength: 300,
                 maxLines: 3,
-                style: GoogleFonts.nunito(fontSize: 14, color: AppColors.textDark),
+                style: GoogleFonts.nunito(
+                  fontSize: 14,
+                  color: AppColors.textDark,
+                ),
                 decoration: const InputDecoration(
                   labelText: 'Observação do avistamento',
-                  hintText: 'ex: Visto atravessando a rua perto da praça às 17h.',
+                  hintText:
+                      'ex: Visto atravessando a rua perto da praça às 17h.',
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -1272,7 +1543,10 @@ class _CluesPageState extends State<CluesPage> {
                 text: 'Salvar Avistamento',
                 onPressed: () async {
                   if (selectedLocation == null) {
-                    showMessage(context, 'Escolha o local do avistamento no mapa.');
+                    showMessage(
+                      context,
+                      'Escolha o local do avistamento no mapa.',
+                    );
                     return;
                   }
                   final catId = widget.report['cat_client_id'] as String;
@@ -1288,7 +1562,10 @@ class _CluesPageState extends State<CluesPage> {
                     );
                     if (ctx.mounted) Navigator.pop(ctx);
                     if (mounted) {
-                      showMessage(context, 'Avistamento registrado com sucesso.');
+                      showMessage(
+                        context,
+                        'Avistamento registrado com sucesso.',
+                      );
                       _load();
                     }
                   } catch (e) {
@@ -1310,12 +1587,13 @@ class _CluesPageState extends State<CluesPage> {
     );
     final cat = cats.isEmpty ? null : cats.first;
 
-    final confirmedList =
-        _clues.where((c) => c['status'] == 'confirmed').toList();
-    final pendingList =
-        _clues.where((c) => c['status'] == 'pending').toList();
-    final dismissedList =
-        _clues.where((c) => c['status'] == 'dismissed').toList();
+    final confirmedList = _clues
+        .where((c) => c['status'] == 'confirmed')
+        .toList();
+    final pendingList = _clues.where((c) => c['status'] == 'pending').toList();
+    final dismissedList = _clues
+        .where((c) => c['status'] == 'dismissed')
+        .toList();
 
     List<Map<String, dynamic>> filteredList;
     if (_filter == 'confirmed') {
@@ -1358,6 +1636,7 @@ class _CluesPageState extends State<CluesPage> {
           ),
         ),
         actions: [
+          const AppHeaderActions(),
           IconButton(
             tooltip: 'Mapa Consolidado',
             icon: const Icon(LucideIcons.map, color: AppColors.textDark),
@@ -1376,7 +1655,11 @@ class _CluesPageState extends State<CluesPage> {
           IconButton(
             tooltip: 'Atualizar',
             onPressed: _load,
-            icon: const Icon(LucideIcons.refreshCw, size: 20, color: AppColors.textDark),
+            icon: const Icon(
+              LucideIcons.refreshCw,
+              size: 20,
+              color: AppColors.textDark,
+            ),
           ),
         ],
       ),
@@ -1391,11 +1674,20 @@ class _CluesPageState extends State<CluesPage> {
                 children: [
                   _buildFilterChip('all', 'Todas (${_clues.length})'),
                   const SizedBox(width: 8),
-                  _buildFilterChip('pending', 'Pendentes (${pendingList.length})'),
+                  _buildFilterChip(
+                    'pending',
+                    'Pendentes (${pendingList.length})',
+                  ),
                   const SizedBox(width: 8),
-                  _buildFilterChip('confirmed', 'Reconhecidas (${confirmedList.length})'),
+                  _buildFilterChip(
+                    'confirmed',
+                    'Reconhecidas (${confirmedList.length})',
+                  ),
                   const SizedBox(width: 8),
-                  _buildFilterChip('dismissed', 'Descartadas (${dismissedList.length})'),
+                  _buildFilterChip(
+                    'dismissed',
+                    'Descartadas (${dismissedList.length})',
+                  ),
                 ],
               ),
             ),
@@ -1419,7 +1711,10 @@ class _CluesPageState extends State<CluesPage> {
                 icon: const Icon(LucideIcons.plusCircle, size: 16),
                 label: Text(
                   'Registrar Avistamento Manual (sem foto)',
-                  style: GoogleFonts.nunito(fontSize: 13, fontWeight: FontWeight.w700),
+                  style: GoogleFonts.nunito(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
@@ -1427,33 +1722,38 @@ class _CluesPageState extends State<CluesPage> {
 
           Expanded(
             child: _loading
-                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                ? const Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  )
                 : _error != null
-                    ? EmptyContent(
-                        'Não foi possível carregar',
-                        _error!,
-                        action: TextButton(
-                          onPressed: _load,
-                          child: const Text('Tentar novamente'),
-                        ),
-                      )
-                    : filteredList.isEmpty
-                        ? EmptyContent(
-                            _filter == 'all'
-                                ? 'Ainda sem pistas'
-                                : 'Nenhuma pista neste filtro',
-                            _filter == 'all'
-                                ? 'Os possíveis avistamentos cruzados pela inteligência artificial aparecerão aqui.'
-                                : 'Não há registros com o status selecionado no momento.',
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                            itemCount: filteredList.length,
-                            itemBuilder: (context, index) {
-                              final clue = filteredList[index];
-                              return _buildTimelineItem(clue, index == filteredList.length - 1);
-                            },
-                          ),
+                ? EmptyContent(
+                    'Não foi possível carregar',
+                    _error!,
+                    action: TextButton(
+                      onPressed: _load,
+                      child: const Text('Tentar novamente'),
+                    ),
+                  )
+                : filteredList.isEmpty
+                ? EmptyContent(
+                    _filter == 'all'
+                        ? 'Ainda sem pistas'
+                        : 'Nenhuma pista neste filtro',
+                    _filter == 'all'
+                        ? 'Os possíveis avistamentos cruzados pela inteligência artificial aparecerão aqui.'
+                        : 'Não há registros com o status selecionado no momento.',
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                    itemCount: filteredList.length,
+                    itemBuilder: (context, index) {
+                      final clue = filteredList[index];
+                      return _buildTimelineItem(
+                        clue,
+                        index == filteredList.length - 1,
+                      );
+                    },
+                  ),
           ),
         ],
       ),
@@ -1505,7 +1805,8 @@ class _CluesPageState extends State<CluesPage> {
       statusIcon = LucideIcons.clock;
     }
 
-    final distanceKm = ((clue['distance_meters'] as num? ?? 0) / 1000).toStringAsFixed(1);
+    final distanceKm = ((clue['distance_meters'] as num? ?? 0) / 1000)
+        .toStringAsFixed(1);
     final dateStr = displayDate(clue['created_at']);
     final note = clue['note'] as String?;
 
@@ -1526,11 +1827,7 @@ class _CluesPageState extends State<CluesPage> {
               child: Icon(statusIcon, size: 12, color: statusColor),
             ),
             if (!isLast)
-              Container(
-                width: 2,
-                height: 110,
-                color: AppColors.borderLight,
-              ),
+              Container(width: 2, height: 110, color: AppColors.borderLight),
           ],
         ),
         const SizedBox(width: 12),
@@ -1555,7 +1852,10 @@ class _CluesPageState extends State<CluesPage> {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: statusColor.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -1623,7 +1923,11 @@ class _CluesPageState extends State<CluesPage> {
                             ],
                           ),
                         ),
-                        const Icon(LucideIcons.chevronRight, size: 18, color: AppColors.textLight),
+                        const Icon(
+                          LucideIcons.chevronRight,
+                          size: 18,
+                          color: AppColors.textLight,
+                        ),
                       ],
                     ),
 
@@ -1633,11 +1937,18 @@ class _CluesPageState extends State<CluesPage> {
                         alignment: Alignment.centerRight,
                         child: TextButton.icon(
                           style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             visualDensity: VisualDensity.compact,
                           ),
                           onPressed: () => _reopenClue(clue),
-                          icon: const Icon(LucideIcons.undo, size: 14, color: AppColors.primary),
+                          icon: const Icon(
+                            LucideIcons.undo,
+                            size: 14,
+                            color: AppColors.primary,
+                          ),
                           label: Text(
                             'Desfazer descarte',
                             style: GoogleFonts.nunito(
@@ -1701,39 +2012,6 @@ class _PrivateCluePhotoState extends State<PrivateCluePhoto> {
                   height: 240,
                   child: Image.memory(snapshot.data!, fit: BoxFit.contain),
                 ),
-                Positioned(
-                  right: 8,
-                  bottom: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          LucideIcons.zoomIn,
-                          size: 12,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Toque para ampliar',
-                          style: GoogleFonts.nunito(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
               ],
             ),
           );
@@ -1794,10 +2072,7 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
           ),
           content: Text(
             'Tem certeza de que este avistamento não é do seu gato? Você poderá desfazer e reabrir a pista a qualquer momento.',
-            style: GoogleFonts.nunito(
-              fontSize: 14,
-              color: AppColors.textDark,
-            ),
+            style: GoogleFonts.nunito(fontSize: 14, color: AppColors.textDark),
           ),
           actions: [
             TextButton(
@@ -1833,9 +2108,8 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
   Future<void> _reopen() async {
     setState(() => _busy = true);
     try {
-      final result = await ProductApiService(widget.store.sessionStore).post(
-        '/vision/matches/${_clue['id']}/reopen',
-      );
+      final result = await ProductApiService(widget.store.sessionStore)
+          .post('/vision/matches/${_clue['id']}/reopen');
       if (mounted) {
         setState(() => _clue.addAll(result));
         showMessage(context, 'Pista reaberta com sucesso.');
@@ -1854,13 +2128,15 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
     );
     final myCat = cats.isEmpty ? null : cats.first;
     final isFriendSighting = widget.clue['conversation_id'] != null;
-    final isPending = _clue['status'] == 'pending' && widget.report['status'] == 'active';
+    final isPending =
+        _clue['status'] == 'pending' && widget.report['status'] == 'active';
     final isConfirmed = _clue['status'] == 'confirmed';
     final isDismissed = _clue['status'] == 'dismissed';
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        actions: const [AppHeaderActions()],
         backgroundColor: AppColors.background,
         elevation: 0,
         leading: GestureDetector(
@@ -1889,7 +2165,12 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.xl),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.sm,
+          AppSpacing.lg,
+          AppSpacing.xl,
+        ),
         children: [
           // Destaque Especial: Avistamento por um Amigo
           if (isFriendSighting) ...[
@@ -1964,7 +2245,8 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
                         MaterialPageRoute(
                           builder: (_) => ConversationPage(
                             sessionStore: widget.store.sessionStore,
-                            conversationId: widget.clue['conversation_id'] as String,
+                            conversationId:
+                                widget.clue['conversation_id'] as String,
                           ),
                         ),
                       ),
@@ -1986,7 +2268,11 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
               children: [
                 Row(
                   children: [
-                    const Icon(LucideIcons.camera, size: 18, color: AppColors.textTitle),
+                    const Icon(
+                      LucideIcons.camera,
+                      size: 18,
+                      color: AppColors.textTitle,
+                    ),
                     const SizedBox(width: AppSpacing.xs),
                     Text(
                       'Foto do Avistamento',
@@ -2009,7 +2295,11 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
                 const SizedBox(height: AppSpacing.md),
                 Row(
                   children: [
-                    const Icon(LucideIcons.clock, size: 14, color: AppColors.textMedium),
+                    const Icon(
+                      LucideIcons.clock,
+                      size: 14,
+                      color: AppColors.textMedium,
+                    ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
@@ -2022,7 +2312,8 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
                     ),
                   ],
                 ),
-                if (widget.clue['note'] != null && (widget.clue['note'] as String).trim().isNotEmpty) ...[
+                if (widget.clue['note'] != null &&
+                    (widget.clue['note'] as String).trim().isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.sm),
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.sm),
@@ -2033,7 +2324,11 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(LucideIcons.fileText, size: 14, color: AppColors.textMedium),
+                        const Icon(
+                          LucideIcons.fileText,
+                          size: 14,
+                          color: AppColors.textMedium,
+                        ),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
@@ -2058,7 +2353,10 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 14,
+                      ),
                     ),
                     onPressed: () => Navigator.push(
                       context,
@@ -2090,7 +2388,11 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.pets, size: 18, color: AppColors.primaryDark),
+                      const Icon(
+                        Icons.pets,
+                        size: 18,
+                        color: AppColors.primaryDark,
+                      ),
                       const SizedBox(width: AppSpacing.xs),
                       Text(
                         'Comparar com ${myCat.displayName}',
@@ -2114,39 +2416,6 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
                           myCat.photoPath,
                           height: 170,
                           borderRadius: AppRadius.photo,
-                        ),
-                        Positioned(
-                          right: 8,
-                          bottom: 8,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.5),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  LucideIcons.zoomIn,
-                                  size: 12,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Toque para ampliar',
-                                  style: GoogleFonts.nunito(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                         ),
                       ],
                     ),
@@ -2172,7 +2441,10 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
             Text(
               'Reconhecer uma pista ajuda a registrar o histórico de localização.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.nunito(fontSize: 12, color: AppColors.textMedium),
+              style: GoogleFonts.nunito(
+                fontSize: 12,
+                color: AppColors.textMedium,
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
             Row(
@@ -2226,7 +2498,11 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
                 children: [
                   Row(
                     children: [
-                      const Icon(LucideIcons.xCircle, size: 20, color: AppColors.textMedium),
+                      const Icon(
+                        LucideIcons.xCircle,
+                        size: 20,
+                        color: AppColors.textMedium,
+                      ),
                       const SizedBox(width: AppSpacing.xs),
                       Text(
                         'Pista Descartada',
@@ -2241,7 +2517,10 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     'Você indicou anteriormente que este gato não é o seu. Se mudou de ideia ou quer reavaliar com mais calma, você pode desfazer o descarte a qualquer momento.',
-                    style: GoogleFonts.nunito(fontSize: 12, color: AppColors.textMedium),
+                    style: GoogleFonts.nunito(
+                      fontSize: 12,
+                      color: AppColors.textMedium,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   SizedBox(
@@ -2272,14 +2551,20 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
               decoration: BoxDecoration(
                 color: AppColors.greenLight,
                 borderRadius: BorderRadius.circular(AppRadius.card),
-                border: Border.all(color: AppColors.greenProgress.withValues(alpha: 0.4)),
+                border: Border.all(
+                  color: AppColors.greenProgress.withValues(alpha: 0.4),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      const Icon(LucideIcons.checkCircle, size: 20, color: AppColors.greenProgress),
+                      const Icon(
+                        LucideIcons.checkCircle,
+                        size: 20,
+                        color: AppColors.greenProgress,
+                      ),
                       const SizedBox(width: AppSpacing.xs),
                       Text(
                         'Pista Reconhecida',
@@ -2294,7 +2579,10 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     'Você confirmou que este avistamento é do seu gato. O ponto foi registrado no histórico e mapa consolidado da busca.',
-                    style: GoogleFonts.nunito(fontSize: 12, color: AppColors.textDark),
+                    style: GoogleFonts.nunito(
+                      fontSize: 12,
+                      color: AppColors.textDark,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   Align(

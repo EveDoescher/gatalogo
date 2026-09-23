@@ -1,3 +1,5 @@
+import '../widgets/app_header_actions.dart';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -36,7 +38,9 @@ class _MyCatsPageState extends State<MyCatsPage> {
       final reports = await ProductApiService(widget.store.sessionStore)
           .list('/app/reports');
       if (mounted) {
-        final activeList = reports.where((report) => report['status'] == 'active');
+        final activeList = reports.where(
+          (report) => report['status'] == 'active',
+        );
         setState(() {
           _active = activeList
               .map((report) => report['cat_client_id'] as String)
@@ -99,54 +103,30 @@ class _MyCatsPageState extends State<MyCatsPage> {
                 onRefresh: _loadReports,
                 color: AppColors.primary,
                 child: CustomScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
                   slivers: [
-                    // Cabeçalho
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.sm),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         child: Row(
                           children: [
-                            IconButton(
-                              onPressed: () => Navigator.maybePop(context),
-                              icon: const Icon(LucideIcons.arrowLeft, color: AppColors.textDark),
-                              tooltip: 'Voltar',
-                            ),
-                            const SizedBox(width: AppSpacing.xs),
-                            Expanded(
+                            const BackButton(),
+                            const Expanded(
                               child: Text(
                                 'Meus Gatos',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.fredoka(
+                                style: TextStyle(
                                   fontSize: 22,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w700,
                                   color: AppColors.textTitle,
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: AppColors.primarySoftBg,
-                                borderRadius: BorderRadius.circular(AppRadius.pill),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.pets, size: 13, color: AppColors.primary),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${store.pets.length}',
-                                    style: GoogleFonts.nunito(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.primaryDark,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                            AppHeaderActions(store: widget.store),
                           ],
                         ),
                       ),
@@ -155,11 +135,15 @@ class _MyCatsPageState extends State<MyCatsPage> {
                     // Botão Adicionar Gato (em harmonia com o design system, sem FAB)
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.xs),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.xl,
+                          vertical: AppSpacing.xs,
+                        ),
                         child: GatalogoButton(
                           text: 'Cadastrar Meu Gato',
                           icon: LucideIcons.plus,
-                          onPressed: () => _open(AddPetPage(store: widget.store)),
+                          onPressed: () =>
+                              _open(AddPetPage(store: widget.store)),
                         ),
                       ),
                     ),
@@ -167,16 +151,31 @@ class _MyCatsPageState extends State<MyCatsPage> {
                     // Ação de Emergência Rápida: Perdi meu gato agora
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.xs),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.xl,
+                          vertical: AppSpacing.xs,
+                        ),
                         child: InkWell(
-                          onTap: () => _open(CreateMissingReportPage(store: widget.store)),
+                          onTap: () => _open(
+                            CreateMissingReportPage(
+                              store: widget.store,
+                              quickMode: true,
+                            ),
+                          ),
                           borderRadius: BorderRadius.circular(AppRadius.card),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md,
+                              vertical: 12,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.errorBg,
-                              borderRadius: BorderRadius.circular(AppRadius.card),
-                              border: Border.all(color: AppColors.error.withValues(alpha: 0.35)),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.card,
+                              ),
+                              border: Border.all(
+                                color: AppColors.error.withValues(alpha: 0.35),
+                              ),
                             ),
                             child: Row(
                               children: [
@@ -186,15 +185,20 @@ class _MyCatsPageState extends State<MyCatsPage> {
                                     color: AppColors.error,
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(LucideIcons.alertTriangle, color: Colors.white, size: 18),
+                                  child: const Icon(
+                                    LucideIcons.alertTriangle,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
                                 ),
                                 const SizedBox(width: AppSpacing.md),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'Perdi meu gato agora',
+                                        'Criar Alerta Rápido',
                                         style: GoogleFonts.fredoka(
                                           fontSize: 15,
                                           fontWeight: FontWeight.w600,
@@ -203,16 +207,22 @@ class _MyCatsPageState extends State<MyCatsPage> {
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        'Ative um alerta de busca comunitária imediato',
+                                        'Ative um alerta de busca imediato para um gato seu não cadastrado',
                                         style: GoogleFonts.nunito(
                                           fontSize: 12,
-                                          color: AppColors.errorText.withValues(alpha: 0.9),
+                                          color: AppColors.errorText.withValues(
+                                            alpha: 0.9,
+                                          ),
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                const Icon(LucideIcons.chevronRight, color: AppColors.error, size: 18),
+                                const Icon(
+                                  LucideIcons.chevronRight,
+                                  color: AppColors.error,
+                                  size: 18,
+                                ),
                               ],
                             ),
                           ),
@@ -223,17 +233,28 @@ class _MyCatsPageState extends State<MyCatsPage> {
                     // Card explicativo sobre a importância das fotos para proteção
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.md, AppSpacing.xl, AppSpacing.xs),
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.xl,
+                          AppSpacing.md,
+                          AppSpacing.xl,
+                          AppSpacing.xs,
+                        ),
                         child: Container(
                           padding: const EdgeInsets.all(AppSpacing.md),
                           decoration: BoxDecoration(
                             color: AppColors.greenLight,
                             borderRadius: BorderRadius.circular(AppRadius.card),
-                            border: Border.all(color: AppColors.green.withValues(alpha: 0.3)),
+                            border: Border.all(
+                              color: AppColors.green.withValues(alpha: 0.3),
+                            ),
                           ),
                           child: Row(
                             children: [
-                              const Icon(LucideIcons.shieldCheck, color: AppColors.greenProgress, size: 22),
+                              const Icon(
+                                LucideIcons.shieldCheck,
+                                color: AppColors.greenProgress,
+                                size: 22,
+                              ),
                               const SizedBox(width: AppSpacing.sm),
                               Expanded(
                                 child: Text(
@@ -259,7 +280,10 @@ class _MyCatsPageState extends State<MyCatsPage> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Image.asset('assets/images/gato_3.png', width: 110),
+                                Image.asset(
+                                  'assets/images/gato_3.png',
+                                  width: 110,
+                                ),
                                 const SizedBox(height: AppSpacing.md),
                                 Text(
                                   'Quem mora com você?',
@@ -285,108 +309,139 @@ class _MyCatsPageState extends State<MyCatsPage> {
                       )
                     else
                       SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.md, AppSpacing.xl, AppSpacing.xxxl),
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.xl,
+                          AppSpacing.md,
+                          AppSpacing.xl,
+                          AppSpacing.xxxl,
+                        ),
                         sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final cat = store.pets[index];
-                              final isMissing = _active.contains(cat.id);
-                              final refCount = store.referencePhotosFor(cat.id).length;
+                          delegate: SliverChildBuilderDelegate((
+                            context,
+                            index,
+                          ) {
+                            final cat = store.pets[index];
+                            final isMissing = _active.contains(cat.id);
+                            final refCount = store
+                                .referencePhotosFor(cat.id)
+                                .length;
 
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                                child: GatalogoCard(
-                                  backgroundColor: AppColors.cardBackground,
-                                  onTap: () => _open(PetProfilePage(
+                            return Padding(
+                              padding: const EdgeInsets.only(
+                                bottom: AppSpacing.md,
+                              ),
+                              child: GatalogoCard(
+                                backgroundColor: AppColors.cardBackground,
+                                onTap: () => _open(
+                                  PetProfilePage(
                                     catId: cat.id,
                                     store: store,
                                     isMissing: isMissing,
                                     activeReport: _activeReports[cat.id],
-                                  )),
-                                  child: Row(
-                                    children: [
-                                      SizedBox(
-                                        width: 70,
-                                        height: 70,
-                                        child: CatPhotoView(
-                                          cat.photoPath,
-                                          borderRadius: AppRadius.photo,
-                                        ),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    SizedBox(
+                                      width: 70,
+                                      height: 70,
+                                      child: CatPhotoView(
+                                        cat.photoPath,
+                                        borderRadius: AppRadius.photo,
                                       ),
-                                      const SizedBox(width: AppSpacing.md),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Expanded(
+                                    ),
+                                    const SizedBox(width: AppSpacing.md),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  cat.displayName,
+                                                  style: GoogleFonts.fredoka(
+                                                    fontSize: 17,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: AppColors.textTitle,
+                                                  ),
+                                                ),
+                                              ),
+                                              if (isMissing)
+                                                Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 2,
+                                                      ),
+                                                  decoration: BoxDecoration(
+                                                    color: AppColors.errorBg,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          AppRadius.pill,
+                                                        ),
+                                                  ),
                                                   child: Text(
-                                                    cat.displayName,
-                                                    style: GoogleFonts.fredoka(
-                                                      fontSize: 17,
-                                                      fontWeight: FontWeight.w600,
-                                                      color: AppColors.textTitle,
+                                                    'Desaparecido',
+                                                    style: GoogleFonts.nunito(
+                                                      fontSize: 11,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      color: AppColors.error,
                                                     ),
                                                   ),
                                                 ),
-                                                if (isMissing)
-                                                  Container(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                                    decoration: BoxDecoration(
-                                                      color: AppColors.errorBg,
-                                                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                                                    ),
-                                                    child: Text(
-                                                      'Desaparecido',
-                                                      style: GoogleFonts.nunito(
-                                                        fontSize: 11,
-                                                        fontWeight: FontWeight.w700,
-                                                        color: AppColors.error,
-                                                      ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            '${refCount + 1} foto(s) no álbum de proteção',
+                                            style: GoogleFonts.nunito(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.textMedium,
+                                            ),
+                                          ),
+                                          if (refCount < 3) ...[
+                                            const SizedBox(height: 2),
+                                            Row(
+                                              children: [
+                                                const Icon(
+                                                  LucideIcons.lightbulb,
+                                                  size: 11,
+                                                  color:
+                                                      AppColors.greenProgress,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Expanded(
+                                                  child: Text(
+                                                    'Adicione mais ângulos para proteção',
+                                                    style: GoogleFonts.nunito(
+                                                      fontSize: 11,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: AppColors
+                                                          .greenProgress,
                                                     ),
                                                   ),
+                                                ),
                                               ],
                                             ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              '${refCount + 1} foto(s) no álbum de proteção',
-                                              style: GoogleFonts.nunito(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColors.textMedium,
-                                              ),
-                                            ),
-                                             if (refCount < 3) ...[
-                                               const SizedBox(height: 2),
-                                               Row(
-                                                 children: [
-                                                   const Icon(LucideIcons.lightbulb, size: 11, color: AppColors.greenProgress),
-                                                   const SizedBox(width: 4),
-                                                   Expanded(
-                                                     child: Text(
-                                                       'Adicione mais ângulos para proteção',
-                                                       style: GoogleFonts.nunito(
-                                                         fontSize: 11,
-                                                         fontWeight: FontWeight.w600,
-                                                         color: AppColors.greenProgress,
-                                                       ),
-                                                     ),
-                                                   ),
-                                                 ],
-                                               ),
-                                             ],
                                           ],
-                                        ),
+                                        ],
                                       ),
-                                      const Icon(LucideIcons.chevronRight, color: AppColors.textLight, size: 18),
-                                    ],
-                                  ),
+                                    ),
+                                    const Icon(
+                                      LucideIcons.chevronRight,
+                                      color: AppColors.textLight,
+                                      size: 18,
+                                    ),
+                                  ],
                                 ),
-                              );
-                            },
-                            childCount: store.pets.length,
-                          ),
+                              ),
+                            );
+                          }, childCount: store.pets.length),
                         ),
                       ),
                   ],
@@ -498,6 +553,7 @@ class _AddPetPageState extends State<AddPetPage> {
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: AppColors.background,
     appBar: AppBar(
+      actions: const [AppHeaderActions()],
       title: Text(
         'Cadastrar Meu Gato',
         style: GoogleFonts.fredoka(
@@ -514,7 +570,11 @@ class _AddPetPageState extends State<AddPetPage> {
           controller: _name,
           maxLength: 30,
           textCapitalization: TextCapitalization.words,
-          style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textDark),
+          style: GoogleFonts.nunito(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textDark,
+          ),
           decoration: const InputDecoration(
             labelText: 'Nome do seu gato',
             hintText: 'ex: Paçoca, Mingau',
@@ -526,7 +586,11 @@ class _AddPetPageState extends State<AddPetPage> {
           controller: _collar,
           maxLength: 50,
           textCapitalization: TextCapitalization.sentences,
-          style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textDark),
+          style: GoogleFonts.nunito(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textDark,
+          ),
           decoration: const InputDecoration(
             labelText: 'Coleira (opcional)',
             hintText: 'ex: Vermelha com guizo, azul reflexiva',
@@ -539,7 +603,11 @@ class _AddPetPageState extends State<AddPetPage> {
           maxLength: 120,
           maxLines: 2,
           textCapitalization: TextCapitalization.sentences,
-          style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textDark),
+          style: GoogleFonts.nunito(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textDark,
+          ),
           decoration: const InputDecoration(
             labelText: 'Marcas características (opcional)',
             hintText: 'ex: Mancha branca no peito, orelha cortada, rabo curto',
@@ -551,7 +619,11 @@ class _AddPetPageState extends State<AddPetPage> {
           controller: _microchip,
           maxLength: 30,
           keyboardType: TextInputType.text,
-          style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textDark),
+          style: GoogleFonts.nunito(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textDark,
+          ),
           decoration: const InputDecoration(
             labelText: 'Microchip (opcional)',
             hintText: 'Código ou número do microchip',
@@ -592,12 +664,19 @@ class _AddPetPageState extends State<AddPetPage> {
           ),
           child: Row(
             children: [
-              const Icon(LucideIcons.info, color: AppColors.textMedium, size: 20),
+              const Icon(
+                LucideIcons.info,
+                color: AppColors.textMedium,
+                size: 20,
+              ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
                   'Depois de salvar, você poderá adicionar fotos de diferentes ângulos para mapear toda a pelagem e reforçar a identificação.',
-                  style: GoogleFonts.nunito(fontSize: 12, color: AppColors.textMedium),
+                  style: GoogleFonts.nunito(
+                    fontSize: 12,
+                    color: AppColors.textMedium,
+                  ),
                 ),
               ),
             ],
@@ -635,7 +714,7 @@ class PetProfilePage extends StatelessWidget {
       if (found.isEmpty) {
         return Scaffold(
           backgroundColor: AppColors.background,
-          appBar: AppBar(),
+          appBar: AppBar(actions: const [AppHeaderActions()]),
           body: const EmptyContent(
             'Gato não encontrado',
             'Este cadastro pode ter sido removido.',
@@ -661,9 +740,14 @@ class PetProfilePage extends StatelessWidget {
             ),
           ),
           actions: [
+            const AppHeaderActions(),
             IconButton(
               tooltip: 'Editar detalhes',
-              icon: const Icon(LucideIcons.pencil, color: AppColors.textDark, size: 20),
+              icon: const Icon(
+                LucideIcons.pencil,
+                color: AppColors.textDark,
+                size: 20,
+              ),
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -682,47 +766,10 @@ class PetProfilePage extends StatelessWidget {
                 imagePath: cat.photoPath,
                 title: cat.displayName,
               ),
-              child: Stack(
-                children: [
-                  CatPhotoView(
-                    cat.photoPath,
-                    height: 260,
-                    borderRadius: AppRadius.card,
-                  ),
-                  Positioned(
-                    right: 12,
-                    bottom: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            LucideIcons.zoomIn,
-                            size: 12,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Toque para ampliar',
-                            style: GoogleFonts.nunito(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+              child: CatPhotoView(
+                cat.photoPath,
+                height: 260,
+                borderRadius: AppRadius.card,
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -749,7 +796,11 @@ class PetProfilePage extends StatelessWidget {
                   const SizedBox(height: AppSpacing.md),
                   Row(
                     children: [
-                      const Icon(LucideIcons.shieldAlert, size: 16, color: AppColors.greenProgress),
+                      const Icon(
+                        LucideIcons.shieldAlert,
+                        size: 16,
+                        color: AppColors.greenProgress,
+                      ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
@@ -772,7 +823,9 @@ class PetProfilePage extends StatelessWidget {
                         : 'Ângulos pendentes: $missing.',
                     style: GoogleFonts.nunito(
                       fontSize: 12,
-                      color: missing.isEmpty ? AppColors.greenProgress : AppColors.textMedium,
+                      color: missing.isEmpty
+                          ? AppColors.greenProgress
+                          : AppColors.textMedium,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -810,10 +863,17 @@ class PetProfilePage extends StatelessWidget {
                       ),
                       TextButton.icon(
                         style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           visualDensity: VisualDensity.compact,
                         ),
-                        icon: const Icon(LucideIcons.pencil, size: 14, color: AppColors.primary),
+                        icon: const Icon(
+                          LucideIcons.pencil,
+                          size: 14,
+                          color: AppColors.primary,
+                        ),
                         label: Text(
                           'Editar',
                           style: GoogleFonts.nunito(
@@ -822,7 +882,8 @@ class PetProfilePage extends StatelessWidget {
                             color: AppColors.primary,
                           ),
                         ),
-                        onPressed: () => _editCatDetailsModal(context, cat, store),
+                        onPressed: () =>
+                            _editCatDetailsModal(context, cat, store),
                       ),
                     ],
                   ),
@@ -830,7 +891,9 @@ class PetProfilePage extends StatelessWidget {
                   _buildDetailRow(
                     icon: LucideIcons.tag,
                     label: 'Coleira',
-                    value: cat.collar?.isNotEmpty == true ? cat.collar! : 'Não informada',
+                    value: cat.collar?.isNotEmpty == true
+                        ? cat.collar!
+                        : 'Não informada',
                   ),
                   const SizedBox(height: 8),
                   _buildDetailRow(
@@ -844,7 +907,9 @@ class PetProfilePage extends StatelessWidget {
                   _buildDetailRow(
                     icon: LucideIcons.cpu,
                     label: 'Microchip',
-                    value: cat.microchip?.isNotEmpty == true ? cat.microchip! : 'Não informado',
+                    value: cat.microchip?.isNotEmpty == true
+                        ? cat.microchip!
+                        : 'Não informado',
                   ),
                 ],
               ),
@@ -855,18 +920,26 @@ class PetProfilePage extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.errorBg,
                 borderRadius: BorderRadius.circular(AppRadius.card),
-                border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: AppColors.error.withValues(alpha: 0.3),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      const Icon(LucideIcons.alertTriangle, color: AppColors.error, size: 20),
+                      const Icon(
+                        LucideIcons.alertTriangle,
+                        color: AppColors.error,
+                        size: 20,
+                      ),
                       const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: Text(
-                          isMissing ? 'Alerta Ativo em Andamento' : 'Alerta Comunitário',
+                          isMissing
+                              ? 'Alerta Ativo em Andamento'
+                              : 'Alerta Comunitário',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.fredoka(
@@ -883,7 +956,10 @@ class PetProfilePage extends StatelessWidget {
                     isMissing
                         ? 'Este gato já está registrado como desaparecido. A comunidade e o sistema de inteligência já estão atentos a possíveis avistamentos.'
                         : 'Se o seu gato sumir ou escapar, crie um alerta com o último local para que a comunidade ajude no reencontro.',
-                    style: GoogleFonts.nunito(fontSize: 12, color: AppColors.errorText),
+                    style: GoogleFonts.nunito(
+                      fontSize: 12,
+                      color: AppColors.errorText,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   if (isMissing)
@@ -927,8 +1003,10 @@ class PetProfilePage extends StatelessWidget {
                       onPressed: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              CreateMissingReportPage(store: store, initialCat: cat),
+                          builder: (_) => CreateMissingReportPage(
+                            store: store,
+                            initialCat: cat,
+                          ),
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
@@ -958,7 +1036,7 @@ class PetProfilePage extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  'Ver meus alertas de busca',
+                  'Ver todos os meus alertas de busca',
                   style: GoogleFonts.nunito(
                     fontWeight: FontWeight.w700,
                     color: AppColors.greenLink,
@@ -994,10 +1072,7 @@ Widget _buildDetailRow({
       Expanded(
         child: Text(
           value,
-          style: GoogleFonts.nunito(
-            fontSize: 13,
-            color: AppColors.textMedium,
-          ),
+          style: GoogleFonts.nunito(fontSize: 13, color: AppColors.textMedium),
         ),
       ),
     ],
@@ -1007,8 +1082,9 @@ Widget _buildDetailRow({
 void _editCatDetailsModal(BuildContext context, Cat cat, CatStore store) {
   final nameController = TextEditingController(text: cat.name ?? '');
   final collarController = TextEditingController(text: cat.collar ?? '');
-  final marksController =
-      TextEditingController(text: cat.distinguishingMarks ?? '');
+  final marksController = TextEditingController(
+    text: cat.distinguishingMarks ?? '',
+  );
   final microchipController = TextEditingController(text: cat.microchip ?? '');
   bool saving = false;
 
@@ -1102,7 +1178,10 @@ void _editCatDetailsModal(BuildContext context, Cat cat, CatStore store) {
                         );
                         if (ctx.mounted) {
                           Navigator.pop(ctx);
-                          showMessage(context, 'Dados atualizados com sucesso.');
+                          showMessage(
+                            context,
+                            'Dados atualizados com sucesso.',
+                          );
                         }
                       } catch (e) {
                         if (ctx.mounted) showMessage(ctx, e);
