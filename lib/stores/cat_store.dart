@@ -19,6 +19,8 @@ import '../services/gamification_service.dart';
 import '../services/location_service.dart';
 import '../services/vision_api_service.dart';
 import 'session_store.dart';
+import 'notification_store.dart';
+import '../services/product_api_service.dart';
 
 class SavedCatResult {
   const SavedCatResult({required this.cat, required this.awaitingConnection});
@@ -37,15 +39,52 @@ class CatStore extends ChangeNotifier {
   final Map<String, List<CatReferencePhoto>> _referencePhotos = {};
   final Set<String> _deletedCatIds = {};
 
-  CatStore(this._sessionStore) {
+  CatStore(
+    this._sessionStore, {
+    CatalogSyncService? catalogSync,
+    this.networkAvailable,
+  }) {
     _analysisApi = AnalysisApiService(
       accessToken: _sessionStore.accessToken,
       refreshAccessToken: () => _sessionStore.accessToken(refresh: true),
     );
-    _catalogSync = CatalogSyncService(_sessionStore);
+    _catalogSync = catalogSync ?? CatalogSyncService(_sessionStore);
     _visionApi = VisionApiService(_sessionStore);
     _gamificationService = GamificationService(_sessionStore);
+    final productApi = ProductApiService(_sessionStore);
+    notifications = NotificationStore(
+      loadItems: () async => _sessionStore.isSignedIn
+          ? productApi.list('/vision/notifications')
+          : [],
+      saveRead: (id) async {
+        await productApi.post('/app/notifications/$id/read');
+      },
+    );
+    _notificationSubscription = _sessionStore.webSocket.onNotification.listen((
+      _,
+    ) {
+      unawaited(refreshNotifications());
+      unawaited(refreshGamification());
+    });
+    _pushSubscription = _sessionStore.pushNotifications.onNotification.listen((
+      _,
+    ) {
+      unawaited(refreshNotifications());
+      unawaited(refreshGamification());
+    });
     _sessionStore.addListener(_onSessionChanged);
+  }
+
+  late final NotificationStore notifications;
+  StreamSubscription? _notificationSubscription;
+  StreamSubscription? _pushSubscription;
+
+  Future<void> refreshNotifications() async {
+    try {
+      await notifications.refresh();
+    } catch (_) {
+      // Retain the shared snapshot when offline.
+    }
   }
 
   final SessionStore _sessionStore;
@@ -54,6 +93,7 @@ class CatStore extends ChangeNotifier {
   late final VisionApiService _visionApi;
   late final GamificationService _gamificationService;
   final Connectivity _connectivity = Connectivity();
+  final Future<bool> Function()? networkAvailable;
 
   GamificationState get gamification => _gamificationService.currentState;
 
@@ -127,10 +167,13 @@ class CatStore extends ChangeNotifier {
     notifyListeners();
 
     _startPendingAnalysisSync();
+    unawaited(refreshNotifications());
     unawaited(syncCatalog());
     unawaited(syncPendingAnalyses());
     unawaited(resolvePendingLocations());
-    unawaited(_gamificationService.loadGamification().then((_) => notifyListeners()));
+    unawaited(
+      _gamificationService.loadGamification().then((_) => notifyListeners()),
+    );
   }
 
   Future<GamificationActionResult> recordGamificationAction(
@@ -226,7 +269,8 @@ class CatStore extends ChangeNotifier {
     return SavedCatResult(cat: cat, awaitingConnection: awaitingConnection);
   }
 
-  Future<void> syncPendingAnalyses() async {
+  Future<void> syncPendingAnalyses({bool manual = false}) async {
+    if (!manual && !_sessionStore.autoSyncEnabled) return;
     if (_sessionStore.session == null ||
         _isSynchronizing ||
         _isLoading ||
@@ -379,10 +423,12 @@ class CatStore extends ChangeNotifier {
       unawaited(syncPendingAnalyses());
       unawaited(syncCatalog());
       unawaited(resolvePendingLocations());
+      unawaited(refreshNotifications());
     });
   }
 
   Future<bool> _hasNetworkTransport() async {
+    if (networkAvailable != null) return networkAvailable!();
     try {
       final results = await _connectivity.checkConnectivity().timeout(
         const Duration(seconds: 2),
@@ -409,7 +455,7 @@ class CatStore extends ChangeNotifier {
       'pending_analysis',
       automaticRetryCount: 0,
     );
-    await syncPendingAnalyses();
+    await syncPendingAnalyses(manual: true);
   }
 
   Future<void> deleteCat(String catId) async {
@@ -501,10 +547,10 @@ class CatStore extends ChangeNotifier {
     final savedName = normalizedName == null || normalizedName.isEmpty
         ? null
         : normalizedName;
-    final savedMicrochip =
-        microchip?.trim().isEmpty == true ? null : microchip?.trim();
-    final savedCollar =
-        collar?.trim().isEmpty == true ? null : collar?.trim();
+    final savedMicrochip = microchip?.trim().isEmpty == true
+        ? null
+        : microchip?.trim();
+    final savedCollar = collar?.trim().isEmpty == true ? null : collar?.trim();
     final savedMarks = distinguishingMarks?.trim().isEmpty == true
         ? null
         : distinguishingMarks?.trim();
@@ -717,7 +763,10 @@ class CatStore extends ChangeNotifier {
   }
 
   Future<void> toggleFavorite(String catId) async {
-    await FavoritesManager.instance.toggleFavorite(catId, sessionStore: _sessionStore);
+    await FavoritesManager.instance.toggleFavorite(
+      catId,
+      sessionStore: _sessionStore,
+    );
     final index = _cats.indexWhere((c) => c.id == catId);
     if (index != -1) {
       final isFav = FavoritesManager.instance.isFavorite(catId);
@@ -735,7 +784,8 @@ class CatStore extends ChangeNotifier {
     }
   }
 
-  Future<void> syncCatalog() async {
+  Future<void> syncCatalog({bool manual = false}) async {
+    if (!manual && !_sessionStore.autoSyncEnabled) return;
     try {
       if (_isLoading ||
           _sessionStore.session == null ||
@@ -771,6 +821,8 @@ class CatStore extends ChangeNotifier {
 
   void _onSessionChanged() {
     if (_loadedOwnerId != _sessionStore.session?.userId) {
+      notifications.clear();
+      _gamificationService.reset();
       _cats.clear();
       _analyses.clear();
       _referencePhotos.clear();
@@ -790,6 +842,9 @@ class CatStore extends ChangeNotifier {
     _sessionStore.removeListener(_onSessionChanged);
     _connectivitySubscription?.cancel();
     _retryTimer?.cancel();
+    _notificationSubscription?.cancel();
+    _pushSubscription?.cancel();
+    notifications.dispose();
     super.dispose();
   }
 }

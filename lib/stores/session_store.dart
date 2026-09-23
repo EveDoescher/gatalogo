@@ -24,6 +24,16 @@ class SessionStore extends ChangeNotifier {
   static const _refreshKey = 'auth_refresh_token';
   static const _profileKey = 'auth_local_profile';
   static const _avatarKey = 'auth_avatar_url';
+  static const _autoSyncKey = 'auto_sync_enabled';
+  bool _autoSyncEnabled = true;
+  bool get autoSyncEnabled => _autoSyncEnabled;
+
+  Future<void> setAutoSyncEnabled(bool value) async {
+    await _secureStorage.write(key: _autoSyncKey, value: value.toString());
+    _autoSyncEnabled = value;
+    notifyListeners();
+  }
+
   Future<String?>? _refreshing;
 
   final AuthApiService _api;
@@ -47,6 +57,8 @@ class SessionStore extends ChangeNotifier {
 
   Future<void> initialize() async {
     try {
+      _autoSyncEnabled =
+          await _secureStorage.read(key: _autoSyncKey) != 'false';
       await pushNotifications.initialize();
       _avatarUrl = await _secureStorage.read(key: _avatarKey);
       final access = await _secureStorage.read(key: _accessKey);
@@ -130,6 +142,7 @@ class SessionStore extends ChangeNotifier {
       ),
     );
     await _save(tokens);
+    unawaited(syncAccountDetails());
   }
 
   Future<void> loginWithGoogle() async {
@@ -150,6 +163,7 @@ class SessionStore extends ChangeNotifier {
           _api.loginWithGoogle(idToken: idToken, deviceId: await deviceId()),
     );
     await _save(tokens);
+    unawaited(syncAccountDetails());
   }
 
   Future<void> loginWithApple({
@@ -166,6 +180,7 @@ class SessionStore extends ChangeNotifier {
       ),
     );
     await _save(tokens);
+    unawaited(syncAccountDetails());
   }
 
   Future<void> requestPasswordReset(String email) =>

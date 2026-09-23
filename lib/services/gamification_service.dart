@@ -7,183 +7,129 @@ import '../models/gamification.dart';
 import '../stores/session_store.dart';
 import 'product_api_service.dart';
 
+/// Ordered server-confirmed progress, isolated by account.
 class GamificationService {
-  GamificationService(this._sessionStore, {FlutterSecureStorage? storage})
-      : _storage = storage ?? const FlutterSecureStorage();
+  GamificationService(
+    this._sessionStore, {
+    FlutterSecureStorage? storage,
+    ProductApiService? api,
+  }) : _storage = storage ?? const FlutterSecureStorage(),
+       _api = api ?? ProductApiService(_sessionStore);
 
   final SessionStore _sessionStore;
   final FlutterSecureStorage _storage;
-  static const _storageKey = 'local_gamification_cache';
-
+  final ProductApiService _api;
   GamificationState? _cachedState;
-  GamificationState get currentState => _cachedState ?? GamificationState.initial();
+  Future<void> _pending = Future.value();
+  int _generation = 0;
 
-  Future<GamificationState> loadGamification() async {
-    // 1. Try local cache first for instant UI response
-    if (_cachedState == null) {
-      try {
-        final raw = await _storage.read(key: _storageKey);
-        if (raw != null) {
-          final decoded = jsonDecode(raw) as Map<String, dynamic>;
-          _cachedState = GamificationState.fromMap(decoded);
-        }
-      } catch (e) {
-        debugPrint('Erro ao ler cache de gamificação: $e');
-      }
-    }
+  GamificationState get currentState =>
+      _cachedState ?? GamificationState.initial();
 
-    // 2. Fetch fresh state from remote API if signed in
-    if (_sessionStore.isSignedIn) {
-      try {
-        final api = ProductApiService(_sessionStore);
-        final data = await api.get('/app/gamification');
-        final newState = GamificationState.fromMap(data);
-        _cachedState = newState;
-        await _persistLocally(newState);
-        return newState;
-      } catch (e) {
-        debugPrint('Erro ao carregar gamificação remota: $e');
-      }
-    }
-
-    return _cachedState ?? GamificationState.initial();
+  void reset() {
+    _generation++;
+    _cachedState = null;
+    _pending = Future.value();
   }
+
+  Future<T> _ordered<T>(Future<T> Function(bool Function(), String) operation) {
+    final generation = _generation;
+    final owner = _sessionStore.session?.userId;
+    bool isCurrent() =>
+        generation == _generation && owner == _sessionStore.session?.userId;
+    final result = _pending.then(
+      (_) =>
+          operation(isCurrent, 'local_gamification_cache_${owner ?? 'guest'}'),
+    );
+    _pending = result.then<void>((_) {}, onError: (Object _, StackTrace _) {});
+    return result;
+  }
+
+  Future<GamificationState> loadGamification() =>
+      _ordered((isCurrent, key) async {
+        if (!isCurrent()) return currentState;
+        if (_cachedState == null) {
+          try {
+            final raw = await _storage.read(key: key);
+            if (!isCurrent()) return currentState;
+            if (raw != null) {
+              _cachedState = GamificationState.fromMap(
+                jsonDecode(raw) as Map<String, dynamic>,
+              );
+            }
+          } catch (e) {
+            debugPrint('Erro ao ler cache de gamificação: $e');
+          }
+        }
+        if (!isCurrent() || !_sessionStore.isSignedIn) return currentState;
+        try {
+          final data = await _api.get('/app/gamification');
+          if (!isCurrent()) return currentState;
+          _cachedState = GamificationState.fromMap(data);
+          await _persistLocally(currentState, key);
+        } catch (e) {
+          debugPrint('Erro ao carregar gamificação remota: $e');
+        }
+        return currentState;
+      });
 
   Future<GamificationActionResult> recordAction(
     String action, {
     String? contextId,
-  }) async {
-    if (_sessionStore.isSignedIn) {
-      try {
-        final api = ProductApiService(_sessionStore);
-        final response = await api.post(
-          '/app/gamification/action',
-          {
-            'action': action,
-            'context_id': contextId,
-          },
-        );
-
-        GamificationState updatedState;
-        if (response.containsKey('daily_missions') ||
-            response.containsKey('xp') ||
-            response.containsKey('new_xp')) {
-          final merged = {
-            ..._cachedState?.toMap() ?? {},
-            ...response,
-            'xp': (response['xp'] as num?)?.toInt() ??
-                (response['new_xp'] as num?)?.toInt() ??
-                _cachedState?.xp ??
-                0,
-          };
-          updatedState = GamificationState.fromMap(merged);
-          _cachedState = updatedState;
-          await _persistLocally(updatedState);
-        } else {
-          updatedState = await loadGamification();
-        }
-
-        final missions = (response['missions_completed'] as List?)
-                ?.map((e) => e.toString())
-                .toList() ??
-            [];
-
-        return GamificationActionResult(
-          state: updatedState,
-          earnedXp: (response['earned_xp'] as num?)?.toInt() ?? 10,
-          multiplier: (response['multiplier'] as num?)?.toDouble() ?? 1.0,
-          levelUp: response['level_up'] == true,
-          level: (response['level'] as num?)?.toInt() ?? updatedState.level,
-          levelTitle: response['level_title']?.toString() ?? updatedState.levelTitle,
-          missionsCompleted: missions,
-        );
-      } catch (e) {
-        debugPrint('Erro ao registrar ação de gamificação remota: $e');
-      }
-    }
-
-    // Local offline simulation fallback
-    final current = currentState;
-    final earned = (action == 'photo'
-        ? 50
-        : action == 'sighting'
-            ? 40
-            : action == 'post'
-                ? 30
-                : action == 'comment'
-                    ? 15
-                    : action == 'share'
-                        ? 25
-                        : action == 'care'
-                            ? 25
-                            : 10);
-    var bonusFromMissions = 0;
-    final completedMissions = <String>[];
-    final updatedDaily = current.dailyMissions.map((m) {
-      var advances = false;
-      if (m.id == 'daily_photo' && (action == 'photo')) advances = true;
-      if (m.id == 'daily_social' && (action == 'like' || action == 'comment' || action == 'post')) advances = true;
-      if (m.id == 'daily_care' && (action == 'sighting' || action == 'photo' || action == 'share' || action == 'care')) advances = true;
-      if (advances && !m.completed) {
-        final newProg = (m.progress + 1).clamp(0, m.target);
-        final isDone = newProg >= m.target;
-        if (isDone) {
-          bonusFromMissions += m.xpReward;
-          completedMissions.add(m.title);
-        }
-        return m.copyWith(progress: newProg, completed: isDone);
-      }
-      return m;
-    }).toList();
-
-    var updatedBonus = current.bonusMission;
-    if (action == 'share' && updatedBonus != null && !updatedBonus.completed) {
-      final newProg = (updatedBonus.progress + 1).clamp(0, updatedBonus.target);
-      final isDone = newProg >= updatedBonus.target;
-      if (isDone) {
-        bonusFromMissions += updatedBonus.xpReward;
-        completedMissions.add(updatedBonus.title);
-      }
-      updatedBonus = updatedBonus.copyWith(progress: newProg, completed: isDone);
-    }
-
-    final newXp = current.xp + earned + bonusFromMissions;
-    final offlineState = GamificationState(
-      xp: newXp,
-      level: current.level,
-      levelTitle: current.levelTitle,
-      levelMinXp: current.levelMinXp,
-      targetXp: current.targetXp,
-      levelReward: current.levelReward,
-      streak: current.streak > 0 ? current.streak : 1,
-      longestStreak: current.longestStreak > 0 ? current.longestStreak : 1,
-      multiplier: current.multiplier,
-      freezeShields: current.freezeShields,
-      dailyMissions: updatedDaily,
-      weeklyMission: current.weeklyMission,
-      bonusMission: updatedBonus,
-      unlockedAchievements: current.unlockedAchievements,
-      totalAchievements: current.totalAchievements,
-    );
-
-    _cachedState = offlineState;
-    await _persistLocally(offlineState);
-
-    return GamificationActionResult(
-      state: offlineState,
-      earnedXp: earned + bonusFromMissions,
-      multiplier: current.multiplier,
-      levelUp: false,
-      level: offlineState.level,
-      levelTitle: offlineState.levelTitle,
-      missionsCompleted: completedMissions,
-    );
-  }
-
-  Future<void> _persistLocally(GamificationState state) async {
+  }) => _ordered((isCurrent, key) async {
+    if (!isCurrent() || !_sessionStore.isSignedIn) return _unchanged();
     try {
-      final jsonStr = jsonEncode(state.toMap());
-      await _storage.write(key: _storageKey, value: jsonStr);
+      final response = await _api.post('/app/gamification/action', {
+        'action': action,
+        'context_id': contextId,
+      });
+      if (!isCurrent()) return _unchanged();
+      if (response.containsKey('xp') || response.containsKey('new_xp')) {
+        _cachedState = GamificationState.fromMap({
+          ...currentState.toMap(),
+          ...response,
+          'xp': response['xp'] ?? response['new_xp'],
+        });
+      } else {
+        final data = await _api.get('/app/gamification');
+        if (!isCurrent()) return _unchanged();
+        _cachedState = GamificationState.fromMap(data);
+      }
+      await _persistLocally(currentState, key);
+      if (!isCurrent()) return _unchanged();
+      return GamificationActionResult(
+        state: currentState,
+        earnedXp: (response['earned_xp'] as num?)?.toInt() ?? 0,
+        multiplier: (response['multiplier'] as num?)?.toDouble() ?? 1,
+        levelUp: response['level_up'] == true,
+        level: currentState.level,
+        levelTitle: currentState.levelTitle,
+        missionsCompleted:
+            (response['missions_completed'] as List?)
+                ?.map((item) => item.toString())
+                .toList() ??
+            [],
+      );
+    } catch (e) {
+      // Failed requests cannot award XP or invent progress locally.
+      debugPrint('Erro ao registrar ação de gamificação remota: $e');
+      return _unchanged();
+    }
+  });
+
+  GamificationActionResult _unchanged() => GamificationActionResult(
+    state: currentState,
+    earnedXp: 0,
+    multiplier: currentState.multiplier,
+    levelUp: false,
+    level: currentState.level,
+    levelTitle: currentState.levelTitle,
+    missionsCompleted: const [],
+  );
+
+  Future<void> _persistLocally(GamificationState state, String key) async {
+    try {
+      await _storage.write(key: key, value: jsonEncode(state.toMap()));
     } catch (e) {
       debugPrint('Erro ao persistir gamificação: $e');
     }
