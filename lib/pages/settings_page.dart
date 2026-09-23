@@ -1,3 +1,5 @@
+import '../widgets/app_header_actions.dart';
+
 import 'dart:async';
 import 'dart:convert';
 
@@ -16,11 +18,7 @@ import '../widgets/gatalogo_components.dart';
 import 'auth_page.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({
-    super.key,
-    required this.sessionStore,
-    this.catStore,
-  });
+  const SettingsPage({super.key, required this.sessionStore, this.catStore});
 
   final SessionStore sessionStore;
   final CatStore? catStore;
@@ -40,16 +38,19 @@ class _SettingsPageState extends State<SettingsPage> {
   void initState() {
     super.initState();
     _load();
-    PackageInfo.fromPlatform().then((info) {
-      if (mounted) setState(() => _packageInfo = info);
-    }).catchError((_) {});
+    PackageInfo.fromPlatform()
+        .then((info) {
+          if (mounted) setState(() => _packageInfo = info);
+        })
+        .catchError((_) {});
   }
 
   Future<void> _load() async {
     if (!widget.sessionStore.isSignedIn) return;
     setState(() => _loading = true);
     try {
-      final data = await ProductApiService(widget.sessionStore).get('/app/account');
+      final data = await ProductApiService(widget.sessionStore)
+          .get('/app/account');
       if (mounted) {
         setState(() {
           _account = data;
@@ -63,6 +64,15 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _updatePreference(String key, bool value) async {
+    if (key == 'auto_sync') {
+      try {
+        await widget.sessionStore.setAutoSyncEnabled(value);
+        if (mounted) setState(() {});
+      } catch (error) {
+        if (mounted) showMessage(context, error);
+      }
+      return;
+    }
     if (_account == null) return;
     setState(() => _busy = true);
     try {
@@ -70,11 +80,8 @@ class _SettingsPageState extends State<SettingsPage> {
         _account!['preferences'] as Map? ?? {},
       )..[key] = value;
 
-      await ProductApiService(widget.sessionStore).request(
-        'PUT',
-        '/app/preferences',
-        preferences,
-      );
+      await ProductApiService(widget.sessionStore)
+          .request('PUT', '/app/preferences', preferences);
       if (mounted) {
         setState(() => _account!['preferences'] = preferences);
         showMessage(context, 'Preferência salva!');
@@ -90,8 +97,8 @@ class _SettingsPageState extends State<SettingsPage> {
     if (widget.catStore == null) return;
     setState(() => _syncing = true);
     try {
-      await widget.catStore!.syncCatalog();
-      await widget.catStore!.syncPendingAnalyses();
+      await widget.catStore!.syncCatalog(manual: true);
+      await widget.catStore!.syncPendingAnalyses(manual: true);
       if (mounted) {
         showMessage(context, 'Sincronizacao concluida com sucesso.');
       }
@@ -181,7 +188,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.cardBackground,
                       borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -189,7 +199,11 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(LucideIcons.mail, size: 16, color: AppColors.textMedium),
+                        const Icon(
+                          LucideIcons.mail,
+                          size: 16,
+                          color: AppColors.textMedium,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -207,7 +221,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   if (errorMessage != null) ...[
                     const SizedBox(height: AppSpacing.sm),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.errorBg,
                         borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -229,7 +246,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       child: OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.primaryDark,
-                          side: const BorderSide(color: AppColors.borderProfile),
+                          side: const BorderSide(
+                            color: AppColors.borderProfile,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(AppRadius.pill),
                           ),
@@ -243,7 +262,8 @@ class _SettingsPageState extends State<SettingsPage> {
                                   errorMessage = null;
                                 });
                                 try {
-                                  await widget.sessionStore.requestDeactivationCode();
+                                  await widget.sessionStore
+                                      .requestDeactivationCode();
                                   setDialogState(() {
                                     codeSent = true;
                                     sendingCode = false;
@@ -251,7 +271,10 @@ class _SettingsPageState extends State<SettingsPage> {
                                 } catch (e) {
                                   setDialogState(() {
                                     sendingCode = false;
-                                    errorMessage = e.toString().replaceFirst('Exception: ', '');
+                                    errorMessage = e.toString().replaceFirst(
+                                      'Exception: ',
+                                      '',
+                                    );
                                   });
                                 }
                               },
@@ -259,12 +282,18 @@ class _SettingsPageState extends State<SettingsPage> {
                             ? const SizedBox(
                                 width: 14,
                                 height: 14,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Icon(LucideIcons.send, size: 16),
                         label: Text(
-                          sendingCode ? 'Enviando codigo...' : 'Enviar Codigo para meu E-mail',
-                          style: GoogleFonts.nunito(fontWeight: FontWeight.w700),
+                          sendingCode
+                              ? 'Enviando codigo...'
+                              : 'Enviar Codigo para meu E-mail',
+                          style: GoogleFonts.nunito(
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     )
@@ -277,7 +306,11 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(LucideIcons.checkCircle, size: 16, color: AppColors.greenLink),
+                          const Icon(
+                            LucideIcons.checkCircle,
+                            size: 16,
+                            color: AppColors.greenLink,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -359,15 +392,21 @@ class _SettingsPageState extends State<SettingsPage> {
                             errorMessage = null;
                           });
                           try {
-                            await widget.sessionStore.confirmDeactivate(code: code);
+                            await widget.sessionStore.confirmDeactivate(
+                              code: code,
+                            );
                             if (ctx.mounted) Navigator.pop(ctx);
                             if (mounted) {
-                              Navigator.of(context).popUntil((route) => route.isFirst);
+                              Navigator.of(context)
+                                  .popUntil((route) => route.isFirst);
                             }
                           } catch (e) {
                             setDialogState(() {
                               confirming = false;
-                              errorMessage = e.toString().replaceFirst('Exception: ', '');
+                              errorMessage = e.toString().replaceFirst(
+                                'Exception: ',
+                                '',
+                              );
                             });
                           }
                         },
@@ -382,7 +421,9 @@ class _SettingsPageState extends State<SettingsPage> {
                         )
                       : Text(
                           'Confirmar Desativacao',
-                          style: GoogleFonts.nunito(fontWeight: FontWeight.w800),
+                          style: GoogleFonts.nunito(
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                 ),
             ],
@@ -410,7 +451,11 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             title: Row(
               children: [
-                const Icon(LucideIcons.lock, color: AppColors.primary, size: 22),
+                const Icon(
+                  LucideIcons.lock,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'Alterar Senha',
@@ -456,7 +501,10 @@ class _SettingsPageState extends State<SettingsPage> {
                     const SizedBox(height: 12),
                     Text(
                       errorMsg!,
-                      style: const TextStyle(color: AppColors.error, fontSize: 13),
+                      style: const TextStyle(
+                        color: AppColors.error,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ],
@@ -475,15 +523,22 @@ class _SettingsPageState extends State<SettingsPage> {
                         final newP = newPasswordController.text;
                         final conf = confirmPasswordController.text;
                         if (cur.isEmpty) {
-                          setDialogState(() => errorMsg = 'Informe a senha atual.');
+                          setDialogState(
+                            () => errorMsg = 'Informe a senha atual.',
+                          );
                           return;
                         }
                         if (newP.length < 6) {
-                          setDialogState(() => errorMsg = 'A nova senha deve ter no minimo 6 caracteres.');
+                          setDialogState(
+                            () => errorMsg =
+                                'A nova senha deve ter no minimo 6 caracteres.',
+                          );
                           return;
                         }
                         if (newP != conf) {
-                          setDialogState(() => errorMsg = 'As novas senhas nao coincidem.');
+                          setDialogState(
+                            () => errorMsg = 'As novas senhas nao coincidem.',
+                          );
                           return;
                         }
 
@@ -504,7 +559,10 @@ class _SettingsPageState extends State<SettingsPage> {
                         } catch (e) {
                           setDialogState(() {
                             loading = false;
-                            errorMsg = e.toString().replaceFirst('Exception: ', '');
+                            errorMsg = e.toString().replaceFirst(
+                              'Exception: ',
+                              '',
+                            );
                           });
                         }
                       },
@@ -512,7 +570,10 @@ class _SettingsPageState extends State<SettingsPage> {
                     ? const SizedBox(
                         width: 14,
                         height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     : const Text('Salvar'),
               ),
@@ -542,7 +603,11 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             title: Row(
               children: [
-                const Icon(LucideIcons.mail, color: AppColors.primary, size: 22),
+                const Icon(
+                  LucideIcons.mail,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'Alterar E-mail',
@@ -563,7 +628,10 @@ class _SettingsPageState extends State<SettingsPage> {
                     codeSent
                         ? 'Um codigo de confirmacao foi enviado para ${emailController.text.trim()}. Digite-o abaixo:'
                         : 'Digite o novo endereco de e-mail. Enviaremos um codigo de verificacao para confirmar a troca.',
-                    style: GoogleFonts.nunito(fontSize: 13, color: AppColors.textMedium),
+                    style: GoogleFonts.nunito(
+                      fontSize: 13,
+                      color: AppColors.textMedium,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   if (!codeSent)
@@ -589,7 +657,10 @@ class _SettingsPageState extends State<SettingsPage> {
                     const SizedBox(height: 12),
                     Text(
                       errorMsg!,
-                      style: const TextStyle(color: AppColors.error, fontSize: 13),
+                      style: const TextStyle(
+                        color: AppColors.error,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ],
@@ -607,7 +678,9 @@ class _SettingsPageState extends State<SettingsPage> {
                         final email = emailController.text.trim();
                         if (!codeSent) {
                           if (email.isEmpty || !email.contains('@')) {
-                            setDialogState(() => errorMsg = 'Informe um e-mail valido.');
+                            setDialogState(
+                              () => errorMsg = 'Informe um e-mail valido.',
+                            );
                             return;
                           }
                           setDialogState(() {
@@ -626,13 +699,18 @@ class _SettingsPageState extends State<SettingsPage> {
                           } catch (e) {
                             setDialogState(() {
                               loading = false;
-                              errorMsg = e.toString().replaceFirst('Exception: ', '');
+                              errorMsg = e.toString().replaceFirst(
+                                'Exception: ',
+                                '',
+                              );
                             });
                           }
                         } else {
                           final code = codeController.text.trim();
                           if (code.length != 6) {
-                            setDialogState(() => errorMsg = 'Digite o codigo de 6 digitos.');
+                            setDialogState(
+                              () => errorMsg = 'Digite o codigo de 6 digitos.',
+                            );
                             return;
                           }
                           setDialogState(() {
@@ -648,14 +726,22 @@ class _SettingsPageState extends State<SettingsPage> {
                             if (ctx.mounted) Navigator.pop(ctx);
                             if (mounted) {
                               setState(() {
-                                if (_account != null) _account!['email'] = email;
+                                if (_account != null) {
+                                  _account!['email'] = email;
+                                }
                               });
-                              showMessage(context, 'E-mail alterado com sucesso!');
+                              showMessage(
+                                context,
+                                'E-mail alterado com sucesso!',
+                              );
                             }
                           } catch (e) {
                             setDialogState(() {
                               loading = false;
-                              errorMsg = e.toString().replaceFirst('Exception: ', '');
+                              errorMsg = e.toString().replaceFirst(
+                                'Exception: ',
+                                '',
+                              );
                             });
                           }
                         }
@@ -664,7 +750,10 @@ class _SettingsPageState extends State<SettingsPage> {
                     ? const SizedBox(
                         width: 14,
                         height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     : Text(codeSent ? 'Confirmar' : 'Enviar Codigo'),
               ),
@@ -678,7 +767,8 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _exportUserData() async {
     setState(() => _busy = true);
     try {
-      final data = await ProductApiService(widget.sessionStore).get('/app/account/export');
+      final data = await ProductApiService(widget.sessionStore)
+          .get('/app/account/export');
       final jsonString = const JsonEncoder.withIndent('  ').convert(data);
       await SharePlus.instance.share(
         ShareParams(
@@ -713,7 +803,11 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             title: Row(
               children: [
-                const Icon(LucideIcons.messageSquare, color: AppColors.primary, size: 22),
+                const Icon(
+                  LucideIcons.messageSquare,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'Feedback & Suporte',
@@ -732,7 +826,10 @@ class _SettingsPageState extends State<SettingsPage> {
                 children: [
                   Text(
                     'Selecione o tipo de mensagem:',
-                    style: GoogleFonts.nunito(fontSize: 13, fontWeight: FontWeight.w600),
+                    style: GoogleFonts.nunito(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Wrap(
@@ -742,22 +839,26 @@ class _SettingsPageState extends State<SettingsPage> {
                       ChoiceChip(
                         label: const Text('Sugestao'),
                         selected: category == 'sugestao',
-                        onSelected: (val) => setDialogState(() => category = 'sugestao'),
+                        onSelected: (val) =>
+                            setDialogState(() => category = 'sugestao'),
                       ),
                       ChoiceChip(
                         label: const Text('Problema/Bug'),
                         selected: category == 'bug',
-                        onSelected: (val) => setDialogState(() => category = 'bug'),
+                        onSelected: (val) =>
+                            setDialogState(() => category = 'bug'),
                       ),
                       ChoiceChip(
                         label: const Text('Elogio'),
                         selected: category == 'elogio',
-                        onSelected: (val) => setDialogState(() => category = 'elogio'),
+                        onSelected: (val) =>
+                            setDialogState(() => category = 'elogio'),
                       ),
                       ChoiceChip(
                         label: const Text('Outro'),
                         selected: category == 'outro',
-                        onSelected: (val) => setDialogState(() => category = 'outro'),
+                        onSelected: (val) =>
+                            setDialogState(() => category = 'outro'),
                       ),
                     ],
                   ),
@@ -774,7 +875,10 @@ class _SettingsPageState extends State<SettingsPage> {
                     const SizedBox(height: 12),
                     Text(
                       errorMsg!,
-                      style: const TextStyle(color: AppColors.error, fontSize: 13),
+                      style: const TextStyle(
+                        color: AppColors.error,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ],
@@ -791,7 +895,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     : () async {
                         final msg = messageController.text.trim();
                         if (msg.isEmpty) {
-                          setDialogState(() => errorMsg = 'Por favor, digite sua mensagem.');
+                          setDialogState(
+                            () => errorMsg = 'Por favor, digite sua mensagem.',
+                          );
                           return;
                         }
                         setDialogState(() {
@@ -799,22 +905,26 @@ class _SettingsPageState extends State<SettingsPage> {
                           errorMsg = null;
                         });
                         try {
-                          await ProductApiService(widget.sessionStore).post(
-                            '/app/feedback',
-                            {
-                              'category': category,
-                              'message': msg,
-                              'device_info': 'Gatalogo App Mobile Flutter',
-                            },
-                          );
+                          await ProductApiService(widget.sessionStore)
+                              .post('/app/feedback', {
+                                'category': category,
+                                'message': msg,
+                                'device_info': 'Gatalogo App Mobile Flutter',
+                              });
                           if (ctx.mounted) Navigator.pop(ctx);
                           if (mounted) {
-                            showMessage(context, 'Feedback enviado com sucesso! Muito obrigado!');
+                            showMessage(
+                              context,
+                              'Feedback enviado com sucesso! Muito obrigado!',
+                            );
                           }
                         } catch (e) {
                           setDialogState(() {
                             loading = false;
-                            errorMsg = e.toString().replaceFirst('Exception: ', '');
+                            errorMsg = e.toString().replaceFirst(
+                              'Exception: ',
+                              '',
+                            );
                           });
                         }
                       },
@@ -822,7 +932,10 @@ class _SettingsPageState extends State<SettingsPage> {
                     ? const SizedBox(
                         width: 14,
                         height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     : const Text('Enviar'),
               ),
@@ -841,7 +954,8 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       applicationName: 'Gatálogo',
       applicationVersion: versionStr,
-      applicationLegalese: '© 2026 Gatálogo Team - Feito com amor para amantes de gatos.',
+      applicationLegalese:
+          '© 2026 Gatálogo Team - Feito com amor para amantes de gatos.',
       applicationIcon: Padding(
         padding: const EdgeInsets.all(12),
         child: Image.asset('assets/images/Logo.png', height: 48),
@@ -854,10 +968,12 @@ class _SettingsPageState extends State<SettingsPage> {
     final prefs = (_account?['preferences'] as Map?) ?? {};
     final sightingPush = prefs['sighting_notifications'] != false;
     final socialPush = prefs['social_notifications'] != false;
+    final autoSync = widget.sessionStore.autoSyncEnabled;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        actions: const [AppHeaderActions()],
         elevation: 0,
         backgroundColor: AppColors.background,
         leading: IconButton(
@@ -885,13 +1001,19 @@ class _SettingsPageState extends State<SettingsPage> {
               children: [
                 if (!widget.sessionStore.isSignedIn) ...[
                   GatalogoCard(
-                    backgroundColor: AppColors.primaryLight.withValues(alpha: 0.35),
+                    backgroundColor: AppColors.primaryLight.withValues(
+                      alpha: 0.35,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            const Icon(LucideIcons.userX, color: AppColors.primary, size: 24),
+                            const Icon(
+                              LucideIcons.userX,
+                              color: AppColors.primary,
+                              size: 24,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               'Modo Convidado',
@@ -921,7 +1043,8 @@ class _SettingsPageState extends State<SettingsPage> {
                                 MaterialPageRoute(
                                   builder: (_) => AuthPage(
                                     sessionStore: widget.sessionStore,
-                                    onContinueOffline: () => Navigator.pop(context),
+                                    onContinueOffline: () =>
+                                        Navigator.pop(context),
                                   ),
                                 ),
                               );
@@ -932,7 +1055,9 @@ class _SettingsPageState extends State<SettingsPage> {
                               backgroundColor: AppColors.primary,
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.pill),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
+                                ),
                               ),
                             ),
                           ),
@@ -955,79 +1080,109 @@ class _SettingsPageState extends State<SettingsPage> {
                 const SizedBox(height: AppSpacing.sm),
                 GatalogoCard(
                   backgroundColor: AppColors.surface,
+                  padding: EdgeInsets.zero,
                   child: Column(
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: AppColors.greenLight,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              LucideIcons.cloud,
-                              color: AppColors.greenLink,
-                              size: 20,
-                            ),
+                      SwitchListTile(
+                        value: autoSync,
+                        onChanged: _busy
+                            ? null
+                            : (val) => _updatePreference('auto_sync', val),
+                        activeThumbColor: AppColors.primary,
+                        activeTrackColor: AppColors.primaryLight,
+                        title: Text(
+                          'Sincronização Automática',
+                          style: GoogleFonts.nunito(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textDark,
                           ),
-                          const SizedBox(width: AppSpacing.md),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Catálogo em Nuvem',
-                                  style: GoogleFonts.fredoka(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textDark,
-                                  ),
-                                ),
-                                Text(
-                                  widget.catStore != null
-                                      ? '${widget.catStore!.discoveries.length} gatos salvos no dispositivo'
-                                      : 'Sincronização ativa',
-                                  style: GoogleFonts.nunito(
-                                    fontSize: 12,
-                                    color: AppColors.textMedium,
-                                  ),
-                                ),
-                              ],
-                            ),
+                        ),
+                        subtitle: Text(
+                          'Salvar seus dados na nuvem automaticamente.',
+                          style: GoogleFonts.nunito(
+                            fontSize: 12,
+                            color: AppColors.textMedium,
                           ),
-                          ElevatedButton(
-                            onPressed: _syncing ? null : _triggerManualSync,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.greenButton,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                      ),
+                      const Divider(height: 1, color: AppColors.borderLight),
+                      Padding(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: AppColors.greenLight,
+                                shape: BoxShape.circle,
                               ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 8,
+                              child: const Icon(
+                                LucideIcons.cloud,
+                                color: AppColors.greenLink,
+                                size: 20,
                               ),
                             ),
-                            child: _syncing
-                                ? const SizedBox(
-                                    width: 14,
-                                    height: 14,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Sincronizar agora',
+                                    style: GoogleFonts.fredoka(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textDark,
                                     ),
-                                  )
-                                : Text(
-                                    'Sincronizar',
+                                  ),
+                                  Text(
+                                    widget.catStore != null
+                                        ? '${widget.catStore!.discoveries.length} gatos salvos no dispositivo'
+                                        : 'Sincronização ativa',
                                     style: GoogleFonts.nunito(
-                                      fontWeight: FontWeight.w800,
                                       fontSize: 12,
+                                      color: AppColors.textMedium,
                                     ),
                                   ),
-                          ),
-                        ],
+                                ],
+                              ),
+                            ),
+                            ElevatedButton(
+                              onPressed: _syncing ? null : _triggerManualSync,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.greenButton,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.pill,
+                                  ),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                              ),
+                              child: _syncing
+                                  ? const SizedBox(
+                                      width: 14,
+                                      height: 14,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : Text(
+                                      'Sincronizar',
+                                      style: GoogleFonts.nunito(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -1094,7 +1249,8 @@ class _SettingsPageState extends State<SettingsPage> {
                             ),
                           ),
                           subtitle: Text(
-                            widget.sessionStore.session?.email ?? 'Atualize seu endereco cadastrado.',
+                            widget.sessionStore.session?.email ??
+                                'Atualize seu endereco cadastrado.',
                             style: GoogleFonts.nunito(
                               fontSize: 12,
                               color: AppColors.textMedium,
@@ -1162,9 +1318,9 @@ class _SettingsPageState extends State<SettingsPage> {
                         onChanged: _busy
                             ? null
                             : (val) => _updatePreference(
-                                  'sighting_notifications',
-                                  val,
-                                ),
+                                'sighting_notifications',
+                                val,
+                              ),
                         activeThumbColor: AppColors.primary,
                         activeTrackColor: AppColors.primaryLight,
                         title: Text(
@@ -1189,9 +1345,9 @@ class _SettingsPageState extends State<SettingsPage> {
                         onChanged: _busy
                             ? null
                             : (val) => _updatePreference(
-                                  'social_notifications',
-                                  val,
-                                ),
+                                'social_notifications',
+                                val,
+                              ),
                         activeThumbColor: AppColors.primary,
                         activeTrackColor: AppColors.primaryLight,
                         title: Text(
