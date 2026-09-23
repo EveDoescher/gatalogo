@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:catlogue/models/cat.dart';
 import 'package:catlogue/models/cat_analysis.dart';
 import 'package:catlogue/models/cat_reference_photo.dart';
@@ -267,28 +266,20 @@ void main() {
       expect(find.text('150 / 300 XP'), findsOneWidget);
     });
 
-    testWidgets('GatalogoAchievementCard renders formatted date when completed', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: GatalogoAchievementCard(
-              title: 'Primeiro Contato',
-              description: 'Fotografe seu primeiro gato.',
-              icon: LucideIcons.search,
-              progress: 1.0,
-              currentCount: 1,
-              targetCount: 1,
-              state: AchievementState.completed,
-              themeColor: Colors.amber,
-              unlockedAt: '2026-09-16T10:00:00Z',
-            ),
-          ),
-        ),
-      );
-
-      expect(find.text('Primeiro Contato'), findsOneWidget);
-      expect(find.textContaining('Desbloqueado em'), findsOneWidget);
-      expect(find.byIcon(LucideIcons.checkCircle2), findsOneWidget);
+    testWidgets('Conquistas filters unlocked achievements without a journey heading', (tester) async {
+      final session = SessionStore();
+      final store = GamificationMockStore(session);
+      store.mockCats.add(Cat(id: 'one', captureNumber: 1, photoPath: 'missing.jpg', capturedAt: DateTime(2026, 9, 22)));
+      await tester.pumpWidget(MaterialApp(home: JourneyPage(store: store)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Conquistadas'));
+      await tester.pumpAndSettle();
+      expect(find.text('Conquistas'), findsOneWidget);
+      expect(find.text('Primeira Descoberta'), findsOneWidget);
+      expect(find.text('Olhar Curioso'), findsNothing);
+      expect(find.textContaining('Conquistas e jornada'), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+      store.dispose(); session.dispose();
     });
   });
 }
