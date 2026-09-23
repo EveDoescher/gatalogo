@@ -47,9 +47,7 @@ class _CapturePageState extends State<CapturePage> {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
             const Icon(
@@ -362,25 +360,8 @@ class _CapturePageState extends State<CapturePage> {
 
   Widget _buildCaptura() {
     return Stack(
+      fit: StackFit.expand,
       children: [
-        // Ramo de folhas à esquerda atrás do título (Flipped horizontalmente conforme Figma Tela 3)
-        Positioned(
-          top: 85,
-          left: -20,
-          child: IgnorePointer(
-            child: Transform.flip(
-              flipX: true,
-              child: Transform.rotate(
-                angle: -0.22,
-                child: Image.asset(
-                  'assets/images/Folha_1.png',
-                  width: 160,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-          ),
-        ),
         // Ilustração inferior direita (plantas e tijolos encostando na base da tela)
         Positioned(
           bottom: -10,
@@ -419,64 +400,36 @@ class _CapturePageState extends State<CapturePage> {
                 ],
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 48),
 
-              // Hero: Título + Ilustração do gatinho com a câmera rosa
+              Text(
+                'Encontrou um gato?',
+                style: GoogleFonts.nunito(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textTitle,
+                  height: 1.1,
+                ),
+              ),
+              const SizedBox(height: 12),
               Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Encontrou\num gato?',
-                          style: GoogleFonts.nunito(
-                            fontSize: 36,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textTitle,
-                            height: 1.05,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          'Registre uma nova\ndescoberta para\nsua coleção',
-                          style: GoogleFonts.nunito(
-                            fontSize: 16.5,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textTitle,
-                            height: 1.25,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      'Registre uma nova descoberta para sua coleção.',
+                      style: GoogleFonts.nunito(
+                        fontSize: 16,
+                        color: AppColors.textTitle,
+                        height: 1.35,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  // Gatinho com a câmera rosa sobre elipse suave
-                  SizedBox(
-                    width: 160,
-                    height: 140,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Positioned(
-                          bottom: 0,
-                          child: Container(
-                            width: 140,
-                            height: 35,
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryLight,
-                              borderRadius: BorderRadius.circular(50),
-                            ),
-                          ),
-                        ),
-                        Image.asset(
-                          'assets/images/gato_1.png',
-                          height: 135,
-                          fit: BoxFit.contain,
-                        ),
-                      ],
-                    ),
+                  const SizedBox(width: 20),
+                  Image.asset(
+                    'assets/images/gato_1.png',
+                    width: 100,
+                    height: 104,
+                    fit: BoxFit.contain,
                   ),
                 ],
               ),
@@ -528,7 +481,8 @@ class _CapturePageState extends State<CapturePage> {
                                   circleColor: AppColors.primaryLight,
                                   icon: LucideIcons.camera,
                                   title: 'Fotografe',
-                                  description: 'Tire uma\nfoto nítida\ndo gato.',
+                                  description:
+                                      'Tire uma\nfoto nítida\ndo gato.',
                                 ),
                               ),
                               const Padding(
@@ -545,7 +499,8 @@ class _CapturePageState extends State<CapturePage> {
                                   circleColor: AppColors.greenLight,
                                   icon: LucideIcons.search,
                                   title: 'Analise',
-                                  description: 'Nosso\nsistema\nidentifica a\npelagem.',
+                                  description:
+                                      'Nosso\nsistema\nidentifica a\npelagem.',
                                 ),
                               ),
                               const Padding(
@@ -577,88 +532,87 @@ class _CapturePageState extends State<CapturePage> {
               const SizedBox(height: 26),
 
               // Botões de Ação: Câmera e Galeria
-              Row(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 48,
-                      child: ElevatedButton(
-                        onPressed: _isAnalyzing || _isValidating ? null : _tirarFoto,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                          ),
+                  SizedBox(
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: _isAnalyzing || _isValidating
+                          ? null
+                          : _tirarFoto,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              LucideIcons.camera,
-                              size: 18,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Text(
-                                'Abrir câmera',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.nunito(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            LucideIcons.camera,
+                            size: 18,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              'Abrir câmera',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.nunito(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: SizedBox(
-                      height: 48,
-                      child: OutlinedButton(
-                        onPressed: _isAnalyzing || _isValidating
-                            ? null
-                            : () => _escolherFoto(ImageSource.gallery),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(
-                            color: AppColors.primary,
-                            width: 1.4,
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                          ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 48,
+                    child: OutlinedButton(
+                      onPressed: _isAnalyzing || _isValidating
+                          ? null
+                          : () => _escolherFoto(ImageSource.gallery),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(
+                          color: AppColors.primary,
+                          width: 1.4,
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              LucideIcons.image,
-                              size: 18,
-                              color: AppColors.primary,
-                            ),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Text(
-                                'Galeria',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.nunito(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.primary,
-                                ),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            LucideIcons.image,
+                            size: 18,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              'Galeria',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.nunito(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.primary,
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -680,11 +634,7 @@ class _CapturePageState extends State<CapturePage> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Icon(
-                      Icons.pets,
-                      size: 28,
-                      color: AppColors.primary,
-                    ),
+                    const Icon(Icons.pets, size: 28, color: AppColors.primary),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -733,11 +683,7 @@ class _CapturePageState extends State<CapturePage> {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.file(
-                    _foto!,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
+                  Image.file(_foto!, width: double.infinity, fit: BoxFit.cover),
                   if (_detectedBoundingBox != null)
                     LayoutBuilder(
                       builder: (context, constraints) {
@@ -799,8 +745,9 @@ class _CapturePageState extends State<CapturePage> {
                 child: SizedBox(
                   height: 48,
                   child: OutlinedButton(
-                    onPressed:
-                        _isAnalyzing || _isValidating ? null : _cancelarFoto,
+                    onPressed: _isAnalyzing || _isValidating
+                        ? null
+                        : _cancelarFoto,
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(
                         color: AppColors.border,
@@ -896,10 +843,7 @@ class _StepItem extends StatelessWidget {
         Container(
           width: 52,
           height: 52,
-          decoration: BoxDecoration(
-            color: circleColor,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: circleColor, shape: BoxShape.circle),
           child: Icon(icon, size: 24, color: AppColors.textDark),
         ),
         const SizedBox(height: 8),
