@@ -1,3 +1,5 @@
+import '../widgets/app_header_actions.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -25,7 +27,8 @@ class FriendsPage extends StatefulWidget {
   State<FriendsPage> createState() => _FriendsPageState();
 }
 
-class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStateMixin {
+class _FriendsPageState extends State<FriendsPage>
+    with SingleTickerProviderStateMixin {
   late final SocialApiService _api;
   late final ProductApiService _product;
   late final TabController _tabController;
@@ -47,7 +50,8 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
   bool _nearbyOptIn = false;
   StreamSubscription? _wsSub;
 
-  String get _currentUsername => widget.sessionStore.session?.username ?? 'explorador';
+  String get _currentUsername =>
+      widget.sessionStore.session?.username ?? 'explorador';
 
   @override
   void initState() {
@@ -56,7 +60,9 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
     _api = SocialApiService(widget.sessionStore);
     _product = ProductApiService(widget.sessionStore);
     _loadAll();
-    _wsSub = widget.sessionStore.webSocket.onNotification.listen((_) => _loadAll());
+    _wsSub = widget.sessionStore.webSocket.onNotification.listen(
+      (_) => _loadAll(),
+    );
   }
 
   @override
@@ -262,7 +268,8 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
     final url = 'https://gatalogo.app/u/$_currentUsername';
     SharePlus.instance.share(
       ShareParams(
-        text: 'Vamos nos conectar no Gatálogo! Veja minhas descobertas de gatos: $url',
+        text:
+            'Vamos nos conectar no Gatálogo! Veja minhas descobertas de gatos: $url',
         subject: 'Convite de amizade no Gatálogo',
       ),
     );
@@ -271,16 +278,20 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
   @override
   Widget build(BuildContext context) {
     final currentUserId = widget.sessionStore.session?.userId;
-    final receivedInvites = _invites.where(
-      (item) =>
-          item['status'] == 'pending' &&
-          (item['recipient'] as Map?)?['id'] == currentUserId,
-    ).toList();
-    final sentInvites = _invites.where(
-      (item) =>
-          item['status'] == 'pending' &&
-          (item['sender'] as Map?)?['id'] == currentUserId,
-    ).toList();
+    final receivedInvites = _invites
+        .where(
+          (item) =>
+              item['status'] == 'pending' &&
+              (item['recipient'] as Map?)?['id'] == currentUserId,
+        )
+        .toList();
+    final sentInvites = _invites
+        .where(
+          (item) =>
+              item['status'] == 'pending' &&
+              (item['sender'] as Map?)?['id'] == currentUserId,
+        )
+        .toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -292,7 +303,7 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Comunidade & Amigos',
+          'Amigos',
           style: GoogleFonts.fredoka(
             fontSize: 22,
             fontWeight: FontWeight.w600,
@@ -300,24 +311,29 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
           ),
         ),
         actions: [
+          const AppHeaderActions(),
           IconButton(
             tooltip: 'Meu QR Code',
-            icon: const Icon(LucideIcons.qrCode, color: AppColors.primary, size: 20),
+            icon: const Icon(
+              LucideIcons.qrCode,
+              color: AppColors.primary,
+              size: 20,
+            ),
             onPressed: _showQrCode,
-          ),
-          IconButton(
-            tooltip: 'Atualizar',
-            icon: const Icon(LucideIcons.refreshCw, color: AppColors.textMedium, size: 18),
-            onPressed: _loadAll,
           ),
         ],
         bottom: TabBar(
           controller: _tabController,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
           labelColor: AppColors.primaryDark,
           unselectedLabelColor: AppColors.textMedium,
           indicatorColor: AppColors.primary,
           indicatorWeight: 3,
-          labelStyle: GoogleFonts.fredoka(fontSize: 13, fontWeight: FontWeight.w600),
+          labelStyle: GoogleFonts.fredoka(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
           tabs: [
             Tab(text: 'Amigos (${_friends.length})'),
             const Tab(text: 'Descobrir'),
@@ -329,14 +345,21 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
                   if (receivedInvites.isNotEmpty) ...[
                     const SizedBox(width: 4),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 1,
+                      ),
                       decoration: const BoxDecoration(
                         color: AppColors.error,
                         shape: BoxShape.circle,
                       ),
                       child: Text(
                         '${receivedInvites.length}',
-                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ],
@@ -348,7 +371,9 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
         ),
       ),
       body: _loading && _friends.isEmpty && _suggestions.isEmpty
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            )
           : TabBarView(
               controller: _tabController,
               children: [
@@ -376,21 +401,32 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
               const SizedBox(height: 14),
               Text(
                 'Nenhum amigo conectado ainda',
-                style: GoogleFonts.fredoka(fontSize: 18, color: AppColors.textTitle),
+                style: GoogleFonts.fredoka(
+                  fontSize: 18,
+                  color: AppColors.textTitle,
+                ),
               ),
               const SizedBox(height: 6),
               Text(
                 'Descubra exploradores na aba Descobrir ou compartilhe seu QR Code para conectar-se com outros gateiros!',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.nunito(fontSize: 13, color: AppColors.textMedium),
+                style: GoogleFonts.nunito(
+                  fontSize: 13,
+                  color: AppColors.textMedium,
+                ),
               ),
               const SizedBox(height: 18),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 12,
+                  ),
                 ),
                 onPressed: () => _tabController.animateTo(1),
                 icon: const Icon(LucideIcons.userPlus, size: 16),
@@ -427,18 +463,24 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
                     decoration: BoxDecoration(
                       color: AppColors.primarySoftBg,
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.borderProfile, width: 1.4),
+                      border: Border.all(
+                        color: AppColors.borderProfile,
+                        width: 1.4,
+                      ),
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: avatarUrl != null
                         ? Image.network(
-                            avatarUrl.startsWith('http') ? avatarUrl : '${ApiConfig.baseUrl}$avatarUrl',
+                            avatarUrl.startsWith('http')
+                                ? avatarUrl
+                                : '${ApiConfig.baseUrl}$avatarUrl',
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => const Icon(
-                              LucideIcons.user,
-                              color: AppColors.primaryDark,
-                              size: 22,
-                            ),
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(
+                                  LucideIcons.user,
+                                  color: AppColors.primaryDark,
+                                  size: 22,
+                                ),
                           )
                         : const Icon(
                             LucideIcons.user,
@@ -460,7 +502,9 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
                           ),
                         ),
                         Text(
-                          friendBio.isNotEmpty ? friendBio : 'Toque para ver o perfil completo',
+                          friendBio.isNotEmpty
+                              ? friendBio
+                              : 'Toque para ver o perfil completo',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.nunito(
@@ -485,12 +529,19 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
                         color: AppColors.greenLink,
                       ),
                     ),
-                    onPressed: _busy ? null : () => _openConversation(friend['id'] as String),
+                    onPressed: _busy
+                        ? null
+                        : () => _openConversation(friend['id'] as String),
                   ),
                   IconButton(
                     tooltip: 'Remover',
-                    icon: const Icon(LucideIcons.trash2, size: 16, color: AppColors.textLight),
-                    onPressed: () => _removeFriend(friend['id'] as String, friendName),
+                    icon: const Icon(
+                      LucideIcons.trash2,
+                      size: 16,
+                      color: AppColors.textLight,
+                    ),
+                    onPressed: () =>
+                        _removeFriend(friend['id'] as String, friendName),
                   ),
                 ],
               ),
@@ -520,8 +571,13 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primaryDark,
-                    side: const BorderSide(color: AppColors.borderProfile, width: 1.2),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+                    side: const BorderSide(
+                      color: AppColors.borderProfile,
+                      width: 1.2,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 11),
                   ),
                   onPressed: _showQrCode,
@@ -536,7 +592,9 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 11),
                   ),
                   onPressed: _shareProfileLink,
@@ -552,20 +610,32 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
           // Campo de Busca com Autocomplete Instantâneo
           Container(
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: AppColors.inputBg,
               borderRadius: BorderRadius.circular(AppRadius.input),
               border: Border.all(color: AppColors.borderLight),
             ),
             child: TextField(
               controller: _searchController,
               onChanged: _onSearchChanged,
-              style: GoogleFonts.nunito(fontWeight: FontWeight.w700, color: AppColors.textDark),
+              style: GoogleFonts.nunito(
+                fontWeight: FontWeight.w700,
+                color: AppColors.textTitle,
+              ),
               decoration: InputDecoration(
                 hintText: 'Buscar exploradores por @nome...',
-                prefixIcon: const Icon(LucideIcons.search, size: 18, color: AppColors.textMedium),
+                hintStyle: GoogleFonts.nunito(color: AppColors.textMedium),
+                prefixIcon: const Icon(
+                  LucideIcons.search,
+                  size: 18,
+                  color: AppColors.textMedium,
+                ),
                 suffixIcon: queryActive
                     ? IconButton(
-                        icon: const Icon(LucideIcons.x, size: 16, color: AppColors.textMedium),
+                        icon: const Icon(
+                          LucideIcons.x,
+                          size: 16,
+                          color: AppColors.textMedium,
+                        ),
                         onPressed: () {
                           _searchController.clear();
                           _onSearchChanged('');
@@ -573,7 +643,10 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
                       )
                     : null,
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
               ),
             ),
           ),
@@ -584,13 +657,19 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
           if (queryActive) ...[
             Text(
               'Resultados da Busca',
-              style: GoogleFonts.fredoka(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textTitle),
+              style: GoogleFonts.fredoka(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textTitle,
+              ),
             ),
             const SizedBox(height: 8),
             if (_searching)
               const Padding(
                 padding: EdgeInsets.all(24),
-                child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+                child: Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                ),
               )
             else if (_searchResults.isEmpty)
               Padding(
@@ -598,7 +677,10 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
                 child: Center(
                   child: Text(
                     'Nenhum explorador encontrado para essa busca.',
-                    style: GoogleFonts.nunito(fontSize: 13, color: AppColors.textMedium),
+                    style: GoogleFonts.nunito(
+                      fontSize: 13,
+                      color: AppColors.textMedium,
+                    ),
                   ),
                 ),
               )
@@ -609,11 +691,19 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
             if (_suggestions.isNotEmpty) ...[
               Row(
                 children: [
-                  const Icon(LucideIcons.sparkles, size: 16, color: AppColors.primary),
+                  const Icon(
+                    LucideIcons.sparkles,
+                    size: 16,
+                    color: AppColors.primary,
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     'Sugestões para Você',
-                    style: GoogleFonts.fredoka(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textTitle),
+                    style: GoogleFonts.fredoka(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textTitle,
+                    ),
                   ),
                 ],
               ),
@@ -641,7 +731,11 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
                           color: AppColors.primarySoftBg,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(LucideIcons.mapPin, size: 16, color: AppColors.primaryDark),
+                        child: const Icon(
+                          LucideIcons.mapPin,
+                          size: 16,
+                          color: AppColors.primaryDark,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -650,11 +744,18 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
                           children: [
                             Text(
                               'Exploradores Perto de Você',
-                              style: GoogleFonts.fredoka(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textTitle),
+                              style: GoogleFonts.fredoka(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textTitle,
+                              ),
                             ),
                             Text(
                               'Descoberta de gateiros regionais de forma anônima e segura',
-                              style: GoogleFonts.nunito(fontSize: 11, color: AppColors.textMedium),
+                              style: GoogleFonts.nunito(
+                                fontSize: 11,
+                                color: AppColors.textMedium,
+                              ),
                             ),
                           ],
                         ),
@@ -665,8 +766,12 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
                         onChanged: (val) async {
                           setState(() => _nearbyOptIn = val);
                           if (val) {
-                            final nearby = await _api.getSuggestions(nearby: true);
-                            if (mounted) setState(() => _nearbySuggestions = nearby);
+                            final nearby = await _api.getSuggestions(
+                              nearby: true,
+                            );
+                            if (mounted) {
+                              setState(() => _nearbySuggestions = nearby);
+                            }
                           }
                         },
                       ),
@@ -679,11 +784,16 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Text(
                           'Nenhum outro explorador regional ativo no momento.',
-                          style: GoogleFonts.nunito(fontSize: 12, color: AppColors.textMedium),
+                          style: GoogleFonts.nunito(
+                            fontSize: 12,
+                            color: AppColors.textMedium,
+                          ),
                         ),
                       )
                     else
-                      ..._nearbySuggestions.map((sugg) => _buildSuggestionCard(sugg)),
+                      ..._nearbySuggestions.map(
+                        (sugg) => _buildSuggestionCard(sugg),
+                      ),
                   ],
                 ],
               ),
@@ -719,11 +829,21 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
               clipBehavior: Clip.antiAlias,
               child: avatarUrl != null
                   ? Image.network(
-                      avatarUrl.startsWith('http') ? avatarUrl : '${ApiConfig.baseUrl}$avatarUrl',
+                      avatarUrl.startsWith('http')
+                          ? avatarUrl
+                          : '${ApiConfig.baseUrl}$avatarUrl',
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => const Icon(LucideIcons.user, size: 20, color: AppColors.primaryDark),
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        LucideIcons.user,
+                        size: 20,
+                        color: AppColors.primaryDark,
+                      ),
                     )
-                  : const Icon(LucideIcons.user, size: 20, color: AppColors.primaryDark),
+                  : const Icon(
+                      LucideIcons.user,
+                      size: 20,
+                      color: AppColors.primaryDark,
+                    ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -732,19 +852,30 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
                 children: [
                   Text(
                     '@$username',
-                    style: GoogleFonts.fredoka(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textTitle),
+                    style: GoogleFonts.fredoka(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textTitle,
+                    ),
                   ),
                   if (mutual > 0)
                     Text(
                       '$mutual amigo(s) em comum',
-                      style: GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textMedium),
+                      style: GoogleFonts.nunito(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textMedium,
+                      ),
                     )
                   else if (bio.isNotEmpty)
                     Text(
                       bio,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.nunito(fontSize: 11, color: AppColors.textMedium),
+                      style: GoogleFonts.nunito(
+                        fontSize: 11,
+                        color: AppColors.textMedium,
+                      ),
                     ),
                 ],
               ),
@@ -755,29 +886,60 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
                 ),
                 onPressed: _busy ? null : () => _sendInvite(username),
-                child: Text('Conectar', style: GoogleFonts.nunito(fontWeight: FontWeight.w800, fontSize: 12)),
+                child: Text(
+                  'Conectar',
+                  style: GoogleFonts.nunito(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                  ),
+                ),
               )
             else if (status == 'friends')
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.greenLight,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
-                child: Text('Amigos', style: GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.greenLink)),
+                child: Text(
+                  'Amigos',
+                  style: GoogleFonts.nunito(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.greenLink,
+                  ),
+                ),
               )
             else if (status == 'pending_sent')
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.cardAltBackground,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
-                child: Text('Enviado', style: GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.textMedium)),
+                child: Text(
+                  'Enviado',
+                  style: GoogleFonts.nunito(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textMedium,
+                  ),
+                ),
               ),
           ],
         ),
@@ -808,11 +970,21 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
               clipBehavior: Clip.antiAlias,
               child: avatarUrl != null
                   ? Image.network(
-                      avatarUrl.startsWith('http') ? avatarUrl : '${ApiConfig.baseUrl}$avatarUrl',
+                      avatarUrl.startsWith('http')
+                          ? avatarUrl
+                          : '${ApiConfig.baseUrl}$avatarUrl',
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => const Icon(LucideIcons.user, size: 20, color: AppColors.primaryDark),
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        LucideIcons.user,
+                        size: 20,
+                        color: AppColors.primaryDark,
+                      ),
                     )
-                  : const Icon(LucideIcons.user, size: 20, color: AppColors.primaryDark),
+                  : const Icon(
+                      LucideIcons.user,
+                      size: 20,
+                      color: AppColors.primaryDark,
+                    ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -821,11 +993,19 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
                 children: [
                   Text(
                     '@$username',
-                    style: GoogleFonts.fredoka(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textTitle),
+                    style: GoogleFonts.fredoka(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textTitle,
+                    ),
                   ),
                   Text(
                     reason,
-                    style: GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primaryDark),
+                    style: GoogleFonts.nunito(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primaryDark,
+                    ),
                   ),
                 ],
               ),
@@ -835,11 +1015,22 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
               ),
               onPressed: _busy ? null : () => _sendInvite(username),
-              child: Text('Conectar', style: GoogleFonts.nunito(fontWeight: FontWeight.w800, fontSize: 12)),
+              child: Text(
+                'Conectar',
+                style: GoogleFonts.nunito(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12,
+                ),
+              ),
             ),
           ],
         ),
@@ -850,7 +1041,10 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
   // -------------------------------------------------------------
   // TAB 3: Convites (Recebidos & Enviados)
   // -------------------------------------------------------------
-  Widget _buildInvitesTab(List<Map<String, dynamic>> received, List<Map<String, dynamic>> sent) {
+  Widget _buildInvitesTab(
+    List<Map<String, dynamic>> received,
+    List<Map<String, dynamic>> sent,
+  ) {
     if (received.isEmpty && sent.isEmpty) {
       return Center(
         child: Padding(
@@ -858,17 +1052,27 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(LucideIcons.mailCheck, size: 48, color: AppColors.textLight),
+              const Icon(
+                LucideIcons.mailCheck,
+                size: 48,
+                color: AppColors.textLight,
+              ),
               const SizedBox(height: 12),
               Text(
                 'Nenhum convite pendente',
-                style: GoogleFonts.fredoka(fontSize: 18, color: AppColors.textTitle),
+                style: GoogleFonts.fredoka(
+                  fontSize: 18,
+                  color: AppColors.textTitle,
+                ),
               ),
               const SizedBox(height: 6),
               Text(
                 'Quando alguém te convidar ou você enviar um convite de amizade, eles aparecerão aqui.',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.nunito(fontSize: 13, color: AppColors.textMedium),
+                style: GoogleFonts.nunito(
+                  fontSize: 13,
+                  color: AppColors.textMedium,
+                ),
               ),
             ],
           ),
@@ -886,7 +1090,11 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
           if (received.isNotEmpty) ...[
             Text(
               'Convites Recebidos (${received.length})',
-              style: GoogleFonts.fredoka(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textTitle),
+              style: GoogleFonts.fredoka(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textTitle,
+              ),
             ),
             const SizedBox(height: 8),
             ...received.map((invite) {
@@ -901,17 +1109,28 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
                   onTap: () => _openProfile(senderName),
                   child: Row(
                     children: [
-                      const Icon(LucideIcons.mail, size: 20, color: AppColors.primaryDark),
+                      const Icon(
+                        LucideIcons.mail,
+                        size: 20,
+                        color: AppColors.primaryDark,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           '@$senderName quer ser seu amigo!',
-                          style: GoogleFonts.nunito(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textDark),
+                          style: GoogleFonts.nunito(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textDark,
+                          ),
                         ),
                       ),
                       IconButton(
                         tooltip: 'Aceitar',
-                        icon: const Icon(LucideIcons.check, color: AppColors.greenLink),
+                        icon: const Icon(
+                          LucideIcons.check,
+                          color: AppColors.greenLink,
+                        ),
                         onPressed: () => _decideInvite(inviteId, true),
                       ),
                       IconButton(
@@ -931,12 +1150,17 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
           if (sent.isNotEmpty) ...[
             Text(
               'Convites Enviados (${sent.length})',
-              style: GoogleFonts.fredoka(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textTitle),
+              style: GoogleFonts.fredoka(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textTitle,
+              ),
             ),
             const SizedBox(height: 8),
             ...sent.map((invite) {
               final recipient = invite['recipient'] as Map? ?? {};
-              final recipientName = recipient['username']?.toString() ?? 'explorador';
+              final recipientName =
+                  recipient['username']?.toString() ?? 'explorador';
               final inviteId = invite['id'] as String;
 
               return Padding(
@@ -946,7 +1170,11 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
                   onTap: () => _openProfile(recipientName),
                   child: Row(
                     children: [
-                      const Icon(LucideIcons.clock, size: 18, color: AppColors.textLight),
+                      const Icon(
+                        LucideIcons.clock,
+                        size: 18,
+                        color: AppColors.textLight,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
@@ -954,17 +1182,26 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
                           children: [
                             Text(
                               '@$recipientName',
-                              style: GoogleFonts.fredoka(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textTitle),
+                              style: GoogleFonts.fredoka(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textTitle,
+                              ),
                             ),
                             Text(
                               'Aguardando resposta do amigo',
-                              style: GoogleFonts.nunito(fontSize: 11, color: AppColors.textMedium),
+                              style: GoogleFonts.nunito(
+                                fontSize: 11,
+                                color: AppColors.textMedium,
+                              ),
                             ),
                           ],
                         ),
                       ),
                       TextButton.icon(
-                        style: TextButton.styleFrom(foregroundColor: AppColors.error),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.error,
+                        ),
                         onPressed: _busy ? null : () => _cancelInvite(inviteId),
                         icon: const Icon(LucideIcons.xCircle, size: 15),
                         label: const Text('Cancelar'),
@@ -991,17 +1228,27 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(LucideIcons.trophy, size: 48, color: AppColors.amberDark),
+              const Icon(
+                LucideIcons.trophy,
+                size: 48,
+                color: AppColors.amberDark,
+              ),
               const SizedBox(height: 12),
               Text(
                 'Sem ranking semanal ainda',
-                style: GoogleFonts.fredoka(fontSize: 18, color: AppColors.textTitle),
+                style: GoogleFonts.fredoka(
+                  fontSize: 18,
+                  color: AppColors.textTitle,
+                ),
               ),
               const SizedBox(height: 6),
               Text(
                 'Adicione amigos para disputar quem ganha mais XP e mantém as maiores sequências no Gatálogo!',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.nunito(fontSize: 13, color: AppColors.textMedium),
+                style: GoogleFonts.nunito(
+                  fontSize: 13,
+                  color: AppColors.textMedium,
+                ),
               ),
             ],
           ),
@@ -1079,11 +1326,22 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
                     clipBehavior: Clip.antiAlias,
                     child: avatarUrl != null
                         ? Image.network(
-                            avatarUrl.startsWith('http') ? avatarUrl : '${ApiConfig.baseUrl}$avatarUrl',
+                            avatarUrl.startsWith('http')
+                                ? avatarUrl
+                                : '${ApiConfig.baseUrl}$avatarUrl',
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => const Icon(LucideIcons.user, size: 20, color: AppColors.primaryDark),
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(
+                                  LucideIcons.user,
+                                  size: 20,
+                                  color: AppColors.primaryDark,
+                                ),
                           )
-                        : const Icon(LucideIcons.user, size: 20, color: AppColors.primaryDark),
+                        : const Icon(
+                            LucideIcons.user,
+                            size: 20,
+                            color: AppColors.primaryDark,
+                          ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -1103,7 +1361,10 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
                             if (isSelf) ...[
                               const SizedBox(width: 6),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 1,
+                                ),
                                 decoration: BoxDecoration(
                                   color: AppColors.primary,
                                   borderRadius: BorderRadius.circular(6),
@@ -1132,7 +1393,11 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
                             ),
                             if (streak > 0) ...[
                               const SizedBox(width: 8),
-                              const Icon(LucideIcons.flame, size: 12, color: AppColors.amberDark),
+                              const Icon(
+                                LucideIcons.flame,
+                                size: 12,
+                                color: AppColors.amberDark,
+                              ),
                               const SizedBox(width: 2),
                               Text(
                                 '$streak d',
@@ -1149,7 +1414,10 @@ class _FriendsPageState extends State<FriendsPage> with SingleTickerProviderStat
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.achievementBg,
                       borderRadius: BorderRadius.circular(8),
