@@ -7,12 +7,13 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../models/cat.dart';
 import '../models/cat_analysis.dart';
-import '../services/cat_sharing_service.dart';
 import '../services/favorites_manager.dart';
 import '../services/location_service.dart';
 import '../stores/cat_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_widgets.dart';
+import '../widgets/post_composer.dart';
+import '../widgets/app_header_actions.dart';
 import 'cat_gallery_page.dart';
 import 'location_page.dart';
 
@@ -76,7 +77,7 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
       'set.',
       'out.',
       'nov.',
-      'dez.'
+      'dez.',
     ];
     final hour = date.hour.toString().padLeft(2, '0');
     final minute = date.minute.toString().padLeft(2, '0');
@@ -123,10 +124,7 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => CatGalleryPage(
-          cat: cat,
-          store: widget.catStore,
-        ),
+        builder: (_) => CatGalleryPage(cat: cat, store: widget.catStore),
       ),
     );
     if (mounted) {
@@ -148,13 +146,30 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
   }
 
   String _formatHairType(String? raw) {
-    if (raw == null || raw.trim().isEmpty) return 'Curto';
+    if (raw == null || raw.trim().isEmpty) return 'Não informado';
     final normalized = raw.trim().toLowerCase();
-    if (normalized.contains('curt') || normalized.contains('short')) return 'Curto';
-    if (normalized.contains('méd') || normalized.contains('med') || normalized.contains('medium')) return 'Médio';
-    if (normalized.contains('long') || normalized.contains('comprid')) return 'Longo';
-    if (normalized.contains('sem') || normalized.contains('hairless') || normalized.contains('careca')) return 'Sem pelo';
-    if (normalized.contains('ondul') || normalized.contains('wavy') || normalized.contains('curly') || normalized.contains('cresp')) return 'Ondulado';
+    if (normalized.contains('curt') || normalized.contains('short')) {
+      return 'Curto';
+    }
+    if (normalized.contains('méd') ||
+        normalized.contains('med') ||
+        normalized.contains('medium')) {
+      return 'Médio';
+    }
+    if (normalized.contains('long') || normalized.contains('comprid')) {
+      return 'Longo';
+    }
+    if (normalized.contains('sem') ||
+        normalized.contains('hairless') ||
+        normalized.contains('careca')) {
+      return 'Sem pelo';
+    }
+    if (normalized.contains('ondul') ||
+        normalized.contains('wavy') ||
+        normalized.contains('curly') ||
+        normalized.contains('cresp')) {
+      return 'Ondulado';
+    }
     return raw.trim();
   }
 
@@ -174,119 +189,125 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-              Center(
-                child: Container(
-                  width: 38,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD5CDC3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
+                Center(
+                  child: Container(
+                    width: 38,
+                    height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withAlpha(25),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      LucideIcons.sparkles,
-                      size: 20,
-                      color: AppColors.primary,
+                      color: const Color(0xFFD5CDC3),
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Confiança da IA ($confidenceDisplay)',
-                          style: GoogleFonts.nunito(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.textDark,
-                          ),
-                        ),
-                        Text(
-                          'Como funciona a estimativa visual',
-                          style: GoogleFonts.nunito(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textMedium,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'O índice de confiança representa a certeza dos modelos de visão computacional na identificação das cores, padrão e pelagem do gato.',
-                style: GoogleFonts.nunito(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textDark,
-                  height: 1.35,
                 ),
-              ),
-              const SizedBox(height: 14),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.cardBackground,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(height: 18),
+                Row(
                   children: [
-                    Text(
-                      'Critérios avaliados:',
-                      style: GoogleFonts.nunito(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textDark,
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withAlpha(25),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        LucideIcons.sparkles,
+                        size: 20,
+                        color: AppColors.primary,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    _buildConfidenceBullet('Iluminação adequada e nitidez da fotografia'),
-                    _buildConfidenceBullet('Visibilidade dos padrões e contraste da pelagem'),
-                    _buildConfidenceBullet('Enquadramento do corpo e ângulos de referência'),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Confiança da IA ($confidenceDisplay)',
+                            style: GoogleFonts.nunito(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.textDark,
+                            ),
+                          ),
+                          Text(
+                            'Como funciona a estimativa visual',
+                            style: GoogleFonts.nunito(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(ctx),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(22),
-                  ),
-                ),
-                child: Text(
-                  'Entendi',
+                const SizedBox(height: 16),
+                Text(
+                  'O índice de confiança representa a certeza dos modelos de visão computacional na identificação das cores, padrão e pelagem do gato.',
                   style: GoogleFonts.nunito(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textDark,
+                    height: 1.35,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBackground,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Critérios avaliados:',
+                        style: GoogleFonts.nunito(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildConfidenceBullet(
+                        'Iluminação adequada e nitidez da fotografia',
+                      ),
+                      _buildConfidenceBullet(
+                        'Visibilidade dos padrões e contraste da pelagem',
+                      ),
+                      _buildConfidenceBullet(
+                        'Enquadramento do corpo e ângulos de referência',
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(22),
+                    ),
+                  ),
+                  child: Text(
+                    'Entendi',
+                    style: GoogleFonts.nunito(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildConfidenceBullet(String text) {
     return Padding(
@@ -296,11 +317,7 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
         children: [
           const Padding(
             padding: EdgeInsets.only(top: 6, right: 8),
-            child: Icon(
-              Icons.circle,
-              size: 5,
-              color: AppColors.primary,
-            ),
+            child: Icon(Icons.circle, size: 5, color: AppColors.primary),
           ),
           Expanded(
             child: Text(
@@ -323,13 +340,17 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.background,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.dialog),
         ),
         title: Row(
           children: [
-            const Icon(LucideIcons.bookOpen, color: AppColors.primary, size: 22),
+            const Icon(
+              LucideIcons.bookOpen,
+              color: AppColors.primary,
+              size: 22,
+            ),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -337,7 +358,7 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                 style: GoogleFonts.fredoka(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textDark,
+                  color: AppColors.textTitle,
                 ),
               ),
             ),
@@ -352,15 +373,23 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                 'Anotacoes e lembretes sobre este gatinho (habitos, local preferido, comida, etc.):',
                 style: GoogleFonts.nunito(
                   fontSize: 13,
-                  color: AppColors.textMedium,
+                  color: AppColors.textDark,
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: controller,
                 maxLines: 4,
-                decoration: const InputDecoration(
+                style: GoogleFonts.nunito(color: AppColors.textTitle),
+                decoration: InputDecoration(
                   hintText: 'Escreva suas observacoes...',
+                  hintStyle: GoogleFonts.nunito(color: AppColors.textMedium),
+                  filled: true,
+                  fillColor: AppColors.cardAltBackground,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
             ],
@@ -404,11 +433,15 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
   }
 
   Future<void> _shareCat(Cat cat, [CatAnalysis? analysis]) async {
-    final shared = await CatSharingService.shareCat(cat: cat, analysis: analysis);
-    if (!shared && mounted) {
-      showMessage(context, 'Não foi possível abrir o compartilhamento.');
-    } else if (shared) {
-      widget.catStore.recordGamificationAction('share');
+    final post = await showPostComposer(
+      context,
+      session: widget.catStore.sessionStore,
+      cats: [cat],
+      initialCat: cat,
+    );
+    if (post != null && mounted) {
+      showMessage(context, 'Descoberta compartilhada na comunidade.');
+      await widget.catStore.recordGamificationAction('post');
     }
   }
 
@@ -428,8 +461,7 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
         final catName = cat.name?.trim().isNotEmpty == true
             ? cat.name!.trim()
             : 'Gato';
-        final catCode =
-            'Gato #${cat.captureNumber.toString().padLeft(3, '0')}';
+        final catCode = 'Gato #${cat.captureNumber.toString().padLeft(3, '0')}';
 
         // Localização formatada e sanitizada
         final rawLocation = cat.locationName?.trim();
@@ -453,7 +485,6 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
         final sanitizedLocation = locationCity.isNotEmpty
             ? '$locationStreet, $locationCity'
             : locationStreet;
-
 
         return Scaffold(
           backgroundColor: AppColors.background,
@@ -533,6 +564,11 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                             ),
                           ),
                         ),
+                        Positioned(
+                          top: MediaQuery.of(context).padding.top + 10,
+                          right: 66,
+                          child: AppHeaderActions(store: widget.catStore),
+                        ),
                         // Botão Opções (topo direito)
                         Positioned(
                           top: MediaQuery.of(context).padding.top + 10,
@@ -540,33 +576,14 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                           child: PopupMenuButton<String>(
                             enabled: !_busy,
                             onSelected: (value) {
-                              if (value == 'notes') _editNotes(cat);
                               if (value == 'rename') _rename(cat);
                               if (value == 'delete') _delete(cat);
                             },
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
+                            color: AppColors.surface,
                             itemBuilder: (context) => [
-                              PopupMenuItem(
-                                value: 'notes',
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      LucideIcons.bookOpen,
-                                      size: 18,
-                                      color: AppColors.textDark,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      'Anotacoes do diario',
-                                      style: GoogleFonts.nunito(
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
                               PopupMenuItem(
                                 value: 'rename',
                                 child: Row(
@@ -675,7 +692,8 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                                       fontSize: 28,
                                                       fontWeight:
                                                           FontWeight.w900,
-                                                      color: AppColors.textTitle,
+                                                      color:
+                                                          AppColors.textTitle,
                                                     ),
                                                   ),
                                                 ),
@@ -755,13 +773,15 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                                       fontSize: 10,
                                                       fontWeight:
                                                           FontWeight.w600,
-                                                      color: AppColors.textLight,
+                                                      color:
+                                                          AppColors.textLight,
                                                     ),
                                                   ),
                                                   const SizedBox(height: 2),
                                                   Text(
                                                     _formatFullDate(
-                                                        cat.capturedAt),
+                                                      cat.capturedAt,
+                                                    ),
                                                     style: GoogleFonts.nunito(
                                                       fontSize: 11,
                                                       fontWeight:
@@ -800,7 +820,8 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                                       fontSize: 10,
                                                       fontWeight:
                                                           FontWeight.w600,
-                                                      color: AppColors.textLight,
+                                                      color:
+                                                          AppColors.textLight,
                                                     ),
                                                   ),
                                                   const SizedBox(height: 2),
@@ -903,7 +924,8 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                         ...referencePhotos.map(
                                           (photo) => Padding(
                                             padding: const EdgeInsets.only(
-                                                right: 12),
+                                              right: 12,
+                                            ),
                                             child: GestureDetector(
                                               onTap: () => _openGallery(cat),
                                               child: ClipRRect(
@@ -917,14 +939,15 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                                     fit: BoxFit.cover,
                                                     errorBuilder: (_, _, _) =>
                                                         Container(
-                                                      color: const Color(
-                                                          0xFFEAE6DC),
-                                                      child: const Icon(
-                                                        LucideIcons.image,
-                                                        color:
-                                                            AppColors.textLight,
-                                                      ),
-                                                    ),
+                                                          color: const Color(
+                                                            0xFFEAE6DC,
+                                                          ),
+                                                          child: const Icon(
+                                                            LucideIcons.image,
+                                                            color: AppColors
+                                                                .textLight,
+                                                          ),
+                                                        ),
                                                   ),
                                                 ),
                                               ),
@@ -959,8 +982,9 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                                   style: GoogleFonts.nunito(
                                                     fontSize: 10,
                                                     fontWeight: FontWeight.w700,
-                                                    color:
-                                                        const Color(0xFF5A7352),
+                                                    color: const Color(
+                                                      0xFF5A7352,
+                                                    ),
                                                     height: 1.1,
                                                   ),
                                                 ),
@@ -971,7 +995,9 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                         // Mensagem discreta quando ainda não há fotos adicionais de poses
                                         if (referencePhotos.isEmpty)
                                           Padding(
-                                            padding: const EdgeInsets.only(left: 14),
+                                            padding: const EdgeInsets.only(
+                                              left: 14,
+                                            ),
                                             child: Center(
                                               child: Text(
                                                 'Adicione fotos de diferentes\nângulos para enriquecer o perfil.',
@@ -1030,8 +1056,9 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                           ),
                                           decoration: BoxDecoration(
                                             color: AppColors.primaryLight,
-                                            borderRadius:
-                                                BorderRadius.circular(12),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
                                           ),
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
@@ -1043,7 +1070,8 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                               ),
                                               const SizedBox(width: 4),
                                               Text(
-                                                cat.notes?.trim().isNotEmpty == true
+                                                cat.notes?.trim().isNotEmpty ==
+                                                        true
                                                     ? 'Editar'
                                                     : 'Adicionar',
                                                 style: GoogleFonts.nunito(
@@ -1088,9 +1116,12 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                         width: double.infinity,
                                         padding: const EdgeInsets.all(12),
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withValues(alpha: 0.6),
-                                          borderRadius:
-                                              BorderRadius.circular(14),
+                                          color: Colors.white.withValues(
+                                            alpha: 0.6,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            14,
+                                          ),
                                           border: Border.all(
                                             color: AppColors.borderLight,
                                             width: 1.0,
@@ -1192,13 +1223,15 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                                 Container(
                                                   padding:
                                                       const EdgeInsets.symmetric(
-                                                    horizontal: 6,
-                                                    vertical: 1,
-                                                  ),
+                                                        horizontal: 6,
+                                                        vertical: 1,
+                                                      ),
                                                   decoration: BoxDecoration(
                                                     color: AppColors.greenLight,
                                                     borderRadius:
-                                                        BorderRadius.circular(6),
+                                                        BorderRadius.circular(
+                                                          6,
+                                                        ),
                                                   ),
                                                   child: Text(
                                                     'Original',
@@ -1206,7 +1239,8 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                                       fontSize: 10,
                                                       fontWeight:
                                                           FontWeight.w700,
-                                                      color: AppColors.greenLink,
+                                                      color:
+                                                          AppColors.greenLink,
                                                     ),
                                                   ),
                                                 ),
@@ -1233,8 +1267,9 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Container(
-                                            margin:
-                                                const EdgeInsets.only(top: 4),
+                                            margin: const EdgeInsets.only(
+                                              top: 4,
+                                            ),
                                             width: 10,
                                             height: 10,
                                             decoration: BoxDecoration(
@@ -1256,8 +1291,7 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                                   'Foto de Referencia (${photo.kind})',
                                                   style: GoogleFonts.nunito(
                                                     fontSize: 12,
-                                                    fontWeight:
-                                                        FontWeight.w700,
+                                                    fontWeight: FontWeight.w700,
                                                     color: AppColors.textDark,
                                                   ),
                                                 ),
@@ -1265,8 +1299,7 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                                   'Atualizado em ${_formatFullDate(photo.updatedAt)}',
                                                   style: GoogleFonts.nunito(
                                                     fontSize: 11,
-                                                    color:
-                                                        AppColors.textMedium,
+                                                    color: AppColors.textMedium,
                                                   ),
                                                 ),
                                               ],
@@ -1281,7 +1314,9 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                               ),
                             ),
 
-                            const SizedBox(height: 90), // Espaço para os botões fixos
+                            const SizedBox(
+                              height: 90,
+                            ), // Espaço para os botões fixos
                           ],
                         ),
                       ),
@@ -1305,10 +1340,7 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                   decoration: BoxDecoration(
                     color: AppColors.background.withAlpha(245),
                     border: const Border(
-                      top: BorderSide(
-                        color: Color(0xFFEFE7DE),
-                        width: 1.0,
-                      ),
+                      top: BorderSide(color: Color(0xFFEFE7DE), width: 1.0),
                     ),
                   ),
                   child: Row(
@@ -1324,7 +1356,8 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                 builder: (_) => LocationPage(
                                   catStore: widget.catStore,
                                   catId: cat.id,
-                                  initial: cat.latitude != null &&
+                                  initial:
+                                      cat.latitude != null &&
                                           cat.longitude != null
                                       ? LatLng(cat.latitude!, cat.longitude!)
                                       : null,
@@ -1335,7 +1368,9 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.greenButton,
                               elevation: 0,
-                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(24),
                               ),
@@ -1376,7 +1411,9 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               elevation: 0,
-                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(24),
                               ),
@@ -1537,7 +1574,11 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () => widget.catStore.retryAnalysis(cat.id),
-              icon: const Icon(LucideIcons.refreshCw, size: 16, color: Colors.white),
+              icon: const Icon(
+                LucideIcons.refreshCw,
+                size: 16,
+                color: Colors.white,
+              ),
               label: Text(
                 'Tentar novamente',
                 style: GoogleFonts.nunito(
@@ -1604,7 +1645,11 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
             const SizedBox(height: 14),
             OutlinedButton.icon(
               onPressed: () => widget.catStore.retryAnalysis(cat.id),
-              icon: const Icon(LucideIcons.refreshCw, size: 16, color: AppColors.primary),
+              icon: const Icon(
+                LucideIcons.refreshCw,
+                size: 16,
+                color: AppColors.primary,
+              ),
               label: Text(
                 'Analisar agora',
                 style: GoogleFonts.nunito(
@@ -1626,8 +1671,8 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
     }
 
     final confVal = _resolveConfidence(analysis);
-    final confidenceDisplay = confVal != null ? '$confVal%' : '92%';
-    final coatType = analysis?.coatType ?? 'Tricolor';
+    final confidenceDisplay = confVal != null ? '$confVal%' : 'Não informada';
+    final coatType = analysis?.coatType ?? 'Não informado';
     final hairType = _formatHairType(analysis?.hairType);
 
     return Container(
@@ -1660,33 +1705,37 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                 ),
               ),
               const SizedBox(width: 8),
-              InkWell(
-                onTap: () => _showConfidenceModal(context, confidenceDisplay),
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Confiança: $confidenceDisplay',
-                        style: GoogleFonts.nunito(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textMedium,
-                          decoration: TextDecoration.underline,
+              if (confVal != null)
+                InkWell(
+                  onTap: () => _showConfidenceModal(context, confidenceDisplay),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 2,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Confiança: $confidenceDisplay',
+                          style: GoogleFonts.nunito(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textMedium,
+                            decoration: TextDecoration.underline,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(
-                        LucideIcons.helpCircle,
-                        size: 15,
-                        color: AppColors.textMedium,
-                      ),
-                    ],
+                        const SizedBox(width: 4),
+                        const Icon(
+                          LucideIcons.helpCircle,
+                          size: 15,
+                          color: AppColors.textMedium,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 18),
@@ -1708,7 +1757,9 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                     ),
                     const SizedBox(height: 10),
                     if (analysis?.colors.isNotEmpty == true)
-                      ...analysis!.colors.take(3).map(
+                      ...analysis!.colors
+                          .take(3)
+                          .map(
                             (c) => _ColorItem(
                               label: c.name,
                               percentage: _formatPercentage(c.percentage),
@@ -1781,10 +1832,7 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
 }
 
 class _ColorItem extends StatelessWidget {
-  const _ColorItem({
-    required this.label,
-    required this.percentage,
-  });
+  const _ColorItem({required this.label, required this.percentage});
 
   final String label;
   final String percentage;

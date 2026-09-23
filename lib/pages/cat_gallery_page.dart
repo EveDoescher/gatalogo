@@ -1,3 +1,5 @@
+import '../widgets/app_header_actions.dart';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -149,8 +151,8 @@ class _CatGalleryPageState extends State<CatGalleryPage> {
                         kind == 'front'
                             ? Icons.pets
                             : kind == 'back'
-                                ? LucideIcons.alignCenter
-                                : LucideIcons.maximize2,
+                            ? LucideIcons.alignCenter
+                            : LucideIcons.maximize2,
                         color: AppColors.primary,
                         size: 22,
                       ),
@@ -314,53 +316,55 @@ class _CatGalleryPageState extends State<CatGalleryPage> {
   }
 
   void _view(String path, String label) => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => Scaffold(
-            backgroundColor: AppColors.textDark,
-            appBar: AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  margin: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(200),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    LucideIcons.chevronLeft,
-                    color: AppColors.textDark,
-                    size: 22,
-                  ),
-                ),
+    context,
+    MaterialPageRoute(
+      builder: (_) => Scaffold(
+        backgroundColor: AppColors.textDark,
+        appBar: AppBar(
+          actions: const [AppHeaderActions()],
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha(200),
+                shape: BoxShape.circle,
               ),
-              title: Text(
-                label,
-                style: GoogleFonts.fredoka(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            body: Center(
-              child: InteractiveViewer(
-                minScale: 0.5,
-                maxScale: 5.0,
-                child: CatPhotoView(path, fit: BoxFit.contain, borderRadius: 0),
+              child: const Icon(
+                LucideIcons.chevronLeft,
+                color: AppColors.textDark,
+                size: 22,
               ),
             ),
           ),
+          title: Text(
+            label,
+            style: GoogleFonts.fredoka(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
         ),
-      );
+        body: Center(
+          child: InteractiveViewer(
+            minScale: 0.5,
+            maxScale: 5.0,
+            child: CatPhotoView(path, fit: BoxFit.contain, borderRadius: 0),
+          ),
+        ),
+      ),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        actions: const [AppHeaderActions()],
         backgroundColor: AppColors.background,
         elevation: 0,
         leading: GestureDetector(
@@ -513,21 +517,6 @@ class _CatGalleryPageState extends State<CatGalleryPage> {
                                     ),
                                   ),
                                 ),
-                                const Spacer(),
-                                Text(
-                                  'Toque para ampliar',
-                                  style: GoogleFonts.nunito(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textLight,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                const Icon(
-                                  LucideIcons.zoomIn,
-                                  size: 14,
-                                  color: AppColors.textLight,
-                                ),
                               ],
                             ),
                           ),
@@ -652,9 +641,9 @@ class _CatGalleryPageState extends State<CatGalleryPage> {
                                             Container(
                                               padding:
                                                   const EdgeInsets.symmetric(
-                                                horizontal: 8,
-                                                vertical: 2,
-                                              ),
+                                                    horizontal: 8,
+                                                    vertical: 2,
+                                                  ),
                                               decoration: BoxDecoration(
                                                 color: AppColors.greenLight,
                                                 borderRadius:
@@ -673,9 +662,7 @@ class _CatGalleryPageState extends State<CatGalleryPage> {
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        photo == null
-                                            ? desc
-                                            : 'Foto cadastrada para reconhecimento',
+                                        photo == null ? desc : 'Foto cadastrada para reconhecimento',
                                         style: GoogleFonts.nunito(
                                           fontSize: 12,
                                           color: AppColors.textMedium,
@@ -692,7 +679,8 @@ class _CatGalleryPageState extends State<CatGalleryPage> {
                                       elevation: 0,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(
-                                            AppRadius.pill),
+                                          AppRadius.pill,
+                                        ),
                                       ),
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 14,
@@ -729,7 +717,9 @@ class _CatGalleryPageState extends State<CatGalleryPage> {
                                         onPressed: _busy
                                             ? null
                                             : () => _showAddPhotoSheet(
-                                                kind, label),
+                                                kind,
+                                                label,
+                                              ),
                                         icon: const Icon(
                                           LucideIcons.refreshCw,
                                           size: 18,
@@ -750,9 +740,9 @@ class _CatGalleryPageState extends State<CatGalleryPage> {
                                                   try {
                                                     await widget.store
                                                         .deleteReferencePhoto(
-                                                      widget.cat.id,
-                                                      kind,
-                                                    );
+                                                          widget.cat.id,
+                                                          kind,
+                                                        );
                                                   } catch (_) {
                                                     if (context.mounted) {
                                                       showMessage(
@@ -785,8 +775,9 @@ class _CatGalleryPageState extends State<CatGalleryPage> {
                   color: Colors.black.withAlpha(50),
                   child: const Center(
                     child: CircularProgressIndicator(
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(AppColors.primary),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColors.primary,
+                      ),
                     ),
                   ),
                 ),
