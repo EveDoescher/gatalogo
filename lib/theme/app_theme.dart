@@ -374,7 +374,9 @@ class AppTheme {
           return AppColors.textLight;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return AppColors.greenLight;
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.greenLight;
+          }
           return AppColors.borderLight;
         }),
       ),
@@ -636,7 +638,9 @@ class AppTheme {
           return AppColors.darkTextLight;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return AppColors.green.withValues(alpha: 0.3);
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.green.withValues(alpha: 0.3);
+          }
           return AppColors.darkBorderLight;
         }),
       ),

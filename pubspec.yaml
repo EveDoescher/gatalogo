@@ -76,6 +76,7 @@ flutter:
 
   assets:
     - assets/models/cat_detector.tflite
+    - assets/fonts/
     - assets/images/
     - assets/templates/
 
