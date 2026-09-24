@@ -32,7 +32,7 @@ class CatDatabase {
 
     return openDatabase(
       path,
-      version: 14,
+      version: 16,
 
       onCreate: (db, version) async {
         await db.execute('''
@@ -82,9 +82,18 @@ class CatDatabase {
   )
 ''');
         await _createReferencePhotoTable(db);
+        await _createHabitatCacheTable(db);
       },
 
       onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion == 15) {
+          await db.execute(
+            'ALTER TABLE habitat_cache ADD COLUMN pending_purchases TEXT',
+          );
+        }
+        if (oldVersion < 15) {
+          await _createHabitatCacheTable(db);
+        }
         if (oldVersion < 14) {
           final columns = await db.rawQuery('PRAGMA table_info(cats)');
           final names = columns.map((c) => c['name'] as String).toSet();
@@ -239,6 +248,80 @@ class CatDatabase {
         PRIMARY KEY (cat_id, kind)
       )
     ''');
+  }
+
+  Future<void> _createHabitatCacheTable(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS habitat_cache (
+        owner_id TEXT PRIMARY KEY,
+        snapshot TEXT,
+        draft TEXT,
+        pending_purchases TEXT
+      )
+    ''');
+  }
+
+  Future<Map<String, dynamic>?> readHabitatCache(String ownerId) async {
+    final rows = await (await database).query(
+      'habitat_cache',
+      where: 'owner_id = ?',
+      whereArgs: [ownerId],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return {
+      'snapshot': rows.first['snapshot'] == null
+          ? null
+          : jsonDecode(rows.first['snapshot'] as String),
+      'draft': rows.first['draft'] == null
+          ? null
+          : jsonDecode(rows.first['draft'] as String),
+      'pending_purchases': rows.first['pending_purchases'] == null
+          ? null
+          : jsonDecode(rows.first['pending_purchases'] as String),
+    };
+  }
+
+  Future<void> saveHabitatSnapshot(
+    String ownerId,
+    Map<String, dynamic> snapshot,
+  ) async {
+    await (await database).rawInsert(
+      '''
+      INSERT INTO habitat_cache (owner_id, snapshot)
+      VALUES (?, ?)
+      ON CONFLICT(owner_id) DO UPDATE SET snapshot = excluded.snapshot
+    ''',
+      [ownerId, jsonEncode(snapshot)],
+    );
+  }
+
+  Future<void> saveHabitatDraft(
+    String ownerId,
+    Map<String, dynamic>? draft,
+  ) async {
+    await (await database).rawInsert(
+      '''
+      INSERT INTO habitat_cache (owner_id, draft)
+      VALUES (?, ?)
+      ON CONFLICT(owner_id) DO UPDATE SET draft = excluded.draft
+    ''',
+      [ownerId, draft == null ? null : jsonEncode(draft)],
+    );
+  }
+
+  Future<void> saveHabitatPendingPurchases(
+    String ownerId,
+    Map<String, String> pendingPurchases,
+  ) async {
+    await (await database).rawInsert(
+      '''
+      INSERT INTO habitat_cache (owner_id, pending_purchases)
+      VALUES (?, ?)
+      ON CONFLICT(owner_id) DO UPDATE SET pending_purchases = excluded.pending_purchases
+    ''',
+      [ownerId, jsonEncode(pendingPurchases)],
+    );
   }
 
   Future<void> insertCat(Cat cat) async {

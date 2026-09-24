@@ -193,6 +193,23 @@ class CatStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> recordHabitatAction(
+    String action, {
+    String? targetType,
+    String? targetId,
+  }) async {
+    if (!_sessionStore.isSignedIn) return;
+    try {
+      await ProductApiService(_sessionStore).post('/app/habitat/actions', {
+        'action': action,
+        'target_type': targetType,
+        'target_id': targetId,
+      });
+    } catch (_) {
+      // A moeda só aparece após confirmação no servidor.
+    }
+  }
+
   Future<SavedCatResult> addFromTempPhoto(
     String tempPhotoPath, {
     double? latitude,

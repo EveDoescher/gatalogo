@@ -280,7 +280,12 @@ class MissingCatPosterPage extends StatelessWidget {
                 report: report,
                 locationName: locStr,
               );
-              if (shared) await catStore?.recordGamificationAction('share');
+              if (shared) {
+                await catStore?.recordGamificationAction('share');
+                await catStore?.recordHabitatAction(
+                  'share', targetType: 'report', targetId: report['id']?.toString(),
+                );
+              }
             },
             icon: const Icon(LucideIcons.share2, size: 18),
             label: Text(

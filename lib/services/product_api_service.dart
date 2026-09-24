@@ -7,8 +7,9 @@ import '../config/api_config.dart';
 import '../stores/session_store.dart';
 
 class ProductApiException implements Exception {
-  const ProductApiException(this.message);
+  const ProductApiException(this.message, {this.statusCode});
   final String message;
+  final int? statusCode;
   @override
   String toString() => message;
 }
@@ -49,7 +50,7 @@ class ProductApiService {
           final detail = (jsonDecode(response.body) as Map)['detail'];
           if (detail is String) message = detail;
         } catch (_) {}
-        throw ProductApiException(message);
+        throw ProductApiException(message, statusCode: response.statusCode);
       }
       return response;
     } on ProductApiException {

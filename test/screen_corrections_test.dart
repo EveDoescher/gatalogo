@@ -205,32 +205,38 @@ void main() {
     },
   );
 
-  testWidgets('five navigation actions fit and Habitat opens the placeholder', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(320, 720);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    final session = SessionStore();
-    final store = ScreenStore(session);
-    await tester.pumpWidget(
-      screenApp(
-        MainNavigation(sessionStore: session, catStore: store),
-        store,
-        scale: 1.3,
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(tester.takeException(), isNull);
-    await tester.tap(find.text('Habitat').last);
-    await tester.pumpAndSettle();
-    expect(find.text('Em breve'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-    await tester.pumpWidget(const SizedBox());
-    store.dispose();
-    session.dispose();
-  });
+  testWidgets(
+    'five navigation actions fit and Habitat opens the playable scene',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 720);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final session = SessionStore();
+      final store = ScreenStore(session);
+      await tester.pumpWidget(
+        screenApp(
+          MainNavigation(sessionStore: session, catStore: store),
+          store,
+          scale: 1.3,
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.text('Habitat').last);
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('Um cantinho para descansar'), findsNothing);
+      expect(find.byTooltip('Abrir ações do Habitat'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.byTooltip('Ajuda do Habitat'));
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('Como ganhar moedas'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      store.dispose();
+      session.dispose();
+    },
+  );
 
   testWidgets(
     'signed-in feed displays author avatar and floating composer on a narrow screen',
@@ -339,27 +345,55 @@ void main() {
         ),
       );
       final add = find.text('Adicionar telefone');
-      await tester.scrollUntilVisible(add, 250, scrollable: find.byType(Scrollable).first);
+      await tester.scrollUntilVisible(
+        add,
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(add);
       await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(add, 200, scrollable: find.byType(Scrollable).first);
+      await tester.scrollUntilVisible(
+        add,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(add);
       await tester.pumpAndSettle();
       final first = find.widgetWithText(TextField, 'Telefone 1');
-      await tester.scrollUntilVisible(first, -200, scrollable: find.byType(Scrollable).first);
+      await tester.scrollUntilVisible(
+        first,
+        -200,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.enterText(first, '(11) 99999-1234');
       final second = find.widgetWithText(TextField, 'Telefone 2');
-      await tester.scrollUntilVisible(second, 200, scrollable: find.byType(Scrollable).first);
+      await tester.scrollUntilVisible(
+        second,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.enterText(second, '(11) 3333-1234');
       final firstChoice = find.byKey(const ValueKey('contact_whatsapp_0'));
       final secondChoice = find.byKey(const ValueKey('contact_whatsapp_1'));
-      await tester.scrollUntilVisible(firstChoice, -200, scrollable: find.byType(Scrollable).first);
+      await tester.scrollUntilVisible(
+        firstChoice,
+        -200,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(firstChoice);
       await tester.pumpAndSettle();
       expect(tester.widget<CheckboxListTile>(firstChoice).value, true);
-      await tester.scrollUntilVisible(secondChoice, 200, scrollable: find.byType(Scrollable).first);
+      await tester.scrollUntilVisible(
+        secondChoice,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(tester.widget<CheckboxListTile>(secondChoice).value, false);
-      await tester.scrollUntilVisible(find.byTooltip('Remover contato 1'), -200, scrollable: find.byType(Scrollable).first);
+      await tester.scrollUntilVisible(
+        find.byTooltip('Remover contato 1'),
+        -200,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(find.byTooltip('Remover contato 1'));
       await tester.pumpAndSettle();
       expect(

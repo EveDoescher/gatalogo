@@ -237,12 +237,11 @@ class _SocialPageState extends State<SocialPage> {
       payload['likes_count'] = newLikes;
     });
 
-    if (newLiked) {
-      widget.catStore?.recordGamificationAction('like');
-    }
-
     try {
       final result = await _api.toggleLike(itemId);
+      if (result['liked'] == true) {
+        widget.catStore?.recordGamificationAction('like', contextId: itemId);
+      }
       if (mounted) {
         setState(() {
           payload['has_liked'] = result['liked'] == true;
@@ -1603,17 +1602,19 @@ class _SocialPageState extends State<SocialPage> {
                                                   size: 16,
                                                   color: AppColors.textLight,
                                                 ),
-                                                onPressed: () {
-                                                  CatSharingService.sharePost(
+                                                onPressed: () async {
+                                                  final shared = await CatSharingService.sharePost(
                                                     author: author,
                                                     catName: catName,
                                                     note: note,
                                                     location: location,
                                                   );
-                                                  widget.catStore
-                                                      ?.recordGamificationAction(
-                                                        'share',
-                                                      );
+                                                  if (shared) {
+                                                    widget.catStore?.recordGamificationAction('share', contextId: itemId);
+                                                    widget.catStore?.recordHabitatAction(
+                                                      'share', targetType: 'post', targetId: itemId,
+                                                    );
+                                                  }
                                                 },
                                               ),
                                             ],

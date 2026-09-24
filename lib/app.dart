@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'pages/auth_page.dart';
 import 'pages/capture_page.dart';
 import 'pages/home_page.dart';
+import 'pages/habitat_page.dart';
 import 'pages/social_page.dart';
 import 'pages/library_page.dart';
 import 'pages/notifications_page.dart';
@@ -106,6 +107,7 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation>
     with WidgetsBindingObserver {
   int currentIndex = 0;
+  final ValueNotifier<bool> _habitatActive = ValueNotifier(false);
   int _unreadMessages = 0;
 
   late final CatStore catStore;
@@ -169,27 +171,15 @@ class _MainNavigationState extends State<MainNavigation>
       HomePage(
         sessionStore: widget.sessionStore,
         catStore: catStore,
-        onNavigate: (index) => setState(() => currentIndex = index),
+        onNavigate: _navigateTo,
       ),
       SocialPage(sessionStore: widget.sessionStore, catStore: catStore),
       CapturePage(catStore: catStore),
       LibraryPage(catStore: catStore),
-      Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: const Text('Habitat'),
-          actions: [AppHeaderActions(store: catStore)],
-        ),
-        body: Center(
-          child: Text(
-            'Em breve',
-            style: GoogleFonts.nunito(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
-          ),
-        ),
+      HabitatPage(
+        sessionStore: widget.sessionStore,
+        catStore: catStore,
+        active: _habitatActive,
       ),
     ];
   }
@@ -208,6 +198,7 @@ class _MainNavigationState extends State<MainNavigation>
 
   @override
   void dispose() {
+    _habitatActive.dispose();
     _openedNotificationSubscription?.cancel();
     _foregroundNotificationSubscription?.cancel();
     _msgSub?.cancel();
@@ -215,6 +206,11 @@ class _MainNavigationState extends State<MainNavigation>
     WidgetsBinding.instance.removeObserver(this);
     if (widget.catStore == null) catStore.dispose();
     super.dispose();
+  }
+
+  void _navigateTo(int index) {
+    setState(() => currentIndex = index);
+    _habitatActive.value = index == 4;
   }
 
   void _openNotification(String notificationId) {
@@ -290,7 +286,7 @@ class _MainNavigationState extends State<MainNavigation>
         selected: isSelected,
         button: true,
         child: InkWell(
-          onTap: () => setState(() => currentIndex = index),
+          onTap: () => _navigateTo(index),
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),

@@ -57,6 +57,7 @@ class _MissingCatsPageState extends State<MissingCatsPage> {
           .list('/app/reports');
       if (mounted) setState(() => _reports = items);
       widget.catStore.recordGamificationAction('care');
+      widget.catStore.recordHabitatAction('care');
     } catch (error) {
       if (mounted) setState(() => _error = error.toString());
     } finally {

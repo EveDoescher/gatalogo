@@ -33,6 +33,7 @@ dependencies:
   lucide_icons_flutter: ^3.1.19
   qr_flutter: ^4.1.0
   package_info_plus: ^10.2.1
+  flame: ^1.38.2
 
 dev_dependencies:
   flutter_test:
@@ -49,6 +50,11 @@ flutter:
     - assets/models/cat_detector.tflite
     - assets/fonts/
     - assets/images/
+    - assets/3d_assets/kenney_nature-kit/Isometric/
+    - assets/habitat/animal-cat.png
+    - assets/habitat/building-type-a.png
+    - assets/habitat/building-type-f.png
+    - assets/3d_assets/kenney_mini-dungeon/Previews/
 flutter_launcher_icons:
   android: true
   ios: true
