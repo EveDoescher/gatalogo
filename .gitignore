@@ -53,9 +53,27 @@ app.*.map.json
 **/local.properties
 
 # Firebase / Secrets
+.env
+.env.*
+!.env.example
 **/google-services.json
 **/GoogleService-Info.plist
+**/key.properties
+**/keystore.properties
+firebase-service-account.json
+*firebase-adminsdk*.json
+*service-account*.json
+*credentials*.json
+*.pem
+*.key
+*.p12
+*.pfx
 *.keystore
 *.jks
+
+# Local Python tooling
+.venv/
+venv/
+__pycache__/
 
 
