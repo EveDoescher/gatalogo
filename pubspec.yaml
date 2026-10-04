@@ -34,6 +34,8 @@ dependencies:
   qr_flutter: ^4.1.0
   package_info_plus: ^10.2.1
   flame: ^1.38.2
+  audioplayers: ^6.8.1
+  flutter_timezone: ^5.1.0
 
 dev_dependencies:
   flutter_test:
@@ -47,13 +49,26 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/audio/
     - assets/models/cat_detector.tflite
     - assets/fonts/
-    - assets/images/
+    - assets/gatalogo_asset_library/avatars/
+    - assets/gatalogo_asset_library/backgrounds/
+    - assets/gatalogo_asset_library/branding/
+    - assets/gatalogo_asset_library/cats/
+    - assets/gatalogo_asset_library/environment/
+    - assets/gatalogo_asset_library/flora/
+    - assets/gatalogo_asset_library/icons/
+    - assets/gatalogo_asset_library/rewards/
+    - assets/gatalogo_asset_library/ui/
     - assets/3d_assets/kenney_nature-kit/Isometric/
     - assets/habitat/animal-cat.png
     - assets/habitat/building-type-a.png
     - assets/habitat/building-type-f.png
+    - assets/habitat/decor/
+    - assets/habitat/cat/
+    - assets/3d_assets/kenney_isometric-roads/png/water.png
+    - assets/3d_assets/kenney_isometric-roads/png/dirt.png
     - assets/3d_assets/kenney_mini-dungeon/Previews/
 flutter_launcher_icons:
   android: true

@@ -58,11 +58,12 @@ void main() {
     final store = ScreenStore(session);
     final capture = GlobalKey();
     await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.lightTheme,
-        home: RepaintBoundary(
-          key: capture,
-          child: MainNavigation(sessionStore: session, catStore: store),
+      RepaintBoundary(
+        key: capture,
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          home: MainNavigation(sessionStore: session, catStore: store),
         ),
       ),
     );
@@ -186,6 +187,67 @@ void main() {
     await tester.tap(find.text('Loja'));
     await tester.pump();
     await save('shop');
+    await tester.ensureVisible(find.text('Casinhas'));
+    await tester.tap(find.text('Casinhas'));
+    await tester.pump();
+    await save('new_houses');
+    await tester.ensureVisible(find.text('Terreno'));
+    await tester.tap(find.text('Terreno'));
+    await tester.pump();
+    await save('terrain_shop');
+    await tester.tap(find.byTooltip('Voltar ao Habitat'));
+    await tester.pump();
+    await tester.tap(find.byTooltip('Abrir ações do Habitat'));
+    await tester.pump();
+    await tester.tap(find.text('Concluir edição'));
+    await tester.pump();
+    habitat.items = [
+      const HabitatItem(id: 'solar', sku: 'solar_cottage', x: 1, y: 0),
+      const HabitatItem(id: 'planter', sku: 'garden_planter', x: 5, y: 1),
+      const HabitatItem(id: 'autumn', sku: 'autumn_tree', x: 6, y: 2),
+      const HabitatItem(id: 'bowl', sku: 'food_bowl', x: 5, y: 7),
+      const HabitatItem(id: 'crate', sku: 'play_crate', x: 2, y: 6),
+      HabitatItem(
+        id: 'leaves',
+        sku: 'leaf_garden',
+        x: 1,
+        y: 5,
+        careState: {
+          'grow_at': DateTime.now()
+              .toUtc()
+              .subtract(const Duration(hours: 1))
+              .toIso8601String(),
+        },
+      ),
+      for (var x = 4; x <= 5; x++)
+        for (var y = 3; y <= 6; y++)
+          HabitatItem(id: 'water-$x-$y', sku: 'water_tile', x: x, y: y),
+      const HabitatItem(id: 'bridge', sku: 'wood_bridge', x: 4, y: 4),
+      const HabitatItem(id: 'lily', sku: 'water_lily', x: 4, y: 6),
+      const HabitatItem(id: 'spare-palm', sku: 'palm_tree'),
+    ];
+    habitat.selectedCatIds = ['luna', 'nina'];
+    habitat.catAnchors = {'luna': (1, 4), 'nina': (6, 6)};
+    expect(habitat.layoutProblem(habitat.items), isNull);
+    await tester.runAsync(
+      () => game.sprites.preloadReady([
+        for (final item in habitat.items)
+          game.sprites.keyFor(habitat.spriteFor(item), item.rotation),
+      ]),
+    );
+    game.reducedMotion = true;
+    game.update(0);
+    game.resumeEngine();
+    await tester.pump(const Duration(milliseconds: 16));
+    await tester.pump(const Duration(milliseconds: 16));
+    game.pauseEngine();
+    await tester.pump();
+    await save('living_yard');
+    final catPoint = game.groundAnchor(1, 4) - Offset(0, game.tileWidth * 0.3);
+    expect(game.catAtScreen(catPoint), 'luna');
+    await tester.tapAt(tester.getTopLeft(gameFinder) + catPoint);
+    await tester.pump();
+    await save('care');
     await tester.pumpWidget(const SizedBox());
     store.dispose();
     session.dispose();

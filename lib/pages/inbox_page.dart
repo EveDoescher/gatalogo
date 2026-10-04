@@ -1,3 +1,4 @@
+import '../widgets/botanical_scene.dart';
 import '../widgets/app_header_actions.dart';
 
 import 'dart:async';
@@ -6,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../config/api_config.dart';
+import '../widgets/illustrated_home_components.dart';
 import '../models/conversation_summary.dart';
 import '../services/social_api_service.dart';
 import '../stores/session_store.dart';
@@ -125,32 +126,9 @@ class _InboxPageState extends State<InboxPage> {
   }
 
   Widget _buildAvatar(ConversationSummary conv) {
-    final avatarUrl = conv.otherAvatarUrl;
-    final initial = conv.otherUsername.isNotEmpty
-        ? conv.otherUsername[0].toUpperCase()
-        : '?';
-
-    Widget avatarContent;
-    if (avatarUrl != null && avatarUrl.isNotEmpty) {
-      final fullUrl = avatarUrl.startsWith('http')
-          ? avatarUrl
-          : '${ApiConfig.baseUrl}$avatarUrl';
-      avatarContent = ClipOval(
-        child: Image.network(
-          fullUrl,
-          width: 48,
-          height: 48,
-          fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => _fallbackAvatar(initial),
-        ),
-      );
-    } else {
-      avatarContent = _fallbackAvatar(initial);
-    }
-
     return Stack(
       children: [
-        avatarContent,
+        FramedUserAvatar(url: conv.otherAvatarUrl, size: 54),
         if (conv.isOnline)
           Positioned(
             right: 0,
@@ -169,91 +147,70 @@ class _InboxPageState extends State<InboxPage> {
     );
   }
 
-  Widget _fallbackAvatar(String initial) {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        color: AppColors.primarySoftBg,
-        shape: BoxShape.circle,
-        border: Border.all(color: AppColors.borderProfile, width: 1.4),
-      ),
-      child: Center(
-        child: Text(
-          initial,
-          style: GoogleFonts.fredoka(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: AppColors.primaryDark,
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildEmptyState() {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(
-              'assets/images/gato_1.png',
-              width: 90,
-              errorBuilder: (_, _, _) => const Icon(
-                LucideIcons.messageCircle,
-                size: 64,
-                color: AppColors.primary,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IllustratedGardenStage(
+                height: 156,
+                child: GatalogoArt.image(
+                  'environment/environment_mailbox_coral',
+                  width: 122,
+                  height: 126,
+                ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              'Nenhuma conversa ainda',
-              style: GoogleFonts.fredoka(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textTitle,
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                'Nenhuma conversa ainda',
+                style: GoogleFonts.fredoka(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textTitle,
+                ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              'Suas conversas com amigos e avisos de resgate de gatos perdidos aparecerão aqui.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.nunito(
-                fontSize: 13,
-                color: AppColors.textMedium,
-                height: 1.4,
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                'Suas conversas com amigos e avisos de resgate de gatos perdidos aparecerão aqui.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.nunito(
+                  fontSize: 13,
+                  color: AppColors.textMedium,
+                  height: 1.4,
+                ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        FriendsPage(sessionStore: widget.sessionStore),
+              const SizedBox(height: AppSpacing.lg),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          FriendsPage(sessionStore: widget.sessionStore),
+                    ),
+                  );
+                },
+                icon: const Icon(LucideIcons.users, size: 18),
+                label: Text(
+                  'Conversar com Amigos',
+                  style: GoogleFonts.fredoka(fontWeight: FontWeight.w600),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
-                );
-              },
-              icon: const Icon(LucideIcons.users, size: 18),
-              label: Text(
-                'Conversar com Amigos',
-                style: GoogleFonts.fredoka(fontWeight: FontWeight.w600),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -439,11 +396,11 @@ class _InboxPageState extends State<InboxPage> {
       return content;
     }
 
-    return Scaffold(
+    return BotanicalScaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.transparent,
         title: Text(
           'Mensagens',
           style: GoogleFonts.fredoka(
@@ -472,7 +429,19 @@ class _InboxPageState extends State<InboxPage> {
           ),
         ],
       ),
-      body: content,
+      body: Column(
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 12, 20, 16),
+            child: IllustratedPaperHeading(
+              title: 'Conversas da comunidade',
+              description: 'Amigos e buscas por gatos, em um só lugar.',
+              art: 'ui/ui_speech_ellipsis_heart',
+            ),
+          ),
+          Expanded(child: content),
+        ],
+      ),
     );
   }
 }

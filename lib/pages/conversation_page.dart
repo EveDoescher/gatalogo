@@ -1,3 +1,5 @@
+import '../widgets/botanical_scene.dart';
+import '../widgets/illustrated_home_components.dart';
 import '../widgets/app_header_actions.dart';
 
 import 'dart:async';
@@ -340,7 +342,7 @@ class _ConversationPageState extends State<ConversationPage> {
   void _scrollToBottom({bool animate = true}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scrollController.hasClients) return;
-      final target = _scrollController.position.maxScrollExtent + 120;
+      final target = _scrollController.position.maxScrollExtent;
       if (animate) {
         _scrollController.animateTo(
           target,
@@ -1239,7 +1241,7 @@ class _ConversationPageState extends State<ConversationPage> {
 
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => Scaffold(
+        builder: (_) => BotanicalScaffold(
           backgroundColor: Colors.black,
           appBar: AppBar(
             actions: const [AppHeaderActions()],
@@ -1541,29 +1543,7 @@ class _ConversationPageState extends State<ConversationPage> {
   }
 
   Widget _buildAvatar() {
-    final initial = (_username != null && _username!.isNotEmpty)
-        ? _username![0].toUpperCase()
-        : '?';
-
-    Widget avatarWidget;
-    if (_avatarUrl != null && _avatarUrl!.isNotEmpty) {
-      final token = widget.sessionStore.session?.accessToken;
-      final fullUrl = _avatarUrl!.startsWith('http')
-          ? _avatarUrl!
-          : '${ApiConfig.baseUrl}$_avatarUrl${token != null ? '?token=$token' : ''}';
-
-      avatarWidget = ClipOval(
-        child: Image.network(
-          fullUrl,
-          width: 38,
-          height: 38,
-          fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => _fallbackAvatar(initial),
-        ),
-      );
-    } else {
-      avatarWidget = _fallbackAvatar(initial);
-    }
+    final avatarWidget = FramedUserAvatar(url: _avatarUrl, size: 38);
 
     return Stack(
       children: [
@@ -1583,28 +1563,6 @@ class _ConversationPageState extends State<ConversationPage> {
             ),
           ),
       ],
-    );
-  }
-
-  Widget _fallbackAvatar(String initial) {
-    return Container(
-      width: 38,
-      height: 38,
-      decoration: BoxDecoration(
-        color: AppColors.primarySoftBg,
-        shape: BoxShape.circle,
-        border: Border.all(color: AppColors.borderProfile, width: 1.4),
-      ),
-      child: Center(
-        child: Text(
-          initial,
-          style: GoogleFonts.fredoka(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: AppColors.primaryDark,
-          ),
-        ),
-      ),
     );
   }
 
@@ -1663,12 +1621,16 @@ class _ConversationPageState extends State<ConversationPage> {
         children: [
           const Icon(LucideIcons.users, size: 12, color: AppColors.textLight),
           const SizedBox(width: 4),
-          Text(
-            'Amigo no Gatálogo',
-            style: GoogleFonts.nunito(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textLight,
+          Flexible(
+            child: Text(
+              'Amigo no Gatálogo',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.nunito(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textLight,
+              ),
             ),
           ),
         ],
@@ -1688,7 +1650,8 @@ class _ConversationPageState extends State<ConversationPage> {
               )
               .toList();
 
-    return Scaffold(
+    return BotanicalScaffold(
+      level: BotanicalLevel.tertiary,
       backgroundColor: AppColors.background,
       appBar: AppBar(
         elevation: 0,
@@ -1862,7 +1825,7 @@ class _ConversationPageState extends State<ConversationPage> {
               child: Opacity(
                 opacity: 0.35,
                 child: Image.asset(
-                  'assets/images/Folha_2.png',
+                  'assets/gatalogo_asset_library/flora/flora_branch_pale_diagonal_01.png',
                   width: 95,
                   fit: BoxFit.contain,
                 ),
@@ -1998,7 +1961,7 @@ class _ConversationPageState extends State<ConversationPage> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Image.asset(
-                                'assets/images/gato_1.png',
+                                'assets/gatalogo_asset_library/cats/cat_orange_camera.png',
                                 width: 85,
                               ),
                               const SizedBox(height: AppSpacing.sm),

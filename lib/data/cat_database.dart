@@ -32,7 +32,7 @@ class CatDatabase {
 
     return openDatabase(
       path,
-      version: 16,
+      version: 17,
 
       onCreate: (db, version) async {
         await db.execute('''
@@ -58,6 +58,7 @@ class CatDatabase {
         ,collar TEXT
         ,distinguishing_marks TEXT
         ,is_favorite INTEGER NOT NULL DEFAULT 0
+        ,individual_id TEXT
         ,notes TEXT
       )
     ''');
@@ -86,6 +87,9 @@ class CatDatabase {
       },
 
       onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 17) {
+          await db.execute('ALTER TABLE cats ADD COLUMN individual_id TEXT');
+        }
         if (oldVersion == 15) {
           await db.execute(
             'ALTER TABLE habitat_cache ADD COLUMN pending_purchases TEXT',

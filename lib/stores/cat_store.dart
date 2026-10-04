@@ -16,6 +16,7 @@ import '../services/analysis_api_service.dart';
 import '../services/catalog_sync_service.dart';
 import '../services/favorites_manager.dart';
 import '../services/gamification_service.dart';
+import '../services/progress_service.dart';
 import '../services/location_service.dart';
 import '../services/vision_api_service.dart';
 import 'session_store.dart';
@@ -51,6 +52,7 @@ class CatStore extends ChangeNotifier {
     _catalogSync = catalogSync ?? CatalogSyncService(_sessionStore);
     _visionApi = VisionApiService(_sessionStore);
     _gamificationService = GamificationService(_sessionStore);
+    progress = ProgressService(_sessionStore)..addListener(notifyListeners);
     final productApi = ProductApiService(_sessionStore);
     notifications = NotificationStore(
       loadItems: () async => _sessionStore.isSignedIn
@@ -76,6 +78,7 @@ class CatStore extends ChangeNotifier {
   }
 
   late final NotificationStore notifications;
+  late final ProgressService progress;
   StreamSubscription? _notificationSubscription;
   StreamSubscription? _pushSubscription;
 
@@ -95,7 +98,8 @@ class CatStore extends ChangeNotifier {
   final Connectivity _connectivity = Connectivity();
   final Future<bool> Function()? networkAvailable;
 
-  GamificationState get gamification => _gamificationService.currentState;
+  GamificationState get gamification => progress.summary.isNotEmpty
+      ? GamificationState.fromMap(progress.summary) : _gamificationService.currentState;
 
   bool _isLoading = false;
   bool _disposed = false;
@@ -111,6 +115,19 @@ class CatStore extends ChangeNotifier {
 
   List<Cat> get cats => List.unmodifiable(_cats);
   List<Cat> get discoveries => cats.where((cat) => !cat.isOwned).toList();
+
+  List<Cat> get individuals {
+    final groups = <String, Cat>{};
+    for (final cat in discoveries) {
+      final key = cat.individualId ?? cat.id;
+      if (!groups.containsKey(key) || cat.id == key) groups[key] = cat;
+    }
+    return groups.values.toList();
+  }
+
+  List<Cat> photosOf(Cat cat) => cats.where((photo) =>
+      (photo.individualId ?? photo.id) == (cat.individualId ?? cat.id)).toList();
+
   List<Cat> get pets => cats.where((cat) => cat.isOwned).toList();
   SessionStore get sessionStore => _sessionStore;
 
@@ -166,6 +183,7 @@ class CatStore extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
 
+    unawaited(progress.refresh());
     _startPendingAnalysisSync();
     unawaited(refreshNotifications());
     unawaited(syncCatalog());
@@ -180,16 +198,38 @@ class CatStore extends ChangeNotifier {
     String action, {
     String? contextId,
   }) async {
-    final result = await _gamificationService.recordAction(
-      action,
-      contextId: contextId,
+    await refreshGamification();
+    return GamificationActionResult(
+      state: gamification,
+      earnedXp: 0,
+      multiplier: 1,
+      levelUp: false,
+      level: gamification.level,
+      levelTitle: gamification.levelTitle,
+      missionsCompleted: const [],
     );
+  }
+
+  Future<void> identifyRecord(String catId, String individualId) async {
+    final cat = _cats.firstWhere((c) => c.id == catId);
+    final updated = cat.withSync(
+      individualId: individualId,
+      syncState: 'dirty',
+      localUpdatedAt: DateTime.now().toUtc(),
+    );
+    await _database.insertCatWithAnalysis(
+      updated,
+      _analyses[catId] ??
+          CatAnalysis(catId: catId, status: AnalysisStatus.pending),
+    );
+    _replaceCat(catId, (_) => updated);
     notifyListeners();
-    return result;
+    await syncCatalog();
+    await progress.refresh();
   }
 
   Future<void> refreshGamification() async {
-    await _gamificationService.loadGamification();
+    await progress.refresh();
     notifyListeners();
   }
 
@@ -216,6 +256,7 @@ class CatStore extends ChangeNotifier {
     double? longitude,
     String? locationName,
     bool isOwned = false,
+    String? individualId,
     String? name,
     DateTime? capturedAt,
     String? microchip,
@@ -249,6 +290,7 @@ class CatStore extends ChangeNotifier {
     final deviceId = await _database.getOrCreateDeviceId();
     final cat = Cat(
       isOwned: isOwned,
+      individualId: individualId,
       name: name?.trim(),
       id: id,
       captureNumber: captureNumber,
@@ -272,6 +314,7 @@ class CatStore extends ChangeNotifier {
     await _database.insertCatWithAnalysis(cat, analysis);
 
     _cats.insert(0, cat);
+    unawaited(progress.track('capture_saved'));
 
     _analyses[id] = analysis;
 
@@ -281,7 +324,6 @@ class CatStore extends ChangeNotifier {
     // mesmo quando a rede cai durante a captura ou a API está indisponível.
     unawaited(syncPendingAnalyses());
     unawaited(syncCatalog());
-    unawaited(recordGamificationAction('photo', contextId: id));
 
     return SavedCatResult(cat: cat, awaitingConnection: awaitingConnection);
   }
@@ -352,6 +394,7 @@ class CatStore extends ChangeNotifier {
       _replaceCat(cat.id, (current) => current.withStatus('completed'));
       notifyListeners();
       unawaited(syncCatalog());
+      unawaited(refreshGamification());
       return true;
     } on AnalysisConnectionException {
       await _scheduleAutomaticRetry(cat);
@@ -641,7 +684,6 @@ class CatStore extends ChangeNotifier {
       'observed_at': (observedAt ?? DateTime.now()).toUtc().toIso8601String(),
     });
     unawaited(syncCatalog());
-    unawaited(recordGamificationAction('sighting', contextId: cat.id));
   }
 
   bool _sendingSightings = false;
@@ -658,6 +700,7 @@ class CatStore extends ChangeNotifier {
         if (cat.ownerId != _sessionStore.session?.userId) continue;
         await _visionApi.createSighting(
           catId: cat.id,
+          clientEventId: item['queue_key'] as String,
           latitude: (item['latitude'] as num).toDouble(),
           longitude: (item['longitude'] as num).toDouble(),
           note: item['note'] as String?,
@@ -702,7 +745,6 @@ class CatStore extends ChangeNotifier {
     notifyListeners();
     unawaited(syncCatalog());
     unawaited(syncPendingAnalyses());
-    unawaited(recordGamificationAction('photo', contextId: catId));
   }
 
   Future<void> _addReferencePhoto(
@@ -738,7 +780,6 @@ class CatStore extends ChangeNotifier {
     _referencePhotos[catId] = existing;
     notifyListeners();
     unawaited(syncCatalog());
-    unawaited(recordGamificationAction('photo', contextId: catId));
   }
 
   Future<void> deleteReferencePhoto(String catId, String kind) async {
@@ -840,6 +881,7 @@ class CatStore extends ChangeNotifier {
     if (_loadedOwnerId != _sessionStore.session?.userId) {
       notifications.clear();
       _gamificationService.reset();
+      progress.reset();
       _cats.clear();
       _analyses.clear();
       _referencePhotos.clear();
@@ -855,6 +897,8 @@ class CatStore extends ChangeNotifier {
 
   @override
   void dispose() {
+    progress.removeListener(notifyListeners);
+    progress.dispose();
     _disposed = true;
     _sessionStore.removeListener(_onSessionChanged);
     _connectivitySubscription?.cancel();

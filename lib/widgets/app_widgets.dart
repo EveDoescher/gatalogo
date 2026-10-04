@@ -1,7 +1,12 @@
+import 'botanical_scene.dart';
+
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+
+import 'illustrated_home_components.dart';
+
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -22,17 +27,19 @@ String displayDate(dynamic value) {
 
 void showMessage(BuildContext context, Object message) {
   if (context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      backgroundColor: AppColors.textDark,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.card),
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: AppColors.textDark,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+        ),
+        content: Text(
+          message.toString(),
+          style: GoogleFonts.nunito(color: AppColors.surface),
+        ),
       ),
-      content: Text(
-        message.toString(),
-        style: GoogleFonts.nunito(color: AppColors.surface),
-      ),
-    ));
+    );
   }
 }
 
@@ -51,7 +58,10 @@ Future<bool> confirmAction(
         ),
         title: Text(
           title,
-          style: GoogleFonts.fredoka(color: AppColors.textTitle, fontWeight: FontWeight.w600),
+          style: GoogleFonts.fredoka(
+            color: AppColors.textTitle,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         content: Text(
           message,
@@ -97,7 +107,7 @@ class CatPhotoView extends StatelessWidget {
   final double? height;
   final BoxFit fit;
   final double borderRadius;
-  
+
   @override
   Widget build(BuildContext context) => ClipRRect(
     borderRadius: BorderRadius.circular(borderRadius),
@@ -129,7 +139,7 @@ class CatTile extends StatelessWidget {
   final Cat cat;
   final VoidCallback onTap;
   final String? subtitle;
-  
+
   @override
   Widget build(BuildContext context) => GestureDetector(
     onTap: onTap,
@@ -145,10 +155,7 @@ class CatTile extends StatelessWidget {
           SizedBox(
             width: 64,
             height: 64,
-            child: CatPhotoView(
-              cat.photoPath,
-              borderRadius: AppRadius.photo,
-            ),
+            child: CatPhotoView(cat.photoPath, borderRadius: AppRadius.photo),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
@@ -188,37 +195,7 @@ class EmptyContent extends StatelessWidget {
   final Widget? action;
   @override
   Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.pets, size: 48, color: AppColors.primaryLight),
-          const SizedBox(height: AppSpacing.lg),
-          Text(
-            title,
-            style: GoogleFonts.fredoka(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textTitle,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            message,
-            style: GoogleFonts.nunito(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textMedium,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          if (action != null)
-            Padding(padding: const EdgeInsets.only(top: AppSpacing.lg), child: action!),
-        ],
-      ),
-    ),
+    child: BotanicalEmpty(title: title, description: message, action: action),
   );
 }
 
@@ -263,7 +240,11 @@ void showFullscreenImage(
           child: InteractiveViewer(
             minScale: 0.5,
             maxScale: 5.0,
-            child: CatPhotoView(imagePath, fit: BoxFit.contain, borderRadius: 0),
+            child: CatPhotoView(
+              imagePath,
+              fit: BoxFit.contain,
+              borderRadius: 0,
+            ),
           ),
         ),
       ),
@@ -329,11 +310,13 @@ class UserAvatarButton extends StatelessWidget {
     required this.sessionStore,
     this.catStore,
     this.size = 42,
+    this.framed = false,
   });
 
   final SessionStore sessionStore;
   final CatStore? catStore;
   final double size;
+  final bool framed;
 
   @override
   Widget build(BuildContext context) {
@@ -344,59 +327,58 @@ class UserAvatarButton extends StatelessWidget {
         final hasAvatar = avatarUrl != null && avatarUrl.isNotEmpty;
         final fullUrl = hasAvatar
             ? (avatarUrl.startsWith('http')
-                ? avatarUrl
-                : '${ApiConfig.baseUrl}$avatarUrl')
+                  ? avatarUrl
+                  : '${ApiConfig.baseUrl}$avatarUrl')
             : null;
 
         return InkWell(
           onTap: () => Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => ProfilePage(
-                sessionStore: sessionStore,
-                catStore: catStore,
-              ),
+              builder: (_) =>
+                  ProfilePage(sessionStore: sessionStore, catStore: catStore),
             ),
           ),
           borderRadius: BorderRadius.circular(size / 2),
-          child: Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.surface,
-              border: Border.all(
-                color: AppColors.borderProfile,
-                width: 1.4,
-              ),
-            ),
-            child: ClipOval(
-              child: hasAvatar
-                  ? Image.network(
-                      fullUrl!,
-                      width: size,
-                      height: size,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Center(
-                        child: Icon(
-                          LucideIcons.user,
-                          size: size * 0.48,
-                          color: AppColors.textLight,
-                        ),
-                      ),
-                    )
-                  : Center(
-                      child: Icon(
-                        LucideIcons.user,
-                        size: size * 0.48,
-                        color: AppColors.textLight,
-                      ),
+          child: framed
+              ? FramedUserAvatar(url: avatarUrl, size: size)
+              : Container(
+                  width: size,
+                  height: size,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.surface,
+                    border: Border.all(
+                      color: AppColors.borderProfile,
+                      width: 1.4,
                     ),
-            ),
-          ),
+                  ),
+                  child: ClipOval(
+                    child: hasAvatar
+                        ? Image.network(
+                            fullUrl!,
+                            width: size,
+                            height: size,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Center(
+                              child: Icon(
+                                LucideIcons.user,
+                                size: size * 0.48,
+                                color: AppColors.textLight,
+                              ),
+                            ),
+                          )
+                        : Center(
+                            child: Icon(
+                              LucideIcons.user,
+                              size: size * 0.48,
+                              color: AppColors.textLight,
+                            ),
+                          ),
+                  ),
+                ),
         );
       },
     );
   }
 }
-

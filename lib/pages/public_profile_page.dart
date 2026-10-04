@@ -1,3 +1,6 @@
+import '../widgets/illustrated_home_components.dart';
+import '../widgets/botanical_scene.dart';
+import '../widgets/game_components.dart';
 import '../widgets/app_header_actions.dart';
 
 import 'package:flutter/material.dart';
@@ -18,9 +21,11 @@ class PublicProfilePage extends StatefulWidget {
     super.key,
     required this.username,
     required this.sessionStore,
+    this.viewAsFriend = false,
   });
 
   final String username;
+  final bool viewAsFriend;
   final SessionStore sessionStore;
 
   @override
@@ -50,7 +55,11 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
       _error = null;
     });
     try {
-      final data = await _socialApi.getPublicProfile(widget.username);
+      final data = widget.viewAsFriend
+          ? await _productApi.get(
+              '/social/profiles/${Uri.encodeComponent(widget.username)}?view_as_friend=true',
+            )
+          : await _socialApi.getPublicProfile(widget.username);
       if (mounted) {
         setState(() {
           _profile = data;
@@ -162,11 +171,11 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BotanicalScaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft, color: AppColors.textDark),
           onPressed: () => Navigator.pop(context),
@@ -277,205 +286,149 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         children: [
-          // 1. Cabeçalho de Perfil: Avatar + Nome + Bio
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppColors.borderLight, width: 1.2),
+          if (widget.viewAsFriend)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 16),
+              child: Text('Prévia: como seus amigos veem seu perfil'),
             ),
-            child: Column(
-              children: [
-                Center(
-                  child: Container(
-                    width: 90,
-                    height: 90,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.primarySoftBg,
-                      border: Border.all(
-                        color: AppColors.borderProfile,
-                        width: 2.5,
-                      ),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: avatarUrl != null
-                        ? Image.network(
-                            avatarUrl.startsWith('http')
-                                ? avatarUrl
-                                : '${ApiConfig.baseUrl}$avatarUrl',
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Icon(
-                                  LucideIcons.user,
-                                  size: 44,
-                                  color: AppColors.primaryDark,
-                                ),
-                          )
-                        : const Icon(
-                            LucideIcons.user,
-                            size: 44,
-                            color: AppColors.primaryDark,
-                          ),
-                  ),
+          if (p['habitat_preview'] is Map)
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.yard_outlined),
+                title: const Text('Habitat'),
+                subtitle: Text(
+                  '${p['habitat_preview']['cats_count']} gato(s) no quintal · expansão ${p['habitat_preview']['expansion_level']}',
                 ),
-                const SizedBox(height: 12),
-                Text(
+              ),
+            ),
+          // 1. Cabeçalho de Perfil: Avatar + Nome + Bio
+          Column(
+            children: [
+              IllustratedProfileIdentity(
+                portrait: FramedUserAvatar(url: avatarUrl, size: 116),
+                name: Text(
                   '@$username',
-                  style: GoogleFonts.fredoka(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textTitle,
-                  ),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineMedium,
                 ),
-                if (mutualCount > 0 && !isSelf) ...[
-                  const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.cardAltBackground,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      border: Border.all(color: AppColors.borderLight),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          LucideIcons.users,
-                          size: 13,
+              ),
+              if (mutualCount > 0 && !isSelf) ...[
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardAltBackground,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(color: AppColors.borderLight),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        LucideIcons.users,
+                        size: 13,
+                        color: AppColors.textMedium,
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        '$mutualCount amigo(s) em comum',
+                        style: GoogleFonts.nunito(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
                           color: AppColors.textMedium,
                         ),
-                        const SizedBox(width: 5),
-                        Text(
-                          '$mutualCount amigo(s) em comum',
-                          style: GoogleFonts.nunito(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textMedium,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-                if (bio.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  Text(
-                    bio,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.nunito(
-                      fontSize: 13,
-                      fontStyle: FontStyle.italic,
-                      color: AppColors.textDark,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 16),
-                // Botão de Ação Social Contextual
-                if (!isSelf)
-                  SizedBox(
-                    width: double.infinity,
-                    height: 44,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: friendshipStatus == 'friends'
-                            ? AppColors.primary
-                            : friendshipStatus == 'pending_sent'
-                            ? AppColors.cardAltBackground
-                            : friendshipStatus == 'pending_received'
-                            ? AppColors.greenLink
-                            : AppColors.primary,
-                        foregroundColor: friendshipStatus == 'pending_sent'
-                            ? AppColors.textDark
-                            : Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                          side: friendshipStatus == 'pending_sent'
-                              ? const BorderSide(color: AppColors.border)
-                              : BorderSide.none,
-                        ),
                       ),
-                      onPressed: _busy ? null : _handleFriendAction,
-                      icon: Icon(
-                        friendshipStatus == 'friends'
-                            ? LucideIcons.messageCircle
-                            : friendshipStatus == 'pending_sent'
-                            ? LucideIcons.clock
-                            : friendshipStatus == 'pending_received'
-                            ? LucideIcons.check
-                            : LucideIcons.userPlus,
-                        size: 18,
-                      ),
-                      label: Text(
-                        friendshipStatus == 'friends'
-                            ? 'Conversar'
-                            : friendshipStatus == 'pending_sent'
-                            ? 'Convite Enviado (Cancelar)'
-                            : friendshipStatus == 'pending_received'
-                            ? 'Aceitar Convite'
-                            : 'Adicionar Conexão',
-                        style: GoogleFonts.nunito(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
+                    ],
                   ),
+                ),
               ],
-            ),
+              const SizedBox(height: 16),
+              // Botão de Ação Social Contextual
+              if (!isSelf)
+                ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minWidth: double.infinity,
+                    minHeight: 50,
+                  ),
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: friendshipStatus == 'friends'
+                          ? AppColors.primary
+                          : friendshipStatus == 'pending_sent'
+                          ? AppColors.cardAltBackground
+                          : friendshipStatus == 'pending_received'
+                          ? AppColors.greenLink
+                          : AppColors.primary,
+                      foregroundColor: friendshipStatus == 'pending_sent'
+                          ? AppColors.textDark
+                          : Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        side: friendshipStatus == 'pending_sent'
+                            ? const BorderSide(color: AppColors.border)
+                            : BorderSide.none,
+                      ),
+                    ),
+                    onPressed: _busy ? null : _handleFriendAction,
+                    icon: Icon(
+                      friendshipStatus == 'friends'
+                          ? LucideIcons.messageCircle
+                          : friendshipStatus == 'pending_sent'
+                          ? LucideIcons.clock
+                          : friendshipStatus == 'pending_received'
+                          ? LucideIcons.check
+                          : LucideIcons.userPlus,
+                      size: 18,
+                    ),
+                    label: Text(
+                      friendshipStatus == 'friends'
+                          ? 'Conversar'
+                          : friendshipStatus == 'pending_sent'
+                          ? 'Convite Enviado (Cancelar)'
+                          : friendshipStatus == 'pending_received'
+                          ? 'Aceitar Convite'
+                          : 'Adicionar Conexão',
+                      style: GoogleFonts.nunito(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
 
           const SizedBox(height: 16),
 
           // 2. Nível e Status de Gamificação
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.borderLight, width: 1.2),
-            ),
+          GameNotebook(
             child: Row(
               children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primarySoftBg,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      '$level',
-                      style: GoogleFonts.fredoka(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
-                ),
+                GameSeal(size: 60, label: '$level'),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Nível $level — $levelTitle',
+                        levelTitle,
                         style: GoogleFonts.fredoka(
-                          fontSize: 16,
+                          fontSize: 21,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textTitle,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '$xp Pontos de Experiência (XP)',
+                        'Nível $level · $xp XP',
                         style: GoogleFonts.nunito(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -519,13 +472,24 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
 
           const SizedBox(height: 16),
 
+          if (bio.isNotEmpty) ...[
+            GameNote(
+              child: Row(
+                children: [
+                  GatalogoArt.image('ui/ui_note_pinned', width: 40, height: 44),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text(bio)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
           // 3. Grid de Estatísticas
           Row(
             children: [
               Expanded(
                 child: _buildStatCard(
-                  icon: LucideIcons.pawPrint,
-                  iconColor: AppColors.primary,
+                  art: 'ui/ui_cat_photos_stack',
                   title: 'Gatos',
                   value: '$catsCount',
                   subtitle: 'catalogados',
@@ -534,9 +498,8 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
               const SizedBox(width: 10),
               Expanded(
                 child: _buildStatCard(
-                  icon: LucideIcons.trophy,
-                  iconColor: AppColors.amberDark,
-                  title: 'Troféus',
+                  art: 'rewards/reward_medal_paw_gold',
+                  title: 'Conquistas',
                   value: '${achievements.length}',
                   subtitle: 'desbloqueados',
                 ),
@@ -707,6 +670,10 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                                 photoUrl.startsWith('http')
                                     ? photoUrl
                                     : '${ApiConfig.baseUrl}$photoUrl',
+                                headers: {
+                                  'Authorization':
+                                      'Bearer ${widget.sessionStore.session?.accessToken ?? ''}',
+                                },
                                 fit: BoxFit.cover,
                                 width: double.infinity,
                                 errorBuilder: (context, error, stackTrace) =>
@@ -772,42 +739,9 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
   }
 
   Widget _buildStatCard({
-    required IconData icon,
-    required Color iconColor,
+    required String art,
     required String title,
     required String value,
     required String subtitle,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.borderLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 18, color: iconColor),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: GoogleFonts.fredoka(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textTitle,
-            ),
-          ),
-          Text(
-            '$title $subtitle',
-            style: GoogleFonts.nunito(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textMedium,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  }) => IllustratedStatTile(value: value, label: '$title $subtitle', art: art);
 }

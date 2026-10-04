@@ -1,3 +1,5 @@
+import '../widgets/botanical_scene.dart';
+import '../widgets/game_components.dart';
 import '../widgets/app_header_actions.dart';
 
 import 'package:flutter/material.dart';
@@ -62,394 +64,188 @@ class _MyCatsPageState extends State<MyCatsPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.background,
-    body: SafeArea(
-      child: Stack(
-        children: [
-          // Folhagens decorativas
-          Positioned(
-            top: -15,
-            left: -20,
-            child: IgnorePointer(
-              child: Transform.rotate(
-                angle: 0.2,
-                child: Image.asset(
-                  'assets/images/Folha_2.png',
-                  width: 90,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            right: -10,
-            child: IgnorePointer(
-              child: Image.asset(
-                'assets/images/Folha_6.png',
-                width: 100,
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-
-          // Conteúdo
-          AnimatedBuilder(
-            animation: widget.store,
-            builder: (context, _) {
-              final store = widget.store;
-              return RefreshIndicator(
-                onRefresh: _loadReports,
-                color: AppColors.primary,
-                child: CustomScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(
-                    parent: BouncingScrollPhysics(),
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: widget.store,
+    builder: (context, _) => BotanicalScaffold(
+      mood: BotanicalMood.care,
+      appBar: AppBar(
+        title: const Text('Meus Gatos'),
+        actions: [AppHeaderActions(store: widget.store)],
+      ),
+      body: RefreshIndicator(
+        onRefresh: _loadReports,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
+              sliver: SliverList.list(
+                children: [
+                  IllustratedPaperHeading(
+                    title: 'Seu álbum de proteção',
+                    description:
+                        '${widget.store.pets.length} gato(s) cadastrado(s). Fotos e detalhes ajudam a reconhecer quem mora com você.',
+                    art: 'ui/ui_cat_photos_stack',
                   ),
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
+                  const SizedBox(height: 16),
+                  BotanicalAction(
+                    label: 'Cadastrar Meu Gato',
+                    icon: LucideIcons.plus,
+                    onPressed: () => _open(AddPetPage(store: widget.store)),
+                  ),
+                  const SizedBox(height: 14),
+                  Material(
+                    color: AppColors.errorBg,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      side: const BorderSide(color: AppColors.error),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: () => _open(
+                        CreateMissingReportPage(
+                          store: widget.store,
+                          quickMode: true,
                         ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
                         child: Row(
                           children: [
-                            const BackButton(),
-                            const Expanded(
-                              child: Text(
-                                'Meus Gatos',
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textTitle,
-                                ),
+                            GatalogoArt.image(
+                              'ui/ui_speech_alert',
+                              width: 42,
+                              height: 44,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Criar Alerta Rápido',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(color: AppColors.errorText),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  const Text(
+                                    'Ative um alerta de busca imediato para um gato seu não cadastrado',
+                                  ),
+                                ],
                               ),
                             ),
-                            AppHeaderActions(store: widget.store),
+                            const Icon(
+                              LucideIcons.chevronRight,
+                              color: AppColors.error,
+                            ),
                           ],
                         ),
                       ),
                     ),
-
-                    // Botão Adicionar Gato (em harmonia com o design system, sem FAB)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.xl,
-                          vertical: AppSpacing.xs,
-                        ),
-                        child: GatalogoButton(
-                          text: 'Cadastrar Meu Gato',
-                          icon: LucideIcons.plus,
-                          onPressed: () =>
-                              _open(AddPetPage(store: widget.store)),
+                  ),
+                  const SizedBox(height: 20),
+                  if (widget.store.pets.isEmpty)
+                    const BotanicalEmpty(
+                      title: 'Quem mora com você?',
+                      description: 'Cadastre seus gatos e guarde fotos para mantê-los seguros e protegidos.',
+                      art: 'ui/ui_notebook_cat',
+                    ),
+                  for (final cat in widget.store.pets) ...[
+                    _PetAlbumEntry(
+                      cat: cat,
+                      photoCount:
+                          widget.store.referencePhotosFor(cat.id).length + 1,
+                      isMissing: _active.contains(cat.id),
+                      onTap: () => _open(
+                        PetProfilePage(
+                          catId: cat.id,
+                          store: widget.store,
+                          isMissing: _active.contains(cat.id),
+                          activeReport: _activeReports[cat.id],
                         ),
                       ),
                     ),
-
-                    // Ação de Emergência Rápida: Perdi meu gato agora
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.xl,
-                          vertical: AppSpacing.xs,
-                        ),
-                        child: InkWell(
-                          onTap: () => _open(
-                            CreateMissingReportPage(
-                              store: widget.store,
-                              quickMode: true,
-                            ),
-                          ),
-                          borderRadius: BorderRadius.circular(AppRadius.card),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.md,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.errorBg,
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.card,
-                              ),
-                              border: Border.all(
-                                color: AppColors.error.withValues(alpha: 0.35),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.error,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    LucideIcons.alertTriangle,
-                                    color: Colors.white,
-                                    size: 18,
-                                  ),
-                                ),
-                                const SizedBox(width: AppSpacing.md),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Criar Alerta Rápido',
-                                        style: GoogleFonts.fredoka(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.errorText,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        'Ative um alerta de busca imediato para um gato seu não cadastrado',
-                                        style: GoogleFonts.nunito(
-                                          fontSize: 12,
-                                          color: AppColors.errorText.withValues(
-                                            alpha: 0.9,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const Icon(
-                                  LucideIcons.chevronRight,
-                                  color: AppColors.error,
-                                  size: 18,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Card explicativo sobre a importância das fotos para proteção
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.xl,
-                          AppSpacing.md,
-                          AppSpacing.xl,
-                          AppSpacing.xs,
-                        ),
-                        child: Container(
-                          padding: const EdgeInsets.all(AppSpacing.md),
-                          decoration: BoxDecoration(
-                            color: AppColors.greenLight,
-                            borderRadius: BorderRadius.circular(AppRadius.card),
-                            border: Border.all(
-                              color: AppColors.green.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                LucideIcons.shieldCheck,
-                                color: AppColors.greenProgress,
-                                size: 22,
-                              ),
-                              const SizedBox(width: AppSpacing.sm),
-                              Expanded(
-                                child: Text(
-                                  'Fotos de diferentes ângulos ajudam a reconhecer seu gato automaticamente caso ele se perca.',
-                                  style: GoogleFonts.nunito(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textDark,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    if (store.pets.isEmpty)
-                      SliverToBoxAdapter(
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(AppSpacing.xxxl),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Image.asset(
-                                  'assets/images/gato_3.png',
-                                  width: 110,
-                                ),
-                                const SizedBox(height: AppSpacing.md),
-                                Text(
-                                  'Quem mora com você?',
-                                  style: GoogleFonts.fredoka(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textTitle,
-                                  ),
-                                ),
-                                const SizedBox(height: AppSpacing.xs),
-                                Text(
-                                  'Cadastre seus gatos e guarde fotos para mantê-los seguros e protegidos.',
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.nunito(
-                                    fontSize: 13,
-                                    color: AppColors.textMedium,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      )
-                    else
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.xl,
-                          AppSpacing.md,
-                          AppSpacing.xl,
-                          AppSpacing.xxxl,
-                        ),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate((
-                            context,
-                            index,
-                          ) {
-                            final cat = store.pets[index];
-                            final isMissing = _active.contains(cat.id);
-                            final refCount = store
-                                .referencePhotosFor(cat.id)
-                                .length;
-
-                            return Padding(
-                              padding: const EdgeInsets.only(
-                                bottom: AppSpacing.md,
-                              ),
-                              child: GatalogoCard(
-                                backgroundColor: AppColors.cardBackground,
-                                onTap: () => _open(
-                                  PetProfilePage(
-                                    catId: cat.id,
-                                    store: store,
-                                    isMissing: isMissing,
-                                    activeReport: _activeReports[cat.id],
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    SizedBox(
-                                      width: 70,
-                                      height: 70,
-                                      child: CatPhotoView(
-                                        cat.photoPath,
-                                        borderRadius: AppRadius.photo,
-                                      ),
-                                    ),
-                                    const SizedBox(width: AppSpacing.md),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Expanded(
-                                                child: Text(
-                                                  cat.displayName,
-                                                  style: GoogleFonts.fredoka(
-                                                    fontSize: 17,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: AppColors.textTitle,
-                                                  ),
-                                                ),
-                                              ),
-                                              if (isMissing)
-                                                Container(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 2,
-                                                      ),
-                                                  decoration: BoxDecoration(
-                                                    color: AppColors.errorBg,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          AppRadius.pill,
-                                                        ),
-                                                  ),
-                                                  child: Text(
-                                                    'Desaparecido',
-                                                    style: GoogleFonts.nunito(
-                                                      fontSize: 11,
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                      color: AppColors.error,
-                                                    ),
-                                                  ),
-                                                ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            '${refCount + 1} foto(s) no álbum de proteção',
-                                            style: GoogleFonts.nunito(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                              color: AppColors.textMedium,
-                                            ),
-                                          ),
-                                          if (refCount < 3) ...[
-                                            const SizedBox(height: 2),
-                                            Row(
-                                              children: [
-                                                const Icon(
-                                                  LucideIcons.lightbulb,
-                                                  size: 11,
-                                                  color:
-                                                      AppColors.greenProgress,
-                                                ),
-                                                const SizedBox(width: 4),
-                                                Expanded(
-                                                  child: Text(
-                                                    'Adicione mais ângulos para proteção',
-                                                    style: GoogleFonts.nunito(
-                                                      fontSize: 11,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      color: AppColors
-                                                          .greenProgress,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    ),
-                                    const Icon(
-                                      LucideIcons.chevronRight,
-                                      color: AppColors.textLight,
-                                      size: 18,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }, childCount: store.pets.length),
-                        ),
-                      ),
+                    const SizedBox(height: 14),
                   ],
-                ),
-              );
-            },
-          ),
-        ],
+                  const IllustratedPaperHeading(
+                    title: 'Cada ângulo ajuda',
+                    description: 'Fotos de diferentes ângulos ajudam a reconhecer seu gato automaticamente caso ele se perca.',
+                    art: 'ui/ui_clipboard_checklist',
+                  ),
+                  SizedBox(height: 20 + MediaQuery.paddingOf(context).bottom),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _PetAlbumEntry extends StatelessWidget {
+  const _PetAlbumEntry({
+    required this.cat,
+    required this.photoCount,
+    required this.isMissing,
+    required this.onTap,
+  });
+  final Cat cat;
+  final int photoCount;
+  final bool isMissing;
+  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) => BotanicalPaper(
+    foliage: false,
+    padding: EdgeInsets.zero,
+    child: InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 90,
+              child: GamePhotoCard(
+                cat: cat,
+                height: 78,
+                showName: false,
+                onTap: onTap,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    cat.displayName,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 5),
+                  Text('$photoCount foto(s) no álbum de proteção'),
+                  if (isMissing) ...[
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Desaparecido',
+                      style: TextStyle(
+                        color: AppColors.errorText,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const Icon(
+              LucideIcons.chevronRight,
+              size: 18,
+              color: AppColors.greenButton,
+            ),
+          ],
+        ),
       ),
     ),
   );
@@ -550,7 +346,9 @@ class _AddPetPageState extends State<AddPetPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => BotanicalScaffold(
+    level: BotanicalLevel.tertiary,
+    mood: BotanicalMood.care,
     backgroundColor: AppColors.background,
     appBar: AppBar(
       actions: const [AppHeaderActions()],
@@ -566,6 +364,13 @@ class _AddPetPageState extends State<AddPetPage> {
     body: ListView(
       padding: const EdgeInsets.all(AppSpacing.xl),
       children: [
+        const IllustratedPaperHeading(
+          title: 'Ficha do seu gato',
+          description:
+              'Guarde uma foto e os detalhes que tornam seu gato único.',
+          art: 'ui/ui_notebook_cat',
+        ),
+        const SizedBox(height: 22),
         TextField(
           controller: _name,
           maxLength: 30,
@@ -635,6 +440,12 @@ class _AddPetPageState extends State<AddPetPage> {
           CatPhotoView(_photo!, height: 260, borderRadius: AppRadius.card),
           const SizedBox(height: AppSpacing.md),
         ],
+        const IllustratedPaperHeading(
+          title: 'Uma foto para reconhecer',
+          description: 'Escolha uma imagem nítida do seu gato. Depois você pode completar os outros ângulos.',
+          art: 'icons/icon_camera_cream_coral',
+        ),
+        const SizedBox(height: 14),
         Row(
           children: [
             Expanded(
@@ -655,33 +466,6 @@ class _AddPetPageState extends State<AddPetPage> {
           ],
         ),
         const SizedBox(height: AppSpacing.lg),
-        Container(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            color: AppColors.cardBackground,
-            borderRadius: BorderRadius.circular(AppRadius.card),
-            border: Border.all(color: AppColors.borderLight),
-          ),
-          child: Row(
-            children: [
-              const Icon(
-                LucideIcons.info,
-                color: AppColors.textMedium,
-                size: 20,
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  'Depois de salvar, você poderá adicionar fotos de diferentes ângulos para mapear toda a pelagem e reforçar a identificação.',
-                  style: GoogleFonts.nunito(
-                    fontSize: 12,
-                    color: AppColors.textMedium,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
         const SizedBox(height: AppSpacing.xl),
         GatalogoButton(
           text: _busy ? 'Salvando…' : 'Salvar Gatinho',
@@ -712,7 +496,8 @@ class PetProfilePage extends StatelessWidget {
     builder: (context, _) {
       final found = store.pets.where((cat) => cat.id == catId);
       if (found.isEmpty) {
-        return Scaffold(
+        return BotanicalScaffold(
+          mood: BotanicalMood.care,
           backgroundColor: AppColors.background,
           appBar: AppBar(actions: const [AppHeaderActions()]),
           body: const EmptyContent(
@@ -728,7 +513,8 @@ class PetProfilePage extends StatelessWidget {
           .map((entry) => entry.value.toLowerCase())
           .join(', ');
 
-      return Scaffold(
+      return BotanicalScaffold(
+        mood: BotanicalMood.care,
         backgroundColor: AppColors.background,
         appBar: AppBar(
           title: Text(
@@ -766,14 +552,11 @@ class PetProfilePage extends StatelessWidget {
                 imagePath: cat.photoPath,
                 title: cat.displayName,
               ),
-              child: CatPhotoView(
-                cat.photoPath,
-                height: 260,
-                borderRadius: AppRadius.card,
-              ),
+              child: GamePhotoCard(cat: cat, height: 210, showName: false),
             ),
             const SizedBox(height: AppSpacing.md),
-            GatalogoCard(
+            BotanicalPaper(
+              foliage: false,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -796,10 +579,10 @@ class PetProfilePage extends StatelessWidget {
                   const SizedBox(height: AppSpacing.md),
                   Row(
                     children: [
-                      const Icon(
-                        LucideIcons.shieldAlert,
-                        size: 16,
-                        color: AppColors.greenProgress,
+                      GatalogoArt.image(
+                        'ui/ui_cat_photos_stack',
+                        width: 40,
+                        height: 42,
                       ),
                       const SizedBox(width: 6),
                       Expanded(
@@ -845,12 +628,19 @@ class PetProfilePage extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
 
             // Card de Identificação para Busca
-            GatalogoCard(
+            BotanicalPaper(
+              foliage: false,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
+                      GatalogoArt.image(
+                        'icons/icon_cat_collar_medallion',
+                        width: 36,
+                        height: 38,
+                      ),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           'Identificação para Busca',

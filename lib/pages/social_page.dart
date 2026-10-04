@@ -1,3 +1,7 @@
+import '../widgets/botanical_scene.dart';
+import '../widgets/community_post_card.dart';
+import '../widgets/illustrated_home_components.dart';
+import 'community_posters_page.dart';
 import '../widgets/app_header_actions.dart';
 
 import 'dart:async';
@@ -20,7 +24,6 @@ import '../widgets/gatalogo_components.dart';
 import 'auth_page.dart';
 import 'friends_page.dart';
 import 'inbox_page.dart';
-import 'journey_page.dart';
 import 'public_profile_page.dart';
 
 class SocialPage extends StatefulWidget {
@@ -30,12 +33,14 @@ class SocialPage extends StatefulWidget {
     this.catStore,
     this.initialTab = 0,
     this.api,
+    this.onNavigate,
   });
 
   final SessionStore sessionStore;
   final CatStore? catStore;
   final int initialTab;
   final SocialApiService? api;
+  final ValueChanged<int>? onNavigate;
 
   @override
   State<SocialPage> createState() => _SocialPageState();
@@ -44,9 +49,13 @@ class SocialPage extends StatefulWidget {
 class _SocialPageState extends State<SocialPage> {
   late final SocialApiService _api;
   late final ScrollController _scrollController;
+  int _feedGeneration = 0;
   bool _loading = false;
   bool _isLoadingMore = false;
   bool _hasMore = true;
+  String _contentType = 'all';
+  String get _queryMode =>
+      _contentType == 'all' ? _feedMode : '$_feedMode:$_contentType';
   String _feedMode = 'all'; // 'all' (comunidade) ou 'friends'
   final Map<String, Uint8List> _base64Cache = {};
   String? _error;
@@ -160,6 +169,8 @@ class _SocialPageState extends State<SocialPage> {
 
   Future<void> _load({bool refresh = true}) async {
     if (!widget.sessionStore.isSignedIn) return;
+    final generation = ++_feedGeneration;
+    final mode = _queryMode;
     if (refresh) {
       setState(() {
         _loading = true;
@@ -168,8 +179,8 @@ class _SocialPageState extends State<SocialPage> {
       });
     }
     try {
-      final items = await _api.feed(limit: 15, mode: _feedMode);
-      if (mounted) {
+      final items = await _api.feed(limit: 15, mode: mode);
+      if (mounted && generation == _feedGeneration) {
         setState(() {
           _feed = items;
           _hasMore = items.length >= 15;
@@ -177,26 +188,28 @@ class _SocialPageState extends State<SocialPage> {
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _error = e.toString());
+      if (mounted && generation == _feedGeneration) {
+        setState(() => _error = e.toString());
+      }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted && generation == _feedGeneration) {
+        setState(() => _loading = false);
+      }
     }
   }
 
   Future<void> _loadMore() async {
     if (_isLoadingMore || !_hasMore || _feed.isEmpty) return;
+    final generation = _feedGeneration;
+    final mode = _queryMode;
     final lastItem = _feed.last;
     final cursor = lastItem['created_at']?.toString();
     if (cursor == null) return;
 
     setState(() => _isLoadingMore = true);
     try {
-      final moreItems = await _api.feed(
-        limit: 15,
-        cursor: cursor,
-        mode: _feedMode,
-      );
-      if (mounted) {
+      final moreItems = await _api.feed(limit: 15, cursor: cursor, mode: mode);
+      if (mounted && generation == _feedGeneration) {
         setState(() {
           final existingIds = _feed.map((it) => it['id']?.toString()).toSet();
           final newUnique = moreItems
@@ -239,9 +252,6 @@ class _SocialPageState extends State<SocialPage> {
 
     try {
       final result = await _api.toggleLike(itemId);
-      if (result['liked'] == true) {
-        widget.catStore?.recordGamificationAction('like', contextId: itemId);
-      }
       if (mounted) {
         setState(() {
           payload['has_liked'] = result['liked'] == true;
@@ -531,1121 +541,480 @@ class _SocialPageState extends State<SocialPage> {
       cats: widget.catStore?.discoveries ?? [],
     );
     if (post == null || !mounted) return;
-    setState(() => _feed.insert(0, post));
-    await widget.catStore?.recordGamificationAction('post');
+    await _load();
+    await widget.catStore?.refreshGamification();
   }
 
   Widget _buildPostMedia(Map<String, dynamic> payload) {
     final photoUrl = payload['photo_url']?.toString();
-    final photoBase64 = payload['photo_base64']?.toString();
-
-    if (photoUrl != null && photoUrl.isNotEmpty) {
-      final token = widget.sessionStore.session?.accessToken;
-      final fullUrl = photoUrl.startsWith('http')
+    final encoded = payload['photo_base64']?.toString();
+    Widget? photo;
+    Widget failed() => const Center(
+      child: Icon(LucideIcons.imageOff, color: AppColors.textMedium),
+    );
+    if (photoUrl?.isNotEmpty == true) {
+      final full = photoUrl!.startsWith('http')
           ? photoUrl
-          : '${ApiConfig.baseUrl}$photoUrl${token != null ? '?token=$token' : ''}';
+          : '${ApiConfig.baseUrl}$photoUrl';
+      final token = widget.sessionStore.session?.accessToken;
+      photo = Image.network(
+        full,
+        fit: BoxFit.cover,
+        cacheWidth: 1000,
+        headers: full.startsWith(ApiConfig.baseUrl) && token != null
+            ? {'Authorization': 'Bearer $token'}
+            : null,
+        errorBuilder: (_, _, _) => failed(),
+      );
+    } else if (encoded?.isNotEmpty == true) {
+      try {
+        final bytes = _base64Cache.putIfAbsent(
+          encoded!,
+          () => base64Decode(encoded),
+        );
+        photo = Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          cacheWidth: 1000,
+          errorBuilder: (_, _, _) => failed(),
+        );
+      } catch (_) {
+        photo = failed();
+      }
+    }
+    if (photo == null) return const SizedBox.shrink();
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: AspectRatio(
+        aspectRatio: 4 / 3,
+        child: ColoredBox(color: AppColors.cardBackground, child: photo),
+      ),
+    );
+  }
 
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.photo),
-          child: SizedBox(
-            height: 210,
-            width: double.infinity,
-            child: Image.network(
-              fullUrl,
-              fit: BoxFit.cover,
-              cacheWidth: 800,
-              loadingBuilder: (context, child, progress) {
-                if (progress == null) return child;
-                return Container(
-                  color: Colors.black12,
-                  child: const Center(
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                );
-              },
-              errorBuilder: (_, _, _) => Container(
-                color: Colors.black12,
-                child: const Center(
-                  child: Icon(
-                    LucideIcons.imageOff,
-                    color: AppColors.textLight,
-                    size: 28,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
+  Future<void> _open(Widget page) async {
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+    if (!mounted) return;
+    if (page is CommunityPostersPage) {
+      await _load();
+      await widget.catStore?.refreshGamification();
+    }
+  }
+
+  String _when(dynamic value) {
+    final time = DateTime.tryParse(value?.toString() ?? '');
+    if (time == null) return '';
+    final days = DateTime.now().difference(time).inDays;
+    return days == 0
+        ? 'Hoje'
+        : days == 1
+        ? 'Ontem'
+        : 'Há $days dias';
+  }
+
+  Widget _post(Map<String, dynamic> item) {
+    final id = item['id']?.toString() ?? '';
+    final author = item['username']?.toString() ?? 'Pessoa da comunidade';
+    final type = item['type']?.toString();
+    final payload = Map<String, dynamic>.from(item['payload'] as Map? ?? {});
+    final location = payload['location_name']?.toString();
+    final note = payload['note']?.toString() ?? '';
+    final cat = payload['cat_name']?.toString() ?? '';
+    final isMilestone = type == 'achievement';
+    final caption = isMilestone
+        ? payload['title']?.toString() ?? 'Conquista compartilhada'
+        : [
+            if (cat.isNotEmpty && cat != 'Gato') cat,
+            note,
+          ].where((v) => v.isNotEmpty).join(' · ');
+    void profile() => _open(
+      PublicProfilePage(username: author, sessionStore: widget.sessionStore),
+    );
+    void share() {
+      CatSharingService.sharePost(
+        author: author,
+        catName: cat,
+        note: note,
+        location: location,
       );
     }
 
-    if (photoBase64 != null && photoBase64.isNotEmpty) {
-      Uint8List? cached = _base64Cache[photoBase64];
-      if (cached == null) {
-        try {
-          cached = base64Decode(photoBase64);
-          _base64Cache[photoBase64] = cached;
-        } catch (_) {}
-      }
-      if (cached != null) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.photo),
-            child: SizedBox(
-              height: 210,
-              width: double.infinity,
-              child: Image.memory(
-                cached,
-                fit: BoxFit.cover,
-                cacheWidth: 800,
-                errorBuilder: (_, _, _) => Container(
-                  color: Colors.black12,
-                  child: const Center(
-                    child: Icon(
-                      LucideIcons.imageOff,
-                      color: AppColors.textLight,
-                      size: 28,
+    return CommunityPostCard(
+      author: '@$author',
+      when: _when(item['created_at']),
+      note: caption,
+      avatarUrl: payload['author_avatar_url']?.toString(),
+      location: location,
+      media: isMilestone
+          ? Padding(
+              padding: const EdgeInsets.all(12),
+              child: GatalogoArt.image(
+                'icons/icon_reward_chest_star',
+                height: 90,
+              ),
+            )
+          : _buildPostMedia(payload),
+      liked: payload['has_liked'] == true,
+      likes: (payload['likes_count'] as num?)?.toInt() ?? 0,
+      comments:
+          (payload['comments_count'] as num?)?.toInt() ??
+          (payload['comments'] as List? ?? []).length,
+      onAuthor: profile,
+      onLike: () => _toggleLike(id),
+      onComment: () => _showCommentsModal(id, cat),
+      onShare: share,
+      contextualAction: type == 'poster_repost'
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Cartaz · ${payload['report_status'] == 'active' ? 'Busca ativa' : 'Caso encerrado'}',
+                  style: const TextStyle(
+                    color: AppColors.errorText,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (payload['report_id'] != null)
+                  TextButton(
+                    onPressed: () => _open(
+                      CommunityCasePage(
+                        session: widget.sessionStore,
+                        reportId: payload['report_id'].toString(),
+                      ),
                     ),
+                    child: const Text('Abrir busca'),
+                  ),
+              ],
+            )
+          : null,
+    );
+  }
+
+  Widget _feedChoice(String key, String label, IconData icon) => Expanded(
+    child: Semantics(
+      selected: _feedMode == key,
+      button: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: () {
+          if (_feedMode == key) return;
+          setState(() => _feedMode = key);
+          _load();
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 6),
+          decoration: BoxDecoration(
+            color: _feedMode == key
+                ? AppColors.greenButton
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(22),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: _feedMode == key ? HomeArt.paper : AppColors.textMedium,
+              ),
+              const SizedBox(width: 7),
+              Flexible(
+                child: Text(
+                  label,
+                  style: HomeArt.title(12).copyWith(
+                    color: _feedMode == key
+                        ? HomeArt.paper
+                        : AppColors.textMedium,
                   ),
                 ),
               ),
-            ),
+            ],
           ),
+        ),
+      ),
+    ),
+  );
+
+  Widget _filters() => LayoutBuilder(
+    builder: (context, box) {
+      final choices = [
+        ('all', 'Tudo', LucideIcons.sprout),
+        ('cat_post', 'Conversas e fotos', LucideIcons.messageCircle),
+        ('poster_repost', 'Cartazes', LucideIcons.image),
+      ];
+      Widget chip((String, String, IconData) choice) => ChoiceChip(
+        showCheckmark: false,
+        visualDensity: VisualDensity.compact,
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        selected: _contentType == choice.$1,
+        selectedColor: AppColors.greenLight,
+        backgroundColor: AppColors.surface,
+        side: BorderSide(
+          color: _contentType == choice.$1
+              ? AppColors.greenButton
+              : AppColors.border,
+        ),
+        shape: const StadiumBorder(),
+        avatar: Icon(choice.$3, size: 16, color: AppColors.greenLink),
+        labelPadding: const EdgeInsets.symmetric(horizontal: 2),
+        label: Text(
+          choice.$2,
+          style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            color: HomeArt.ink,
+          ),
+        ),
+        onSelected: (_) {
+          setState(() => _contentType = choice.$1);
+          _load();
+        },
+      );
+      if (MediaQuery.textScalerOf(context).scale(1) > 1.2) {
+        return Wrap(
+          spacing: 7,
+          runSpacing: 3,
+          children: choices.map(chip).toList(),
         );
       }
-    }
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: choices.map(chip).toList(),
+      );
+    },
+  );
 
-    return const SizedBox.shrink();
-  }
+  Widget _helpSearch() => Material(
+    color: const Color(0xFFFFDCD3),
+    borderRadius: BorderRadius.circular(24),
+    child: InkWell(
+      onTap: () => _open(CommunityPostersPage(session: widget.sessionStore)),
+      borderRadius: BorderRadius.circular(24),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+        child: Row(
+          children: [
+            GatalogoArt.image('cats/cat_calico_peeking', width: 42, height: 34),
+            GatalogoArt.image('ui/ui_speech_heart', width: 25, height: 25),
+            const SizedBox(width: 10),
+            Expanded(child: Text('Ajudar uma busca', style: HomeArt.title(12))),
+            const Icon(
+              LucideIcons.chevronRight,
+              color: AppColors.errorText,
+              size: 22,
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.sessionStore.isSignedIn) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
+    if (_currentTab == 1 && widget.sessionStore.isSignedIn) {
+      return BotanicalScaffold(
         appBar: AppBar(
-          actions: [AppHeaderActions(store: widget.catStore)],
-          title: Text(
-            'Social',
-            style: GoogleFonts.fredoka(
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textTitle,
-            ),
-          ),
+          leading: BackButton(onPressed: () => setState(() => _currentTab = 0)),
+          title: const Text('Conversas'),
         ),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  decoration: const BoxDecoration(
-                    color: AppColors.primaryLight,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    LucideIcons.globe,
-                    size: 48,
-                    color: AppColors.primaryDark,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                Text(
-                  'Feed de Amigos & Conexões',
-                  style: GoogleFonts.fredoka(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textTitle,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  'Entre na sua conta para acompanhar as descobertas e conquistas compartilhadas pelos seus amigos!',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.nunito(
-                    fontSize: 14,
-                    color: AppColors.textMedium,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                GatalogoButton(
-                  text: 'Entrar na conta',
-                  icon: LucideIcons.logIn,
-                  onPressed: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => AuthPage(
-                          sessionStore: widget.sessionStore,
-                          onContinueOffline: () => Navigator.pop(context),
-                        ),
-                      ),
-                    );
-                    if (mounted) _load();
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
+        body: InboxPage(sessionStore: widget.sessionStore, embedded: true),
       );
     }
-
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      floatingActionButton: _currentTab == 0
-          ? FloatingActionButton.extended(
+    return BotanicalScaffold(
+      mood: BotanicalMood.community,
+      floatingActionButton: widget.sessionStore.isSignedIn
+          ? FloatingActionButton.small(
+              tooltip: 'Criar publicação',
               elevation: 0,
-              highlightElevation: 0,
               onPressed: _showShareCatModal,
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              icon: const Icon(LucideIcons.camera, size: 20),
-              label: Text(
-                'Postar Gato',
-                style: GoogleFonts.nunito(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
+              backgroundColor: AppColors.greenButton,
+              foregroundColor: HomeArt.paper,
+              child: const Icon(LucideIcons.plus),
             )
           : null,
       body: SafeArea(
-        child: Stack(
-          children: [
-            // Folhagem decorativa
-            Positioned(
-              top: -10,
-              right: -15,
-              child: IgnorePointer(
-                child: Image.asset(
-                  'assets/images/Folha_1.png',
-                  width: 95,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-
-            RefreshIndicator(
+        bottom: false,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: RefreshIndicator(
               onRefresh: _load,
-              color: AppColors.primary,
               child: CustomScrollView(
                 controller: _scrollController,
-                physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
-                ),
+                physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    sliver: SliverToBoxAdapter(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Row(
-                            children: [
-                              if (Navigator.canPop(context))
-                                BackButton(
-                                  onPressed: () => Navigator.maybePop(context),
-                                ),
-                              const Expanded(
-                                child: Text(
-                                  'Social',
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textTitle,
-                                  ),
-                                ),
-                              ),
-                              AppHeaderActions(store: widget.catStore),
-                            ],
-                          ),
+                          if (widget.catStore != null)
+                            IllustratedAppHeader(
+                              store: widget.catStore!,
+                              logoWidth: 140,
+                              onWallet: widget.onNavigate == null
+                                  ? null
+                                  : () => widget.onNavigate!(4),
+                            )
+                          else
+                            GatalogoArt.image(
+                              'branding/brand_gatalogo_logo',
+                              height: 48,
+                            ),
                           const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              OutlinedButton.icon(
-                                onPressed: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => FriendsPage(
-                                      sessionStore: widget.sessionStore,
-                                    ),
-                                  ),
-                                ),
-                                icon: const Icon(LucideIcons.users, size: 18),
-                                label: const Text('Amigos'),
-                              ),
-                              if (widget.catStore != null)
-                                OutlinedButton.icon(
-                                  onPressed: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          JourneyPage(store: widget.catStore!),
-                                    ),
-                                  ),
-                                  icon: const Icon(
-                                    LucideIcons.trophy,
-                                    size: 18,
-                                  ),
-                                  label: const Text('Conquistas'),
-                                ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Segmented Bar: Feed Social vs Conversas (com badge de não lidas)
-                  SliverToBoxAdapter(
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 8,
-                      ),
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                        border: Border.all(color: AppColors.borderLight),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                              onTap: () => setState(() => _currentTab = 0),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _currentTab == 0
-                                      ? AppColors.primary
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.pill,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      LucideIcons.newspaper,
-                                      size: 16,
-                                      color: _currentTab == 0
-                                          ? Colors.white
-                                          : AppColors.textMedium,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      'Feed Social',
-                                      style: GoogleFonts.fredoka(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: _currentTab == 0
-                                            ? Colors.white
-                                            : AppColors.textMedium,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                              onTap: () => setState(() => _currentTab = 1),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _currentTab == 1
-                                      ? AppColors.primary
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.pill,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      LucideIcons.messageSquare,
-                                      size: 16,
-                                      color: _currentTab == 1
-                                          ? Colors.white
-                                          : AppColors.textMedium,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      'Conversas',
-                                      style: GoogleFonts.fredoka(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: _currentTab == 1
-                                            ? Colors.white
-                                            : AppColors.textMedium,
-                                      ),
-                                    ),
-                                    if (_unreadMessages > 0) ...[
-                                      const SizedBox(width: 6),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 6,
-                                          vertical: 1,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: _currentTab == 1
-                                              ? Colors.white
-                                              : AppColors.primary,
-                                          borderRadius: BorderRadius.circular(
-                                            AppRadius.pill,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          '$_unreadMessages',
-                                          style: GoogleFonts.fredoka(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w700,
-                                            color: _currentTab == 1
-                                                ? AppColors.primary
-                                                : Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  if (_currentTab == 1)
-                    SliverFillRemaining(
-                      hasScrollBody: true,
-                      child: InboxPage(
-                        sessionStore: widget.sessionStore,
-                        embedded: true,
-                      ),
-                    )
-                  else ...[
-                    // Barra de Filtro de Feed e Ação de Postar
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
-                        child: Row(
-                          children: [
-                            // Pills: Comunidade vs Amigos
-                            InkWell(
-                              onTap: () {
-                                if (_feedMode != 'all') {
-                                  setState(() => _feedMode = 'all');
-                                  _load(refresh: true);
-                                }
-                              },
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 7,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _feedMode == 'all'
-                                      ? AppColors.primary
-                                      : AppColors.cardAltBackground,
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.pill,
-                                  ),
-                                  border: Border.all(
-                                    color: _feedMode == 'all'
-                                        ? AppColors.primary
-                                        : AppColors.borderLight,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      LucideIcons.globe,
-                                      size: 13,
-                                      color: _feedMode == 'all'
-                                          ? Colors.white
-                                          : AppColors.textMedium,
-                                    ),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      'Comunidade',
-                                      style: GoogleFonts.nunito(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w800,
-                                        color: _feedMode == 'all'
-                                            ? Colors.white
-                                            : AppColors.textDark,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            InkWell(
-                              onTap: () {
-                                if (_feedMode != 'friends') {
-                                  setState(() => _feedMode = 'friends');
-                                  _load(refresh: true);
-                                }
-                              },
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 7,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _feedMode == 'friends'
-                                      ? AppColors.primary
-                                      : AppColors.cardAltBackground,
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.pill,
-                                  ),
-                                  border: Border.all(
-                                    color: _feedMode == 'friends'
-                                        ? AppColors.primary
-                                        : AppColors.borderLight,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      LucideIcons.users,
-                                      size: 13,
-                                      color: _feedMode == 'friends'
-                                          ? Colors.white
-                                          : AppColors.textMedium,
-                                    ),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      'Amigos',
-                                      style: GoogleFonts.nunito(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w800,
-                                        color: _feedMode == 'friends'
-                                            ? Colors.white
-                                            : AppColors.textDark,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    // Erro de Conexão
-                    if (_error != null)
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 8,
-                          ),
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
+                          Container(
+                            padding: const EdgeInsets.all(2),
                             decoration: BoxDecoration(
-                              color: AppColors.errorBg,
-                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              color: const Color(0xFFF2EADB),
+                              borderRadius: BorderRadius.circular(26),
+                              border: Border.all(color: AppColors.border),
                             ),
                             child: Row(
                               children: [
-                                const Icon(
-                                  LucideIcons.alertCircle,
-                                  color: AppColors.error,
-                                  size: 18,
+                                _feedChoice(
+                                  'all',
+                                  'Comunidade',
+                                  Icons.pets_rounded,
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    'Não foi possível atualizar o feed: $_error',
-                                    style: GoogleFonts.nunito(
-                                      fontSize: 12,
-                                      color: AppColors.errorText,
+                                _feedChoice(
+                                  'friends',
+                                  'Amigos',
+                                  LucideIcons.usersRound,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          _filters(),
+                          const SizedBox(height: 6),
+                          _helpSearch(),
+                          if (widget.sessionStore.isSignedIn &&
+                              _feedMode == 'friends')
+                            Wrap(
+                              alignment: WrapAlignment.end,
+                              children: [
+                                TextButton.icon(
+                                  onPressed: () => _open(
+                                    FriendsPage(
+                                      sessionStore: widget.sessionStore,
                                     ),
                                   ),
-                                ),
-                                IconButton(
                                   icon: const Icon(
-                                    LucideIcons.refreshCw,
+                                    LucideIcons.userPlus,
                                     size: 16,
                                   ),
+                                  label: const Text('Gerenciar amigos'),
+                                ),
+                                TextButton.icon(
+                                  onPressed: () =>
+                                      setState(() => _currentTab = 1),
+                                  icon: Badge(
+                                    isLabelVisible: _unreadMessages > 0,
+                                    label: Text('$_unreadMessages'),
+                                    child: const Icon(
+                                      LucideIcons.mail,
+                                      size: 16,
+                                    ),
+                                  ),
+                                  label: const Text('Conversas'),
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (!widget.sessionStore.isSignedIn)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(
+                        child: BotanicalEmpty(
+                          title: 'Encontros que viram histórias',
+                          description: 'Entre para conversar, acompanhar amigos e compartilhar suas descobertas.',
+                          art: 'ui/ui_cat_photos_stack',
+                          action: GatalogoButton(
+                            text: 'Entrar na conta',
+                            onPressed: () async {
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => AuthPage(
+                                    sessionStore: widget.sessionStore,
+                                    onContinueOffline: () =>
+                                        Navigator.pop(context),
+                                  ),
+                                ),
+                              );
+                              if (mounted) _load();
+                            },
+                          ),
+                        ),
+                      ),
+                    )
+                  else ...[
+                    if (_error != null)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: BotanicalPaper(
+                            foliage: false,
+                            child: Column(
+                              children: [
+                                const Text(
+                                  'Não foi possível atualizar o feed.',
+                                ),
+                                TextButton(
                                   onPressed: _load,
+                                  child: const Text('Tentar novamente'),
                                 ),
                               ],
                             ),
                           ),
                         ),
                       ),
-
-                    // Feed de Itens Reais
-                    if (_feed.isEmpty && !_loading)
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 20,
-                          ),
-                          child: Container(
-                            padding: const EdgeInsets.all(24),
-                            decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(22),
-                              border: Border.all(color: AppColors.borderLight),
-                            ),
-                            child: Column(
-                              children: [
-                                Image.asset(
-                                  'assets/images/gato_2.png',
-                                  width: 90,
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'Nenhuma atividade recente',
-                                  style: GoogleFonts.fredoka(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textTitle,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  'Quando você ou seus amigos compartilharem conquistas ou postarem fotos de gatos, elas aparecerão aqui!',
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.nunito(
-                                    fontSize: 13,
-                                    color: AppColors.textMedium,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    OutlinedButton.icon(
-                                      onPressed: () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => FriendsPage(
-                                            sessionStore: widget.sessionStore,
-                                          ),
-                                        ),
-                                      ).then((_) => _load()),
-                                      icon: const Icon(
-                                        LucideIcons.userPlus,
-                                        size: 16,
-                                      ),
-                                      label: const Text('Convidar Amigos'),
-                                      style: OutlinedButton.styleFrom(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            AppRadius.pill,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    ElevatedButton.icon(
-                                      onPressed: _showShareCatModal,
-                                      icon: const Icon(
-                                        LucideIcons.camera,
-                                        size: 16,
-                                      ),
-                                      label: const Text('Postar Gato'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppColors.primary,
-                                        foregroundColor: Colors.white,
-                                        elevation: 0,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            AppRadius.pill,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                    if (_loading && _feed.isEmpty)
+                      const SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (_feed.isEmpty && _error == null)
+                      const SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Center(
+                          child: BotanicalEmpty(
+                            title: 'Uma comunidade para descobrir',
+                            description: 'As publicações compartilhadas aparecem aqui. Que tal contar uma história?',
+                            art: 'cats/cat_calico_peeking',
                           ),
                         ),
                       )
                     else
                       SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
                         sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate((
-                            context,
-                            index,
-                          ) {
-                            final item = _feed[index];
-                            final itemId = item['id']?.toString() ?? '';
-                            final author =
-                                item['username']?.toString() ?? 'amigo';
-                            final type = item['type']?.toString() ?? '';
-                            final payload =
-                                item['payload'] is Map<String, dynamic>
-                                ? (item['payload'] as Map<String, dynamic>)
-                                : (item['payload'] = Map<String, dynamic>.from(
-                                    item['payload'] as Map? ?? {},
-                                  ));
-
-                            // 1. Item do Tipo: Conquista Compartilhada
-                            if (type == 'achievement') {
-                              final title =
-                                  payload['title']?.toString() ??
-                                  'Nova Conquista!';
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 14),
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(18),
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => PublicProfilePage(
-                                          username: author,
-                                          sessionStore: widget.sessionStore,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(14),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.achievementBg,
-                                      borderRadius: BorderRadius.circular(18),
-                                      border: Border.all(
-                                        color: AppColors.achievement.withValues(
-                                          alpha: 0.4,
-                                        ),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(10),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.achievement
-                                                .withValues(alpha: 0.3),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Icon(
-                                            LucideIcons.trophy,
-                                            size: 20,
-                                            color: AppColors.achievementDark,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                '@$author desbloqueou um marco!',
-                                                style: GoogleFonts.fredoka(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w600,
-                                                  color:
-                                                      AppColors.achievementText,
-                                                ),
-                                              ),
-                                              Text(
-                                                title,
-                                                style: GoogleFonts.nunito(
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: AppColors.textDark,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        const Icon(
-                                          Icons.pets,
-                                          size: 16,
-                                          color: AppColors.achievementText,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }
-
-                            // 2. Item do Tipo: Postagem de Gato
-                            final catName =
-                                payload['cat_name']?.toString() ?? 'Gato';
-                            final note = payload['note']?.toString() ?? '';
-                            final location = payload['location_name']
-                                ?.toString();
-                            final hasLiked = payload['has_liked'] == true;
-                            final likesCount =
-                                (payload['likes_count'] as num?)?.toInt() ?? 0;
-                            final commentsList =
-                                payload['comments'] as List? ?? [];
-                            final rawAvatar = payload['author_avatar_url']
-                                ?.toString();
-                            final authorAvatarUrl =
-                                rawAvatar != null && rawAvatar.isNotEmpty
-                                ? (rawAvatar.startsWith('http')
-                                      ? rawAvatar
-                                      : '${ApiConfig.baseUrl}$rawAvatar${widget.sessionStore.session?.accessToken != null ? '?token=${widget.sessionStore.session!.accessToken}' : ''}')
-                                : null;
-
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              child: Container(
-                                decoration: const BoxDecoration(
-                                  border: Border(
-                                    bottom: BorderSide(
-                                      color: AppColors.borderLight,
-                                    ),
-                                  ),
-                                ),
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // Avatar do Autor (Esquerda)
-                                    InkWell(
-                                      borderRadius: BorderRadius.circular(20),
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => PublicProfilePage(
-                                              username: author,
-                                              sessionStore: widget.sessionStore,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      child: Container(
-                                        width: 40,
-                                        height: 40,
-                                        margin: const EdgeInsets.only(
-                                          top: 4,
-                                          right: 12,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.primarySoftBg,
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: AppColors.borderProfile,
-                                            width: 1.2,
-                                          ),
-                                        ),
-                                        child: ClipOval(
-                                          child: authorAvatarUrl != null
-                                              ? Image.network(
-                                                  authorAvatarUrl,
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder: (_, _, _) =>
-                                                      const Icon(
-                                                        LucideIcons.user,
-                                                        size: 20,
-                                                        color: AppColors
-                                                            .primaryDark,
-                                                      ),
-                                                )
-                                              : const Icon(
-                                                  LucideIcons.user,
-                                                  size: 20,
-                                                  color: AppColors.primaryDark,
-                                                ),
-                                        ),
-                                      ),
-                                    ),
-
-                                    // Conteúdo (Direita)
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          // Nome e Local
-                                          Row(
-                                            children: [
-                                              Text(
-                                                '@$author',
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: GoogleFonts.fredoka(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: AppColors.textTitle,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              if (location != null &&
-                                                  location.isNotEmpty)
-                                                Expanded(
-                                                  child: Row(
-                                                    children: [
-                                                      const Icon(
-                                                        LucideIcons.mapPin,
-                                                        size: 12,
-                                                        color:
-                                                            AppColors.textLight,
-                                                      ),
-                                                      const SizedBox(width: 4),
-                                                      Expanded(
-                                                        child: Text(
-                                                          location,
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                          style:
-                                                              GoogleFonts.nunito(
-                                                                fontSize: 12,
-                                                                color: AppColors
-                                                                    .textLight,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                              ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 2),
-
-                                          // Mensagem/Nota
-                                          if (note.isNotEmpty ||
-                                              catName != 'Gato')
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                bottom: 8,
-                                              ),
-                                              child: Text.rich(
-                                                TextSpan(
-                                                  children: [
-                                                    if (catName != 'Gato')
-                                                      TextSpan(
-                                                        text: '$catName ',
-                                                        style:
-                                                            GoogleFonts.fredoka(
-                                                              fontSize: 15,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w600,
-                                                              color: AppColors
-                                                                  .textTitle,
-                                                            ),
-                                                      ),
-                                                    TextSpan(
-                                                      text: note,
-                                                      style: GoogleFonts.nunito(
-                                                        fontSize: 14,
-                                                        color:
-                                                            AppColors.textDark,
-                                                        height: 1.35,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-
-                                          // Midia do Gato
-                                          ClipRRect(
-                                            borderRadius: BorderRadius.circular(
-                                              16,
-                                            ),
-                                            child: _buildPostMedia(payload),
-                                          ),
-                                          const SizedBox(height: 8),
-
-                                          // Ações
-                                          Row(
-                                            children: [
-                                              // Comentar
-                                              InkWell(
-                                                onTap: () => _showCommentsModal(
-                                                  itemId,
-                                                  catName,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(
-                                                      AppRadius.pill,
-                                                    ),
-                                                child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 6,
-                                                      ),
-                                                  child: Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: [
-                                                      const Icon(
-                                                        LucideIcons
-                                                            .messageCircle,
-                                                        size: 16,
-                                                        color: AppColors
-                                                            .textMedium,
-                                                      ),
-                                                      const SizedBox(width: 6),
-                                                      Text(
-                                                        '${commentsList.length}',
-                                                        style:
-                                                            GoogleFonts.nunito(
-                                                              fontSize: 13,
-                                                              color: AppColors
-                                                                  .textMedium,
-                                                            ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                              const SizedBox(width: 16),
-                                              // Curtir
-                                              InkWell(
-                                                onTap: () =>
-                                                    _toggleLike(itemId),
-                                                borderRadius:
-                                                    BorderRadius.circular(
-                                                      AppRadius.pill,
-                                                    ),
-                                                child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 6,
-                                                      ),
-                                                  child: Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: [
-                                                      Icon(
-                                                        hasLiked
-                                                            ? Icons.pets
-                                                            : Icons
-                                                                  .pets_outlined,
-                                                        size: 16,
-                                                        color: hasLiked
-                                                            ? AppColors.primary
-                                                            : AppColors
-                                                                  .textMedium,
-                                                      ),
-                                                      const SizedBox(width: 6),
-                                                      Text(
-                                                        '$likesCount',
-                                                        style: GoogleFonts.nunito(
-                                                          fontSize: 13,
-                                                          fontWeight: hasLiked
-                                                              ? FontWeight.w700
-                                                              : FontWeight
-                                                                    .normal,
-                                                          color: hasLiked
-                                                              ? AppColors
-                                                                    .primary
-                                                              : AppColors
-                                                                    .textMedium,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                              const Spacer(),
-                                              // Compartilhar
-                                              IconButton(
-                                                padding: EdgeInsets.zero,
-                                                constraints:
-                                                    const BoxConstraints(),
-                                                icon: const Icon(
-                                                  LucideIcons.share2,
-                                                  size: 16,
-                                                  color: AppColors.textLight,
-                                                ),
-                                                onPressed: () async {
-                                                  final shared = await CatSharingService.sharePost(
-                                                    author: author,
-                                                    catName: catName,
-                                                    note: note,
-                                                    location: location,
-                                                  );
-                                                  if (shared) {
-                                                    widget.catStore?.recordGamificationAction('share', contextId: itemId);
-                                                    widget.catStore?.recordHabitatAction(
-                                                      'share', targetType: 'post', targetId: itemId,
-                                                    );
-                                                  }
-                                                },
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }, childCount: _feed.length),
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) => Padding(
+                              padding: const EdgeInsets.only(bottom: 18),
+                              child: _post(_feed[index]),
+                            ),
+                            childCount: _feed.length,
+                          ),
+                        ),
+                      ),
+                    if (_isLoadingMore)
+                      const SliverToBoxAdapter(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Center(child: CircularProgressIndicator()),
                         ),
                       ),
                   ],
-
-                  if (_isLoadingMore)
-                    const SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 24),
-                        child: Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      ),
-                    ),
-
-                  const SliverToBoxAdapter(child: SizedBox(height: 32)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 70)),
                 ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );

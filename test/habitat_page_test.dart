@@ -84,11 +84,11 @@ void main() {
     expect(find.text('Caminha'), findsNothing);
     expect(find.text('Caminho de pedrinhas'), findsOneWidget);
     expect(find.text('5 disponíveis'), findsOneWidget);
-    await habitat.paintPath('pebble_path', [(1, 1)]);
+    await habitat.paintGround('pebble_path', [(1, 1)]);
     await tester.pump();
     expect(find.text('Caminho de pedrinhas'), findsOneWidget);
     expect(find.text('4 disponíveis'), findsOneWidget);
-    await habitat.paintPath('pebble_path', [(1, 2), (1, 3), (1, 4), (1, 5)]);
+    await habitat.paintGround('pebble_path', [(1, 2), (1, 3), (1, 4), (1, 5)]);
     await tester.pump();
     expect(find.text('Caminho de pedrinhas'), findsNothing);
     await habitat.storeItem('path-0');
@@ -119,6 +119,21 @@ void main() {
     await tester.pump();
     expect(find.text('Loja do Habitat'), findsOneWidget);
     expect(find.text('Expandir terreno'), findsOneWidget);
+    await tester.ensureVisible(find.text('Natureza'));
+    await tester.tap(find.text('Natureza'));
+    await tester.pump();
+    expect(find.text('Árvore pequena'), findsOneWidget);
+    expect(find.text('Caminha'), findsNothing);
+    await tester.drag(
+      find.byType(SingleChildScrollView).last,
+      const Offset(-600, 0),
+    );
+    await tester.pump();
+    await tester.ensureVisible(find.text('Terreno'));
+    await tester.tap(find.text('Terreno'));
+    await tester.pump();
+    expect(find.text('Lago'), findsOneWidget);
+    expect(find.text('Terra'), findsOneWidget);
     await tester.tap(find.byTooltip('Voltar ao Habitat'));
     await tester.pump();
     expect(find.text('Loja do Habitat'), findsNothing);

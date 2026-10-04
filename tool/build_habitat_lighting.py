@@ -11,6 +11,7 @@ from pathlib import Path
 
 import numpy as np
 from habitat_model import load_model
+from habitat_assets import DECORATIONS
 
 ROOT = Path(__file__).resolve().parents[1] / "assets" / "3d_assets"
 NATURE = ROOT / "kenney_nature-kit"
@@ -20,7 +21,7 @@ NATURE_NAMES = (
     "grass", "log_large", "plant_bushSmall", "plant_flatShort", "rock_largeA",
     "rock_smallA", "tent_detailedOpen", "tent_smallOpen", "tree_default",
     "tree_detailed", "tree_oak", "tree_pineTallA", "tree_pineDefaultA",
-)
+) + tuple(asset.name for asset in DECORATIONS if asset.pack == 'kenney_nature-kit')
 def mesh_triangles(path: Path) -> np.ndarray:
     return np.concatenate([mesh.positions[mesh.indices] for mesh in load_model(path)])
 

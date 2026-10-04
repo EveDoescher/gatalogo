@@ -5,11 +5,14 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
 
+import 'habitat_cat_animations.dart';
+
 /// Loads only the sprite orientations used in the current scene.
 class HabitatSprites {
   static const _nature = 'assets/3d_assets/kenney_nature-kit/Isometric';
   static const _rendered = 'assets/habitat';
   static const _icons = 'assets/3d_assets/kenney_mini-dungeon/Previews';
+  static const _roads = 'assets/3d_assets/kenney_isometric-roads/png';
 
   final Map<String, Future<ui.Image>> _images = {};
   final Map<String, Future<ui.Image>> _preparing = {};
@@ -17,6 +20,8 @@ class HabitatSprites {
   Map<String, ui.Rect>? _bounds;
   Map<String, dynamic> _lightingData = {};
   Future<void>? _initialization;
+  final catAnimations = HabitatCatAnimations();
+  final Set<String> _decorKeys = {};
 
   Future<void> initialize() => _initialization ??= _initialize();
 
@@ -36,10 +41,35 @@ class HabitatSprites {
     _lightingData = jsonDecode(
       await rootBundle.loadString('$_nature/habitat_lighting.json'),
     ) as Map<String, dynamic>;
+    final decor = jsonDecode(
+      await rootBundle.loadString('$_rendered/decor/profiles.json'),
+    ) as Map;
+    for (final entry in decor.entries) {
+      final key = entry.key as String;
+      final box = entry.value['bounds'] as List;
+      _decorKeys.add(key);
+      _bounds![key] = ui.Rect.fromLTWH(
+        (box[0] as num).toDouble(),
+        (box[1] as num).toDouble(),
+        (box[2] as num).toDouble(),
+        (box[3] as num).toDouble(),
+      );
+      _lightingData[key] = entry.value;
+    }
+    await catAnimations.initialize();
+    for (final key in ['water', 'dirt']) {
+      _bounds![key] = const ui.Rect.fromLTWH(0, 0, 100, 50);
+      _lightingData[key] = {
+        'origin': [50, 25],
+        'groundCenter': [0, 0],
+      };
+    }
   }
 
   String keyFor(String sprite, int rotation) {
-    if (sprite.startsWith('building-type-') ||
+    if (sprite == 'water' || sprite == 'dirt') return sprite;
+    if (sprite == 'building-type-a' ||
+        sprite == 'building-type-f' ||
         sprite == 'coin' ||
         sprite == 'chest' ||
         sprite == 'animal-cat') {
@@ -158,7 +188,11 @@ class HabitatSprites {
 
   Future<ui.Image> load(String key) => _images.putIfAbsent(key, () async {
     await initialize();
-    final path = key == 'animal-cat' || key.startsWith('building-type-')
+    final path = key == 'water' || key == 'dirt'
+        ? '$_roads/$key.png'
+        : _decorKeys.contains(key)
+        ? '$_rendered/decor/$key.png'
+        : key == 'animal-cat' || key.startsWith('building-type-')
         ? '$_rendered/$key.png'
         : key == 'coin' || key == 'chest'
         ? '$_icons/$key.png'
@@ -188,7 +222,7 @@ class HabitatSprites {
   Future<ui.Image> ready(String key) => _preparing.putIfAbsent(key, () async {
     final image = await load(key);
     final data = _lightingData[key] as Map?;
-    if (data != null) {
+    if (data != null && data['shadow'] != null) {
       _lighting[key] = await HabitatSpriteLighting.bake(data);
     }
     _ready[key] = image;

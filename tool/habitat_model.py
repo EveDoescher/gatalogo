@@ -2,6 +2,7 @@
 
 import json
 import struct
+from functools import lru_cache
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -21,7 +22,8 @@ class Mesh:
     color: np.ndarray
 
 
-def load_model(path: Path) -> list[Mesh]:
+@lru_cache(maxsize=64)
+def read_document(path: Path) -> tuple[dict, bytes]:
     data = path.read_bytes()
     magic, version, total = struct.unpack_from("<III", data)
     if magic != 0x46546C67 or version != 2 or total != len(data):
@@ -29,6 +31,35 @@ def load_model(path: Path) -> list[Mesh]:
     json_size = struct.unpack_from("<I", data, 12)[0]
     document = json.loads(data[20:20 + json_size])
     binary = data[28 + json_size:]
+    return document, binary
+
+
+def sample_channel(times, values, time, *, rotation=False, interpolation="LINEAR"):
+    """Sample glTF node transforms; quaternion interpolation follows glTF 2.0."""
+    if interpolation not in ("LINEAR", "STEP"):
+        raise ValueError(f"Unsupported animation interpolation: {interpolation}")
+    index = max(0, min(int(np.searchsorted(times, time, side="right")) - 1, len(times) - 1))
+    a = values[index].astype(float)
+    if index == len(times) - 1 or interpolation == "STEP":
+        return a
+    weight = float(np.clip((time - times[index]) / (times[index + 1] - times[index]), 0, 1))
+    b = values[index + 1].astype(float)
+    if rotation:
+        a /= np.linalg.norm(a)
+        b /= np.linalg.norm(b)
+        dot = float(a @ b)
+        if dot < 0:
+            b, dot = -b, -dot
+        if dot < 0.9995:
+            angle = np.arccos(np.clip(dot, -1, 1))
+            return (np.sin((1 - weight) * angle) * a + np.sin(weight * angle) * b) / np.sin(angle)
+    result = a * (1 - weight) + b * weight
+    return result / np.linalg.norm(result) if rotation else result
+
+
+def load_model(path: Path, *, animation: str | None = None, time: float = 0,
+               ground: float | None = None, rotation: int = 0) -> list[Mesh]:
+    document, binary = read_document(path)
 
     def accessor(index: int) -> np.ndarray:
         entry = document["accessors"][index]
@@ -41,10 +72,25 @@ def load_model(path: Path) -> list[Mesh]:
             strides=(view.get("byteStride", width * dtype.itemsize), dtype.itemsize),
         )
 
+    poses = {}
+    if animation is not None:
+        clip = next((clip for clip in document.get("animations", []) if clip["name"] == animation), None)
+        if clip is None:
+            raise ValueError(f"Animation {animation!r} not found in {path}")
+        for channel in clip["channels"]:
+            sampler = clip["samplers"][channel["sampler"]]
+            target = channel["target"]
+            property_name = target["path"]
+            if property_name not in ("translation", "rotation", "scale"):
+                raise ValueError(f"Unsupported animated property: {property_name}")
+            poses.setdefault(target["node"], {})[property_name] = sample_channel(
+                accessor(sampler["input"]).ravel(), accessor(sampler["output"]), time,
+                rotation=property_name == "rotation", interpolation=sampler.get("interpolation", "LINEAR"),
+            )
     meshes = []
 
     def visit(index: int, parent: np.ndarray) -> None:
-        node = document["nodes"][index]
+        node = document["nodes"][index] | poses.get(index, {})
         if "matrix" in node:
             local = np.array(node["matrix"]).reshape(4, 4).T
         else:
@@ -85,7 +131,12 @@ def load_model(path: Path) -> list[Mesh]:
 
     for index in document["scenes"][document.get("scene", 0)]["nodes"]:
         visit(index, np.eye(4))
-    ground = min(mesh.positions[:, 1].min() for mesh in meshes)
+    if ground is None:
+        ground = min(mesh.positions[:, 1].min() for mesh in meshes)
+    angle = rotation * np.pi / 2
+    turn = np.array([[np.cos(angle), 0, -np.sin(angle)], [0, 1, 0], [np.sin(angle), 0, np.cos(angle)]])
     for mesh in meshes:
         mesh.positions[:, 1] -= ground
+        mesh.positions = mesh.positions @ turn.T
+        mesh.normals = mesh.normals @ turn.T
     return meshes

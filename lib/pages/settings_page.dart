@@ -1,3 +1,5 @@
+import '../widgets/botanical_scene.dart';
+import 'experience_settings_page.dart';
 import '../widgets/app_header_actions.dart';
 
 import 'dart:async';
@@ -958,7 +960,10 @@ class _SettingsPageState extends State<SettingsPage> {
           '© 2026 Gatálogo Team - Feito com amor para amantes de gatos.',
       applicationIcon: Padding(
         padding: const EdgeInsets.all(12),
-        child: Image.asset('assets/images/Logo.png', height: 48),
+        child: Image.asset(
+          'assets/gatalogo_asset_library/branding/brand_gatalogo_logo.png',
+          height: 48,
+        ),
       ),
     );
   }
@@ -970,12 +975,12 @@ class _SettingsPageState extends State<SettingsPage> {
     final socialPush = prefs['social_notifications'] != false;
     final autoSync = widget.sessionStore.autoSyncEnabled;
 
-    return Scaffold(
+    return BotanicalScaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         actions: const [AppHeaderActions()],
         elevation: 0,
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft, color: AppColors.textDark),
           onPressed: () => Navigator.pop(context),
@@ -999,6 +1004,32 @@ class _SettingsPageState extends State<SettingsPage> {
                 vertical: AppSpacing.md,
               ),
               children: [
+                const IllustratedPaperHeading(
+                  title: 'Do seu jeito',
+                  description:
+                      'Ajuste sua conta, os dados e a experiência no Gatálogo.',
+                  art: 'icons/icon_settings_gear',
+                ),
+                const SizedBox(height: 18),
+                ListTile(
+                  leading: GatalogoArt.image(
+                    'icons/icon_settings_gear',
+                    width: 36,
+                    height: 36,
+                  ),
+                  title: const Text('Experiência e privacidade'),
+                  subtitle: const Text(
+                    'Música, efeitos, movimento e audiência do Perfil',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          ExperienceSettingsPage(session: widget.sessionStore),
+                    ),
+                  ),
+                ),
                 if (!widget.sessionStore.isSignedIn) ...[
                   GatalogoCard(
                     backgroundColor: AppColors.primaryLight.withValues(

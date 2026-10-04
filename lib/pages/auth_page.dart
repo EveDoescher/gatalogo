@@ -1,3 +1,5 @@
+import '../widgets/botanical_scene.dart';
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -376,7 +378,8 @@ class _AuthPageState extends State<AuthPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BotanicalScaffold(
+      level: BotanicalLevel.authentication,
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
@@ -388,7 +391,7 @@ class _AuthPageState extends State<AuthPage> {
               child: Transform.rotate(
                 angle: 0.38, // ~22 graus no sentido horário para alinhar o caule horizontalmente
                 child: Image.asset(
-                  'assets/images/Folha_2.png',
+                  'assets/gatalogo_asset_library/flora/flora_branch_pale_diagonal_01.png',
                   width: 310,
                   fit: BoxFit.contain,
                 ),
@@ -401,7 +404,7 @@ class _AuthPageState extends State<AuthPage> {
             right: 42,
             child: IgnorePointer(
               child: Image.asset(
-                'assets/images/Folha_3.png',
+                'assets/gatalogo_asset_library/flora/flora_leaves_loose_pale_two.png',
                 width: 36,
                 fit: BoxFit.contain,
               ),
@@ -413,7 +416,7 @@ class _AuthPageState extends State<AuthPage> {
             left: -4,
             child: IgnorePointer(
               child: Image.asset(
-                'assets/images/Folha_4.png',
+                'assets/gatalogo_asset_library/flora/flora_leaves_loose_pale_three.png',
                 width: 44,
                 fit: BoxFit.contain,
               ),
@@ -425,7 +428,7 @@ class _AuthPageState extends State<AuthPage> {
             right: -8,
             child: IgnorePointer(
               child: Image.asset(
-                'assets/images/Folha_6.png',
+                'assets/gatalogo_asset_library/environment/environment_wall_foliage_corner.png',
                 width: 250,
                 fit: BoxFit.contain,
               ),
@@ -459,7 +462,7 @@ class _AuthPageState extends State<AuthPage> {
                                 Positioned(
                                   top: 0,
                                   child: Image.asset(
-                                    'assets/images/gato_3.png',
+                                    'assets/gatalogo_asset_library/cats/cat_orange_crouching.png',
                                     width: 172,
                                     fit: BoxFit.contain,
                                   ),
@@ -467,7 +470,7 @@ class _AuthPageState extends State<AuthPage> {
                                 Positioned(
                                   top: 92,
                                   child: Image.asset(
-                                    'assets/images/Logo.png',
+                                    'assets/gatalogo_asset_library/branding/brand_gatalogo_logo.png',
                                     width: 215,
                                     fit: BoxFit.contain,
                                   ),
@@ -959,7 +962,7 @@ class _AuthPageState extends State<AuthPage> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Image.asset(
-                                    'assets/images/google_logo.png',
+                                    'assets/gatalogo_asset_library/branding/brand_google_logo.png',
                                     width: 20,
                                     height: 20,
                                     fit: BoxFit.contain,

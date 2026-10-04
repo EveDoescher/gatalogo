@@ -37,7 +37,7 @@ Não transformar o app em painel de diagnóstico frio de IA, comparação manual
 
 ## Product Principles
 
-- Início, Gatalogar e Coleção formam a navegação principal.
+- Início, Social, Gatalogar, Coleção e Habitat formam a navegação principal.
 - Descobertas na rua e gatos próprios da residência possuem áreas e ciclos de vida distintos.
 - Fotografias e dados são salvos localmente antes de qualquer sincronização com nuvem.
 - Alertas de gatos desaparecidos respeitam a privacidade: avisos ocorrem de forma não invasiva e a correspondência opera nos bastidores.

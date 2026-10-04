@@ -1,3 +1,5 @@
+import '../widgets/illustrated_home_components.dart';
+import '../widgets/botanical_scene.dart';
 import '../widgets/app_header_actions.dart';
 
 import 'dart:async';
@@ -7,7 +9,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../config/api_config.dart';
 import '../services/product_api_service.dart';
 import '../services/social_api_service.dart';
 import '../stores/session_store.dart';
@@ -293,11 +294,11 @@ class _FriendsPageState extends State<FriendsPage>
         )
         .toList();
 
-    return Scaffold(
+    return BotanicalScaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft, color: AppColors.textDark),
           onPressed: () => Navigator.pop(context),
@@ -326,10 +327,16 @@ class _FriendsPageState extends State<FriendsPage>
           controller: _tabController,
           isScrollable: true,
           tabAlignment: TabAlignment.start,
-          labelColor: AppColors.primaryDark,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          labelColor: AppColors.surface,
           unselectedLabelColor: AppColors.textMedium,
-          indicatorColor: AppColors.primary,
-          indicatorWeight: 3,
+          dividerColor: Colors.transparent,
+          indicatorSize: TabBarIndicatorSize.tab,
+          indicator: BoxDecoration(
+            color: AppColors.greenButton,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: AppColors.greenLink),
+          ),
           labelStyle: GoogleFonts.fredoka(
             fontSize: 13,
             fontWeight: FontWeight.w600,
@@ -391,48 +398,23 @@ class _FriendsPageState extends State<FriendsPage>
   // -------------------------------------------------------------
   Widget _buildFriendsTab() {
     if (_friends.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset('assets/images/gato_2.png', width: 90),
-              const SizedBox(height: 14),
-              Text(
-                'Nenhum amigo conectado ainda',
-                style: GoogleFonts.fredoka(
-                  fontSize: 18,
-                  color: AppColors.textTitle,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Descubra exploradores na aba Descobrir ou compartilhe seu QR Code para conectar-se com outros gateiros!',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.nunito(
-                  fontSize: 13,
-                  color: AppColors.textMedium,
-                ),
-              ),
-              const SizedBox(height: 18),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 12,
-                  ),
-                ),
-                onPressed: () => _tabController.animateTo(1),
-                icon: const Icon(LucideIcons.userPlus, size: 16),
-                label: const Text('Descobrir Pessoas'),
-              ),
-            ],
+      return SingleChildScrollView(
+        child: BotanicalEmpty(
+          art: 'ui/ui_speech_ellipsis_heart',
+          illustration: IllustratedGardenStage(
+            child: GatalogoArt.image(
+              'environment/environment_house_coral_roof',
+              width: 142,
+              height: 140,
+            ),
+          ),
+          title: 'Nenhum amigo conectado ainda',
+          description: 'Descubra exploradores na aba Descobrir ou compartilhe seu QR Code para conectar-se com outros gateiros!',
+          action: BotanicalAction(
+            label: 'Descobrir Pessoas',
+            icon: LucideIcons.userPlus,
+            fullWidth: false,
+            onPressed: () => _tabController.animateTo(1),
           ),
         ),
       );
@@ -457,37 +439,7 @@ class _FriendsPageState extends State<FriendsPage>
               onTap: () => _openProfile(friendName),
               child: Row(
                 children: [
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      color: AppColors.primarySoftBg,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.borderProfile,
-                        width: 1.4,
-                      ),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: avatarUrl != null
-                        ? Image.network(
-                            avatarUrl.startsWith('http')
-                                ? avatarUrl
-                                : '${ApiConfig.baseUrl}$avatarUrl',
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Icon(
-                                  LucideIcons.user,
-                                  color: AppColors.primaryDark,
-                                  size: 22,
-                                ),
-                          )
-                        : const Icon(
-                            LucideIcons.user,
-                            color: AppColors.primaryDark,
-                            size: 22,
-                          ),
-                  ),
+                  FramedUserAvatar(url: avatarUrl, size: 48),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -564,6 +516,12 @@ class _FriendsPageState extends State<FriendsPage>
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         children: [
+          const IllustratedPaperHeading(
+            title: 'Encontre outros gateiros',
+            description: 'Conecte-se por convite e escolha com quem compartilhar suas descobertas.',
+            art: 'environment/environment_signpost_cat',
+          ),
+          const SizedBox(height: 16),
           // Ações Rápidas de Conexão (QR Code + Compartilhar Link)
           Row(
             children: [
@@ -818,33 +776,7 @@ class _FriendsPageState extends State<FriendsPage>
         onTap: () => _openProfile(username),
         child: Row(
           children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.primarySoftBg,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.borderProfile),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: avatarUrl != null
-                  ? Image.network(
-                      avatarUrl.startsWith('http')
-                          ? avatarUrl
-                          : '${ApiConfig.baseUrl}$avatarUrl',
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => const Icon(
-                        LucideIcons.user,
-                        size: 20,
-                        color: AppColors.primaryDark,
-                      ),
-                    )
-                  : const Icon(
-                      LucideIcons.user,
-                      size: 20,
-                      color: AppColors.primaryDark,
-                    ),
-            ),
+            FramedUserAvatar(url: avatarUrl, size: 48),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -959,33 +891,7 @@ class _FriendsPageState extends State<FriendsPage>
         onTap: () => _openProfile(username),
         child: Row(
           children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.primarySoftBg,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.borderProfile),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: avatarUrl != null
-                  ? Image.network(
-                      avatarUrl.startsWith('http')
-                          ? avatarUrl
-                          : '${ApiConfig.baseUrl}$avatarUrl',
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => const Icon(
-                        LucideIcons.user,
-                        size: 20,
-                        color: AppColors.primaryDark,
-                      ),
-                    )
-                  : const Icon(
-                      LucideIcons.user,
-                      size: 20,
-                      color: AppColors.primaryDark,
-                    ),
-            ),
+            FramedUserAvatar(url: avatarUrl, size: 48),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -1046,35 +952,17 @@ class _FriendsPageState extends State<FriendsPage>
     List<Map<String, dynamic>> sent,
   ) {
     if (received.isEmpty && sent.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                LucideIcons.mailCheck,
-                size: 48,
-                color: AppColors.textLight,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Nenhum convite pendente',
-                style: GoogleFonts.fredoka(
-                  fontSize: 18,
-                  color: AppColors.textTitle,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Quando alguém te convidar ou você enviar um convite de amizade, eles aparecerão aqui.',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.nunito(
-                  fontSize: 13,
-                  color: AppColors.textMedium,
-                ),
-              ),
-            ],
+      return SingleChildScrollView(
+        child: BotanicalEmpty(
+          title: 'Nenhum convite pendente',
+          description: 'Quando alguém te convidar ou você enviar um convite de amizade, eles aparecerão aqui.',
+          art: 'environment/environment_mailbox_coral',
+          illustration: IllustratedGardenStage(
+            child: GatalogoArt.image(
+              'environment/environment_mailbox_coral',
+              width: 120,
+              height: 130,
+            ),
           ),
         ),
       );
@@ -1222,35 +1110,17 @@ class _FriendsPageState extends State<FriendsPage>
   // -------------------------------------------------------------
   Widget _buildLeaderboardTab() {
     if (_leaderboard.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                LucideIcons.trophy,
-                size: 48,
-                color: AppColors.amberDark,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Sem ranking semanal ainda',
-                style: GoogleFonts.fredoka(
-                  fontSize: 18,
-                  color: AppColors.textTitle,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Adicione amigos para disputar quem ganha mais XP e mantém as maiores sequências no Gatálogo!',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.nunito(
-                  fontSize: 13,
-                  color: AppColors.textMedium,
-                ),
-              ),
-            ],
+      return SingleChildScrollView(
+        child: BotanicalEmpty(
+          title: 'Sem ranking semanal ainda',
+          description: 'Conecte-se com amigos para acompanhar o progresso semanal de vocês.',
+          art: 'rewards/reward_trophy_paw_gold',
+          illustration: IllustratedGardenStage(
+            child: GatalogoArt.image(
+              'rewards/reward_trophy_paw_gold',
+              width: 120,
+              height: 130,
+            ),
           ),
         ),
       );
@@ -1315,40 +1185,16 @@ class _FriendsPageState extends State<FriendsPage>
                     ),
                   ),
                   const SizedBox(width: 10),
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.borderProfile),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: avatarUrl != null
-                        ? Image.network(
-                            avatarUrl.startsWith('http')
-                                ? avatarUrl
-                                : '${ApiConfig.baseUrl}$avatarUrl',
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Icon(
-                                  LucideIcons.user,
-                                  size: 20,
-                                  color: AppColors.primaryDark,
-                                ),
-                          )
-                        : const Icon(
-                            LucideIcons.user,
-                            size: 20,
-                            color: AppColors.primaryDark,
-                          ),
-                  ),
+                  FramedUserAvatar(url: avatarUrl, size: 46),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             Text(
                               '@$username',
@@ -1381,7 +1227,10 @@ class _FriendsPageState extends State<FriendsPage>
                             ],
                           ],
                         ),
-                        Row(
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             Text(
                               'Nível $level',

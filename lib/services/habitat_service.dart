@@ -8,6 +8,10 @@ import '../stores/cat_store.dart';
 import '../stores/session_store.dart';
 import 'product_api_service.dart';
 
+part 'habitat_catalog.g.dart';
+part 'habitat_care.dart';
+part 'habitat_layout.dart';
+
 class HabitatItem {
   const HabitatItem({
     required this.id,
@@ -15,6 +19,7 @@ class HabitatItem {
     this.x,
     this.y,
     this.rotation = 0,
+    this.careState = const {},
   });
 
   final String id;
@@ -22,11 +27,18 @@ class HabitatItem {
   final int? x;
   final int? y;
   final int rotation;
+  final Map<String, dynamic> careState;
 
   bool get isPlaced => x != null && y != null;
 
-  HabitatItem at(int? newX, int? newY, int newRotation) =>
-      HabitatItem(id: id, sku: sku, x: newX, y: newY, rotation: newRotation);
+  HabitatItem at(int? newX, int? newY, int newRotation) => HabitatItem(
+    id: id,
+    sku: sku,
+    x: newX,
+    y: newY,
+    rotation: newRotation,
+    careState: careState,
+  );
 
   factory HabitatItem.fromMap(Map<String, dynamic> value) => HabitatItem(
     id: value['id'].toString(),
@@ -34,6 +46,9 @@ class HabitatItem {
     x: (value['x'] as num?)?.toInt(),
     y: (value['y'] as num?)?.toInt(),
     rotation: (value['rotation'] as num?)?.toInt() ?? 0,
+    careState: Map<String, dynamic>.from(
+      value['care_state'] as Map? ?? const {},
+    ),
   );
 
   Map<String, dynamic> toMap() => {
@@ -42,6 +57,7 @@ class HabitatItem {
     'x': x,
     'y': y,
     'rotation': rotation,
+    'care_state': careState,
   };
 }
 
@@ -70,6 +86,8 @@ class HabitatShopItem {
   final String layer;
   final bool rotatable;
   bool get isPath => layer == 'path';
+  bool get isGround => layer == 'path' || layer == 'terrain';
+  bool get isBridge => layer == 'bridge';
 
   factory HabitatShopItem.fromMap(Map<String, dynamic> value) =>
       HabitatShopItem(
@@ -122,6 +140,10 @@ class HabitatCat {
 class HabitatConflictException implements Exception {}
 
 class HabitatService extends ChangeNotifier {
+  /// Read-only art metadata shared with reward previews outside the editor.
+  static HabitatShopItem? catalogItem(String sku) =>
+      _offlineShop.where((item) => item.sku == sku).firstOrNull;
+
   HabitatService(
     this.session,
     this.catStore, {
@@ -143,233 +165,6 @@ class HabitatService extends ChangeNotifier {
     'small_tree',
     'small_bush',
     'red_flowers',
-  ];
-  static const _offlineShop = [
-    HabitatShopItem(
-      sku: 'cat_bed',
-      name: 'Caminha',
-      category: 'descanso',
-      sprite: 'bed',
-      price: 0,
-      width: 1,
-      height: 2,
-      maxOwned: 1,
-    ),
-    HabitatShopItem(
-      sku: 'small_tree',
-      name: 'Árvore pequena',
-      category: 'natureza',
-      sprite: 'tree_default',
-      price: 0,
-      width: 1,
-      height: 1,
-      maxOwned: 1,
-    ),
-    HabitatShopItem(
-      sku: 'small_bush',
-      name: 'Arbusto',
-      category: 'natureza',
-      sprite: 'plant_bushSmall',
-      price: 0,
-      width: 1,
-      height: 1,
-      maxOwned: 1,
-    ),
-    HabitatShopItem(
-      sku: 'red_flowers',
-      name: 'Flores vermelhas',
-      category: 'natureza',
-      sprite: 'flower_redA',
-      price: 0,
-      width: 1,
-      height: 1,
-      maxOwned: 1,
-    ),
-    HabitatShopItem(
-      sku: 'yellow_flowers',
-      name: 'Flores amarelas',
-      category: 'natureza',
-      sprite: 'flower_yellowA',
-      price: 20,
-      width: 1,
-      height: 1,
-      maxOwned: 4,
-    ),
-    HabitatShopItem(
-      sku: 'soft_grass',
-      name: 'Grama macia',
-      category: 'descanso',
-      sprite: 'grass',
-      price: 20,
-      width: 1,
-      height: 1,
-      maxOwned: 4,
-    ),
-    HabitatShopItem(
-      sku: 'small_rock',
-      name: 'Pedra',
-      category: 'natureza',
-      sprite: 'rock_smallA',
-      price: 25,
-      width: 1,
-      height: 1,
-      maxOwned: 4,
-    ),
-    HabitatShopItem(
-      sku: 'stone_path',
-      name: 'Caminho de pedra',
-      category: 'natureza',
-      sprite: 'ground_pathTile',
-      price: 25,
-      width: 1,
-      height: 1,
-      maxOwned: 6,
-      layer: 'path',
-    ),
-    HabitatShopItem(
-      sku: 'low_fence',
-      name: 'Cerca de madeira',
-      category: 'natureza',
-      sprite: 'fence_simple',
-      price: 30,
-      width: 1,
-      height: 1,
-      maxOwned: 6,
-    ),
-    HabitatShopItem(
-      sku: 'leafy_plant',
-      name: 'Folhagem',
-      category: 'natureza',
-      sprite: 'plant_flatShort',
-      price: 35,
-      width: 1,
-      height: 1,
-      maxOwned: 4,
-    ),
-    HabitatShopItem(
-      sku: 'floor_bed',
-      name: 'Cantinho de descanso',
-      category: 'descanso',
-      sprite: 'bed_floor',
-      price: 45,
-      width: 2,
-      height: 2,
-      maxOwned: 2,
-    ),
-    HabitatShopItem(
-      sku: 'oak_tree',
-      name: 'Carvalho',
-      category: 'natureza',
-      sprite: 'tree_oak',
-      price: 60,
-      width: 2,
-      height: 2,
-      maxOwned: 2,
-    ),
-    HabitatShopItem(
-      sku: 'large_log',
-      name: 'Tronco para brincar',
-      category: 'brincadeira',
-      sprite: 'log_large',
-      price: 65,
-      width: 2,
-      height: 1,
-      maxOwned: 3,
-    ),
-    HabitatShopItem(
-      sku: 'large_rock',
-      name: 'Pedra de jardim',
-      category: 'natureza',
-      sprite: 'rock_largeA',
-      price: 75,
-      width: 2,
-      height: 2,
-      maxOwned: 2,
-    ),
-    HabitatShopItem(
-      sku: 'detailed_tree',
-      name: 'Árvore frondosa',
-      category: 'natureza',
-      sprite: 'tree_detailed',
-      price: 95,
-      width: 2,
-      height: 2,
-      maxOwned: 2,
-    ),
-    HabitatShopItem(
-      sku: 'tall_pine',
-      name: 'Pinheiro alto',
-      category: 'natureza',
-      sprite: 'tree_pineTallA',
-      price: 120,
-      width: 2,
-      height: 2,
-      maxOwned: 2,
-    ),
-    HabitatShopItem(
-      sku: 'canvas_shelter',
-      name: 'Abrigo de lona',
-      category: 'descanso',
-      sprite: 'tent_smallOpen',
-      price: 90,
-      width: 2,
-      height: 2,
-      maxOwned: 2,
-    ),
-    HabitatShopItem(
-      sku: 'canvas_retreat',
-      name: 'Refúgio de lona',
-      category: 'descanso',
-      sprite: 'tent_detailedOpen',
-      price: 140,
-      width: 3,
-      height: 2,
-      maxOwned: 2,
-    ),
-    HabitatShopItem(
-      sku: 'green_cottage',
-      name: 'Casinha verde',
-      category: 'casinhas',
-      sprite: 'building-type-a',
-      price: 220,
-      width: 3,
-      height: 3,
-      maxOwned: 1,
-      rotatable: false,
-    ),
-    HabitatShopItem(
-      sku: 'large_cottage',
-      name: 'Casinha ampla',
-      category: 'casinhas',
-      sprite: 'building-type-f',
-      price: 260,
-      width: 3,
-      height: 3,
-      maxOwned: 1,
-      rotatable: false,
-    ),
-    HabitatShopItem(
-      sku: 'pebble_path',
-      name: 'Caminho de pedrinhas',
-      category: 'caminhos',
-      sprite: 'path_stone',
-      price: 6,
-      width: 1,
-      height: 1,
-      maxOwned: 256,
-      layer: 'path',
-    ),
-    HabitatShopItem(
-      sku: 'wood_path',
-      name: 'Caminho de madeira',
-      category: 'caminhos',
-      sprite: 'path_wood',
-      price: 8,
-      width: 1,
-      height: 1,
-      maxOwned: 256,
-      layer: 'path',
-    ),
   ];
 
   int balance = 0;
@@ -440,6 +235,22 @@ class HabitatService extends ChangeNotifier {
     'care': 1,
   };
   Map<String, String> _pendingPurchases = {};
+  Map<String, dynamic> care = {};
+  Map<String, String> _pendingInteractions = {};
+  Duration _clockOffset = Duration.zero;
+  bool _disposed = false;
+  bool caring = false;
+  void _setCaring(bool value) {
+    caring = value;
+    if (!_disposed) notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
   Future<void>? _syncInFlight;
   int _editVersion = 0;
 
@@ -463,7 +274,7 @@ class HabitatService extends ChangeNotifier {
         entry.key.toString(): entry.value.toString(),
     };
     if (cached?['snapshot'] case final Map raw) {
-      _readSnapshot(Map<String, dynamic>.from(raw));
+      _readSnapshot(Map<String, dynamic>.from(raw), cached: true);
     } else if (!session.isSignedIn) {
       _seedGuest();
     }
@@ -532,6 +343,9 @@ class HabitatService extends ChangeNotifier {
   }
 
   void _seedGuest() {
+    care = {};
+    _pendingInteractions.clear();
+    _clockOffset = Duration.zero;
     items = [
       for (final sku in _starterSkus) HabitatItem(id: 'guest-$sku', sku: sku),
     ];
@@ -554,7 +368,21 @@ class HabitatService extends ChangeNotifier {
     ];
   }
 
-  void _readSnapshot(Map<String, dynamic> data) {
+  void _readSnapshot(Map<String, dynamic> data, {bool cached = false}) {
+    care = Map<String, dynamic>.from(data['care'] as Map? ?? const {});
+    if (cached) {
+      _clockOffset = Duration(
+        milliseconds: (data['care_clock_offset_ms'] as num?)?.toInt() ?? 0,
+      );
+      _pendingInteractions = {
+        for (final entry
+            in (data['pending_interactions'] as Map? ?? const {}).entries)
+          entry.key.toString(): entry.value.toString(),
+      };
+    } else if (DateTime.tryParse(care['server_now']?.toString() ?? '')
+        case final serverTime?) {
+      _clockOffset = serverTime.difference(DateTime.now().toUtc());
+    }
     balance = (data['balance'] as num?)?.toInt() ?? 0;
     revision = (data['revision'] as num?)?.toInt() ?? 0;
     expansionLevel = (data['expansion_level'] as num?)?.toInt() ?? 0;
@@ -609,6 +437,9 @@ class HabitatService extends ChangeNotifier {
       : null;
 
   Map<String, dynamic> _snapshot() => {
+    'care': care,
+    'care_clock_offset_ms': _clockOffset.inMilliseconds,
+    'pending_interactions': _pendingInteractions,
     'layout_rules_version': _layoutRulesVersion,
     'balance': balance,
     'revision': revision,
@@ -696,6 +527,7 @@ class HabitatService extends ChangeNotifier {
       ..sort((a, b) {
         final first = definition(a.sku);
         final second = definition(b.sku);
+        if (first.isGround != second.isGround) return first.isGround ? -1 : 1;
         return (second.width * second.height).compareTo(
           first.width * first.height,
         );
@@ -733,53 +565,13 @@ class HabitatService extends ChangeNotifier {
     return adjusted;
   }
 
-  bool canPlace(HabitatItem item, int x, int y, int rotation) {
-    final definition = this.definition(item.sku);
-    if (!definition.rotatable && rotation != 0) return false;
-    final width = rotation.isOdd ? definition.height : definition.width;
-    final height = rotation.isOdd ? definition.width : definition.height;
-    for (var dx = 0; dx < width; dx++) {
-      for (var dy = 0; dy < height; dy++) {
-        if (!buildableCells.contains((x + dx, y + dy))) {
-          return false;
-        }
-        if (!definition.isPath &&
-            catAnchors.values.contains((x + dx, y + dy))) {
-          return false;
-        }
-      }
-    }
-    if (!item.isPlaced &&
-        !definition.isPath &&
-        items
-                .where(
-                  (entry) =>
-                      entry.isPlaced && !this.definition(entry.sku).isPath,
-                )
-                .length >=
-            decorationCapacity) {
-      return false;
-    }
-    for (final other in items.where(
-      (entry) => entry.isPlaced && entry.id != item.id,
-    )) {
-      final otherDefinition = this.definition(other.sku);
-      if (definition.isPath != otherDefinition.isPath) continue;
-      final otherWidth = other.rotation.isOdd
-          ? otherDefinition.height
-          : otherDefinition.width;
-      final otherHeight = other.rotation.isOdd
-          ? otherDefinition.width
-          : otherDefinition.height;
-      if (x < other.x! + otherWidth &&
-          x + width > other.x! &&
-          y < other.y! + otherHeight &&
-          y + height > other.y!) {
-        return false;
-      }
-    }
-    return true;
-  }
+  bool canPlace(HabitatItem item, int x, int y, int rotation) =>
+      layoutProblem([
+        for (final other in items)
+          if (other.id != item.id) other,
+        item.at(x, y, rotation),
+      ]) ==
+      null;
 
   Future<bool> place(String itemId, int x, int y, int rotation) async {
     final index = items.indexWhere((entry) => entry.id == itemId);
@@ -793,7 +585,12 @@ class HabitatService extends ChangeNotifier {
   Future<void> storeItem(String itemId) async {
     final index = items.indexWhere((entry) => entry.id == itemId);
     if (index < 0) return;
-    items[index] = items[index].at(null, null, 0);
+    final proposed = [...items];
+    proposed[index] = proposed[index].at(null, null, 0);
+    if (layoutProblem(proposed) case final problem?) {
+      throw ProductApiException(problem);
+    }
+    items[index] = proposed[index];
     notifyListeners();
     await _saveDraft();
   }
@@ -813,19 +610,7 @@ class HabitatService extends ChangeNotifier {
     await _saveDraft();
   }
 
-  bool isFreeForCat(int x, int y) {
-    if (!buildableCells.contains((x, y))) return false;
-    return !items.any((item) {
-      if (!item.isPlaced || definition(item.sku).isPath) return false;
-      final type = definition(item.sku);
-      final width = item.rotation.isOdd ? type.height : type.width;
-      final height = item.rotation.isOdd ? type.width : type.height;
-      return x >= item.x! &&
-          x < item.x! + width &&
-          y >= item.y! &&
-          y < item.y! + height;
-    });
-  }
+  bool isFreeForCat(int x, int y) => walkableCells().contains((x, y));
 
   (int, int)? firstFreeCatCell() {
     final cells = buildableCells.toList()
@@ -871,8 +656,8 @@ class HabitatService extends ChangeNotifier {
     return true;
   }
 
-  Future<int> paintPath(String sku, Iterable<(int, int)> cells) async {
-    if (!definition(sku).isPath) return 0;
+  Future<int> paintGround(String sku, Iterable<(int, int)> cells) async {
+    if (!definition(sku).isGround) return 0;
     var painted = 0;
     for (final cell in cells.toSet()) {
       final available = items
@@ -970,7 +755,7 @@ class HabitatService extends ChangeNotifier {
     }
     if (quantity < 1 ||
         quantity > 20 ||
-        (quantity > 1 && !definition(sku).isPath)) {
+        (quantity > 1 && !definition(sku).isGround)) {
       throw const ProductApiException('Quantidade inválida para este item.');
     }
     final pendingId = '$sku:$quantity';

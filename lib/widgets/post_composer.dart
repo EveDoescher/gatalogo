@@ -9,6 +9,8 @@ import '../services/social_api_service.dart';
 import '../stores/session_store.dart';
 import '../theme/app_theme.dart';
 import 'app_widgets.dart';
+import 'botanical_scene.dart';
+import 'game_components.dart';
 
 Future<Map<String, dynamic>?> showPostComposer(
   BuildContext context, {
@@ -178,6 +180,11 @@ class _PostComposerState extends State<PostComposer> {
               ],
             ),
             const SizedBox(height: 16),
+            const IllustratedSectionTitle(
+              title: 'Uma lembrança para compartilhar',
+              art: 'ui/ui_speech_heart',
+            ),
+            const SizedBox(height: 18),
             if (widget.cats.isNotEmpty) ...[
               DropdownButtonFormField<String>(
                 key: ValueKey(_cat?.id),
@@ -207,7 +214,9 @@ class _PostComposerState extends State<PostComposer> {
               const SizedBox(height: 12),
             ],
             if (_photo != null)
-              CatPhotoView(_photo!, height: 170, borderRadius: 16),
+              GamePhotoMount(
+                child: CatPhotoView(_photo!, height: 170, borderRadius: 4),
+              ),
             TextButton.icon(
               onPressed: _busy ? null : _pickPhoto,
               icon: const Icon(Icons.photo_library_outlined),

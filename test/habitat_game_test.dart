@@ -29,10 +29,17 @@ void main() {
           ),
         ))!,
       ) as Map;
+      profiles.addAll(
+        jsonDecode(
+          (await tester.runAsync(
+            () => rootBundle.loadString('assets/habitat/decor/profiles.json'),
+          ))!,
+        ) as Map,
+      );
       await tester.pumpWidget(MaterialApp(home: GameWidget(game: game)));
       await tester.pump(const Duration(milliseconds: 300));
       for (final type in habitat.shop.where(
-        (item) => !item.isPath && item.sku != 'low_fence',
+        (item) => !item.isGround && item.sku != 'low_fence',
       )) {
         for (
           var rotation = 0;

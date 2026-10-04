@@ -107,56 +107,18 @@ class GamificationState {
       streak: 0,
       longestStreak: 0,
       multiplier: 1.0,
-      freezeShields: 1,
-      dailyMissions: [
-        Mission(
-          id: 'daily_photo',
-          title: 'Fotografar ou catalogar 1 gato',
-          target: 1,
-          progress: 0,
-          xpReward: 60,
-          completed: false,
-        ),
-        Mission(
-          id: 'daily_social',
-          title: 'Interagir em 2 publicações da comunidade',
-          target: 2,
-          progress: 0,
-          xpReward: 40,
-          completed: false,
-        ),
-        Mission(
-          id: 'daily_care',
-          title: 'Verificar área de busca ou atualizar fotos',
-          target: 1,
-          progress: 0,
-          xpReward: 50,
-          completed: false,
-        ),
-      ],
-      weeklyMission: Mission(
-        id: 'weekly_sightings',
-        title: 'Registrar avistamentos em 3 dias diferentes',
-        target: 3,
-        progress: 0,
-        xpReward: 150,
-        completed: false,
-      ),
-      bonusMission: Mission(
-        id: 'bonus_share',
-        title: 'Compartilhar uma descoberta ou cartaz de desaparecimento',
-        target: 1,
-        progress: 0,
-        xpReward: 80,
-        completed: false,
-      ),
+      freezeShields: 0,
+      dailyMissions: [],
+      weeklyMission: null,
+      bonusMission: null,
       unlockedAchievements: 0,
       totalAchievements: 28,
     );
   }
 
   factory GamificationState.fromMap(Map<String, dynamic> map) {
-    final dailyList = (map['daily_missions'] as List?)
+    final dailyList =
+        (map['daily_missions'] as List?)
             ?.whereType<Map>()
             .map((m) => Mission.fromMap(Map<String, dynamic>.from(m)))
             .toList() ??
@@ -169,14 +131,13 @@ class GamificationState {
         : null;
 
     return GamificationState(
-      xp: (map['xp'] as num?)?.toInt() ??
-          (map['new_xp'] as num?)?.toInt() ??
-          0,
+      xp: (map['xp'] as num?)?.toInt() ?? (map['new_xp'] as num?)?.toInt() ?? 0,
       level: (map['level'] as num?)?.toInt() ?? 1,
       levelTitle: map['level_title']?.toString() ?? 'Curioso',
       levelMinXp: (map['level_min_xp'] as num?)?.toInt() ?? 0,
       targetXp: (map['target_xp'] as num?)?.toInt() ?? 100,
-      levelReward: map['level_reward']?.toString() ?? 'Início da jornada felina',
+      levelReward:
+          map['level_reward']?.toString() ?? 'Início da jornada felina',
       streak: (map['streak'] as num?)?.toInt() ?? 0,
       longestStreak: (map['longest_streak'] as num?)?.toInt() ?? 0,
       multiplier: (map['multiplier'] as num?)?.toDouble() ?? 1.0,

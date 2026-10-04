@@ -230,6 +230,11 @@ void main() {
       expect(tester.takeException(), isNull);
       await tester.tap(find.byTooltip('Ajuda do Habitat'));
       await tester.pump(const Duration(milliseconds: 400));
+      await tester.scrollUntilVisible(
+        find.text('Como ganhar moedas'),
+        250,
+        scrollable: find.byType(Scrollable).last,
+      );
       expect(find.text('Como ganhar moedas'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());

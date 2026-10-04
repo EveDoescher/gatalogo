@@ -94,7 +94,7 @@ void main() {
         final context = tester.element(find.byType(MaterialApp));
         await Future.wait([
           for (final asset in assets.listAssets().where((path) =>
-              path.startsWith('assets/images/') && path.endsWith('.png')))
+              path.startsWith('assets/gatalogo_asset_library/') && path.endsWith('.png')))
             precacheImage(AssetImage(asset), context),
         ]);
       });

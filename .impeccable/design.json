@@ -1,61 +1,800 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-10T18:50:00.000Z",
+  "generatedAt": "2026-09-29",
   "title": "Design System: Gatálogo",
   "extensions": {
     "colorMeta": {
-      "primary": { "role": "primary", "displayName": "Blush Petal / Rosa Gatálogo", "canonical": "#DC8BA1" },
-      "primary-dark": { "role": "primary", "displayName": "Deep Petal", "canonical": "#C7607E" },
-      "green": { "role": "secondary", "displayName": "Sage Foliage / Verde Botânico", "canonical": "#7E9B70" },
-      "green-link": { "role": "secondary", "displayName": "Forest Link / Verde Musgo", "canonical": "#5D7A58" },
-      "background": { "role": "neutral", "displayName": "Warm Paper / Fundo Pergaminho", "canonical": "#FBF6F2" },
-      "text-dark": { "role": "neutral", "displayName": "Deep Roast / Café Escuro", "canonical": "#382923" },
-      "text-title": { "role": "neutral", "displayName": "Warm Umber / Marrom Título", "canonical": "#4A352F" },
-      "border": { "role": "neutral", "displayName": "Blush Border", "canonical": "#EDDEDB" },
-      "input-bg": { "role": "neutral", "displayName": "Vanilla Cream / Fundo de Input", "canonical": "#FDF6F5" }
+      "primary": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.1019 2.32)",
+          "oklch(26.43% 0.1019 2.32)",
+          "oklch(37.86% 0.1019 2.32)",
+          "oklch(49.29% 0.1019 2.32)",
+          "oklch(60.71% 0.1019 2.32)",
+          "oklch(72.14% 0.1019 2.32)",
+          "oklch(83.57% 0.1019 2.32)",
+          "oklch(95% 0.1019 2.32)"
+        ],
+        "displayName": "Blush Petal / Rosa Gatálogo",
+        "role": "primary"
+      },
+      "primary-dark": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.1344 3.37)",
+          "oklch(26.43% 0.1344 3.37)",
+          "oklch(37.86% 0.1344 3.37)",
+          "oklch(49.29% 0.1344 3.37)",
+          "oklch(60.71% 0.1344 3.37)",
+          "oklch(72.14% 0.1344 3.37)",
+          "oklch(83.57% 0.1344 3.37)",
+          "oklch(95% 0.1344 3.37)"
+        ],
+        "displayName": "Deep Petal",
+        "role": "primary"
+      },
+      "primary-light": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0190 29.55)",
+          "oklch(26.43% 0.0190 29.55)",
+          "oklch(37.86% 0.0190 29.55)",
+          "oklch(49.29% 0.0190 29.55)",
+          "oklch(60.71% 0.0190 29.55)",
+          "oklch(72.14% 0.0190 29.55)",
+          "oklch(83.57% 0.0190 29.55)",
+          "oklch(95% 0.0190 29.55)"
+        ],
+        "displayName": "primary-light",
+        "role": "primary"
+      },
+      "primary-soft-bg": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0163 17.44)",
+          "oklch(26.43% 0.0163 17.44)",
+          "oklch(37.86% 0.0163 17.44)",
+          "oklch(49.29% 0.0163 17.44)",
+          "oklch(60.71% 0.0163 17.44)",
+          "oklch(72.14% 0.0163 17.44)",
+          "oklch(83.57% 0.0163 17.44)",
+          "oklch(95% 0.0163 17.44)"
+        ],
+        "displayName": "primary-soft-bg",
+        "role": "primary"
+      },
+      "green": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0699 135.66)",
+          "oklch(26.43% 0.0699 135.66)",
+          "oklch(37.86% 0.0699 135.66)",
+          "oklch(49.29% 0.0699 135.66)",
+          "oklch(60.71% 0.0699 135.66)",
+          "oklch(72.14% 0.0699 135.66)",
+          "oklch(83.57% 0.0699 135.66)",
+          "oklch(95% 0.0699 135.66)"
+        ],
+        "displayName": "Sage Foliage / Verde Botânico",
+        "role": "secondary"
+      },
+      "green-button": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0458 136.44)",
+          "oklch(26.43% 0.0458 136.44)",
+          "oklch(37.86% 0.0458 136.44)",
+          "oklch(49.29% 0.0458 136.44)",
+          "oklch(60.71% 0.0458 136.44)",
+          "oklch(72.14% 0.0458 136.44)",
+          "oklch(83.57% 0.0458 136.44)",
+          "oklch(95% 0.0458 136.44)"
+        ],
+        "displayName": "green-button",
+        "role": "secondary"
+      },
+      "green-light": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0114 128.59)",
+          "oklch(26.43% 0.0114 128.59)",
+          "oklch(37.86% 0.0114 128.59)",
+          "oklch(49.29% 0.0114 128.59)",
+          "oklch(60.71% 0.0114 128.59)",
+          "oklch(72.14% 0.0114 128.59)",
+          "oklch(83.57% 0.0114 128.59)",
+          "oklch(95% 0.0114 128.59)"
+        ],
+        "displayName": "green-light",
+        "role": "secondary"
+      },
+      "green-link": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0616 140.91)",
+          "oklch(26.43% 0.0616 140.91)",
+          "oklch(37.86% 0.0616 140.91)",
+          "oklch(49.29% 0.0616 140.91)",
+          "oklch(60.71% 0.0616 140.91)",
+          "oklch(72.14% 0.0616 140.91)",
+          "oklch(83.57% 0.0616 140.91)",
+          "oklch(95% 0.0616 140.91)"
+        ],
+        "displayName": "Forest Link / Verde Musgo",
+        "role": "secondary"
+      },
+      "green-progress": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0784 134.94)",
+          "oklch(26.43% 0.0784 134.94)",
+          "oklch(37.86% 0.0784 134.94)",
+          "oklch(49.29% 0.0784 134.94)",
+          "oklch(60.71% 0.0784 134.94)",
+          "oklch(72.14% 0.0784 134.94)",
+          "oklch(83.57% 0.0784 134.94)",
+          "oklch(95% 0.0784 134.94)"
+        ],
+        "displayName": "green-progress",
+        "role": "secondary"
+      },
+      "background": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0076 61.45)",
+          "oklch(26.43% 0.0076 61.45)",
+          "oklch(37.86% 0.0076 61.45)",
+          "oklch(49.29% 0.0076 61.45)",
+          "oklch(60.71% 0.0076 61.45)",
+          "oklch(72.14% 0.0076 61.45)",
+          "oklch(83.57% 0.0076 61.45)",
+          "oklch(95% 0.0076 61.45)"
+        ],
+        "displayName": "Warm Paper / Fundo Pergaminho",
+        "role": "neutral"
+      },
+      "surface": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.88)",
+          "oklch(26.43% 0.0000 89.88)",
+          "oklch(37.86% 0.0000 89.88)",
+          "oklch(49.29% 0.0000 89.88)",
+          "oklch(60.71% 0.0000 89.88)",
+          "oklch(72.14% 0.0000 89.88)",
+          "oklch(83.57% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
+        ],
+        "displayName": "surface",
+        "role": "neutral"
+      },
+      "card-background": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0086 44.89)",
+          "oklch(26.43% 0.0086 44.89)",
+          "oklch(37.86% 0.0086 44.89)",
+          "oklch(49.29% 0.0086 44.89)",
+          "oklch(60.71% 0.0086 44.89)",
+          "oklch(72.14% 0.0086 44.89)",
+          "oklch(83.57% 0.0086 44.89)",
+          "oklch(95% 0.0086 44.89)"
+        ],
+        "displayName": "card-background",
+        "role": "neutral"
+      },
+      "card-alt-background": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0067 53.45)",
+          "oklch(26.43% 0.0067 53.45)",
+          "oklch(37.86% 0.0067 53.45)",
+          "oklch(49.29% 0.0067 53.45)",
+          "oklch(60.71% 0.0067 53.45)",
+          "oklch(72.14% 0.0067 53.45)",
+          "oklch(83.57% 0.0067 53.45)",
+          "oklch(95% 0.0067 53.45)"
+        ],
+        "displayName": "card-alt-background",
+        "role": "neutral"
+      },
+      "text-dark": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0250 42.83)",
+          "oklch(26.43% 0.0250 42.83)",
+          "oklch(37.86% 0.0250 42.83)",
+          "oklch(49.29% 0.0250 42.83)",
+          "oklch(60.71% 0.0250 42.83)",
+          "oklch(72.14% 0.0250 42.83)",
+          "oklch(83.57% 0.0250 42.83)",
+          "oklch(95% 0.0250 42.83)"
+        ],
+        "displayName": "Deep Roast / Café Escuro",
+        "role": "neutral"
+      },
+      "text-title": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0322 36.55)",
+          "oklch(26.43% 0.0322 36.55)",
+          "oklch(37.86% 0.0322 36.55)",
+          "oklch(49.29% 0.0322 36.55)",
+          "oklch(60.71% 0.0322 36.55)",
+          "oklch(72.14% 0.0322 36.55)",
+          "oklch(83.57% 0.0322 36.55)",
+          "oklch(95% 0.0322 36.55)"
+        ],
+        "displayName": "Warm Umber / Marrom Título",
+        "role": "neutral"
+      },
+      "text-medium": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0176 37.82)",
+          "oklch(26.43% 0.0176 37.82)",
+          "oklch(37.86% 0.0176 37.82)",
+          "oklch(49.29% 0.0176 37.82)",
+          "oklch(60.71% 0.0176 37.82)",
+          "oklch(72.14% 0.0176 37.82)",
+          "oklch(83.57% 0.0176 37.82)",
+          "oklch(95% 0.0176 37.82)"
+        ],
+        "displayName": "text-medium",
+        "role": "neutral"
+      },
+      "text-light": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0121 54.40)",
+          "oklch(26.43% 0.0121 54.40)",
+          "oklch(37.86% 0.0121 54.40)",
+          "oklch(49.29% 0.0121 54.40)",
+          "oklch(60.71% 0.0121 54.40)",
+          "oklch(72.14% 0.0121 54.40)",
+          "oklch(83.57% 0.0121 54.40)",
+          "oklch(95% 0.0121 54.40)"
+        ],
+        "displayName": "text-light",
+        "role": "neutral"
+      },
+      "border": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0170 31.09)",
+          "oklch(26.43% 0.0170 31.09)",
+          "oklch(37.86% 0.0170 31.09)",
+          "oklch(49.29% 0.0170 31.09)",
+          "oklch(60.71% 0.0170 31.09)",
+          "oklch(72.14% 0.0170 31.09)",
+          "oklch(83.57% 0.0170 31.09)",
+          "oklch(95% 0.0170 31.09)"
+        ],
+        "displayName": "Blush Border",
+        "role": "neutral"
+      },
+      "border-light": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0111 63.36)",
+          "oklch(26.43% 0.0111 63.36)",
+          "oklch(37.86% 0.0111 63.36)",
+          "oklch(49.29% 0.0111 63.36)",
+          "oklch(60.71% 0.0111 63.36)",
+          "oklch(72.14% 0.0111 63.36)",
+          "oklch(83.57% 0.0111 63.36)",
+          "oklch(95% 0.0111 63.36)"
+        ],
+        "displayName": "border-light",
+        "role": "neutral"
+      },
+      "input-bg": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0076 27.23)",
+          "oklch(26.43% 0.0076 27.23)",
+          "oklch(37.86% 0.0076 27.23)",
+          "oklch(49.29% 0.0076 27.23)",
+          "oklch(60.71% 0.0076 27.23)",
+          "oklch(72.14% 0.0076 27.23)",
+          "oklch(83.57% 0.0076 27.23)",
+          "oklch(95% 0.0076 27.23)"
+        ],
+        "displayName": "Vanilla Cream / Fundo de Input",
+        "role": "neutral"
+      },
+      "guest-card-bg": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0148 98.29)",
+          "oklch(26.43% 0.0148 98.29)",
+          "oklch(37.86% 0.0148 98.29)",
+          "oklch(49.29% 0.0148 98.29)",
+          "oklch(60.71% 0.0148 98.29)",
+          "oklch(72.14% 0.0148 98.29)",
+          "oklch(83.57% 0.0148 98.29)",
+          "oklch(95% 0.0148 98.29)"
+        ],
+        "displayName": "guest-card-bg",
+        "role": "neutral"
+      },
+      "guest-card-text": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0365 136.35)",
+          "oklch(26.43% 0.0365 136.35)",
+          "oklch(37.86% 0.0365 136.35)",
+          "oklch(49.29% 0.0365 136.35)",
+          "oklch(60.71% 0.0365 136.35)",
+          "oklch(72.14% 0.0365 136.35)",
+          "oklch(83.57% 0.0365 136.35)",
+          "oklch(95% 0.0365 136.35)"
+        ],
+        "displayName": "guest-card-text",
+        "role": "neutral"
+      },
+      "guest-card-subtext": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0346 133.47)",
+          "oklch(26.43% 0.0346 133.47)",
+          "oklch(37.86% 0.0346 133.47)",
+          "oklch(49.29% 0.0346 133.47)",
+          "oklch(60.71% 0.0346 133.47)",
+          "oklch(72.14% 0.0346 133.47)",
+          "oklch(83.57% 0.0346 133.47)",
+          "oklch(95% 0.0346 133.47)"
+        ],
+        "displayName": "guest-card-subtext",
+        "role": "neutral"
+      },
+      "game-paper": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0235 88.23)",
+          "oklch(26.43% 0.0235 88.23)",
+          "oklch(37.86% 0.0235 88.23)",
+          "oklch(49.29% 0.0235 88.23)",
+          "oklch(60.71% 0.0235 88.23)",
+          "oklch(72.14% 0.0235 88.23)",
+          "oklch(83.57% 0.0235 88.23)",
+          "oklch(95% 0.0235 88.23)"
+        ],
+        "displayName": "game-paper",
+        "role": "neutral"
+      },
+      "game-canvas": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0263 82.38)",
+          "oklch(26.43% 0.0263 82.38)",
+          "oklch(37.86% 0.0263 82.38)",
+          "oklch(49.29% 0.0263 82.38)",
+          "oklch(60.71% 0.0263 82.38)",
+          "oklch(72.14% 0.0263 82.38)",
+          "oklch(83.57% 0.0263 82.38)",
+          "oklch(95% 0.0263 82.38)"
+        ],
+        "displayName": "game-canvas",
+        "role": "neutral"
+      },
+      "game-ink": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0495 60.03)",
+          "oklch(26.43% 0.0495 60.03)",
+          "oklch(37.86% 0.0495 60.03)",
+          "oklch(49.29% 0.0495 60.03)",
+          "oklch(60.71% 0.0495 60.03)",
+          "oklch(72.14% 0.0495 60.03)",
+          "oklch(83.57% 0.0495 60.03)",
+          "oklch(95% 0.0495 60.03)"
+        ],
+        "displayName": "game-ink",
+        "role": "neutral"
+      },
+      "game-edge": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0553 77.06)",
+          "oklch(26.43% 0.0553 77.06)",
+          "oklch(37.86% 0.0553 77.06)",
+          "oklch(49.29% 0.0553 77.06)",
+          "oklch(60.71% 0.0553 77.06)",
+          "oklch(72.14% 0.0553 77.06)",
+          "oklch(83.57% 0.0553 77.06)",
+          "oklch(95% 0.0553 77.06)"
+        ],
+        "displayName": "game-edge",
+        "role": "neutral"
+      },
+      "game-gold": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.1289 87.58)",
+          "oklch(26.43% 0.1289 87.58)",
+          "oklch(37.86% 0.1289 87.58)",
+          "oklch(49.29% 0.1289 87.58)",
+          "oklch(60.71% 0.1289 87.58)",
+          "oklch(72.14% 0.1289 87.58)",
+          "oklch(83.57% 0.1289 87.58)",
+          "oklch(95% 0.1289 87.58)"
+        ],
+        "displayName": "game-gold",
+        "role": "tertiary"
+      },
+      "game-green-paper": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0250 124.27)",
+          "oklch(26.43% 0.0250 124.27)",
+          "oklch(37.86% 0.0250 124.27)",
+          "oklch(49.29% 0.0250 124.27)",
+          "oklch(60.71% 0.0250 124.27)",
+          "oklch(72.14% 0.0250 124.27)",
+          "oklch(83.57% 0.0250 124.27)",
+          "oklch(95% 0.0250 124.27)"
+        ],
+        "displayName": "game-green-paper",
+        "role": "secondary"
+      },
+      "game-pink-edge": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.1073 1.85)",
+          "oklch(26.43% 0.1073 1.85)",
+          "oklch(37.86% 0.1073 1.85)",
+          "oklch(49.29% 0.1073 1.85)",
+          "oklch(60.71% 0.1073 1.85)",
+          "oklch(72.14% 0.1073 1.85)",
+          "oklch(83.57% 0.1073 1.85)",
+          "oklch(95% 0.1073 1.85)"
+        ],
+        "displayName": "game-pink-edge",
+        "role": "primary"
+      },
+      "game-rose-action": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0831 1.75)",
+          "oklch(26.43% 0.0831 1.75)",
+          "oklch(37.86% 0.0831 1.75)",
+          "oklch(49.29% 0.0831 1.75)",
+          "oklch(60.71% 0.0831 1.75)",
+          "oklch(72.14% 0.0831 1.75)",
+          "oklch(83.57% 0.0831 1.75)",
+          "oklch(95% 0.0831 1.75)"
+        ],
+        "displayName": "game-rose-action",
+        "role": "primary"
+      },
+      "game-sage-action": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0520 125.42)",
+          "oklch(26.43% 0.0520 125.42)",
+          "oklch(37.86% 0.0520 125.42)",
+          "oklch(49.29% 0.0520 125.42)",
+          "oklch(60.71% 0.0520 125.42)",
+          "oklch(72.14% 0.0520 125.42)",
+          "oklch(83.57% 0.0520 125.42)",
+          "oklch(95% 0.0520 125.42)"
+        ],
+        "displayName": "game-sage-action",
+        "role": "secondary"
+      },
+      "game-coin-paper": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0879 92.03)",
+          "oklch(26.43% 0.0879 92.03)",
+          "oklch(37.86% 0.0879 92.03)",
+          "oklch(49.29% 0.0879 92.03)",
+          "oklch(60.71% 0.0879 92.03)",
+          "oklch(72.14% 0.0879 92.03)",
+          "oklch(83.57% 0.0879 92.03)",
+          "oklch(95% 0.0879 92.03)"
+        ],
+        "displayName": "game-coin-paper",
+        "role": "tertiary"
+      },
+      "game-xp-paper": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0336 125.55)",
+          "oklch(26.43% 0.0336 125.55)",
+          "oklch(37.86% 0.0336 125.55)",
+          "oklch(49.29% 0.0336 125.55)",
+          "oklch(60.71% 0.0336 125.55)",
+          "oklch(72.14% 0.0336 125.55)",
+          "oklch(83.57% 0.0336 125.55)",
+          "oklch(95% 0.0336 125.55)"
+        ],
+        "displayName": "game-xp-paper",
+        "role": "secondary"
+      },
+      "game-progress": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0811 126.04)",
+          "oklch(26.43% 0.0811 126.04)",
+          "oklch(37.86% 0.0811 126.04)",
+          "oklch(49.29% 0.0811 126.04)",
+          "oklch(60.71% 0.0811 126.04)",
+          "oklch(72.14% 0.0811 126.04)",
+          "oklch(83.57% 0.0811 126.04)",
+          "oklch(95% 0.0811 126.04)"
+        ],
+        "displayName": "game-progress",
+        "role": "neutral"
+      },
+      "game-progress-track": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0253 89.22)",
+          "oklch(26.43% 0.0253 89.22)",
+          "oklch(37.86% 0.0253 89.22)",
+          "oklch(49.29% 0.0253 89.22)",
+          "oklch(60.71% 0.0253 89.22)",
+          "oklch(72.14% 0.0253 89.22)",
+          "oklch(83.57% 0.0253 89.22)",
+          "oklch(95% 0.0253 89.22)"
+        ],
+        "displayName": "game-progress-track",
+        "role": "neutral"
+      },
+      "game-cover": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.0579 69.34)",
+          "oklch(26.43% 0.0579 69.34)",
+          "oklch(37.86% 0.0579 69.34)",
+          "oklch(49.29% 0.0579 69.34)",
+          "oklch(60.71% 0.0579 69.34)",
+          "oklch(72.14% 0.0579 69.34)",
+          "oklch(83.57% 0.0579 69.34)",
+          "oklch(95% 0.0579 69.34)"
+        ],
+        "displayName": "game-cover",
+        "role": "neutral"
+      },
+      "error": {
+        "rampPurpose": "Synthesized display ramp, not an application token scale.",
+        "tonalRamp": [
+          "oklch(15% 0.1666 32.61)",
+          "oklch(26.43% 0.1666 32.61)",
+          "oklch(37.86% 0.1666 32.61)",
+          "oklch(49.29% 0.1666 32.61)",
+          "oklch(60.71% 0.1666 32.61)",
+          "oklch(72.14% 0.1666 32.61)",
+          "oklch(83.57% 0.1666 32.61)",
+          "oklch(95% 0.1666 32.61)"
+        ],
+        "displayName": "error",
+        "role": "tertiary"
+      }
     },
     "typographyMeta": {
-      "display": { "displayName": "Display", "purpose": "Títulos heróicos" },
-      "headline": { "displayName": "Headline", "purpose": "Títulos de seções principais" },
-      "title": { "displayName": "Title", "purpose": "Títulos de formulários e telas de ação" },
-      "body": { "displayName": "Body", "purpose": "Textos informativos e inputs" },
-      "label": { "displayName": "Label", "purpose": "Links e botões compactos" }
+      "display": {
+        "displayName": "Display",
+        "purpose": "Fredoka 32/700 no tema; não altera Nunito declarado diretamente em autenticação."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Fredoka 26/700 no tema."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Fredoka 22/600 no tema; GameStyle.title usa 600 e tamanho por componente."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Textos informativos e inputs"
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Nunito 13/700 no tema; navegação principal usa 11/600 ou 11/800."
+      }
     },
     "shadows": [
-      { "name": "none", "value": "none", "purpose": "Sistema plano por padrão com elevação puramente tonal" }
+      {
+        "value": "none",
+        "purpose": "Formulários, dialogs e bottom sheets do tema preservam elevação zero.",
+        "name": "form-flat"
+      },
+      {
+        "value": "0 3px 8px rgba(146,119,84,0.078431)",
+        "purpose": "GamePanel: sombra de papel difusa.",
+        "name": "paper-panel"
+      },
+      {
+        "value": "0 5px 12px rgba(146,119,84,0.133333)",
+        "purpose": "GameNotebook: separação entre capa e fundo.",
+        "name": "bound-notebook"
+      }
     ],
-    "breakpoints": [
-      { "name": "mobile", "value": "402px" },
-      { "name": "tablet", "value": "768px" }
-    ]
+    "motion": [
+      {
+        "value": "420ms cubic-bezier(0.215,0.61,0.355,1)",
+        "purpose": "Foto escala de 0.96 a 1; duração zero com movimento reduzido ou Pular animação.",
+        "name": "photo-reveal"
+      }
+    ],
+    "sources": [
+      "lib/theme/app_theme.dart",
+      "lib/widgets/game_components.dart",
+      "lib/widgets/progress_components.dart",
+      "lib/widgets/gatalogo_gamification.dart",
+      "lib/pages/home_page.dart",
+      "lib/pages/discovery_result_page.dart",
+      "lib/pages/challenges_page.dart",
+      "lib/pages/library_page.dart",
+      "lib/app.dart",
+      "lib/pages/capture_page.dart",
+      "lib/pages/profile_page.dart",
+      "lib/widgets/app_header_actions.dart"
+    ],
+    "verification": {
+      "nativeVisualQA": "Not captured or verified in this documentation pass",
+      "previewNote": "HTML/CSS samples translate Flutter styling for the documentation panel; they are not native screenshots or proof of Flutter interaction parity.",
+      "notCanonized": [
+        "The existing 2-unit button base is described as component geometry, not a general hard-shadow rule.",
+        "Layout fit, contrast and touch behavior have not been certified on native devices.",
+        "No global mobile/tablet breakpoints were found; previous invented breakpoint entries were removed."
+      ],
+      "method": "Source inspection only",
+      "scope": "Implemented shared game materials merged with incumbent authentication and forms"
+    },
+    "currentArtDirection": {
+      "assetRoot": "assets/gatalogo_asset_library",
+      "references": [
+        "Home.jpg",
+        "Social.jpg"
+      ],
+      "components": [
+        "BotanicalScene",
+        "BotanicalScaffold",
+        "BotanicalPaper",
+        "BotanicalAction",
+        "IllustratedSectionHeader",
+        "CommunityPostCard",
+        "IllustratedAppHeader"
+      ],
+      "data": "Live account services; fixtures only in tests",
+      "notes": "docs/direcao_arte_2026-09-29.md",
+      "verification": "Flutter widget captures; native device unavailable"
+    }
   },
   "narrative": {
-    "northStar": "O Herbário Felino Acolhedor",
-    "overview": "Gatálogo constrói uma experiência sensorial suave e afetuosa, inspirada em cadernos de campo botânicos e ilustrações infantis artesanais. A identidade visual afasta-se da frieza tecnológica, priorizando tons terrosos suaves, bordas arredondadas e folhagens.",
-    "keyCharacteristics": [
-      "Ilustrações botânicas delicadas integradas holisticamente às margens.",
-      "Cantos arredondados contínuos em todos os elementos estruturais (14px a 24px).",
-      "Tipografia Nunito orgânica em tons de cacau e café.",
-      "Zero pretos puros; contraste obtido com marrons quentes."
-    ],
+    "overview": "Jardim ilustrado acolhedor: papel creme, verde folha, café e coral. Home e Social seguem as montagens; objetos da biblioteca identificam as demais áreas.",
     "rules": [
-      { "name": "The No-Pure-Black Rule", "body": "O código #000000 é expressamente proibido no sistema. Toda hierarquia de texto utiliza cafés e marrons quentes.", "section": "colors" },
-      { "name": "The Organic Accent Rule", "body": "O rosa primário (#DC8BA1) é reservado para ações de avanço imediato.", "section": "colors" },
-      { "name": "The Tight Heading Rule", "body": "Título e subtítulo mantêm espaçamento mínimo (máximo 2-4px) e altura de linha compacta (1.1 a 1.15).", "section": "typography" },
-      { "name": "The Tonal Flatness Rule", "body": "Elementos de formulário e cartões não utilizam sombras suspensas; a elevação é puramente cromática.", "section": "elevation" }
+      {
+        "body": "Usar cafés para texto e contornos da interface; a regra não altera as cores de fotografias reais ou assets existentes.",
+        "name": "The Warm Ink Rule",
+        "section": "colors"
+      },
+      {
+        "body": "Rosa indica ação, verde indica crescimento e dourado indica recurso ou conquista; a cor acompanha texto e estado real.",
+        "name": "The Meaningful Accent Rule",
+        "section": "colors"
+      },
+      {
+        "body": "Reservar a personalidade de Fredoka para títulos e ações; usar Nunito para instruções, valores e estados que precisam ser comparados ou compreendidos rapidamente.",
+        "name": "The Readable Record Rule",
+        "section": "typography"
+      },
+      {
+        "body": "Usar profundidade para distinguir capa, página e lembrança; manter a leitura dos formulários limpa e a fotografia reconhecível.",
+        "name": "The Paper Depth Rule",
+        "section": "elevation"
+      }
     ],
+    "keyCharacteristics": [
+      "Fotografias reais enquadradas como lembranças coladas no álbum.",
+      "Papel creme, encadernação visível e contornos marrons suaves nas áreas de jogo.",
+      "Rosa para ações, verde para crescimento e dourado para recursos e conquistas.",
+      "Fredoka nos títulos de jogo e Nunito no corpo e nos números de progresso.",
+      "Ilustrações felinas e botânicas existentes integradas à experiência."
+    ],
+    "northStar": "O Caderno Vivo de Descobertas Felinas",
     "dos": [
-      "Do usar o asset oficial google_logo.png para todas as chamadas de login com Google.",
-      "Do manter Icons.pets sólido e branco nos botões de avanço primário.",
-      "Do utilizar OutlineInputBorder com borderRadius de 16px nos campos de texto.",
-      "Do posicionar Folha_2 com inclinação horizontal atravessando a margem superior esquerda.",
-      "Do alinhar Folha_4 paralelamente à lateral esquerda do botão de ação primária."
+      "Do preservar fotos reais e usar assets existentes de gatos, folhas e Habitat para contextualizar a coleção.",
+      "Do usar estados e quantidades reais nos rótulos de XP, moedas, desafios e próximos objetivos.",
+      "Do manter as cinco entradas principais e o editor existente do Habitat.",
+      "Do manter o asset oficial google_logo.png e a pata sólida branca nas chamadas de autenticação que já os utilizam.",
+      "Do preservar OutlineInputBorder com raio 16 e foco visível nos formulários.",
+      "Do manter Folha_2 na margem superior esquerda e Folha_4 próxima da ação principal nas composições de autenticação existentes.",
+      "Do manter fita, folhas e costuras decorativas fora da captura de toques."
     ],
     "donts": [
-      "Don't utilizar ícones vazados/outline na pata do botão primário.",
-      "Don't usar texto preto puro #000000 em nenhuma circunstância.",
-      "Don't aproximar excessivamente o gato ilustrado do texto da logo Gatálogo.",
-      "Don't adicionar sombras projetadas escuras ou artificiais."
+      "Don't substituir fotos do catálogo por ilustrações ou placeholders que aparentem registros reais.",
+      "Don't apresentar recurso pendente como prêmio confirmado.",
+      "Don't converter formulários em páginas densas de decoração por aplicar a camada de jogo.",
+      "Don't impor ausência de profundidade às páginas, notas e fotos do caderno.",
+      "Don't usar preto puro como tinta de texto da interface ou sombras escuras pesadas nos materiais de papel.",
+      "Don't aproximar excessivamente o gato ilustrado do texto da logo Gatálogo."
     ]
-  }
+  },
+  "components": [
+    {
+      "name": "Ação de jogo rosa",
+      "kind": "button",
+      "refersTo": "button-game-rose",
+      "description": "GameButton: ação principal de captura.",
+      "html": "<button class=\"ds-game-rose\">Gatalogar</button>",
+      "css": ".ds-game-rose{background:#EBA7B9;color:#4A352F;border:2px solid #93765F;border-bottom-width:4px;border-radius:18px;padding:13px 16px;font:600 20px Fredoka,sans-serif;cursor:pointer}.ds-game-rose:hover{filter:brightness(.98)}.ds-game-rose:focus-visible{outline:2px solid #4A352F;outline-offset:3px}.ds-game-rose:active{filter:brightness(.95)}"
+    },
+    {
+      "name": "Ação de jogo sálvia",
+      "kind": "button",
+      "refersTo": "button-game-sage",
+      "description": "Variante green do GameButton.",
+      "html": "<button class=\"ds-game-sage\">Visitar Habitat</button>",
+      "css": ".ds-game-sage{background:#D2E1BC;color:#4A352F;border:2px solid #93765F;border-bottom-width:4px;border-radius:18px;padding:13px 16px;font:600 20px Fredoka,sans-serif;cursor:pointer}.ds-game-sage:hover{filter:brightness(.98)}.ds-game-sage:focus-visible{outline:2px solid #4A352F;outline-offset:3px}.ds-game-sage:active{filter:brightness(.95)}"
+    },
+    {
+      "name": "Botão de autenticação",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Convenção original preservada fora do jogo.",
+      "html": "<button class=\"ds-auth\">Entrar</button>",
+      "css": ".ds-auth{background:#DC8BA1;color:#fff;border:0;border-radius:24px;min-height:48px;padding:14px 24px;font:700 16px Nunito,sans-serif;cursor:pointer}.ds-auth:hover{background:#C7607E}.ds-auth:focus-visible{outline:2px solid #4A352F;outline-offset:3px}.ds-auth:active{filter:brightness(.95)}"
+    },
+    {
+      "name": "Campo de texto",
+      "kind": "input",
+      "refersTo": "input-text",
+      "description": "InputDecorationTheme com borda contínua e foco rosa.",
+      "html": "<label class=\"ds-field-label\">E-mail<input class=\"ds-field\" type=\"email\" placeholder=\"Seu e-mail\"></label>",
+      "css": ".ds-field-label{display:grid;gap:8px;color:#382923;font:500 14px Nunito,sans-serif}.ds-field{background:#FDF6F5;color:#382923;border:1.2px solid #EDDEDB;border-radius:16px;padding:16px 18px;font:500 14px Nunito,sans-serif}.ds-field:hover{border-color:#DC8BA1}.ds-field:focus-visible{outline:none;border:1.6px solid #DC8BA1}"
+    },
+    {
+      "name": "Navegação principal",
+      "kind": "nav",
+      "description": "Cinco destinos preservados com seleção e captura em destaque.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Principal\"><button aria-current=\"page\">Início</button><button>Social</button><button class=\"ds-capture\">Gatalogar</button><button>Coleção</button><button>Habitat</button></nav>",
+      "css": ".ds-nav{display:flex;gap:4px;background:#FFF8E7;border-top:1.5px solid #C2AA87;padding:6px 8px}.ds-nav button{flex:1;min-height:44px;background:transparent;color:#786B67;border:1px solid #C2AA87;border-radius:12px;font:600 11px Nunito,sans-serif;padding:8px 2px;cursor:pointer}.ds-nav button[aria-current]{background:#DEE5C8;color:#4A352F;border:1.7px solid #93765F;font-weight:800}.ds-nav .ds-capture{background:#EBA7B9;border-color:#93765F}.ds-nav button:hover{filter:brightness(.96)}.ds-nav button:focus-visible{outline:2px solid #4A352F;outline-offset:2px}.ds-nav button:active{filter:brightness(.92)}"
+    },
+    {
+      "name": "Moedas guardadas",
+      "kind": "chip",
+      "refersTo": "game-reward-coins",
+      "description": "GameReward: amostra ilustrativa, não saldo de uma conta.",
+      "html": "<span class=\"ds-reward\"><svg width=\"21\" height=\"21\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\" fill=\"#F5CC66\" stroke=\"#8B6914\"/><path d=\"M12 6v12M8 9h6a2 2 0 0 1 0 4h-4a2 2 0 0 0 0 4h6\" fill=\"none\" stroke=\"#8B6914\"/></svg>24 moedas</span>",
+      "css": ".ds-reward{display:inline-flex;align-items:center;gap:5px;background:#FFE9A6;color:#382923;border:1.2px solid #DCB85B;border-radius:14px;padding:5px 9px;font:900 13px Nunito,sans-serif}"
+    },
+    {
+      "name": "Painel de papel",
+      "kind": "card",
+      "refersTo": "game-panel",
+      "description": "GamePanel: superfície compartilhada.",
+      "html": "<article class=\"ds-panel\"><strong>Uma descoberta guardada</strong><p>Fotografias e histórias do seu passeio.</p></article>",
+      "css": ".ds-panel{background:#FFF8E7;color:#382923;border:1.5px solid #C2AA87;border-radius:16px;padding:16px;box-shadow:0 3px 8px rgba(146,119,84,.078431);font:500 14px/1.3 Nunito,sans-serif}.ds-panel strong{font:600 22px Fredoka,sans-serif}.ds-panel p{margin:12px 0 0}"
+    },
+    {
+      "name": "Caderno encadernado",
+      "kind": "custom",
+      "refersTo": "game-notebook",
+      "description": "GameNotebook: capa, folha e costura lateral.",
+      "html": "<section class=\"ds-notebook\"><div class=\"ds-page\"><i class=\"ds-binding\" aria-hidden=\"true\"></i><strong>Meu álbum</strong><p>Um lugar para guardar descobertas.</p></div></section>",
+      "css": ".ds-notebook{background:#B89A79;border:1.5px solid #93765F;border-radius:15px;padding:3px 4px 7px;box-shadow:0 5px 12px rgba(146,119,84,.133333)}.ds-page{position:relative;background:#FFF8E7;border:1px solid #DDCCAD;border-radius:11px;padding:20px 16px 20px 26px;color:#382923;font:500 14px/1.3 Nunito,sans-serif}.ds-page strong{font:600 22px Fredoka,sans-serif}.ds-page p{margin:12px 0 0}.ds-binding{position:absolute;left:2px;top:28px;width:19px;height:8px;border:1.7px solid #93765F;background:#E7C89F;border-radius:7px;pointer-events:none}"
+    },
+    {
+      "name": "Moldura de fotografia",
+      "kind": "custom",
+      "refersTo": "game-photo",
+      "description": "GamePhotoCard: moldura e fita. Área vazia intencional na amostra; a aplicação usa a foto real do registro.",
+      "html": "<figure class=\"ds-photo\"><span class=\"ds-tape\" aria-hidden=\"true\"></span><div class=\"ds-photo-area\">Foto real do registro</div><figcaption>Nome do gato</figcaption></figure>",
+      "css": ".ds-photo{position:relative;max-width:220px;margin:10px;background:#FFF8E7;border:1.3px solid #93765F;border-radius:9px;padding:7px;color:#4A352F}.ds-photo-area{display:grid;place-items:center;min-height:150px;border-radius:4px;background:#F1E7D5;font:500 14px Nunito,sans-serif}.ds-photo figcaption{padding:10px 4px 4px;font:600 20px Fredoka,sans-serif}.ds-tape{position:absolute;top:-7px;left:calc(50% - 24px);width:48px;height:15px;background:rgba(221,197,157,.8);border:1px solid rgba(125,97,74,.2);border-radius:2px;transform:rotate(-.08rad);pointer-events:none}"
+    },
+    {
+      "name": "Progresso de objetivo",
+      "kind": "custom",
+      "refersTo": "game-progress",
+      "description": "GameProgress: quantidade textual e preenchimento limitado.",
+      "html": "<div class=\"ds-progress\" role=\"progressbar\" aria-label=\"Objetivo ilustrativo\" aria-valuemin=\"0\" aria-valuemax=\"5\" aria-valuenow=\"2\"><span class=\"ds-progress-fill\"></span><span class=\"ds-progress-label\">2 / 5</span></div>",
+      "css": ".ds-progress{position:relative;height:24px;overflow:hidden;background:#E5DECC;border:1.3px solid #C6BB9F;border-radius:12px}.ds-progress-fill{position:absolute;inset:0 auto 0 0;width:40%;background:#AEC58C;border-radius:10px}.ds-progress-fill:after{content:'';position:absolute;top:3px;left:5px;right:5px;height:4px;background:rgba(255,255,255,.4);border-radius:4px}.ds-progress-label{position:relative;display:grid;place-items:center;height:100%;color:#382923;font:900 12px Nunito,sans-serif}"
+    }
+  ]
 }

@@ -1,6 +1,9 @@
+import 'botanical_scene.dart';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+
 import '../theme/app_theme.dart';
 
 /// A versatile card container without elevation/shadows.
@@ -31,15 +34,9 @@ class GatalogoCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor ?? AppColors.cardBackground,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(
-          color: AppColors.borderLight,
-          width: 1.2,
-        ),
+        border: Border.all(color: AppColors.borderLight, width: 1.2),
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: child,
-      ),
+      child: Material(color: Colors.transparent, child: child),
     );
 
     if (onTap != null) {
@@ -61,110 +58,27 @@ class GatalogoCard extends StatelessWidget {
 
 /// Primary action button.
 /// Pill-shaped, 48px height, scale animation on press.
-class GatalogoButton extends StatefulWidget {
-  final String text;
-  final VoidCallback? onPressed;
-  final IconData? icon;
-  final bool isLoading;
-  final bool fullWidth;
-
+class GatalogoButton extends StatelessWidget {
   const GatalogoButton({
     super.key,
     required this.text,
-    this.onPressed,
+    required this.onPressed,
     this.icon = Icons.pets,
     this.isLoading = false,
     this.fullWidth = true,
   });
-
+  final String text;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+  final bool isLoading, fullWidth;
   @override
-  State<GatalogoButton> createState() => _GatalogoButtonState();
-}
-
-class _GatalogoButtonState extends State<GatalogoButton> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: AppDurations.fast,
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.97).animate(
-      CurvedAnimation(parent: _controller, curve: AppCurves.standard),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bool isDisabled = widget.onPressed == null || widget.isLoading;
-
-    return GestureDetector(
-      onTapDown: isDisabled ? null : (_) => _controller.forward(),
-      onTapUp: isDisabled ? null : (_) {
-        _controller.reverse();
-        widget.onPressed?.call();
-      },
-      onTapCancel: isDisabled ? null : () => _controller.reverse(),
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: AnimatedOpacity(
-          duration: AppDurations.fast,
-          opacity: isDisabled ? 0.5 : 1.0,
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 48),
-            width: widget.fullWidth ? double.infinity : null,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-            ),
-            child: Center(
-              child: widget.isLoading
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        strokeWidth: 2.5,
-                      ),
-                    )
-                  : Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (widget.icon != null) ...[
-                          Icon(widget.icon, color: Colors.white, size: 20),
-                          const SizedBox(width: AppSpacing.sm),
-                        ],
-                        Flexible(
-                          child: Text(
-                            widget.text,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.nunito(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => BotanicalAction(
+    label: text,
+    onPressed: onPressed,
+    icon: icon,
+    busy: isLoading,
+    fullWidth: fullWidth,
+  );
 }
 
 /// Secondary action button (outlined).
@@ -189,7 +103,11 @@ class GatalogoSecondaryButton extends StatelessWidget {
     final bool isEnabled = onPressed != null;
     Widget? effectiveIcon = leadingIcon;
     if (effectiveIcon == null && icon != null) {
-      effectiveIcon = Icon(icon, size: 18, color: isEnabled ? AppColors.textTitle : AppColors.textLight);
+      effectiveIcon = Icon(
+        icon,
+        size: 18,
+        color: isEnabled ? AppColors.textTitle : AppColors.textLight,
+      );
     }
 
     return Opacity(
@@ -200,7 +118,10 @@ class GatalogoSecondaryButton extends StatelessWidget {
         child: Container(
           constraints: const BoxConstraints(minHeight: 42),
           width: fullWidth ? double.infinity : null,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 4),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: 4,
+          ),
           decoration: BoxDecoration(
             color: AppColors.inputBg,
             borderRadius: BorderRadius.circular(21),
@@ -221,7 +142,9 @@ class GatalogoSecondaryButton extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.nunito(
-                      color: isEnabled ? AppColors.textTitle : AppColors.textLight,
+                      color: isEnabled
+                          ? AppColors.textTitle
+                          : AppColors.textLight,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                     ),
@@ -257,14 +180,9 @@ class GatalogoAvatar extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.primaryLight,
         shape: BoxShape.circle,
-        border: Border.all(
-          color: AppColors.borderProfile,
-          width: 1.4,
-        ),
+        border: Border.all(color: AppColors.borderProfile, width: 1.4),
       ),
-      child: ClipOval(
-        child: _buildImage(),
-      ),
+      child: ClipOval(child: _buildImage()),
     );
   }
 
@@ -286,11 +204,7 @@ class GatalogoAvatar extends StatelessWidget {
   }
 
   Widget _buildFallback() {
-    return Icon(
-      LucideIcons.user,
-      size: size * 0.5,
-      color: AppColors.textLight,
-    );
+    return Icon(LucideIcons.user, size: size * 0.5, color: AppColors.textLight);
   }
 }
 
@@ -312,7 +226,7 @@ class GatalogoProgressBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final clampedValue = value.clamp(0.0, 1.0);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -550,8 +464,9 @@ class LeafDecoration extends StatelessWidget {
               child: Opacity(
                 opacity: opacity,
                 child: Image.asset(
-                  'assets/images/Folha_$leafNumber.png',
-                  errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                  'assets/gatalogo_asset_library/${const {1: 'flora/flora_branch_pale_long_01', 2: 'flora/flora_branch_pale_diagonal_01', 3: 'flora/flora_leaves_loose_pale_two', 4: 'flora/flora_leaves_loose_pale_three', 5: 'flora/flora_branch_pale_long_02', 6: 'environment/environment_wall_foliage_corner'}[leafNumber] ?? 'flora/flora_branch_pale_long_01'}.png',
+                  errorBuilder: (context, error, stackTrace) =>
+                      const SizedBox.shrink(),
                 ),
               ),
             ),

@@ -1,3 +1,5 @@
+import '../widgets/botanical_scene.dart';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -9,18 +11,20 @@ import '../stores/cat_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_widgets.dart';
 import '../widgets/inbox_button.dart';
+import '../widgets/game_components.dart';
 import 'cat_details_page.dart';
+import 'challenges_page.dart';
 
-class LibraryPage extends StatefulWidget {
-  const LibraryPage({super.key, required this.catStore});
+class CatAlbumPage extends StatefulWidget {
+  const CatAlbumPage({super.key, required this.catStore});
 
   final CatStore catStore;
 
   @override
-  State<LibraryPage> createState() => _LibraryPageState();
+  State<CatAlbumPage> createState() => _CatAlbumPageState();
 }
 
-class _LibraryPageState extends State<LibraryPage> {
+class _CatAlbumPageState extends State<CatAlbumPage> {
   String _query = '';
   String _selectedFilter = 'todos';
   String? _selectedAnalysisStatus;
@@ -60,67 +64,17 @@ class _LibraryPageState extends State<LibraryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Positioned(
-              left: -15,
-              top: 40,
-              child: IgnorePointer(
-                child: Transform.rotate(
-                  angle: 1.6,
-                  child: Image.asset(
-                    'assets/images/Folha_3.png',
-                    width: 48,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              left: -20,
-              top: 260,
-              child: IgnorePointer(
-                child: Opacity(
-                  opacity: 0.85,
-                  child: Transform.flip(
-                    flipX: true,
-                    child: Transform.rotate(
-                      angle: -0.28,
-                      child: Image.asset(
-                        'assets/images/Folha_1.png',
-                        width: 90,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              right: -20,
-              bottom: 25,
-              child: IgnorePointer(
-                child: Opacity(
-                  opacity: 0.85,
-                  child: Transform.rotate(
-                    angle: 3.14,
-                    child: Image.asset(
-                      'assets/images/Folha_2.png',
-                      width: 110,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            AnimatedBuilder(
+    return BotanicalScaffold(
+      mood: BotanicalMood.album,
+      backgroundColor: GameStyle.canvas,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          SafeArea(
+            child: AnimatedBuilder(
               animation: Listenable.merge([widget.catStore, _favoritesManager]),
               builder: (context, _) {
-                final allDiscoveries = widget.catStore.discoveries;
+                final allDiscoveries = widget.catStore.individuals;
 
                 final filteredCats = allDiscoveries.where((cat) {
                   final analysis = widget.catStore.analysisFor(cat.id);
@@ -232,98 +186,82 @@ class _LibraryPageState extends State<LibraryPage> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Image.asset(
-                            'assets/images/Logo.png',
+                            'assets/gatalogo_asset_library/branding/brand_gatalogo_logo.png',
                             height: 44,
                             fit: BoxFit.contain,
                           ),
                           const Spacer(),
-                          InboxButton(store: widget.catStore, size: 44),
+                          InboxButton(
+                            store: widget.catStore,
+                            size: 44,
+                            illustrated: true,
+                          ),
                           const SizedBox(width: 10),
                           UserAvatarButton(
                             sessionStore: widget.catStore.sessionStore,
                             catStore: widget.catStore,
                             size: 44,
+                            framed: true,
                           ),
                         ],
                       ),
                     ),
 
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(20, 12, 20, 14),
+                      child: IllustratedSectionTitle(
+                        title: 'Suas descobertas',
+                        art: 'ui/ui_cat_cards_stack',
+                      ),
+                    ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: SizedBox(
-                        height: 84,
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Positioned(
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              child: SizedBox(
-                                height: 48,
-                                child: TextField(
-                                  onChanged: (val) =>
-                                      setState(() => _query = val),
-                                  style: GoogleFonts.nunito(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textDark,
-                                  ),
-                                  decoration: InputDecoration(
-                                    filled: true,
-                                    fillColor: AppColors.surface,
-                                    hintText: 'Buscar gatos na sua coleção...',
-                                    hintStyle: GoogleFonts.nunito(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.textLight,
-                                    ),
-                                    prefixIcon: const Icon(
-                                      LucideIcons.search,
-                                      size: 19,
-                                      color: AppColors.textLight,
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 12,
-                                    ),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(24),
-                                      borderSide: const BorderSide(
-                                        color: AppColors.border,
-                                        width: 1.2,
-                                      ),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(24),
-                                      borderSide: const BorderSide(
-                                        color: AppColors.border,
-                                        width: 1.2,
-                                      ),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(24),
-                                      borderSide: const BorderSide(
-                                        color: AppColors.primary,
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
+                      child: TextField(
+                        onChanged: (val) => setState(() => _query = val),
+                        style: GoogleFonts.nunito(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textDark,
+                        ),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: AppColors.surface,
+                          hintText: 'Buscar gatos na sua coleção...',
+                          hintStyle: GoogleFonts.nunito(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textLight,
+                          ),
+                          prefixIcon: const Icon(
+                            LucideIcons.search,
+                            size: 19,
+                            color: AppColors.textLight,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: const BorderSide(
+                              color: AppColors.border,
+                              width: 1.2,
                             ),
-                            Positioned(
-                              right: 28,
-                              bottom: 32,
-                              child: IgnorePointer(
-                                child: Image.asset(
-                                  'assets/images/gato_3.png',
-                                  width: 76,
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: const BorderSide(
+                              color: AppColors.border,
+                              width: 1.2,
                             ),
-                          ],
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: const BorderSide(
+                              color: AppColors.primary,
+                              width: 1.5,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -458,7 +396,7 @@ class _LibraryPageState extends State<LibraryPage> {
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Image.asset(
-                                        'assets/images/gato_2.png',
+                                        'assets/gatalogo_asset_library/ui/ui_notebook_cat.png',
                                         height: 100,
                                         fit: BoxFit.contain,
                                       ),
@@ -554,8 +492,8 @@ class _LibraryPageState extends State<LibraryPage> {
                 );
               },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -1158,9 +1096,9 @@ class _CollectionCatCardState extends State<_CollectionCatCard>
         curve: Curves.easeInOut,
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.border, width: 1.0),
+            color: GameStyle.paper,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: GameStyle.edge, width: 1.3),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1415,4 +1353,65 @@ class _CardImageClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class LibraryPage extends StatelessWidget {
+  const LibraryPage({super.key, required this.catStore, this.initialTab = 0});
+  final CatStore catStore;
+  final int initialTab;
+  @override
+  Widget build(BuildContext context) => DefaultTabController(
+    length: 2,
+    initialIndex: initialTab,
+    child: BotanicalScaffold(
+      mood: BotanicalMood.album,
+      backgroundColor: GameStyle.canvas,
+      body: SafeArea(
+        child: Column(
+          children: [
+            if (Navigator.canPop(context))
+              const Align(alignment: Alignment.centerLeft, child: BackButton()),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCEB99A),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(12),
+                  ),
+                  border: Border.all(color: GameStyle.ink),
+                ),
+                child: TabBar(
+                  labelStyle: GameStyle.title(18),
+                  unselectedLabelColor: AppColors.textDark,
+                  labelColor: AppColors.textTitle,
+                  dividerColor: Colors.transparent,
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  indicator: BoxDecoration(
+                    color: GameStyle.paper,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(12),
+                    ),
+                    border: Border.all(color: GameStyle.ink, width: 1.5),
+                  ),
+                  tabs: const [
+                    Tab(text: 'Gatos'),
+                    Tab(text: 'Desafios'),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  CatAlbumPage(catStore: catStore),
+                  ChallengesPage(store: catStore),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }

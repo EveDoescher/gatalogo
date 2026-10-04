@@ -7,6 +7,11 @@ import 'package:flutter/material.dart';
 import '../services/habitat_service.dart';
 import 'habitat_path_style.dart';
 import 'habitat_sprites.dart';
+import 'habitat_cat_animations.dart';
+import 'habitat_cat_motion.dart';
+import '../services/product_api_service.dart';
+
+part 'habitat_interactions.dart';
 
 class HabitatGame extends FlameGame {
   HabitatGame(this.habitat, this.sprites) {
@@ -24,14 +29,34 @@ class HabitatGame extends FlameGame {
   int previewRotation = 0;
   bool previewValid = true;
   bool editing = false;
+  bool reducedMotion = false;
   String? selectedItemId;
   double _elapsed = 0;
   final math.Random _random = math.Random();
-  final Map<String, _CatWalk> _catWalks = {};
+  final Map<String, HabitatCatMotion> _catWalks = {};
+  bool _removed = false;
+  bool _feeding = false;
+
+  String _itemKey(HabitatItem item) => sprites.keyFor(
+    _catWalks.values.any(
+          (walk) => walk.targetItemId == item.id && walk.activity == 'feed',
+        )
+        ? 'bowl-cereal'
+        : habitat.spriteFor(item),
+    item.rotation,
+  );
 
   @override
   Future<void> onLoad() async {
     await sprites.initialize();
+    await Future.wait([
+      for (final clip in [
+        HabitatCatClip.idle,
+        HabitatCatClip.walk,
+        HabitatCatClip.run,
+      ])
+        sprites.catAnimations.preload(clip),
+    ]);
     await sprites.preloadReady([
       'animal-cat',
       'tree_default_NE',
@@ -42,6 +67,15 @@ class HabitatGame extends FlameGame {
       'plant_bushSmall_NE',
       'plant_flatShort_NE',
       'flower_yellowA_NE',
+      'tree_pineRoundC_NE',
+      'tree_small_fall_NE',
+      'plant_bushLarge_NE',
+      'mushroom_tanGroup_NE',
+      'flower_purpleA_NE',
+      'animal-bee_NE',
+      'bowl-cereal_NE',
+      'water',
+      'dirt',
       for (final direction in ['NE', 'SE', 'SW', 'NW'])
         'fence_simple_$direction',
     ]);
@@ -58,10 +92,19 @@ class HabitatGame extends FlameGame {
     };
     final keys = placed.map((item) {
       final type = habitat.definition(item.sku);
-      if (!type.isPath) return sprites.keyFor(type.sprite, item.rotation);
+      if (!type.isPath) return _itemKey(item);
       return _pathKey(item, paths);
     });
     unawaited(sprites.preloadReady(keys));
+    unawaited(
+      sprites.preloadReady([
+        for (final item in placed.where(habitat.isGrowingPlant))
+          sprites.keyFor(
+            habitat.definition(item.sku).sprite.replaceAll('StageA', 'StageB'),
+            item.rotation,
+          ),
+      ]),
+    );
   }
 
   String _pathKey(HabitatItem item, Map<(int, int), String> cells) {
@@ -79,6 +122,10 @@ class HabitatGame extends FlameGame {
 
   @override
   void onRemove() {
+    _removed = true;
+    for (final walk in _catWalks.values) {
+      walk.cancelVisit();
+    }
     habitat.removeListener(_preloadVisible);
     super.onRemove();
   }
@@ -87,17 +134,45 @@ class HabitatGame extends FlameGame {
   void update(double dt) {
     super.update(dt);
     _elapsed += dt;
-    _catWalks.removeWhere((id, _) => !habitat.selectedCatIds.contains(id));
+    final freeCells = habitat.walkableCells();
+    bool free(int x, int y) => freeCells.contains((x, y));
+    _catWalks.removeWhere((id, walk) {
+      if (habitat.selectedCatIds.contains(id)) return false;
+      walk.cancelVisit();
+      return true;
+    });
     for (final id in habitat.selectedCatIds) {
       final anchor = habitat.catAnchors[id];
       if (anchor == null) continue;
-      final walk = _catWalks.putIfAbsent(id, () => _CatWalk(anchor));
+      final walk = _catWalks.putIfAbsent(id, () => HabitatCatMotion(anchor));
       if (walk.anchor != anchor) walk.reset(anchor);
-      if (!habitat.isFreeForCat(walk.current.$1, walk.current.$2) ||
-          !habitat.isFreeForCat(walk.next.$1, walk.next.$2)) {
+      if (walk.targetItemId != null &&
+          !habitat.items.any(
+            (item) =>
+                item.id == walk.targetItemId &&
+                item.isPlaced &&
+                (walk.targetPlacement == null ||
+                    walk.targetPlacement == (item.x!, item.y!, item.rotation)),
+          )) {
+        walk.cancelVisit();
+      }
+      if (!free(walk.current.$1, walk.current.$2) ||
+          !free(walk.next.$1, walk.next.$2)) {
         walk.reset(anchor);
       }
-      walk.advance(dt, _random, habitat.isFreeForCat);
+      if (editing) walk.cancelVisit();
+      if (!editing && (!reducedMotion || walk.targetItemId != null)) {
+        walk.advance(
+          dt,
+          _random,
+          (x, y) => free(x, y) && habitat.canTraverse(walk.current, (x, y)),
+        );
+        if (walk.targetItemId == null &&
+            walk.current == walk.next &&
+            _random.nextDouble() < dt * 0.10) {
+          _visitFurniture(id, walk);
+        }
+      }
     }
   }
 
@@ -127,6 +202,9 @@ class HabitatGame extends FlameGame {
 
   Rect itemBounds(HabitatItem item) {
     final definition = habitat.definition(item.sku);
+    if (definition.layer == 'terrain') {
+      return _cellDiamond(item.x!, item.y!).getBounds();
+    }
     final footprintWidth = item.rotation.isOdd
         ? definition.height
         : definition.width;
@@ -150,7 +228,7 @@ class HabitatGame extends FlameGame {
     final visible =
         habitat.items
             .where(
-              (item) => item.isPlaced && !habitat.definition(item.sku).isPath,
+              (item) => item.isPlaced && !habitat.definition(item.sku).isGround,
             )
             .toList()
           ..sort((a, b) {
@@ -176,28 +254,102 @@ class HabitatGame extends FlameGame {
   Offset _catGroundPosition(int index, (int, int) cell) {
     final catId = habitat.selectedCatIds[index];
     final walk = _catWalks[catId];
-    return walk == null
+    final point = walk == null
         ? groundAnchor(cell.$1, cell.$2)
         : Offset.lerp(
             groundAnchor(walk.current.$1, walk.current.$2),
             groundAnchor(walk.next.$1, walk.next.$2),
             walk.progress,
           )!;
+    final target = habitat.items
+        .where((item) => item.id == walk?.targetItemId && item.isPlaced)
+        .firstOrNull;
+    if (walk != null &&
+        target != null &&
+        walk.visiting &&
+        walk.activity != 'feed') {
+      final amount = math.min(
+        (walk.visitElapsed / 0.5).clamp(0.0, 1.0),
+        ((walk.visitDuration - walk.visitElapsed) / 0.5).clamp(0.0, 1.0),
+      );
+      return Offset.lerp(point, itemFocus(target), amount)!;
+    }
+    return point;
   }
 
   Rect _catBounds(int index, (int, int) cell) {
+    final point =
+        _catGroundPosition(index, cell) - Offset(0, _catElevation(index));
+    return _catFrame(index)?.bounds(point, _animatedCatScale) ??
+        sprites.placedBounds('animal-cat', point, _catScale);
+  }
+
+  double _catElevation(int index) {
     final walk = _catWalks[habitat.selectedCatIds[index]];
-    final point = _catGroundPosition(index, cell);
-    final bob =
-        -(walk == null
-            ? 0.0
-            : math.sin(math.pi * walk.progress) * tileHeight * 0.24) +
-        math.sin(_elapsed * 2.8 + index * 2) * tileHeight * 0.03;
-    return sprites.placedBounds(
-      'animal-cat',
-      point + Offset(0, bob),
-      _catScale,
-    );
+    if (walk == null) return 0;
+    final target = habitat.items
+        .where((item) => item.id == walk.targetItemId && item.isPlaced)
+        .firstOrNull;
+    if (target != null && walk.visiting && walk.activity != 'feed') {
+      final height =
+          target.sku.contains('tent') || target.sku.startsWith('canvas_')
+          ? 0.0
+          : target.sku.contains('log') || target.sku.contains('stump')
+          ? 0.3
+          : 0.12;
+      return tileHeight *
+          height *
+          math.min(
+            (walk.visitElapsed / 0.5).clamp(0.0, 1.0),
+            ((walk.visitDuration - walk.visitElapsed) / 0.5).clamp(0.0, 1.0),
+          );
+    }
+    double elevation((int, int) cell) =>
+        habitat.items.any(
+          (item) =>
+              item.isPlaced &&
+              habitat.definition(item.sku).isBridge &&
+              habitat.occupiedCells(item).contains(cell),
+        )
+        ? tileHeight * 0.08
+        : 0;
+    return elevation(walk.current) * (1 - walk.progress) +
+        elevation(walk.next) * walk.progress;
+  }
+
+  double get _animatedCatScale =>
+      tileWidth * 0.86 / sprites.catAnimations.restHeight;
+
+  HabitatCatFrame? _catFrame(int index) {
+    if (reducedMotion) {
+      return sprites.catAnimations.frame(HabitatCatClip.idle, 0, 0);
+    }
+    final walk = _catWalks[habitat.selectedCatIds[index]];
+    final clip = editing
+        ? HabitatCatClip.idle
+        : walk?.clip ?? HabitatCatClip.idle;
+    return sprites.catAnimations.frame(
+          clip,
+          walk?.animationTime ?? _elapsed,
+          walk?.direction ?? 0,
+        ) ??
+        sprites.catAnimations.frame(
+          HabitatCatClip.idle,
+          _elapsed,
+          walk?.direction ?? 0,
+        );
+  }
+
+  Future<void> greetCat(String id) async {
+    if (editing || reducedMotion || !habitat.selectedCatIds.contains(id)) {
+      return;
+    }
+    final clip = _random.nextBool()
+        ? HabitatCatClip.happy
+        : HabitatCatClip.dance;
+    await sprites.catAnimations.preload(clip);
+    if (editing || !habitat.selectedCatIds.contains(id)) return;
+    _catWalks[id]?.react(clip);
   }
 
   double get _catScale =>
@@ -264,9 +416,9 @@ class HabitatGame extends FlameGame {
     final scene = <_SceneSprite>[];
     for (final tree in const [
       (-10, -5, 'tree_default_NE', 1.65),
-      (-6, -5, 'tree_pineDefaultA_NE', 1.9),
+      (-6, -5, 'tree_pineRoundC_NE', 1.9),
       (2, -7, 'tree_oak_NE', 1.8),
-      (8, 16, 'tree_detailed_NE', 1.85),
+      (8, 16, 'tree_small_fall_NE', 2.5),
       (16, 9, 'tree_pineDefaultA_NE', 2.0),
     ]) {
       scene.add(
@@ -284,7 +436,9 @@ class HabitatGame extends FlameGame {
       (10, 0, 'plant_flatShort_NE', 1.2),
       (6, 12, 'grass_NE', 1.5),
       (10, 10, 'flower_yellowA_NE', 1.3),
-      (13, 8, 'plant_bushSmall_NE', 1.1),
+      (13, 8, 'plant_bushLarge_NE', 1.1),
+      (-4, 8, 'mushroom_tanGroup_NE', 2.0),
+      (7, -5, 'flower_purpleA_NE', 2.0),
     ]) {
       scene.add(
         _SceneSprite(
@@ -296,10 +450,10 @@ class HabitatGame extends FlameGame {
     }
     for (final item in habitat.items.where((item) => item.isPlaced)) {
       final type = habitat.definition(item.sku);
-      if (type.isPath) continue;
+      if (type.isGround) continue;
       scene.add(
         _SceneSprite(
-          sprites.keyFor(type.sprite, item.rotation),
+          _itemKey(item),
           itemFocus(item),
           _itemScale(type),
           selected: editing && item.id == selectedItemId,
@@ -316,21 +470,71 @@ class HabitatGame extends FlameGame {
         _SceneSprite(
           'animal-cat',
           _catGroundPosition(index, cells[index]),
-          _catScale,
+          _animatedCatScale,
           destination: _catBounds(index, cells[index]),
           tint: _coatTint(cat.primaryColor),
+          catFrame: _catFrame(index),
+          elevation: _catElevation(index),
+          depthOffset: _catWalks[cat.id]?.visiting == true ? 0.5 : 0,
         ),
       );
     }
     _addFence(scene);
+    final grown = habitat.items
+        .where(
+          (item) =>
+              item.isPlaced &&
+              habitat.isGrowingPlant(item) &&
+              habitat.isMature(item),
+        )
+        .firstOrNull;
+    if (grown != null && !reducedMotion && _elapsed % 30 < 12) {
+      final point =
+          itemFocus(grown) +
+          Offset(
+            math.sin(_elapsed * 1.2) * tileWidth * 0.5,
+            math.cos(_elapsed) * tileHeight * 0.2,
+          );
+      scene.add(
+        _SceneSprite(
+          'animal-bee_NE',
+          point,
+          tileWidth * 0.23 / sprites.bounds('animal-bee_NE').height,
+          destination: sprites.placedBounds(
+            'animal-bee_NE',
+            point - Offset(0, tileWidth * 0.55),
+            tileWidth * 0.23 / sprites.bounds('animal-bee_NE').height,
+          ),
+        ),
+      );
+    }
 
     // Every shadow belongs to the ground layer, never the sprite in front of it.
     for (final entry in scene) {
+      if (entry.catFrame case final frame?) {
+        frame.paint(
+          canvas,
+          entry.ground +
+              Offset(-entry.elevation * 0.62, -entry.elevation * 0.18),
+          entry.scale,
+          groundShadow: true,
+        );
+        continue;
+      }
       if (sprites.cached(entry.key) == null) continue;
       sprites.drawShadow(canvas, entry.key, entry.ground, entry.scale);
     }
     scene.sort((a, b) => a.depth.compareTo(b.depth));
     for (final entry in scene) {
+      if (entry.catFrame case final frame?) {
+        frame.paint(
+          canvas,
+          entry.ground - Offset(0, entry.elevation),
+          entry.scale,
+          tint: entry.tint,
+        );
+        continue;
+      }
       if (sprites.cached(entry.key) == null) continue;
       final target =
           entry.destination ??
@@ -381,6 +585,7 @@ class HabitatGame extends FlameGame {
         ).createShader(area),
     );
     canvas.restore();
+    _drawTerrain(canvas);
     final selected = habitat.items
         .where((item) => item.id == selectedItemId && item.isPlaced)
         .firstOrNull;
@@ -497,6 +702,54 @@ class HabitatGame extends FlameGame {
     }
   }
 
+  void _drawTerrain(Canvas canvas) {
+    final terrain = habitat.items.where(
+      (item) =>
+          item.isPlaced && habitat.definition(item.sku).layer == 'terrain',
+    );
+    final water = {
+      for (final item in terrain.where((item) => item.sku == 'water_tile'))
+        (item.x!, item.y!),
+    };
+    for (final item in terrain) {
+      final diamond = _cellDiamond(item.x!, item.y!);
+      canvas.save();
+      canvas.clipPath(diamond);
+      _drawSprite(
+        canvas,
+        habitat.definition(item.sku).sprite,
+        diamond.getBounds(),
+      );
+      canvas.restore();
+      if (item.sku != 'water_tile') continue;
+      final top = cellTop(item.x!, item.y!);
+      final corners = [
+        top,
+        top + Offset(tileWidth / 2, tileHeight / 2),
+        top + Offset(0, tileHeight),
+        top + Offset(-tileWidth / 2, tileHeight / 2),
+      ];
+      final neighbors = [
+        (item.x!, item.y! - 1),
+        (item.x! + 1, item.y!),
+        (item.x!, item.y! + 1),
+        (item.x! - 1, item.y!),
+      ];
+      for (var i = 0; i < 4; i++) {
+        if (!water.contains(neighbors[i])) {
+          canvas.drawLine(
+            corners[i],
+            corners[(i + 1) % 4],
+            Paint()
+              ..color = const Color(0xFF85AD62)
+              ..strokeWidth = tileWidth * 0.06
+              ..strokeCap = StrokeCap.round,
+          );
+        }
+      }
+    }
+  }
+
   void _drawPreview(Canvas canvas) {
     if (previewX == null || previewY == null) return;
     final type = previewSku == null ? null : habitat.definition(previewSku!);
@@ -506,6 +759,14 @@ class HabitatGame extends FlameGame {
         ? null
         : sprites.keyFor(type.sprite, previewRotation);
     if (key == null) return;
+    if (type?.layer == 'terrain') {
+      final diamond = _cellDiamond(previewX!, previewY!);
+      canvas.save();
+      canvas.clipPath(diamond);
+      _drawSprite(canvas, key, diamond.getBounds());
+      canvas.restore();
+      return;
+    }
     final image = sprites.cached(key);
     if (image == null) return;
     final width = type == null
@@ -542,14 +803,15 @@ class HabitatGame extends FlameGame {
   double _itemScale(HabitatShopItem item) {
     final sprite = item.sprite;
     if (sprite.startsWith('building-type-')) {
+      final key = sprites.keyFor(sprite, 0);
       final preferred =
           tileWidth *
           (item.width + item.height) /
           2 *
           0.84 /
-          sprites.bounds(sprite).width;
+          sprites.bounds(key).width;
       return sprites.fitScale(
-        sprite,
+        key,
         preferred,
         tileWidth,
         item.width,
@@ -564,7 +826,10 @@ class HabitatGame extends FlameGame {
         ? (item.width == 1 ? 1.6 : 2.4)
         : sprite.startsWith('plant_')
         ? 2.1
-        : sprite.startsWith('flower_')
+        : sprite.startsWith('flower_') ||
+              sprite.startsWith('crops_') ||
+              sprite.startsWith('pot_') ||
+              sprite.startsWith('mushroom_')
         ? 2.7
         : math.max(item.width, item.height).toDouble();
     final preferred = tileWidth / 128 * multiplier;
@@ -637,6 +902,8 @@ class _SceneSprite {
     this.destination,
     this.tint,
     this.selected = false,
+    this.catFrame,
+    this.elevation = 0,
   });
   final String key;
   final Offset ground;
@@ -645,47 +912,7 @@ class _SceneSprite {
   final Rect? destination;
   final Color? tint;
   final bool selected;
+  final HabitatCatFrame? catFrame;
+  final double elevation;
   double get depth => ground.dy + depthOffset;
-}
-
-class _CatWalk {
-  _CatWalk(this.anchor) : current = anchor, next = anchor;
-
-  (int, int) anchor;
-  (int, int) current;
-  (int, int) next;
-  double progress = 0;
-  double pause = 0.8;
-
-  void reset((int, int) cell) {
-    anchor = current = next = cell;
-    progress = 0;
-    pause = 0.8;
-  }
-
-  void advance(double dt, math.Random random, bool Function(int, int) free) {
-    if (pause > 0) {
-      pause -= dt;
-      return;
-    }
-    if (current == next) {
-      final neighbors = [
-        (current.$1 + 1, current.$2),
-        (current.$1 - 1, current.$2),
-        (current.$1, current.$2 + 1),
-        (current.$1, current.$2 - 1),
-      ].where((cell) => free(cell.$1, cell.$2)).toList();
-      if (neighbors.isEmpty) {
-        pause = 1;
-        return;
-      }
-      next = neighbors[random.nextInt(neighbors.length)];
-    }
-    progress += dt / 0.75;
-    if (progress >= 1) {
-      current = next;
-      progress = 0;
-      pause = 0.5 + random.nextDouble() * 1.3;
-    }
-  }
 }

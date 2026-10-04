@@ -1,3 +1,4 @@
+import '../widgets/botanical_scene.dart';
 import '../widgets/app_header_actions.dart';
 
 import 'dart:io';
@@ -7,8 +8,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../config/api_config.dart';
-
 import '../services/product_api_service.dart';
 import '../services/social_api_service.dart';
 import '../stores/cat_store.dart';
@@ -16,6 +15,9 @@ import '../stores/session_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_widgets.dart';
 import '../widgets/gatalogo_gamification.dart';
+import '../widgets/game_components.dart';
+import '../widgets/illustrated_home_components.dart';
+import '../widgets/avatar_choice_sheet.dart';
 import 'auth_page.dart';
 import 'cat_details_page.dart';
 import 'journey_page.dart';
@@ -150,112 +152,75 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _pickProfilePhoto() async {
-    if (!await _ensureSignedIn('alterar sua foto de perfil')) return;
-    if (!mounted) return;
-    final picker = ImagePicker();
-    final source = await showModalBottomSheet<ImageSource>(
+    if (_busy) return;
+    final choice = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Alterar Foto de Perfil',
-                style: GoogleFonts.fredoka(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textTitle,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    color: AppColors.primaryLight,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    LucideIcons.camera,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                ),
-                title: Text(
-                  'Tirar Foto com a Camera',
-                  style: GoogleFonts.nunito(fontWeight: FontWeight.w700),
-                ),
-                onTap: () => Navigator.pop(ctx, ImageSource.camera),
-              ),
-              ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    color: AppColors.greenLight,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    LucideIcons.image,
-                    color: AppColors.greenLink,
-                    size: 20,
-                  ),
-                ),
-                title: Text(
-                  'Escolher da Galeria',
-                  style: GoogleFonts.nunito(fontWeight: FontWeight.w700),
-                ),
-                onTap: () => Navigator.pop(ctx, ImageSource.gallery),
-              ),
-            ],
-          ),
-        ),
-      ),
+      isScrollControlled: true,
+      backgroundColor: HomeArt.paper,
+      builder: (_) =>
+          AvatarChoiceSheet(currentUrl: widget.sessionStore.avatarUrl),
     );
-
-    if (source == null) return;
+    if (choice == null || !mounted) return;
+    if (FramedUserAvatar.presets.contains(choice)) {
+      setState(() => _busy = true);
+      try {
+        var url = '/app/account/avatar/preset/$choice';
+        if (widget.sessionStore.isSignedIn) {
+          final saved = await _productApi.put('/app/account', {
+            'avatar_preset': choice,
+          });
+          url = saved['avatar_url'] as String;
+        }
+        await widget.sessionStore.updateAvatarUrl(url);
+        if (mounted) {
+          setState(() {
+            _avatarUrl = url;
+            _localPreviewPath = null;
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          showMessage(context, 'Não foi possível salvar seu avatar: $e');
+        }
+      } finally {
+        if (mounted) setState(() => _busy = false);
+      }
+      return;
+    }
+    if (!await _ensureSignedIn('salvar sua foto de perfil') || !mounted) return;
+    final source = choice == 'camera'
+        ? ImageSource.camera
+        : ImageSource.gallery;
     try {
-      final picked = await picker.pickImage(
+      final picked = await ImagePicker().pickImage(
         source: source,
         maxWidth: 600,
         maxHeight: 600,
       );
-      if (picked != null) {
+      if (picked == null || !mounted) return;
+      setState(() {
+        _localPreviewPath = picked.path;
+        _busy = true;
+      });
+      final bytes = await File(picked.path).readAsBytes();
+      final uploadedUrl = await _socialApi.uploadAvatar(bytes, picked.name);
+      if (uploadedUrl == null) {
+        throw StateError('O envio não retornou a foto salva.');
+      }
+      await widget.sessionStore.updateAvatarUrl(uploadedUrl);
+      if (mounted) {
         setState(() {
-          _localPreviewPath = picked.path;
-          _busy = true;
+          _avatarUrl = uploadedUrl;
+          _localPreviewPath = null;
         });
-
-        final bytes = await File(picked.path).readAsBytes();
-        final uploadedUrl = await _socialApi.uploadAvatar(bytes, picked.name);
-
-        if (mounted) {
-          setState(() {
-            if (uploadedUrl != null) _avatarUrl = uploadedUrl;
-            _busy = false;
-          });
-          if (uploadedUrl != null) {
-            await widget.sessionStore.updateAvatarUrl(uploadedUrl);
-          }
-          if (mounted) {
-            showMessage(
-              context,
-              'Foto de perfil salva com sucesso no servidor.',
-            );
-          }
-        }
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _busy = false);
-        showMessage(context, 'Erro ao enviar foto: $e');
+        setState(() => _localPreviewPath = null);
+        showMessage(context, 'Não foi possível enviar sua foto: $e');
       }
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
@@ -486,11 +451,13 @@ class _ProfilePageState extends State<ProfilePage> {
             return progress >= target;
           }).length;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    return BotanicalScaffold(
+      backgroundColor: GameStyle.canvas,
       appBar: AppBar(
+        leadingWidth: 44,
+        titleSpacing: 8,
         elevation: 0,
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft, color: AppColors.textDark),
           onPressed: () => Navigator.pop(context),
@@ -504,7 +471,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         actions: [
-          const AppHeaderActions(),
+          const AppHeaderActions(showAvatar: false),
           IconButton(
             tooltip: 'Configurações',
             icon: Container(
@@ -541,126 +508,85 @@ class _ProfilePageState extends State<ProfilePage> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               children: [
                 Center(
-                  child: Column(
-                    children: [
-                      Stack(
-                        children: [
-                          Container(
-                            width: 104,
-                            height: 104,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.surface,
-                              border: Border.all(
-                                color: AppColors.primary,
-                                width: 3,
-                              ),
-                            ),
-                            child: ClipOval(
-                              child: _localPreviewPath != null
-                                  ? Image.file(
-                                      File(_localPreviewPath!),
-                                      width: 104,
-                                      height: 104,
-                                      fit: BoxFit.cover,
-                                    )
-                                  : (_avatarUrl != null &&
-                                        _avatarUrl!.isNotEmpty)
-                                  ? Image.network(
-                                      _avatarUrl!.startsWith('http')
-                                          ? _avatarUrl!
-                                          : '${ApiConfig.baseUrl}$_avatarUrl',
-                                      width: 104,
-                                      height: 104,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, _, _) => Image.asset(
-                                        'assets/images/gato_1.png',
-                                        width: 104,
-                                        height: 104,
-                                        fit: BoxFit.contain,
-                                      ),
-                                    )
-                                  : Image.asset(
-                                      'assets/images/gato_1.png',
-                                      width: 104,
-                                      height: 104,
-                                      fit: BoxFit.contain,
-                                    ),
-                            ),
-                          ),
-                          Positioned(
-                            right: -4,
-                            bottom: -4,
-                            child: GestureDetector(
-                              onTap: _pickProfilePhoto,
-                              behavior: HitTestBehavior.opaque,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                child: Container(
-                                  width: 36,
-                                  height: 36,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.white,
-                                      width: 2.2,
-                                    ),
-                                  ),
-                                  child: const Icon(
-                                    LucideIcons.camera,
-                                    size: 17,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              '@$username',
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.fredoka(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textTitle,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          GestureDetector(
-                            onTap: _busy ? null : _editUsername,
+                  child: IllustratedProfileIdentity(
+                    portrait: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        FramedUserAvatar(
+                          url: _avatarUrl ?? widget.sessionStore.avatarUrl,
+                          localPath: _localPreviewPath,
+                          size: 116,
+                        ),
+                        Positioned(
+                          right: -4,
+                          bottom: -4,
+                          child: GestureDetector(
+                            onTap: _pickProfilePhoto,
                             behavior: HitTestBehavior.opaque,
                             child: Container(
-                              padding: const EdgeInsets.all(10),
+                              padding: const EdgeInsets.all(4),
                               child: Container(
-                                padding: const EdgeInsets.all(5),
+                                width: 36,
+                                height: 36,
                                 decoration: BoxDecoration(
-                                  color: AppColors.primarySoftBg,
+                                  color: AppColors.primary,
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: AppColors.borderProfile,
-                                    width: 1,
+                                    color: Colors.white,
+                                    width: 2.2,
                                   ),
                                 ),
                                 child: const Icon(
-                                  LucideIcons.pencil,
-                                  size: 14,
-                                  color: AppColors.primaryDark,
+                                  LucideIcons.camera,
+                                  size: 17,
+                                  color: Colors.white,
                                 ),
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
+                    name: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            '@$username',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.fredoka(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textTitle,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        GestureDetector(
+                          onTap: _busy ? null : _editUsername,
+                          behavior: HitTestBehavior.opaque,
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            child: Container(
+                              padding: const EdgeInsets.all(5),
+                              decoration: BoxDecoration(
+                                color: AppColors.primarySoftBg,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: AppColors.borderProfile,
+                                  width: 1,
+                                ),
+                              ),
+                              child: const Icon(
+                                LucideIcons.pencil,
+                                size: 14,
+                                color: AppColors.primaryDark,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
 
@@ -678,22 +604,13 @@ class _ProfilePageState extends State<ProfilePage> {
                   const SizedBox(height: 16),
                 ],
 
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.cardBackground,
-                    borderRadius: BorderRadius.circular(AppRadius.card),
-                    border: Border.all(color: AppColors.borderLight),
-                  ),
+                GameNote(
                   child: Row(
                     children: [
-                      const Icon(
-                        LucideIcons.quote,
-                        size: 18,
-                        color: AppColors.primary,
+                      GatalogoArt.image(
+                        'ui/ui_note_pinned',
+                        width: 38,
+                        height: 38,
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -730,33 +647,29 @@ class _ProfilePageState extends State<ProfilePage> {
                     spacing: 12,
                     runSpacing: 12,
                     children: [
-                      for (final stat in <(String, String)>[
-                        ('$totalCats', 'Gatos salvos'),
-                        ('$unlockedAchievementsCount', 'Conquistas'),
-                        ('$_friendsCount', 'Amigos'),
+                      for (final stat in <(String, String, String)>[
+                        (
+                          '$totalCats',
+                          'Gatos salvos',
+                          'ui/ui_cat_photos_stack',
+                        ),
+                        (
+                          '$unlockedAchievementsCount',
+                          'Conquistas',
+                          'rewards/reward_medal_paw_gold',
+                        ),
+                        (
+                          '$_friendsCount',
+                          'Amigos',
+                          'ui/ui_speech_ellipsis_heart',
+                        ),
                       ])
                         SizedBox(
                           width: (constraints.maxWidth - 24) / 3,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                stat.$1,
-                                style: const TextStyle(
-                                  fontSize: 25,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.textTitle,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                stat.$2,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textMedium,
-                                ),
-                              ),
-                            ],
+                          child: IllustratedStatTile(
+                            value: stat.$1,
+                            label: stat.$2,
+                            art: stat.$3,
                           ),
                         ),
                     ],
@@ -791,7 +704,11 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     child: Column(
                       children: [
-                        Image.asset('assets/images/gato_2.png', width: 70),
+                        GatalogoArt.image(
+                          'ui/ui_notebook_cat',
+                          width: 80,
+                          height: 80,
+                        ),
                         const SizedBox(height: 8),
                         Text(
                           'Nenhum gatinho salvo ainda',

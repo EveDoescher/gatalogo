@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../models/gamification.dart';
 import '../theme/app_theme.dart';
+import 'game_components.dart';
 
 /// Enum defining the rarity levels of cats or items.
 enum RarityLevel { common, uncommon, rare, legendary }
@@ -254,7 +255,7 @@ class GatalogoXPBar extends StatelessWidget {
   }
 }
 
-/// A unified card displaying gamification state (Level, Streak, XP, Shield).
+/// Confirmed progression as the explorer's album badge.
 class GatalogoGamificationCard extends StatelessWidget {
   const GatalogoGamificationCard({
     super.key,
@@ -263,101 +264,48 @@ class GatalogoGamificationCard extends StatelessWidget {
   });
   final GamificationState gamification;
   final VoidCallback onTapJourney;
-
   @override
   Widget build(BuildContext context) => Material(
-    color: AppColors.surface,
-    borderRadius: BorderRadius.circular(18),
+    color: Colors.transparent,
     child: InkWell(
       onTap: onTapJourney,
-      borderRadius: BorderRadius.circular(18),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
+      borderRadius: BorderRadius.circular(16),
+      child: GameNotebook(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: const BoxDecoration(
-                    color: AppColors.greenLight,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    '${gamification.level}',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.greenLink,
-                    ),
-                  ),
-                ),
+                GameSeal(label: '${gamification.level}', size: 49),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Text(gamification.levelTitle, style: GameStyle.title(23)),
                       Text(
-                        'Nível ${gamification.level}',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textMedium,
-                        ),
-                      ),
-                      Text(
-                        gamification.levelTitle,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textTitle,
-                        ),
+                        'Nível ${gamification.level} · ${gamification.xp} XP',
                       ),
                     ],
                   ),
                 ),
-                const Icon(
-                  LucideIcons.chevronRight,
-                  size: 18,
-                  color: AppColors.textMedium,
-                ),
+                const Icon(Icons.chevron_right_rounded),
               ],
             ),
-            const SizedBox(height: 16),
-            GatalogoXPBar(
-              showLevel: false,
-              currentLevel: gamification.level,
-              currentXP: gamification.currentLevelXp,
-              targetXP: gamification.currentLevelTargetXp,
+            const SizedBox(height: 14),
+            GameProgress(
+              current: gamification.currentLevelXp,
+              target: gamification.currentLevelTargetXp,
             ),
             const SizedBox(height: 12),
-            Wrap(
-              spacing: 16,
-              runSpacing: 8,
-              children: [
-                Text(
-                  '${gamification.xp} XP no total',
-                  style: const TextStyle(
-                    color: AppColors.textMedium,
-                    fontSize: 12,
-                  ),
-                ),
-                Text(
-                  '${gamification.streak} ${gamification.streak == 1 ? 'dia seguido' : 'dias seguidos'}',
-                  style: const TextStyle(
-                    color: AppColors.greenLink,
-                    fontSize: 12,
-                  ),
-                ),
-                if (gamification.freezeShields > 0)
-                  Text(
-                    '${gamification.freezeShields} ${gamification.freezeShields == 1 ? 'escudo' : 'escudos'}',
-                    style: const TextStyle(
-                      color: AppColors.textMedium,
-                      fontSize: 12,
-                    ),
-                  ),
-              ],
+            Text(
+              '${gamification.unlockedAchievements} conquistas guardadas',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Abrir meu mural',
+              style: TextStyle(color: AppColors.greenLink),
             ),
           ],
         ),

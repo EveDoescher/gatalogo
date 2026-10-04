@@ -239,6 +239,7 @@ class CatalogSyncService {
     }
     final cat = Cat(
       isOwned: payload['is_owned'] == 1 || payload['is_owned'] == true,
+      individualId: payload['individual_id'] as String?,
       id: id,
       captureNumber:
           (payload['capture_number'] as num?)?.toInt() ??

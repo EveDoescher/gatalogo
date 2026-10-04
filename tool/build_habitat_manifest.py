@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 
 from PIL import Image
+from habitat_assets import DECORATIONS
 
 
 ROOT = Path(__file__).resolve().parents[1] / "assets" / "3d_assets"
@@ -22,7 +23,7 @@ NAMES = (
     "path_stoneCorner", "path_stoneEnd", "path_stoneCircle",
     "path_wood", "path_woodCorner", "path_woodEnd",
     "fence_corner", "fence_gate",
-)
+) + tuple(asset.name for asset in DECORATIONS if asset.pack == 'kenney_nature-kit')
 
 
 def bounds(path: Path) -> list[int]:

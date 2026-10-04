@@ -1,3 +1,5 @@
+import '../widgets/botanical_scene.dart';
+import '../widgets/game_components.dart';
 import '../widgets/app_header_actions.dart';
 
 import 'dart:typed_data';
@@ -56,8 +58,6 @@ class _MissingCatsPageState extends State<MissingCatsPage> {
       final items = await ProductApiService(widget.sessionStore)
           .list('/app/reports');
       if (mounted) setState(() => _reports = items);
-      widget.catStore.recordGamificationAction('care');
-      widget.catStore.recordHabitatAction('care');
     } catch (error) {
       if (mounted) setState(() => _error = error.toString());
     } finally {
@@ -66,7 +66,8 @@ class _MissingCatsPageState extends State<MissingCatsPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => BotanicalScaffold(
+    mood: BotanicalMood.care,
     appBar: AppBar(
       title: Text(
         'Gatos desaparecidos',
@@ -86,20 +87,23 @@ class _MissingCatsPageState extends State<MissingCatsPage> {
       ],
     ),
     body: !widget.sessionStore.isSignedIn
-        ? EmptyContent(
-            'Receba pistas do seu gato',
-            'Entre na sua conta para criar alertas e receber avistamentos.',
-            action: FilledButton(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => AuthPage(
-                    sessionStore: widget.sessionStore,
-                    onContinueOffline: () => Navigator.pop(context),
+        ? SingleChildScrollView(
+            child: BotanicalEmpty(
+              title: 'Receba pistas do seu gato',
+              description: 'Entre na sua conta para criar alertas e receber avistamentos.',
+              art: 'environment/environment_signpost_cat',
+              action: FilledButton(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => AuthPage(
+                      sessionStore: widget.sessionStore,
+                      onContinueOffline: () => Navigator.pop(context),
+                    ),
                   ),
                 ),
+                child: const Text('Entrar na conta'),
               ),
-              child: const Text('Entrar na conta'),
             ),
           )
         : RefreshIndicator(
@@ -149,9 +153,10 @@ class _MissingCatsPageState extends State<MissingCatsPage> {
                     ),
                   ),
                 if (!_loading && _error == null && _reports.isEmpty)
-                  const EmptyContent(
-                    'Nenhum alerta por aqui',
-                    'Se um dos seus gatos desaparecer, crie um alerta com o último local onde ele foi visto.',
+                  const BotanicalEmpty(
+                    title: 'Nenhum alerta por aqui',
+                    description: 'Se um dos seus gatos desaparecer, crie um alerta com o último local onde ele foi visto.',
+                    art: 'environment/environment_signpost_cat',
                   ),
                 for (final status in ['active', 'resolved']) ...[
                   if (_reports.any((item) => item['status'] == status))
@@ -165,29 +170,62 @@ class _MissingCatsPageState extends State<MissingCatsPage> {
                   ..._reports
                       .where((item) => item['status'] == status)
                       .map(
-                        (report) => ListTile(
-                          leading: Icon(
-                            status == 'active'
-                                ? Icons.search
-                                : Icons.check_circle_outline,
-                          ),
-                          title: Text(report['name'] as String),
-                          subtitle: Text(
-                            '${displayDate(report['created_at'])} · ${report['clue_count']} pista(s)',
-                          ),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () async {
-                            await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => MissingReportDetailPage(
-                                  report: report,
-                                  store: widget.catStore,
+                        (report) => Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                          child: GatalogoCard(
+                            onTap: () async {
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => MissingReportDetailPage(
+                                    report: report,
+                                    store: widget.catStore,
+                                  ),
                                 ),
-                              ),
-                            );
-                            if (mounted) _load();
-                          },
+                              );
+                              if (mounted) _load();
+                            },
+                            child: Row(
+                              children: [
+                                GatalogoArt.image(
+                                  status == 'active'
+                                      ? 'icons/icon_search_paw_magnifier'
+                                      : 'icons/icon_heart_coral',
+                                  width: 52,
+                                  height: 58,
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        report['name'] as String,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${displayDate(report['created_at'])} · ${report['clue_count'] ?? 0} pista(s)',
+                                      ),
+                                      if (report['last_seen_address'] != null)
+                                        Text(
+                                          '${report['last_seen_address']}',
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall,
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(Icons.chevron_right, size: 20),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                 ],
@@ -377,11 +415,13 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => BotanicalScaffold(
+    level: BotanicalLevel.tertiary,
+    mood: BotanicalMood.care,
     backgroundColor: AppColors.background,
     appBar: AppBar(
       actions: const [AppHeaderActions()],
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       elevation: 0,
       leading: GestureDetector(
         onTap: () => Navigator.maybePop(context),
@@ -433,6 +473,11 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
         return ListView(
           padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
+            const IllustratedSectionTitle(
+              title: 'Vamos ajudar na busca',
+              art: 'ui/ui_clipboard_paw',
+            ),
+            const SizedBox(height: 18),
             if (pets.isNotEmpty) ...[
               SegmentedButton<bool>(
                 segments: const [
@@ -932,11 +977,12 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
     final isActive = _report['status'] == 'active';
     final cat = cats.isEmpty ? null : cats.first;
 
-    return Scaffold(
+    return BotanicalScaffold(
+      mood: BotanicalMood.care,
       backgroundColor: AppColors.background,
       appBar: AppBar(
         actions: const [AppHeaderActions()],
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: GestureDetector(
           onTap: () => Navigator.maybePop(context),
@@ -984,15 +1030,10 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
                       imagePath: cat.photoPath,
                       title: cat.displayName,
                     ),
-                    child: Stack(
-                      children: [
-                        CatPhotoView(
-                          cat.photoPath,
-                          height: 200,
-                          fit: BoxFit.cover,
-                          borderRadius: AppRadius.photo,
-                        ),
-                      ],
+                    child: GamePhotoCard(
+                      cat: cat,
+                      height: 190,
+                      showName: false,
                     ),
                   ),
                 const SizedBox(height: AppSpacing.md),
@@ -1064,18 +1105,20 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
               children: [
                 Row(
                   children: [
-                    const Icon(
-                      LucideIcons.mapPin,
-                      size: 18,
-                      color: AppColors.primaryDark,
+                    GatalogoArt.image(
+                      'environment/environment_cat_map',
+                      width: 42,
+                      height: 46,
                     ),
                     const SizedBox(width: AppSpacing.xs),
-                    Text(
-                      'Área de Monitoramento',
-                      style: GoogleFonts.fredoka(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textTitle,
+                    Expanded(
+                      child: Text(
+                        'Área de Monitoramento',
+                        style: GoogleFonts.fredoka(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textTitle,
+                        ),
                       ),
                     ),
                   ],
@@ -1156,18 +1199,20 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
               children: [
                 Row(
                   children: [
-                    const Icon(
-                      LucideIcons.search,
-                      size: 18,
-                      color: AppColors.greenLink,
+                    GatalogoArt.image(
+                      'icons/icon_search_paw_magnifier',
+                      width: 42,
+                      height: 46,
                     ),
                     const SizedBox(width: AppSpacing.xs),
-                    Text(
-                      'Pistas e Avistamentos',
-                      style: GoogleFonts.fredoka(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textTitle,
+                    Expanded(
+                      child: Text(
+                        'Pistas e Avistamentos',
+                        style: GoogleFonts.fredoka(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textTitle,
+                        ),
                       ),
                     ),
                   ],
@@ -1607,10 +1652,11 @@ class _CluesPageState extends State<CluesPage> {
       filteredList = _clues;
     }
 
-    return Scaffold(
+    return BotanicalScaffold(
+      mood: BotanicalMood.care,
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: GestureDetector(
           onTap: () => Navigator.maybePop(context),
@@ -1629,7 +1675,7 @@ class _CluesPageState extends State<CluesPage> {
           ),
         ),
         title: Text(
-          'Pistas e Avistamentos',
+          'Pistas',
           style: GoogleFonts.fredoka(
             fontSize: 20,
             fontWeight: FontWeight.w600,
@@ -1666,6 +1712,13 @@ class _CluesPageState extends State<CluesPage> {
       ),
       body: Column(
         children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: IllustratedSectionTitle(
+              title: 'Pistas e Avistamentos',
+              art: 'icons/icon_search_paw_magnifier',
+            ),
+          ),
           // Barra de Filtros
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -1736,13 +1789,16 @@ class _CluesPageState extends State<CluesPage> {
                     ),
                   )
                 : filteredList.isEmpty
-                ? EmptyContent(
-                    _filter == 'all'
-                        ? 'Ainda sem pistas'
-                        : 'Nenhuma pista neste filtro',
-                    _filter == 'all'
-                        ? 'Os possíveis avistamentos cruzados pela inteligência artificial aparecerão aqui.'
-                        : 'Não há registros com o status selecionado no momento.',
+                ? SingleChildScrollView(
+                    child: BotanicalEmpty(
+                      title: _filter == 'all'
+                          ? 'Ainda sem pistas'
+                          : 'Nenhuma pista neste filtro',
+                      description: _filter == 'all'
+                          ? 'Os possíveis avistamentos cruzados pela inteligência artificial aparecerão aqui.'
+                          : 'Não há registros com o status selecionado no momento.',
+                      art: 'environment/environment_route_dotted_pin_flag',
+                    ),
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -1850,7 +1906,9 @@ class _CluesPageState extends State<CluesPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -1870,7 +1928,6 @@ class _CluesPageState extends State<CluesPage> {
                             ),
                           ),
                         ),
-                        const Spacer(),
                         Text(
                           dateStr,
                           style: GoogleFonts.nunito(
@@ -1884,14 +1941,15 @@ class _CluesPageState extends State<CluesPage> {
 
                     Row(
                       children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(AppRadius.photo),
+                        GamePhotoMount(
                           child: SizedBox(
                             width: 62,
                             height: 62,
                             child: PrivateCluePhoto(
                               path: clue['photo_url'] as String,
                               session: widget.store.sessionStore,
+                              height: 62,
+                              fit: BoxFit.cover,
                             ),
                           ),
                         ),
@@ -1977,9 +2035,13 @@ class PrivateCluePhoto extends StatefulWidget {
     super.key,
     required this.path,
     required this.session,
+    this.height = 240,
+    this.fit = BoxFit.contain,
   });
   final String path;
   final SessionStore session;
+  final double height;
+  final BoxFit fit;
   @override
   State<PrivateCluePhoto> createState() => _PrivateCluePhotoState();
 }
@@ -1994,7 +2056,7 @@ class _PrivateCluePhotoState extends State<PrivateCluePhoto> {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-    height: 240,
+    height: widget.height,
     width: double.infinity,
     child: FutureBuilder<Uint8List>(
       future: _photo,
@@ -2006,14 +2068,11 @@ class _PrivateCluePhotoState extends State<PrivateCluePhoto> {
               bytes: snapshot.data!,
               title: 'Foto do Avistamento',
             ),
-            child: Stack(
-              children: [
-                SizedBox(
-                  width: double.infinity,
-                  height: 240,
-                  child: Image.memory(snapshot.data!, fit: BoxFit.contain),
-                ),
-              ],
+            child: Image.memory(
+              snapshot.data!,
+              width: double.infinity,
+              height: widget.height,
+              fit: widget.fit,
             ),
           );
         }
@@ -2134,11 +2193,13 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
     final isConfirmed = _clue['status'] == 'confirmed';
     final isDismissed = _clue['status'] == 'dismissed';
 
-    return Scaffold(
+    return BotanicalScaffold(
+      level: BotanicalLevel.tertiary,
+      mood: BotanicalMood.care,
       backgroundColor: AppColors.background,
       appBar: AppBar(
         actions: const [AppHeaderActions()],
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: GestureDetector(
           onTap: () => Navigator.maybePop(context),
@@ -2157,7 +2218,7 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
           ),
         ),
         title: Text(
-          'Detalhes do Avistamento',
+          'Avistamento',
           style: GoogleFonts.fredoka(
             fontSize: 20,
             fontWeight: FontWeight.w600,
@@ -2269,25 +2330,26 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
               children: [
                 Row(
                   children: [
-                    const Icon(
-                      LucideIcons.camera,
-                      size: 18,
-                      color: AppColors.textTitle,
+                    GatalogoArt.image(
+                      'icons/icon_camera_cream_coral',
+                      width: 38,
+                      height: 42,
                     ),
                     const SizedBox(width: AppSpacing.xs),
-                    Text(
-                      'Foto do Avistamento',
-                      style: GoogleFonts.fredoka(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textTitle,
+                    Expanded(
+                      child: Text(
+                        'Foto do Avistamento',
+                        style: GoogleFonts.fredoka(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textTitle,
+                        ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.md),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.photo),
+                GamePhotoMount(
                   child: PrivateCluePhoto(
                     path: widget.clue['photo_url'] as String,
                     session: widget.store.sessionStore,
@@ -2395,12 +2457,14 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
                         color: AppColors.primaryDark,
                       ),
                       const SizedBox(width: AppSpacing.xs),
-                      Text(
-                        'Comparar com ${myCat.displayName}',
-                        style: GoogleFonts.fredoka(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textTitle,
+                      Expanded(
+                        child: Text(
+                          'Comparar com ${myCat.displayName}',
+                          style: GoogleFonts.fredoka(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textTitle,
+                          ),
                         ),
                       ),
                     ],

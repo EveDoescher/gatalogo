@@ -1,8 +1,10 @@
+import 'services/experience_service.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+import 'widgets/illustrated_home_components.dart';
 
 import 'pages/auth_page.dart';
 import 'pages/capture_page.dart';
@@ -66,6 +68,18 @@ class _CatlogueAppState extends State<CatlogueApp> {
         scaffoldMessengerKey: _scaffoldMessengerKey,
         debugShowCheckedModeBanner: false,
         title: 'Gatálogo',
+        navigatorObservers: [ExperienceNavigatorObserver()],
+        builder: (context, child) => AnimatedBuilder(
+          animation: ExperienceService.instance,
+          builder: (context, _) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              disableAnimations:
+                  MediaQuery.disableAnimationsOf(context) ||
+                  !ExperienceService.instance.motion,
+            ),
+            child: child!,
+          ),
+        ),
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         // The screens use the warm light palette, including dialogs and inputs.
@@ -124,6 +138,8 @@ class _MainNavigationState extends State<MainNavigation>
 
     catStore = widget.catStore ?? CatStore(widget.sessionStore);
     catStore.loadCats();
+    unawaited(ExperienceService.instance.initialize());
+    ExperienceService.instance.selectTab(0);
 
     _fetchUnread();
     _msgSub = widget.sessionStore.webSocket.onMessage.listen(
@@ -173,7 +189,11 @@ class _MainNavigationState extends State<MainNavigation>
         catStore: catStore,
         onNavigate: _navigateTo,
       ),
-      SocialPage(sessionStore: widget.sessionStore, catStore: catStore),
+      SocialPage(
+        sessionStore: widget.sessionStore,
+        catStore: catStore,
+        onNavigate: _navigateTo,
+      ),
       CapturePage(catStore: catStore),
       LibraryPage(catStore: catStore),
       HabitatPage(
@@ -198,6 +218,7 @@ class _MainNavigationState extends State<MainNavigation>
 
   @override
   void dispose() {
+    ExperienceService.instance.routeChanged(null);
     _habitatActive.dispose();
     _openedNotificationSubscription?.cancel();
     _foregroundNotificationSubscription?.cancel();
@@ -209,6 +230,17 @@ class _MainNavigationState extends State<MainNavigation>
   }
 
   void _navigateTo(int index) {
+    if (index == 3 || index == 4) {
+      unawaited(
+        catStore.progress.track(
+          index == 3 ? 'collection_opened' : 'habitat_opened',
+        ),
+      );
+    }
+    ExperienceService.instance.selectTab(index);
+    if (index != 2) {
+      unawaited(catStore.refreshGamification());
+    }
     setState(() => currentIndex = index);
     _habitatActive.value = index == 4;
   }
@@ -237,128 +269,10 @@ class _MainNavigationState extends State<MainNavigation>
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(index: currentIndex, children: pages),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.background,
-          border: Border(
-            top: BorderSide(color: AppColors.borderLight, width: 1.2),
-          ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                _buildNavItem(0, LucideIcons.home, 'Início'),
-                _buildNavItem(
-                  1,
-                  LucideIcons.users,
-                  'Social',
-                  badgeCount: _unreadMessages,
-                ),
-                _buildNavItem(2, LucideIcons.camera, 'Gatalogar'),
-                _buildNavItem(3, LucideIcons.library, 'Coleção'),
-                _buildNavItem(4, LucideIcons.map, 'Habitat'),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(
-    int index,
-    IconData icon,
-    String label, {
-    int badgeCount = 0,
-  }) {
-    final isSelected = currentIndex == index;
-    final color = isSelected ? AppColors.primary : AppColors.textMedium;
-
-    return Expanded(
-      child: Semantics(
-        selected: isSelected,
-        button: true,
-        child: InkWell(
-          onTap: () => _navigateTo(index),
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: index == 2
-                            ? AppColors.greenButton
-                            : isSelected
-                            ? AppColors.primaryLight
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Icon(
-                        icon,
-                        size: 24,
-                        color: index == 2 ? Colors.white : color,
-                      ),
-                    ),
-                    if (badgeCount > 0)
-                      Positioned(
-                        right: -8,
-                        top: -4,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 1.5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.error,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          constraints: const BoxConstraints(
-                            minWidth: 16,
-                            minHeight: 16,
-                          ),
-                          child: Text(
-                            badgeCount > 99 ? '99+' : badgeCount.toString(),
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              height: 1,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.nunito(
-                    fontSize: 11,
-                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                    color: color,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => IllustratedNavigationScaffold(
+    body: IndexedStack(index: currentIndex, children: pages),
+    index: currentIndex,
+    unread: _unreadMessages,
+    onSelect: _navigateTo,
+  );
 }

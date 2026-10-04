@@ -89,6 +89,8 @@ void main() {
     expect(find.text('Confiança: 88%'), findsOneWidget);
 
     // 5. Toque na confiança abre o modal explicativo
+    await tester.ensureVisible(find.text('Confiança: 88%'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Confiança: 88%'));
     await tester.pumpAndSettle();
     expect(find.text('Confiança da IA (88%)'), findsOneWidget);

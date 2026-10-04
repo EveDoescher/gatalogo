@@ -9,6 +9,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../game/habitat_game.dart';
 import '../game/habitat_sprites.dart';
 import '../services/habitat_service.dart';
+import '../services/product_api_service.dart';
+import '../widgets/habitat_care_sheet.dart';
 import '../stores/cat_store.dart';
 import '../stores/session_store.dart';
 import '../theme/app_theme.dart';
@@ -84,7 +86,14 @@ class _HabitatPageState extends State<HabitatPage> {
     widget.active.removeListener(_updateActivity);
     _habitat.removeListener(_onHabitatChanged);
     if (widget.habitatService == null) _habitat.dispose();
+    if (widget.sprites == null) _sprites.catAnimations.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _game.reducedMotion = MediaQuery.disableAnimationsOf(context);
   }
 
   void _onHabitatChanged() {
@@ -118,12 +127,14 @@ class _HabitatPageState extends State<HabitatPage> {
       _habitat.items.where((item) => item.id == _selectedItemId).firstOrNull;
 
   HabitatItem? _itemAt((int, int) cell) {
+    HabitatItem? groundItem;
     for (final item in _habitat.items.reversed) {
       if (!item.isPlaced) {
         continue;
       }
       final type = _habitat.definition(item.sku);
-      if (type.isPath) {
+      if (type.isGround) {
+        if (_habitat.occupiedCells(item).contains(cell)) groundItem = item;
         continue;
       }
       final width = item.rotation.isOdd ? type.height : type.width;
@@ -135,7 +146,7 @@ class _HabitatPageState extends State<HabitatPage> {
         return item;
       }
     }
-    return null;
+    return groundItem;
   }
 
   String? _catAt((int, int) cell) {
@@ -225,15 +236,15 @@ class _HabitatPageState extends State<HabitatPage> {
     final item = _habitat.items.where((entry) => entry.id == id).firstOrNull;
     if (item == null) return;
     try {
-      final placed = _habitat.definition(item.sku).isPath
-          ? await _habitat.paintPath(item.sku, [cell]) > 0
+      final placed = _habitat.definition(item.sku).isGround
+          ? await _habitat.paintGround(item.sku, [cell]) > 0
           : await _habitat.place(
               id,
               cell.$1,
               cell.$2,
               id == _selectedItemId ? _rotation : item.rotation,
             );
-      if (placed && !_habitat.definition(item.sku).isPath) {
+      if (placed && !_habitat.definition(item.sku).isGround) {
         setState(_clearSelection);
       } else if (!placed) {
         _message('Esta posição não está disponível.');
@@ -260,9 +271,9 @@ class _HabitatPageState extends State<HabitatPage> {
     _clearPreview();
   }
 
-  Future<void> _paintPath(String sku, Iterable<(int, int)> cells) async {
+  Future<void> _paintGround(String sku, Iterable<(int, int)> cells) async {
     try {
-      final count = await _habitat.paintPath(sku, cells);
+      final count = await _habitat.paintGround(sku, cells);
       if (count == 0) _message('Sem trechos disponíveis nesta área.');
     } on HabitatConflictException {
       await _resolveConflict();
@@ -270,12 +281,23 @@ class _HabitatPageState extends State<HabitatPage> {
   }
 
   Future<void> _tapCell(Offset position) async {
-    if (!_editing) return;
+    if (!_editing) {
+      if (_game.catAtScreen(position) case final id?) {
+        await _showCatCare(id);
+      } else if (_game.itemAtScreen(position) case final item?) {
+        if (_habitat.isGrowingPlant(item)) {
+          await _showPlantCare(item);
+        } else if (_game.inviteToFurniture(item.id)) {
+          _message('Um gatinho está indo explorar esse cantinho.');
+        }
+      }
+      return;
+    }
     if (_selectedItem case final item?) {
       final cell = _game.cellAt(position);
       if (cell == null) return;
-      if (_habitat.definition(item.sku).isPath) {
-        await _paintPath(item.sku, [cell]);
+      if (_habitat.definition(item.sku).isGround) {
+        await _paintGround(item.sku, [cell]);
       } else {
         await _dropItem(item.id, cell);
       }
@@ -324,6 +346,110 @@ class _HabitatPageState extends State<HabitatPage> {
       setState(_clearSelection);
     } on HabitatConflictException {
       await _resolveConflict();
+    } on ProductApiException catch (error) {
+      _message(error.message);
+    }
+  }
+
+  Future<void> _showCatCare(String id) async {
+    final cat = _habitat.cats.where((cat) => cat.id == id).firstOrNull;
+    if (cat == null) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: AppColors.background,
+      builder: (sheetContext) => HabitatCareSheet(
+        habitat: _habitat,
+        cat: cat,
+        sprites: _sprites,
+        preference: _game.preference(id),
+        onAction: (action) {
+          Navigator.pop(sheetContext);
+          unawaited(_careForCat(id, action));
+        },
+      ),
+    );
+  }
+
+  Future<void> _careForCat(String id, String action) async {
+    try {
+      if (action == 'pet') {
+        await _habitat.interact(action, id);
+        await _game.greetCat(id);
+      } else {
+        _message('O gatinho vai até o potinho para comer.');
+        await _game.feedCat(id, treat: action == 'treat');
+      }
+      if (mounted) _message('Cuidado registrado. A afinidade aumentou!');
+    } on HabitatConflictException {
+      if (mounted) await _resolveConflict();
+    } on ProductApiException catch (error) {
+      if (mounted) _message(error.message);
+    }
+  }
+
+  Future<void> _showPlantCare(HabitatItem item) async {
+    final growAt = _habitat.growsAt(item);
+    final mature = _habitat.isMature(item);
+    final hours = growAt == null
+        ? 12
+        : ((growAt.difference(_habitat.serverNow).inMinutes / 60).ceil()).clamp(
+            0,
+            12,
+          );
+    final water = await showModalBottomSheet<bool>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: AppColors.background,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                _habitat.definition(item.sku).name,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                mature
+                    ? 'Sua planta cresceu e pode receber a visita de abelhinhas.'
+                    : growAt == null
+                    ? 'A primeira rega começa o crescimento. Ela ficará adulta em 12 horas.'
+                    : 'Cresce em até $hours horas. Outra rega depois de 6 horas antecipa o crescimento.',
+              ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: _habitat.canWater(item) && !_habitat.offline
+                    ? () => Navigator.pop(sheetContext, true)
+                    : null,
+                icon: const Icon(LucideIcons.droplets),
+                label: Text(
+                  mature
+                      ? 'Planta adulta'
+                      : _habitat.offline
+                      ? 'Conecte-se para regar'
+                      : _habitat.canWater(item)
+                      ? 'Regar'
+                      : 'Regada recentemente',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (water != true || !mounted) return;
+    try {
+      await _habitat.interact('water', item.id);
+      if (mounted) _message('Canteiro regado.');
+    } on HabitatConflictException {
+      if (mounted) await _resolveConflict();
+    } on ProductApiException catch (error) {
+      if (mounted) _message(error.message);
     }
   }
 
@@ -429,7 +555,7 @@ class _HabitatPageState extends State<HabitatPage> {
         _scaleStart = _game.zoom;
         _pathStroke.clear();
         if (_selectedItem case final item?) {
-          if (_habitat.definition(item.sku).isPath) {
+          if (_habitat.definition(item.sku).isGround) {
             if (_game.cellAt(details.localFocalPoint) case final cell?) {
               _extendPathStroke(cell);
             }
@@ -444,7 +570,7 @@ class _HabitatPageState extends State<HabitatPage> {
           );
           setState(() {});
         } else if (_selectedItem case final item?) {
-          if (_habitat.definition(item.sku).isPath) {
+          if (_habitat.definition(item.sku).isGround) {
             if (_game.cellAt(details.localFocalPoint) case final cell?) {
               _extendPathStroke(cell);
             }
@@ -457,8 +583,9 @@ class _HabitatPageState extends State<HabitatPage> {
       },
       onScaleEnd: (_) {
         if (_selectedItem case final item?) {
-          if (_habitat.definition(item.sku).isPath && _pathStroke.isNotEmpty) {
-            unawaited(_paintPath(item.sku, Set.of(_pathStroke)));
+          if (_habitat.definition(item.sku).isGround &&
+              _pathStroke.isNotEmpty) {
+            unawaited(_paintGround(item.sku, Set.of(_pathStroke)));
           } else if (_hovered case final cell?) {
             unawaited(_dropItem(item.id, cell));
           }
@@ -715,7 +842,13 @@ class _HabitatPageState extends State<HabitatPage> {
           .clamp(8.0, (_game.size.x - 112).clamp(8.0, double.infinity))
           .toDouble(),
       top: (point.dy - _game.tileWidth * 1.65)
-          .clamp(78.0, (_game.size.y - 70).clamp(78.0, double.infinity))
+          .clamp(
+            78.0,
+            (_game.size.y - MediaQuery.paddingOf(context).bottom - 70).clamp(
+              78.0,
+              double.infinity,
+            ),
+          )
           .toDouble(),
       child: Material(
         color: AppColors.surface,
@@ -757,7 +890,7 @@ class _HabitatPageState extends State<HabitatPage> {
     return Positioned(
       left: 0,
       right: 0,
-      bottom: 0,
+      bottom: MediaQuery.paddingOf(context).bottom,
       child: Container(
         height: 202,
         decoration: const BoxDecoration(
@@ -971,10 +1104,7 @@ class _HabitatPageState extends State<HabitatPage> {
         if (_habitat.loading) const Center(child: CircularProgressIndicator()),
         if (_editing) _selectedControls(),
         if (_tray != _HabitatTray.none) _trayPanel(),
-        SafeArea(
-          bottom: false,
-          child: Stack(children: [_hud(), _floatingMenu()]),
-        ),
+        SafeArea(child: Stack(children: [_hud(), _floatingMenu()])),
         if (_showShop)
           Positioned.fill(
             child: HabitatShopPage(

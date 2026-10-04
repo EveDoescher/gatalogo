@@ -1,3 +1,6 @@
+import '../widgets/botanical_scene.dart';
+import '../widgets/game_components.dart';
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -15,6 +18,7 @@ import '../widgets/app_widgets.dart';
 import '../widgets/post_composer.dart';
 import '../widgets/app_header_actions.dart';
 import 'cat_gallery_page.dart';
+import 'discovery_result_page.dart';
 import 'location_page.dart';
 
 class CatDetailsPage extends StatefulWidget {
@@ -485,52 +489,33 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
             ? '$locationStreet, $locationCity'
             : locationStreet;
 
-        return Scaffold(
+        return BotanicalScaffold(
+          mood: BotanicalMood.album,
           backgroundColor: AppColors.background,
           body: Stack(
             children: [
-              Positioned(
-                right: -25,
-                bottom: 80,
-                child: IgnorePointer(
-                  child: Opacity(
-                    opacity: 0.85,
-                    child: Image.asset(
-                      'assets/images/Folha_6.png',
-                      width: 170,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: -30,
-                bottom: 240,
-                child: IgnorePointer(
-                  child: Opacity(
-                    opacity: 0.75,
-                    child: Image.asset(
-                      'assets/images/Folha_1.png',
-                      width: 90,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-              ),
-
               SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Stack(
                       children: [
-                        SizedBox(
-                          height: 330,
-                          width: double.infinity,
-                          child: CatPhotoView(
-                            cat.photoPath,
-                            height: 330,
-                            fit: BoxFit.cover,
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            18,
+                            68 + MediaQuery.paddingOf(context).top,
+                            18,
+                            28,
+                          ),
+                          child: GamePhotoCard(
+                            cat: cat,
+                            height: 220,
+                            showName: false,
+                            onTap: () => showFullscreenImage(
+                              context,
+                              imagePath: cat.photoPath,
+                              title: cat.displayName,
+                            ),
                           ),
                         ),
                         Positioned(
@@ -649,6 +634,69 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
+                            ListTile(
+                              leading: GatalogoArt.image(
+                                'ui/ui_notebook_cat',
+                                width: 42,
+                                height: 46,
+                              ),
+                              title: const Text('História e resultado'),
+                              subtitle: Text(
+                                '${widget.catStore.photosOf(cat).length} foto(s) deste indivíduo',
+                              ),
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  settings: const RouteSettings(
+                                    name: '/result',
+                                  ),
+                                  builder: (_) => DiscoveryResultPage(
+                                    store: widget.catStore,
+                                    catId: cat.id,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (widget.catStore.photosOf(cat).length > 1)
+                              SizedBox(
+                                height: 86,
+                                child: ListView(
+                                  scrollDirection: Axis.horizontal,
+                                  children: [
+                                    for (final photo
+                                        in widget.catStore.photosOf(cat))
+                                      Padding(
+                                        padding: const EdgeInsets.all(4),
+                                        child: InkWell(
+                                          onTap: () => Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              settings: const RouteSettings(
+                                                name: '/result',
+                                              ),
+                                              builder: (_) =>
+                                                  DiscoveryResultPage(
+                                                    store: widget.catStore,
+                                                    catId: photo.id,
+                                                  ),
+                                            ),
+                                          ),
+                                          child: Image.file(
+                                            File(photo.photoPath),
+                                            width: 76,
+                                            height: 76,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, _, _) =>
+                                                const Icon(
+                                                  Icons.photo_outlined,
+                                                ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+
                             Container(
                               padding: const EdgeInsets.all(22),
                               decoration: BoxDecoration(
@@ -690,7 +738,7 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                                 ),
                                                 const SizedBox(width: 4),
                                                 Image.asset(
-                                                  'assets/images/Folha_3.png',
+                                                  'assets/gatalogo_asset_library/flora/flora_leaves_loose_pale_two.png',
                                                   width: 22,
                                                   fit: BoxFit.contain,
                                                 ),

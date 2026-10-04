@@ -7,9 +7,15 @@ import '../pages/notifications_page.dart';
 import '../theme/app_theme.dart';
 
 class InboxButton extends StatelessWidget {
-  const InboxButton({super.key, required this.store, this.size = 42});
+  const InboxButton({
+    super.key,
+    required this.store,
+    this.size = 42,
+    this.illustrated = false,
+  });
   final CatStore store;
   final double size;
+  final bool illustrated;
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -29,8 +35,13 @@ class InboxButton extends StatelessWidget {
             height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.surface,
-              border: Border.all(color: AppColors.borderProfile, width: 1.4),
+              color: illustrated ? const Color(0xFFFBF6E8) : AppColors.surface,
+              border: Border.all(
+                color: illustrated
+                    ? const Color(0xFF94724E)
+                    : AppColors.borderProfile,
+                width: illustrated ? 1.8 : 1.4,
+              ),
             ),
             child: Stack(
               alignment: Alignment.center,

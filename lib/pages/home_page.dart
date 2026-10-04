@@ -1,16 +1,16 @@
+import '../widgets/botanical_scene.dart';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../models/cat.dart';
-import '../models/cat_analysis.dart';
 import '../stores/cat_store.dart';
 import '../stores/session_store.dart';
-import '../theme/app_theme.dart';
 import '../widgets/active_search_proximity_card.dart';
 import '../widgets/app_widgets.dart';
-import '../widgets/gatalogo_gamification.dart';
 import '../widgets/inbox_button.dart';
+import '../widgets/illustrated_home_components.dart';
 import 'cat_details_page.dart';
 import 'journey_page.dart';
 import 'location_page.dart';
@@ -23,505 +23,548 @@ class HomePage extends StatelessWidget {
     required this.catStore,
     required this.onNavigate,
   });
-
   final SessionStore sessionStore;
   final CatStore catStore;
   final ValueChanged<int> onNavigate;
-
   void _open(BuildContext context, Widget page) =>
       Navigator.push(context, MaterialPageRoute(builder: (_) => page));
 
-  String _getTimeBasedGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour >= 5 && hour < 12) return 'Bom dia';
-    if (hour >= 12 && hour < 18) return 'Boa tarde';
-    return 'Boa noite';
-  }
-
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: AnimatedBuilder(
-          animation: Listenable.merge([catStore, sessionStore]),
-          builder: (context, _) {
-            final discoveries = catStore.discoveries;
-            final catCount = discoveries.length;
-            final nextMilestone = catCount < 10
-                ? 10
-                : ((catCount ~/ 10) + 1) * 10;
-            final progress = (catCount / nextMilestone).clamp(0.0, 1.0);
-            final greeting = _getTimeBasedGreeting();
-            final name =
-                sessionStore.session?.email.split('@').first ?? 'Explorador';
-
-            return RefreshIndicator(
-              color: AppColors.primary,
-              onRefresh: () async {
-                await catStore.syncCatalog(manual: true);
-                await catStore.refreshNotifications();
-                await catStore.refreshGamification();
-              },
-              child: ListView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
-                ),
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/images/Logo.png',
-                        height: 40,
-                        fit: BoxFit.contain,
-                      ),
-                      const Spacer(),
-                      InboxButton(store: catStore, size: 42),
-                      const SizedBox(width: 10),
-                      UserAvatarButton(
-                        sessionStore: sessionStore,
-                        catStore: catStore,
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '$greeting, $name!',
-                        style: GoogleFonts.nunito(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Bora explorar?',
-                        style: GoogleFonts.nunito(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textTitle,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _ShortcutCard(
-                        backgroundColor: AppColors.shortcutGreenBg,
-                        iconColor: AppColors.shortcutGreenIcon,
-                        icon: Icons.pets,
-                        title: 'Meus Gatos',
-                        subtitle: 'Quem mora com você e registros especiais.',
-                        onTap: () =>
-                            _open(context, MyCatsPage(store: catStore)),
-                      ),
-                      const SizedBox(height: 12),
-                      _ShortcutCard(
-                        backgroundColor: AppColors.shortcutPinkBg,
-                        iconColor: AppColors.shortcutPinkIcon,
-                        icon: LucideIcons.mapPin,
-                        title: 'Avistamentos',
-                        subtitle: 'Veja onde você e outros encontraram gatos.',
-                        onTap: () => _open(
-                          context,
-                          LocationPage(catStore: catStore, readOnly: true),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-                  ActiveSearchProximityCard(
-                    sessionStore: sessionStore,
-                    catStore: catStore,
-                  ),
-
-                  const SizedBox(height: 14),
-                  GatalogoGamificationCard(
-                    gamification: catStore.gamification,
-                    onTapJourney: () =>
-                        _open(context, JourneyPage(store: catStore)),
-                  ),
-
-                  const SizedBox(height: 14),
-                  GestureDetector(
-                    onTap: () => onNavigate(3),
-                    child: Container(
-                      clipBehavior: Clip.antiAlias,
-                      decoration: BoxDecoration(
-                        color: AppColors.primarySoftBg,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Stack(
-                        children: [
-                          Positioned(
-                            right: -10,
-                            top: -6,
-                            child: IgnorePointer(
-                              child: Transform.rotate(
-                                angle: 2.70,
-                                child: Image.asset(
-                                  'assets/images/Folha_2.png',
-                                  width: 138,
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: HomeArt.background,
+    body: DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [HomeArt.paper, HomeArt.background],
+          stops: [0, .5],
+        ),
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Positioned.fill(
+            child: IgnorePointer(
+              child: GatalogoArt.image(
+                'backgrounds/background_garden_frame',
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: AnimatedBuilder(
+              animation: Listenable.merge([catStore, sessionStore]),
+              builder: (context, _) => LayoutBuilder(
+                builder: (context, viewport) {
+                  final width = viewport.maxWidth.clamp(0.0, 560.0);
+                  final scale = width / 390;
+                  final progress = catStore.gamification;
+                  final hasProgress = catStore.progress.summary.containsKey(
+                    'xp',
+                  );
+                  final missions = catStore.progress.dailyMissions;
+                  final mission =
+                      missions
+                          .where((m) => m['completed'] != true)
+                          .firstOrNull ??
+                      missions.firstOrNull;
+                  final last = catStore.discoveries.firstOrNull;
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      await catStore.syncCatalog(manual: true);
+                      await catStore.refreshGamification();
+                      await catStore.refreshNotifications();
+                    },
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Center(
+                        child: SizedBox(
+                          width: width,
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              10 * scale,
+                              7 * scale,
+                              10 * scale,
+                              22 * scale + MediaQuery.paddingOf(context).bottom,
                             ),
-                          ),
-                          Positioned(
-                            left: 122,
-                            bottom: -12,
-                            child: IgnorePointer(
-                              child: Transform.flip(
-                                flipX: true,
-                                child: Transform.rotate(
-                                  angle: -0.05,
-                                  child: Image.asset(
-                                    'assets/images/Folha_1.png',
-                                    width: 90,
-                                    fit: BoxFit.contain,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                Text(
-                                  'Sua Coleção',
-                                  style: GoogleFonts.nunito(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.textTitle,
+                                Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 10 * scale,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Image.asset(
+                                        'assets/gatalogo_asset_library/branding/brand_gatalogo_logo.png',
+                                        width: 143 * scale,
+                                        fit: BoxFit.contain,
+                                      ),
+                                      const Spacer(),
+                                      InboxButton(
+                                        store: catStore,
+                                        size: 42 * scale,
+                                        illustrated: true,
+                                      ),
+                                      SizedBox(width: 6 * scale),
+                                      UserAvatarButton(
+                                        sessionStore: sessionStore,
+                                        catStore: catStore,
+                                        size: 51 * scale,
+                                        framed: true,
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            '$catCount',
-                                            style: GoogleFonts.nunito(
-                                              fontSize: 44,
-                                              fontWeight: FontWeight.w800,
-                                              color: AppColors.primaryDark,
-                                              height: 0.95,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            'Gatos catalogados',
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: GoogleFonts.nunito(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w800,
-                                              color: AppColors.primaryDark,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Image.asset(
-                                      'assets/images/gato_2.png',
-                                      height: 80,
-                                      fit: BoxFit.contain,
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 14),
-                                Row(
-                                  children: [
-                                    const Spacer(),
-                                    Flexible(
-                                      child: ConstrainedBox(
-                                        constraints: const BoxConstraints(
-                                          maxWidth: 165,
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                SizedBox(height: 3 * scale),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 2 * scale,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 76 * scale,
+                                        height: 58 * scale,
+                                        child: Stack(
+                                          alignment: Alignment.center,
                                           children: [
-                                            Container(
-                                              height: 11,
-                                              decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                borderRadius:
-                                                    BorderRadius.circular(
-                                                      AppRadius.sm,
-                                                    ),
-                                                border: Border.all(
-                                                  color: AppColors.textMedium,
-                                                  width: 1.2,
-                                                ),
-                                              ),
-                                              child: ClipRRect(
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                                child: LinearProgressIndicator(
-                                                  value: progress,
-                                                  backgroundColor:
-                                                      Colors.transparent,
-                                                  valueColor:
-                                                      const AlwaysStoppedAnimation<
-                                                        Color
-                                                      >(
-                                                        AppColors.greenProgress,
-                                                      ),
-                                                ),
-                                              ),
+                                            Positioned.fill(
+                                              child: HomeArt.image('Badge'),
                                             ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              'Próxima conquista: $nextMilestone gatos.',
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: GoogleFonts.nunito(
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColors.textMedium,
+                                            Transform.translate(
+                                              offset: Offset(
+                                                1 * scale,
+                                                -3 * scale,
+                                              ),
+                                              child: Text(
+                                                hasProgress
+                                                    ? '${progress.level}'
+                                                    : '—',
+                                                style: HomeArt.title(26 * scale)
+                                                    .copyWith(height: 1),
                                               ),
                                             ),
                                           ],
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                      SizedBox(width: 3 * scale),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              hasProgress
+                                                  ? progress.levelTitle
+                                                  : 'Sua jornada',
+                                              style: HomeArt.title(17 * scale),
+                                            ),
+                                            SizedBox(height: 5 * scale),
+                                            IllustratedProgress(
+                                              current: hasProgress
+                                                  ? progress.currentLevelXp
+                                                  : 0,
+                                              target:
+                                                  progress.currentLevelTargetXp,
+                                              label: hasProgress
+                                                  ? '${progress.xp} / ${progress.targetXp} XP'
+                                                  : 'XP indisponível',
+                                              height: 18 * scale,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      SizedBox(width: 8 * scale),
+                                      Semantics(
+                                        button: true,
+                                        label: 'Moedas do Habitat',
+                                        child: InkWell(
+                                          onTap: () => onNavigate(4),
+                                          borderRadius: BorderRadius.circular(
+                                            24,
+                                          ),
+                                          child: Container(
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 4 * scale,
+                                              vertical: 3 * scale,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFFFF2D7),
+                                              borderRadius:
+                                                  BorderRadius.circular(25),
+                                              border: Border.all(
+                                                color: const Color(0xFFCC994D),
+                                                width: 1.4,
+                                              ),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                HomeArt.image(
+                                                  'Coin',
+                                                  width: 25 * scale,
+                                                  height: 25 * scale,
+                                                ),
+                                                Padding(
+                                                  padding: EdgeInsets.symmetric(
+                                                    horizontal: 6 * scale,
+                                                  ),
+                                                  child: Text(
+                                                    '${catStore.progress.summary['balance'] ?? '—'}',
+                                                    style: HomeArt.title(
+                                                      17 * scale,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Container(
+                                                  padding: const EdgeInsets.all(
+                                                    2,
+                                                  ),
+                                                  decoration:
+                                                      const BoxDecoration(
+                                                        color: HomeArt.green,
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                  child: Icon(
+                                                    Icons.add_rounded,
+                                                    size: 20 * scale,
+                                                    color: HomeArt.paper,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
+                                ActiveSearchProximityCard(
+                                  sessionStore: sessionStore,
+                                  catStore: catStore,
+                                ),
+                                SizedBox(height: 4 * scale),
+                                _DailyBoard(
+                                  mission: mission,
+                                  scale: scale,
+                                  signedIn: sessionStore.isSignedIn,
+                                  onTap: () => _open(
+                                    context,
+                                    JourneyPage(store: catStore),
+                                  ),
+                                ),
+                                _SectionHeading(
+                                  title: 'Suas conquistas',
+                                  action: 'Ver mural',
+                                  icon: LucideIcons.sprout,
+                                  scale: scale,
+                                  onTap: () => _open(
+                                    context,
+                                    JourneyPage(store: catStore),
+                                  ),
+                                ),
+                                SizedBox(height: 5 * scale),
+                                _AchievementShelf(
+                                  challenges: catStore.progress.challenges,
+                                  scale: scale,
+                                  onTap: () => _open(
+                                    context,
+                                    JourneyPage(store: catStore),
+                                  ),
+                                ),
+                                SizedBox(height: 31 * scale),
+                                IllustratedCaptureButton(
+                                  onTap: () => onNavigate(2),
+                                ),
+                                SizedBox(height: 24 * scale),
+                                IntrinsicHeight(
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Expanded(
+                                        child: _IllustratedShortcut(
+                                          title: 'Meus Gatos',
+                                          art: 'Photo',
+                                          scale: scale,
+                                          description:
+                                              'Ver e gerenciar meus gatos.',
+                                          detail:
+                                              '${catStore.pets.length} ${catStore.pets.length == 1 ? 'gato' : 'gatos'}',
+                                          onTap: () => _open(
+                                            context,
+                                            MyCatsPage(store: catStore),
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 8 * scale),
+                                      Expanded(
+                                        child: _IllustratedShortcut(
+                                          title: 'Meu Mapa',
+                                          art: 'Map',
+                                          scale: scale,
+                                          description: 'Descobrir onde os gatos foram encontrados.',
+                                          onTap: () => _open(
+                                            context,
+                                            LocationPage(
+                                              catStore: catStore,
+                                              readOnly: true,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(height: 17 * scale),
+                                _SectionHeading(
+                                  title: 'Última descoberta',
+                                  action: 'Ver todas',
+                                  icon: Icons.pets_rounded,
+                                  scale: scale,
+                                  pink: true,
+                                  onTap: () => onNavigate(3),
+                                ),
+                                SizedBox(height: 7 * scale),
+                                if (last != null)
+                                  _LatestDiscovery(
+                                    cat: last,
+                                    scale: scale,
+                                    onTap: () => _open(
+                                      context,
+                                      CatDetailsPage(
+                                        cat: last,
+                                        catStore: catStore,
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  Container(
+                                    padding: EdgeInsets.all(16 * scale),
+                                    decoration: BoxDecoration(
+                                      color: HomeArt.paper,
+                                      border: Border.all(
+                                        color: HomeArt.edge,
+                                        width: 1.5,
+                                      ),
+                                      borderRadius: BorderRadius.circular(13),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        HomeArt.image(
+                                          'Photo',
+                                          width: 66 * scale,
+                                        ),
+                                        SizedBox(width: 14 * scale),
+                                        Expanded(
+                                          child: Text(
+                                            'Sua primeira descoberta vai aparecer aqui.',
+                                            style: HomeArt.title(17 * scale),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                SizedBox(height: 42 * scale),
                               ],
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-                  Text(
-                    'Descobertas Recentes',
-                    style: GoogleFonts.nunito(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textDark,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  if (discoveries.isEmpty)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 24,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.cardBackground,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: AppColors.borderLight,
-                          width: 1.2,
                         ),
                       ),
-                      child: Column(
-                        children: [
-                          Text(
-                            'Nenhum gato catalogado ainda.',
-                            style: GoogleFonts.nunito(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textMedium,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          ElevatedButton.icon(
-                            onPressed: () => onNavigate(2),
-                            icon: const Icon(LucideIcons.camera, size: 18),
-                            label: const Text('Gatalogar primeiro gato'),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 18,
-                                vertical: 10,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.pill,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    SizedBox(
-                      height: 152,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: discoveries.take(6).length,
-                        separatorBuilder: (_, _) => const SizedBox(width: 14),
-                        itemBuilder: (context, index) {
-                          final cat = discoveries[index];
-                          return _RecentCatCard(
-                            cat: cat,
-                            analysis: catStore.analysisFor(cat.id),
-                            onTap: () => _open(
-                              context,
-                              CatDetailsPage(cat: cat, catStore: catStore),
-                            ),
-                          );
-                        },
-                      ),
                     ),
-
-                  const SizedBox(height: 20),
-
-                  const SizedBox(height: 20),
-                ],
+                  );
+                },
               ),
-            );
-          },
-        ),
+            ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
 }
 
-class _RecentCatCard extends StatelessWidget {
-  const _RecentCatCard({required this.cat, this.analysis, required this.onTap});
-
-  final Cat cat;
-  final CatAnalysis? analysis;
+class _DailyBoard extends StatelessWidget {
+  const _DailyBoard({
+    required this.mission,
+    required this.scale,
+    required this.signedIn,
+    required this.onTap,
+  });
+  final Map<String, dynamic>? mission;
+  final double scale;
+  final bool signedIn;
   final VoidCallback onTap;
-
-  RarityLevel _determineRarity() {
-    if (analysis == null) return RarityLevel.common;
-    if (analysis!.colors.length >= 3) return RarityLevel.legendary;
-    final coat = (analysis!.coatType ?? '').toLowerCase();
-    if (coat.contains('carey') ||
-        coat.contains('calico') ||
-        coat.contains('quimera')) {
-      return RarityLevel.legendary;
-    }
-    if (analysis!.colors.length == 2 ||
-        coat.contains('bicolor') ||
-        coat.contains('point')) {
-      return RarityLevel.rare;
-    }
-    if (coat.contains('tabby') || coat.contains('tigrado')) {
-      return RarityLevel.uncommon;
-    }
-    return RarityLevel.common;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final rarity = _determineRarity();
-    final isSpecial = rarity != RarityLevel.common;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 148,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isSpecial ? rarity.color : AppColors.borderLight,
-            width: isSpecial ? 2.0 : 1.2,
-          ),
-          boxShadow: isSpecial
-              ? [
-                  BoxShadow(
-                    color: rarity.color.withValues(alpha: 0.18),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        padding: const EdgeInsets.fromLTRB(6, 6, 6, 4),
-        child: Column(
+    final enlarged = MediaQuery.textScalerOf(context).scale(1) > 1.2;
+    final done = mission?['completed'] == true;
+    final title = mission?['title'] as String? ?? 'Missões indisponíveis';
+    final description = mission == null
+        ? (signedIn
+              ? 'Sincronize para carregar a jornada de hoje.'
+              : 'Entre na sua conta para ver suas missões.')
+        : mission?['description'] as String? ??
+              (done
+                  ? 'Sua jornada de hoje está guardada.'
+                  : 'Encontre e fotografe um gato no seu dia.');
+    final reward = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('Recompensas', style: HomeArt.title(11 * scale)),
+        SizedBox(height: 5 * scale),
+        Row(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  child: SizedBox(
-                    height: 90,
-                    width: double.infinity,
-                    child: CatPhotoView(cat.photoPath, fit: BoxFit.cover),
-                  ),
-                ),
-                if (isSpecial)
-                  Positioned(
-                    top: 4,
-                    left: 4,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 5,
-                        vertical: 1.5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: rarity.backgroundColor.withValues(alpha: 0.92),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: rarity.color, width: 0.8),
-                      ),
-                      child: Text(
-                        rarity.label,
-                        style: TextStyle(
-                          fontSize: 8,
-                          fontWeight: FontWeight.w800,
-                          color: rarity.color,
+            _RewardToken(
+              art: 'Star',
+              label: mission == null
+                  ? '— XP'
+                  : '+${mission!['xp_reward'] ?? 0} XP',
+              scale: scale,
+            ),
+            SizedBox(width: 5 * scale),
+            _RewardToken(
+              art: 'Coin',
+              label: mission == null ? '—' : '+${mission!['coin_reward'] ?? 0}',
+              scale: scale,
+            ),
+          ],
+        ),
+      ],
+    );
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(title, style: HomeArt.title(12.5 * scale)),
+        SizedBox(height: 4 * scale),
+        Text(
+          description,
+          style: GoogleFonts.nunito(
+            fontSize: 10.5 * scale,
+            height: 1.12,
+            color: HomeArt.ink,
+          ),
+        ),
+        SizedBox(height: 4 * scale),
+        if (mission != null)
+          IllustratedProgress(
+            current: mission?['progress'] as num? ?? 0,
+            target: mission?['target'] as num? ?? 1,
+            height: 15 * scale,
+          ),
+      ],
+    );
+    if (!enlarged) {
+      return LayoutBuilder(
+        builder: (context, box) {
+          final w = box.maxWidth;
+          // Supplied artwork: 1478 x 520. Content follows its open paper areas.
+          return Semantics(
+            button: true,
+            child: InkWell(
+              onTap: onTap,
+              child: SizedBox(
+                height: w * 520 / 1478,
+                child: Stack(
+                  children: [
+                    Positioned.fill(child: HomeArt.image('Card')),
+                    Positioned(
+                      left: w * .29,
+                      top: w * .047,
+                      width: w * .30,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Jornada de hoje',
+                          style: HomeArt.title(15 * scale)
+                              .copyWith(color: HomeArt.paper),
                         ),
                       ),
                     ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      cat.displayName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.nunito(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textTitle,
+                    Positioned(
+                      left: w * .085,
+                      top: w * .137,
+                      width: w * .15,
+                      height: w * .17,
+                      child: HomeArt.image('Board'),
+                    ),
+                    Positioned(
+                      left: w * .245,
+                      top: w * .133,
+                      width: w * .385,
+                      bottom: w * .045,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: SizedBox(width: w * .385, child: content),
                       ),
                     ),
+                    Positioned(
+                      left: w * .675,
+                      top: w * .133,
+                      width: w * .25,
+                      bottom: w * .045,
+                      child: FittedBox(fit: BoxFit.scaleDown, child: reward),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
+    return Semantics(
+      button: true,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(28),
+        child: Stack(
+          children: [
+            Positioned.fill(child: HomeArt.image('Card', fit: BoxFit.fill)),
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                29 * scale,
+                19 * scale,
+                27 * scale,
+                20 * scale,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(left: 67 * scale),
+                    child: Text(
+                      'Jornada de hoje',
+                      style: HomeArt.title(17 * scale)
+                          .copyWith(color: HomeArt.paper),
+                    ),
                   ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    LucideIcons.pawPrint,
-                    size: 15,
-                    color: isSpecial ? rarity.color : AppColors.primary,
-                  ),
+                  SizedBox(height: 21 * scale),
+                  if (enlarged) ...[
+                    content,
+                    SizedBox(height: 12 * scale),
+                    Align(alignment: Alignment.centerRight, child: reward),
+                  ] else
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        HomeArt.image(
+                          'Board',
+                          width: 60 * scale,
+                          height: 78 * scale,
+                        ),
+                        SizedBox(width: 6 * scale),
+                        Expanded(child: content),
+                        SizedBox(width: 22 * scale),
+                        reward,
+                      ],
+                    ),
                 ],
               ),
             ),
@@ -532,74 +575,443 @@ class _RecentCatCard extends StatelessWidget {
   }
 }
 
-class _ShortcutCard extends StatelessWidget {
-  const _ShortcutCard({
-    required this.backgroundColor,
-    required this.iconColor,
-    required this.icon,
+class _RewardToken extends StatelessWidget {
+  const _RewardToken({
+    required this.art,
+    required this.label,
+    required this.scale,
+  });
+  final String art, label;
+  final double scale;
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      Container(
+        width: 39 * scale,
+        height: 40 * scale,
+        padding: EdgeInsets.all(3 * scale),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEFE6CC),
+          borderRadius: BorderRadius.circular(9),
+        ),
+        child: HomeArt.image(art),
+      ),
+      SizedBox(height: 4 * scale),
+      Text(
+        label,
+        style: GoogleFonts.nunito(
+          fontSize: 10 * scale,
+          fontWeight: FontWeight.w900,
+          color: HomeArt.ink,
+        ),
+      ),
+    ],
+  );
+}
+
+class _SectionHeading extends StatelessWidget {
+  const _SectionHeading({
     required this.title,
-    required this.subtitle,
+    required this.action,
+    required this.icon,
+    required this.scale,
+    required this.onTap,
+    this.pink = false,
+  });
+  final String title, action;
+  final IconData icon;
+  final double scale;
+  final VoidCallback onTap;
+  final bool pink;
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Icon(
+        icon,
+        size: 19 * scale,
+        color: pink ? const Color(0xFFE78DA1) : const Color(0xFF64894B),
+      ),
+      SizedBox(width: 6 * scale),
+      Expanded(child: Text(title, style: HomeArt.title(16 * scale))),
+      TextButton(
+        onPressed: onTap,
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.zero,
+          minimumSize: const Size(44, 32),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              action,
+              style: GoogleFonts.nunito(
+                fontSize: 12 * scale,
+                fontWeight: FontWeight.w800,
+                color: HomeArt.green,
+              ),
+            ),
+            Icon(
+              LucideIcons.chevronRight,
+              size: 17 * scale,
+              color: HomeArt.green,
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+class _AchievementShelf extends StatelessWidget {
+  const _AchievementShelf({
+    required this.challenges,
+    required this.scale,
     required this.onTap,
   });
-
-  final Color backgroundColor;
-  final Color iconColor;
-  final IconData icon;
-  final String title;
-  final String subtitle;
+  final List<Map<String, dynamic>> challenges;
+  final double scale;
   final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      if (challenges.isEmpty)
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 14 * scale),
+            child: Text(
+              'Suas conquistas aparecem após sincronizar a conta.',
+              style: GoogleFonts.nunito(
+                fontSize: 12 * scale,
+                color: HomeArt.ink,
+              ),
+            ),
+          ),
+        ),
+      for (var i = 0; i < challenges.length && i < 5; i++)
+        Expanded(
+          child: Builder(
+            builder: (context) {
+              final goal = i < challenges.length ? challenges[i] : null;
+              final earned = goal?['completed'] == true;
+              final started = (goal?['progress'] as num? ?? 0) > 0;
+              return Semantics(
+                button: true,
+                label: goal == null
+                    ? 'Carregar conquistas'
+                    : '${goal['title']}: ${goal['progress']} de ${goal['target']}',
+                child: InkWell(
+                  onTap: onTap,
+                  borderRadius: BorderRadius.circular(40),
+                  child: SizedBox(
+                    height: 66 * scale,
+                    child: Stack(
+                      alignment: Alignment.topCenter,
+                      children: [
+                        Container(
+                          width: 58 * scale,
+                          height: 58 * scale,
+                          padding: EdgeInsets.all(5 * scale),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: earned || started
+                                ? const Color(0xFFFFDFA2)
+                                : const Color(0xFFE8D6B7),
+                            border: Border.all(
+                              color: earned || started
+                                  ? const Color(0xFFAD7F45)
+                                  : const Color(0xFFC7AA85),
+                              width: 1.4,
+                            ),
+                          ),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: i == 0 && (earned || started)
+                                  ? const Color(0xFFF8C8BD)
+                                  : const Color(0xFFF0E8CE),
+                              border: Border.all(
+                                color: const Color(0xFFD6C6A5),
+                                width: 1.4,
+                              ),
+                            ),
+                            child: i == 0 && (earned || started)
+                                ? Padding(
+                                    padding: const EdgeInsets.all(3),
+                                    child: HomeArt.image('Cat'),
+                                  )
+                                : Icon(
+                                    [
+                                      Icons.pets_rounded,
+                                      LucideIcons.sprout,
+                                      LucideIcons.camera,
+                                      Icons.favorite_rounded,
+                                      LucideIcons.house,
+                                    ][i],
+                                    size: 28 * scale,
+                                    color: earned
+                                        ? HomeArt.green
+                                        : const Color(0xFFAFA58B),
+                                  ),
+                          ),
+                        ),
+                        if (earned || started)
+                          Positioned(
+                            bottom: 0,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12 * scale,
+                                vertical: 2 * scale,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFBD956C),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '${goal?['progress']} / ${goal?['target']}',
+                                style: GoogleFonts.nunito(
+                                  fontSize: 10 * scale,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          Positioned(
+                            right: 1 * scale,
+                            bottom: 1 * scale,
+                            child: Container(
+                              padding: EdgeInsets.all(2 * scale),
+                              decoration: const BoxDecoration(
+                                color: HomeArt.paper,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.lock_rounded,
+                                size: 15 * scale,
+                                color: const Color(0xFF967A54),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+    ],
+  );
+}
 
+class _IllustratedShortcut extends StatelessWidget {
+  const _IllustratedShortcut({
+    required this.title,
+    required this.art,
+    required this.description,
+    required this.scale,
+    required this.onTap,
+    this.detail,
+  });
+  final String title, art, description;
+  final String? detail;
+  final double scale;
+  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) => Material(
+    color: HomeArt.paper,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+      side: const BorderSide(color: HomeArt.edge, width: 1.6),
+    ),
+    clipBehavior: Clip.antiAlias,
+    child: InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          5 * scale,
+          9 * scale,
+          7 * scale,
+          7 * scale,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(flex: 47, child: HomeArt.image(art, height: 82 * scale)),
+            SizedBox(width: 3 * scale),
+            Expanded(
+              flex: 53,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: HomeArt.title(14 * scale)),
+                  SizedBox(height: 6 * scale),
+                  Text(
+                    description,
+                    style: GoogleFonts.nunito(
+                      fontSize: 9 * scale,
+                      height: 1.2,
+                      color: const Color(0xFF786551),
+                    ),
+                  ),
+                  const Spacer(),
+                  SizedBox(height: 5 * scale),
+                  Row(
+                    children: [
+                      if (detail != null)
+                        Expanded(
+                          child: Text(
+                            detail!,
+                            style: HomeArt.title(12 * scale),
+                          ),
+                        )
+                      else
+                        const Spacer(),
+                      Container(
+                        padding: EdgeInsets.all(3 * scale),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: HomeArt.edge),
+                        ),
+                        child: Icon(
+                          LucideIcons.chevronRight,
+                          size: 19 * scale,
+                          color: HomeArt.ink,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _LatestDiscovery extends StatelessWidget {
+  const _LatestDiscovery({
+    required this.cat,
+    required this.scale,
+    required this.onTap,
+  });
+  final Cat cat;
+  final double scale;
+  final VoidCallback onTap;
   @override
   Widget build(BuildContext context) {
+    final days = DateTime.now().difference(cat.capturedAt).inDays;
+    final when = days <= 0
+        ? 'Hoje'
+        : days == 1
+        ? 'Ontem'
+        : 'Há $days dias';
     return Material(
-      color: Colors.transparent,
+      color: HomeArt.paper,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: HomeArt.edge, width: 1.6),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 100),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Icon(icon, size: 24, color: iconColor),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.nunito(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: iconColor,
-                      ),
+        child: Stack(
+          children: [
+            Positioned(
+              right: 4,
+              bottom: -18,
+              child: HomeArt.image('Flor', width: 70 * scale),
+            ),
+            Padding(
+              padding: EdgeInsets.all(7 * scale),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 114 * scale,
+                    height: 59 * scale,
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: CatPhotoView(cat.photoPath, borderRadius: 8),
+                        ),
+                        Positioned(
+                          top: 4,
+                          left: 4,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: HomeArt.paper,
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                            child: Text(
+                              '#${cat.captureNumber.toString().padLeft(3, '0')}',
+                              style: GoogleFonts.nunito(fontSize: 10 * scale),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 1),
-                    Text(
-                      subtitle,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.nunito(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: iconColor.withValues(alpha: 0.85),
-                        height: 1.15,
-                      ),
+                  ),
+                  SizedBox(width: 11 * scale),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          cat.name?.trim().isNotEmpty == true
+                              ? cat.displayName
+                              : 'Gato registrado',
+                          style: HomeArt.title(15 * scale),
+                        ),
+                        SizedBox(height: 3 * scale),
+                        Text(
+                          '$when${cat.locationName == null ? '' : ' · ${cat.locationName}'}',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.nunito(
+                            fontSize: 10 * scale,
+                            color: const Color(0xFF86725E),
+                          ),
+                        ),
+                        SizedBox(height: 5 * scale),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 9 * scale,
+                            vertical: 3 * scale,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFD2DC),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            cat.status == 'completed' ? 'Descoberta' : 'Salvo',
+                            style: GoogleFonts.nunito(
+                              fontSize: 10 * scale,
+                              color: const Color(0xFF8C4356),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  Icon(
+                    LucideIcons.circleChevronRight,
+                    color: HomeArt.edge,
+                    size: 26 * scale,
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

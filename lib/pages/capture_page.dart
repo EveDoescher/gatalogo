@@ -1,7 +1,12 @@
+import '../widgets/botanical_scene.dart';
+
 import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+
+import '../widgets/game_components.dart';
+
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -14,7 +19,7 @@ import '../stores/cat_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_widgets.dart';
 import '../widgets/inbox_button.dart';
-import 'cat_details_page.dart';
+import 'discovery_result_page.dart';
 
 class CapturePage extends StatefulWidget {
   const CapturePage({super.key, required this.catStore});
@@ -196,6 +201,7 @@ class _CapturePageState extends State<CapturePage> {
   }
 
   void _cancelarFoto() {
+    unawaited(widget.catStore.progress.track('capture_cancelled'));
     if (_isAnalyzing || _isValidating) {
       return;
     }
@@ -216,9 +222,47 @@ class _CapturePageState extends State<CapturePage> {
     });
 
     try {
+      String? individual;
+      if (widget.catStore.cats.isNotEmpty) {
+        individual = await showModalBottomSheet<String>(
+          context: context,
+          isScrollControlled: true,
+          builder: (context) => SafeArea(
+            child: SizedBox(
+              height: MediaQuery.sizeOf(context).height * .6,
+              child: ListView(
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Text('Você já conhece este gato?'),
+                  ),
+                  ListTile(
+                    title: const Text('É uma nova descoberta'),
+                    subtitle: const Text(
+                      'Você pode corrigir a identificação depois.',
+                    ),
+                    onTap: () => Navigator.pop(context, 'new'),
+                  ),
+                  for (final cat in widget.catStore.cats.where(
+                    (c) => c.individualId == null || c.individualId == c.id,
+                  ))
+                    ListTile(
+                      title: Text(cat.displayName),
+                      subtitle: const Text('Adicionar outra foto deste gato'),
+                      onTap: () => Navigator.pop(context, cat.id),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+        if (individual == null) return;
+        if (individual == 'new') individual = null;
+      }
       final saved = await widget.catStore.addFromTempPhoto(
         _foto!.path,
         capturedAt: _capturedAt,
+        individualId: individual,
       );
 
       unawaited(_attachLocationInBackground(saved.cat.id, _locationAtCapture));
@@ -245,8 +289,11 @@ class _CapturePageState extends State<CapturePage> {
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                CatDetailsPage(cat: saved.cat, catStore: widget.catStore),
+            settings: const RouteSettings(name: '/result'),
+            builder: (_) => DiscoveryResultPage(
+              catId: saved.cat.id,
+              store: widget.catStore,
+            ),
           ),
         );
       }
@@ -349,8 +396,9 @@ class _CapturePageState extends State<CapturePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    return BotanicalScaffold(
+      mood: BotanicalMood.album,
+      backgroundColor: GameStyle.canvas,
       body: SafeArea(
         bottom: false,
         child: _foto == null ? _buildCaptura() : _buildPreview(),
@@ -368,7 +416,7 @@ class _CapturePageState extends State<CapturePage> {
           right: -4,
           child: IgnorePointer(
             child: Image.asset(
-              'assets/images/Folha_6.png',
+              'assets/gatalogo_asset_library/environment/environment_wall_foliage_corner.png',
               width: 255,
               fit: BoxFit.contain,
             ),
@@ -377,7 +425,12 @@ class _CapturePageState extends State<CapturePage> {
 
         // Conteúdo da tela
         SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          padding: EdgeInsets.fromLTRB(
+            24,
+            12,
+            24,
+            12 + MediaQuery.paddingOf(context).bottom,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -386,31 +439,28 @@ class _CapturePageState extends State<CapturePage> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Image.asset(
-                    'assets/images/Logo.png',
+                    'assets/gatalogo_asset_library/branding/brand_gatalogo_logo.png',
                     height: 40,
                     fit: BoxFit.contain,
                   ),
                   const Spacer(),
-                  InboxButton(store: widget.catStore, size: 42),
+                  InboxButton(
+                    store: widget.catStore,
+                    size: 42,
+                    illustrated: true,
+                  ),
                   const SizedBox(width: 10),
                   UserAvatarButton(
                     sessionStore: widget.catStore.sessionStore,
                     catStore: widget.catStore,
+                    framed: true,
                   ),
                 ],
               ),
 
-              const SizedBox(height: 48),
+              const SizedBox(height: 28),
 
-              Text(
-                'Encontrou um gato?',
-                style: GoogleFonts.nunito(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textTitle,
-                  height: 1.1,
-                ),
-              ),
+              Text('Encontrou um gato?', style: GameStyle.title(30)),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -426,7 +476,7 @@ class _CapturePageState extends State<CapturePage> {
                   ),
                   const SizedBox(width: 20),
                   Image.asset(
-                    'assets/images/gato_1.png',
+                    'assets/gatalogo_asset_library/cats/cat_orange_camera.png',
                     width: 100,
                     height: 104,
                     fit: BoxFit.contain,
@@ -436,12 +486,9 @@ class _CapturePageState extends State<CapturePage> {
 
               const SizedBox(height: 28),
 
-              // Card: Como Funciona
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.greenLight,
-                  borderRadius: BorderRadius.circular(AppRadius.xxl),
-                ),
+              // Instructions share the field journal's paper and outline.
+              GamePanel(
+                padding: EdgeInsets.zero,
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
@@ -451,7 +498,7 @@ class _CapturePageState extends State<CapturePage> {
                       right: 14,
                       child: IgnorePointer(
                         child: Image.asset(
-                          'assets/images/Folha_3.png',
+                          'assets/gatalogo_asset_library/flora/flora_leaves_loose_pale_two.png',
                           width: 44,
                           fit: BoxFit.contain,
                         ),
@@ -478,8 +525,7 @@ class _CapturePageState extends State<CapturePage> {
                               // Passo 1: Fotografe
                               Expanded(
                                 child: _StepItem(
-                                  circleColor: AppColors.primaryLight,
-                                  icon: LucideIcons.camera,
+                                  art: 'icons/icon_camera_cream_coral',
                                   title: 'Fotografe',
                                   description:
                                       'Tire uma\nfoto nítida\ndo gato.',
@@ -496,8 +542,7 @@ class _CapturePageState extends State<CapturePage> {
                               // Passo 2: Analise
                               Expanded(
                                 child: _StepItem(
-                                  circleColor: AppColors.greenLight,
-                                  icon: LucideIcons.search,
+                                  art: 'icons/icon_search_paw_magnifier',
                                   title: 'Analise',
                                   description:
                                       'Nosso\nsistema\nidentifica a\npelagem.',
@@ -514,8 +559,7 @@ class _CapturePageState extends State<CapturePage> {
                               // Passo 3: Colecione
                               Expanded(
                                 child: _StepItem(
-                                  circleColor: AppColors.primaryLight,
-                                  icon: LucideIcons.bookHeart,
+                                  art: 'ui/ui_notebook_cat',
                                   title: 'Colecione',
                                   description: 'Adicione ao\nseu\nGatálogo!',
                                 ),
@@ -531,92 +575,19 @@ class _CapturePageState extends State<CapturePage> {
 
               const SizedBox(height: 26),
 
-              // Botões de Ação: Câmera e Galeria
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SizedBox(
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: _isAnalyzing || _isValidating
-                          ? null
-                          : _tirarFoto,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            LucideIcons.camera,
-                            size: 18,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              'Abrir câmera',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.nunito(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 48,
-                    child: OutlinedButton(
-                      onPressed: _isAnalyzing || _isValidating
-                          ? null
-                          : () => _escolherFoto(ImageSource.gallery),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(
-                          color: AppColors.primary,
-                          width: 1.4,
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            LucideIcons.image,
-                            size: 18,
-                            color: AppColors.primary,
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              'Galeria',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.nunito(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+              // Both photo sources are first-class actions.
+              GameButton(
+                label: 'Abrir câmera',
+                onPressed: _isAnalyzing || _isValidating ? null : _tirarFoto,
+              ),
+              const SizedBox(height: 12),
+              GameButton(
+                label: 'Galeria',
+                green: true,
+                icon: Icons.photo_library_rounded,
+                onPressed: _isAnalyzing || _isValidating
+                    ? null
+                    : () => _escolherFoto(ImageSource.gallery),
               ),
 
               const SizedBox(height: 18),
@@ -674,7 +645,12 @@ class _CapturePageState extends State<CapturePage> {
 
   Widget _buildPreview() {
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        20,
+        20,
+        20 + MediaQuery.paddingOf(context).bottom,
+      ),
       child: Column(
         children: [
           Expanded(
@@ -825,14 +801,12 @@ class _CapturePageState extends State<CapturePage> {
 
 class _StepItem extends StatelessWidget {
   const _StepItem({
-    required this.circleColor,
-    required this.icon,
+    required this.art,
     required this.title,
     required this.description,
   });
 
-  final Color circleColor;
-  final IconData icon;
+  final String art;
   final String title;
   final String description;
 
@@ -840,12 +814,7 @@ class _StepItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(color: circleColor, shape: BoxShape.circle),
-          child: Icon(icon, size: 24, color: AppColors.textDark),
-        ),
+        GatalogoArt.image(art, width: 60, height: 52),
         const SizedBox(height: 8),
         Text(
           title,

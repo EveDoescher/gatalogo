@@ -19,7 +19,7 @@ class HabitatCoinBadge extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Image.asset(
-          'assets/3d_assets/kenney_mini-dungeon/Previews/coin.png',
+          'assets/gatalogo_asset_library/rewards/reward_coin_paw_gold.png',
           width: 20,
           height: 20,
         ),

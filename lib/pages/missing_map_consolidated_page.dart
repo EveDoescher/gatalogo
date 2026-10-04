@@ -1,3 +1,4 @@
+import '../widgets/botanical_scene.dart';
 import '../widgets/app_header_actions.dart';
 
 import 'package:flutter/material.dart';
@@ -189,10 +190,11 @@ class _MissingMapConsolidatedPageState
       );
     }
 
-    return Scaffold(
+    return BotanicalScaffold(
+      mood: BotanicalMood.care,
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: GestureDetector(
           onTap: () => Navigator.maybePop(context),

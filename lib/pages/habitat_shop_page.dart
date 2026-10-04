@@ -1,3 +1,5 @@
+import '../widgets/botanical_scene.dart';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -29,6 +31,16 @@ class HabitatShopPage extends StatefulWidget {
 class _HabitatShopPageState extends State<HabitatShopPage> {
   final Map<String, int> _quantities = {};
   String? _workingSku;
+  String? _category;
+  static const _categories = {
+    'natureza': 'Natureza',
+    'descanso': 'Descanso',
+    'brincadeira': 'Brincadeira',
+    'casinhas': 'Casinhas',
+    'caminhos': 'Caminhos',
+    'jardim': 'Jardim vivo',
+    'terreno': 'Terreno',
+  };
 
   @override
   void initState() {
@@ -83,16 +95,20 @@ class _HabitatShopPageState extends State<HabitatShopPage> {
   @override
   Widget build(BuildContext context) {
     final habitat = widget.habitat;
+    final items = habitat.shop
+        .where((item) => _category == null || item.category == _category)
+        .toList();
     final width = MediaQuery.sizeOf(context).width;
     final columns = width >= 700
         ? 4
         : width >= 500
         ? 3
         : 2;
-    return Scaffold(
+    return BotanicalScaffold(
+      level: BotanicalLevel.secondary,
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.transparent,
         leading: IconButton(
           tooltip: 'Voltar ao Habitat',
           onPressed: widget.onClose,
@@ -111,12 +127,12 @@ class _HabitatShopPageState extends State<HabitatShopPage> {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-              child: Text(
-                'Loja do Habitat',
-                style: GoogleFonts.fredoka(
-                  fontSize: 27,
-                  color: AppColors.textTitle,
-                ),
+              child: const IllustratedSectionHeader(
+                title: 'Loja do Habitat',
+                description:
+                    'Um cantinho para descansar, brincar e receber seus gatos.',
+                art: 'environment/environment_shop_coral_awning',
+                accent: 'environment/environment_grass_stones_flowers',
               ),
             ),
           ),
@@ -139,16 +155,47 @@ class _HabitatShopPageState extends State<HabitatShopPage> {
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            sliver: SliverToBoxAdapter(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    for (final entry in {null: 'Tudo', ..._categories}.entries)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text(entry.value),
+                          selected: _category == entry.key,
+                          onSelected: (_) =>
+                              setState(() => _category = entry.key),
+                          selectedColor: AppColors.primaryLight,
+                          backgroundColor: AppColors.surface,
+                          side: BorderSide.none,
+                          labelStyle: TextStyle(color: AppColors.textTitle),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(
+              16,
+              0,
+              16,
+              28 + MediaQuery.paddingOf(context).bottom,
+            ),
             sliver: SliverGrid.builder(
-              itemCount: habitat.shop.length,
+              itemCount: items.length,
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: columns,
                 mainAxisSpacing: 10,
                 crossAxisSpacing: 10,
                 mainAxisExtent: 236,
               ),
-              itemBuilder: (context, index) => _itemCard(habitat.shop[index]),
+              itemBuilder: (context, index) => _itemCard(items[index]),
             ),
           ),
         ],
@@ -266,7 +313,7 @@ class _HabitatShopPageState extends State<HabitatShopPage> {
               ),
             ),
           const SizedBox(height: 5),
-          if (item.isPath && !maxReached)
+          if (item.isGround && !maxReached)
             SizedBox(
               height: 34,
               child: Row(
@@ -309,7 +356,9 @@ class _HabitatShopPageState extends State<HabitatShopPage> {
                   : () => _buy(item, quantity),
               child: Text(
                 item.price == 0
-                    ? 'Inicial'
+                    ? item.sku == 'friendship_garden'
+                          ? (owned > 0 ? 'Desbloqueado' : '20 de afinidade')
+                          : 'Inicial'
                     : maxReached
                     ? 'Adquirido'
                     : '${item.price * quantity} moedas',

@@ -1,3 +1,5 @@
+import '../widgets/botanical_scene.dart';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -27,10 +29,11 @@ class HabitatHelpPage extends StatelessWidget {
       'share': 'Compartilhar',
       'care': 'Acompanhar a busca',
     };
-    return Scaffold(
+    return BotanicalScaffold(
+      level: BotanicalLevel.tertiary,
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.transparent,
         leading: IconButton(
           tooltip: 'Voltar ao Habitat',
           onPressed: onClose,
@@ -39,14 +42,17 @@ class HabitatHelpPage extends StatelessWidget {
         title: const Text('Ajuda do Habitat'),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.fromLTRB(
+          20,
+          20,
+          20,
+          20 + MediaQuery.paddingOf(context).bottom,
+        ),
         children: [
-          Text(
-            'Seu quintal',
-            style: GoogleFonts.fredoka(
-              fontSize: 25,
-              color: AppColors.textTitle,
-            ),
+          const IllustratedPaperHeading(
+            title: 'Seu quintal',
+            description: 'Um guia para cuidar dos gatos e organizar o Habitat.',
+            art: 'ui/ui_clipboard_checklist',
           ),
           const SizedBox(height: 12),
           const _Tip(
@@ -61,13 +67,26 @@ class HabitatHelpPage extends StatelessWidget {
             icon: LucideIcons.cat,
             text: 'Arraste um gato da bandeja até uma célula livre do quintal.',
           ),
+          const _Tip(
+            icon: LucideIcons.heart,
+            text: 'Toque em um gato para dar carinho, uma porção diária gratuita ou um petisco de 4 moedas. Cada cuidado aumenta a afinidade uma vez por dia, sem perda por ausência.',
+          ),
+          const _Tip(
+            icon: LucideIcons.flower,
+            text: 'Toque em um canteiro para regar. Ele cresce em 12 horas; uma nova rega depois de 6 horas antecipa o crescimento. Aos 20 pontos de afinidade, você ganha Flores da amizade.',
+          ),
+          const _Tip(
+            icon: LucideIcons.waves,
+            text: 'Pinte água e terra arrastando os trechos do inventário. Pontes precisam ficar inteiramente sobre a água e permitem a travessia dos gatos. Remova a ponte antes de retirar a água.',
+          ),
+          const _Tip(
+            icon: LucideIcons.armchair,
+            text: 'Os gatos exploram camas, barracas, troncos e caixas sozinhos. Toque em um desses móveis para convidar um gatinho.',
+          ),
           const SizedBox(height: 24),
-          Text(
-            'Como ganhar moedas',
-            style: GoogleFonts.fredoka(
-              fontSize: 23,
-              color: AppColors.textTitle,
-            ),
+          const IllustratedSectionTitle(
+            title: 'Como ganhar moedas',
+            art: 'rewards/reward_coin_paw_gold',
           ),
           const SizedBox(height: 8),
           for (final entry in rewards.entries)

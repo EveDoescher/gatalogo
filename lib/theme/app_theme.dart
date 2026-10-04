@@ -5,17 +5,17 @@ import 'package:google_fonts/google_fonts.dart';
 ///
 /// Regras fundamentais:
 /// - Zero preto puro (#000000) em qualquer lugar
-/// - Sombras projetadas proibidas (Tonal Flatness Rule)
+/// - Papel com elevação suave nas áreas de jogo; formulários mantêm leitura limpa
 /// - Cantos arredondados contínuos (14–24px)
 /// - Fredoka para títulos, Nunito para corpo
 class AppColors {
   AppColors._();
 
   // ─── Superfícies ─────────────────────────────────────────────
-  static const Color background = Color(0xFFFBF6F2);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color cardBackground = Color(0xFFFAF3F0);
-  static const Color cardAltBackground = Color(0xFFFDF8F5);
+  static const Color background = Color(0xFFFBF6E8);
+  static const Color surface = Color(0xFFFFF9EC);
+  static const Color cardBackground = Color(0xFFF8F0DF);
+  static const Color cardAltBackground = Color(0xFFFFFAEF);
 
   // ─── Rosa Principal (CTAs e acentos de marca) ────────────────
   static const Color primary = Color(0xFFDC8BA1);
@@ -24,25 +24,25 @@ class AppColors {
   static const Color primarySoftBg = Color(0xFFFCEDED);
 
   // ─── Verde Botânico ──────────────────────────────────────────
-  static const Color green = Color(0xFF7E9B70);
-  static const Color greenButton = Color(0xFF72856A);
-  static const Color greenLight = Color(0xFFF1F5ED);
-  static const Color greenLink = Color(0xFF5D7A58);
+  static const Color green = Color(0xFF6A914C);
+  static const Color greenButton = Color(0xFF52783C);
+  static const Color greenLight = Color(0xFFECF2D8);
+  static const Color greenLink = Color(0xFF426538);
   static const Color greenProgress = Color(0xFF6B8A5A);
 
   // ─── Textos Neutros (marrons quentes, nunca preto) ──────────
-  static const Color textDark = Color(0xFF382923);
-  static const Color textTitle = Color(0xFF4A352F);
-  static const Color textMedium = Color(0xFF786B67);
+  static const Color textDark = Color(0xFF4B281B);
+  static const Color textTitle = Color(0xFF4B281B);
+  static const Color textMedium = Color(0xFF80654E);
   static const Color textLight = Color(0xFF948C87);
 
   // ─── Bordas e Divisores ──────────────────────────────────────
-  static const Color border = Color(0xFFEDDEDB);
-  static const Color borderLight = Color(0xFFF3ECE6);
-  static const Color borderProfile = Color(0xFFE8D6DE);
+  static const Color border = Color(0xFFBCA381);
+  static const Color borderLight = Color(0xFFE2D4B7);
+  static const Color borderProfile = Color(0xFFBCA381);
 
   // ─── Inputs ──────────────────────────────────────────────────
-  static const Color inputBg = Color(0xFFFDF6F5);
+  static const Color inputBg = Color(0xFFFFF8E9);
 
   // ─── Atalhos / Badges (Home Page) ────────────────────────────
   static const Color shortcutGreenBg = Color(0xFFF0F4EC);
@@ -70,13 +70,13 @@ class AppColors {
   static const Color amberBorder = Color(0xFFF3D298);
 
   // ─── Social (amigos e interação) ─────────────────────────────
-  static const Color socialPurple = Color(0xFFB39DDB);
-  static const Color socialPurpleBg = Color(0xFFF3F0FA);
-  static const Color socialPurpleText = Color(0xFF6A5A8C);
+  static const Color socialPurple = Color(0xFF8DAB66);
+  static const Color socialPurpleBg = Color(0xFFEEF1DA);
+  static const Color socialPurpleText = Color(0xFF526C3A);
 
   // ─── Raridades de Gatos ──────────────────────────────────────
-  static const Color rarityCommon = Color(0xFF7E9B70);
-  static const Color rarityCommonBg = Color(0xFFF1F5ED);
+  static const Color rarityCommon = Color(0xFF6A914C);
+  static const Color rarityCommonBg = Color(0xFFECF2D8);
   static const Color rarityUncommon = Color(0xFF5BA3C4);
   static const Color rarityUncommonBg = Color(0xFFE8F4FD);
   static const Color rarityRare = Color(0xFFDC8BA1);
@@ -186,6 +186,24 @@ class AppTheme {
       // ─── Tipografia: Fredoka (títulos) + Nunito (corpo) ──────
       textTheme: baseTextTheme.copyWith(
         // Fredoka para hierarquia de títulos
+        headlineLarge: GoogleFonts.fredoka(
+          fontSize: 28,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textDark,
+          height: 1.15,
+        ),
+        headlineMedium: GoogleFonts.fredoka(
+          fontSize: 24,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textDark,
+          height: 1.15,
+        ),
+        headlineSmall: GoogleFonts.fredoka(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textDark,
+          height: 1.2,
+        ),
         displayLarge: GoogleFonts.fredoka(
           fontSize: 32,
           fontWeight: FontWeight.w700,
@@ -337,6 +355,20 @@ class AppTheme {
       ),
 
       // ─── Cards: cantos suaves, sem elevação ──────────────────
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.surface,
+        selectedColor: AppColors.greenLight,
+        disabledColor: AppColors.borderLight,
+        checkmarkColor: AppColors.greenLink,
+        side: const BorderSide(color: AppColors.border, width: 1.2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        labelStyle: GoogleFonts.nunito(
+          color: AppColors.textDark,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
       cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 0,
@@ -369,6 +401,10 @@ class AppTheme {
 
       // ─── Switch: verde botânico quando ativo ─────────────────
       switchTheme: SwitchThemeData(
+        trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return AppColors.green;
+          return AppColors.textLight;
+        }),
         thumbColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) return AppColors.green;
           return AppColors.textLight;
@@ -465,6 +501,24 @@ class AppTheme {
         error: AppColors.error,
       ),
       textTheme: baseTextTheme.copyWith(
+        headlineLarge: GoogleFonts.fredoka(
+          fontSize: 28,
+          fontWeight: FontWeight.w600,
+          color: AppColors.darkTextDark,
+          height: 1.15,
+        ),
+        headlineMedium: GoogleFonts.fredoka(
+          fontSize: 24,
+          fontWeight: FontWeight.w600,
+          color: AppColors.darkTextDark,
+          height: 1.15,
+        ),
+        headlineSmall: GoogleFonts.fredoka(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: AppColors.darkTextDark,
+          height: 1.2,
+        ),
         displayLarge: GoogleFonts.fredoka(
           fontSize: 32,
           fontWeight: FontWeight.w700,
@@ -615,6 +669,20 @@ class AppTheme {
           side: const BorderSide(color: AppColors.darkBorderLight, width: 1),
         ),
       ),
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.darkSurface,
+        selectedColor: AppColors.green.withValues(alpha: 0.3),
+        disabledColor: AppColors.darkBorderLight,
+        checkmarkColor: AppColors.darkTextDark,
+        side: const BorderSide(color: AppColors.darkBorderLight, width: 1.2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        labelStyle: GoogleFonts.nunito(
+          color: AppColors.darkTextDark,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
       dividerTheme: const DividerThemeData(
         color: AppColors.darkBorder,
         thickness: 1,
@@ -633,6 +701,10 @@ class AppTheme {
         iconTheme: const IconThemeData(color: AppColors.darkTextDark, size: 24),
       ),
       switchTheme: SwitchThemeData(
+        trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return AppColors.green;
+          return AppColors.darkTextLight;
+        }),
         thumbColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) return AppColors.green;
           return AppColors.darkTextLight;

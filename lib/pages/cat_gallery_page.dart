@@ -1,3 +1,5 @@
+import '../widgets/botanical_scene.dart';
+import '../widgets/game_components.dart';
 import '../widgets/app_header_actions.dart';
 
 import 'package:flutter/material.dart';
@@ -318,7 +320,9 @@ class _CatGalleryPageState extends State<CatGalleryPage> {
   void _view(String path, String label) => Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (_) => Scaffold(
+      builder: (_) => BotanicalScaffold(
+        level: BotanicalLevel.tertiary,
+        mood: BotanicalMood.album,
         backgroundColor: AppColors.textDark,
         appBar: AppBar(
           actions: const [AppHeaderActions()],
@@ -361,11 +365,13 @@ class _CatGalleryPageState extends State<CatGalleryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BotanicalScaffold(
+      mood: BotanicalMood.album,
       backgroundColor: AppColors.background,
+      level: BotanicalLevel.tertiary,
       appBar: AppBar(
         actions: const [AppHeaderActions()],
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
@@ -402,60 +408,10 @@ class _CatGalleryPageState extends State<CatGalleryPage> {
               ListView(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
                 children: [
-                  // Banner explicativo aconchegante
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.primarySoftBg,
-                      borderRadius: BorderRadius.circular(AppRadius.card),
-                      border: Border.all(
-                        color: AppColors.borderProfile,
-                        width: 1.2,
-                      ),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primaryLight,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.pets,
-                            color: AppColors.primaryDark,
-                            size: 18,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Fotos de Reconhecimento',
-                                style: GoogleFonts.fredoka(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primaryDark,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Registre o gatinho em vários ângulos. Quanto mais ângulos cadastrados, mais fácil identificar este felino no futuro!',
-                                style: GoogleFonts.nunito(
-                                  fontSize: 12,
-                                  color: AppColors.textDark,
-                                  height: 1.35,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                  const IllustratedPaperHeading(
+                    title: 'Fotos de Reconhecimento',
+                    description: 'Registre o gatinho em vários ângulos. Quanto mais ângulos cadastrados, mais fácil identificar este felino no futuro!',
+                    art: 'ui/ui_cat_photos_stack',
                   ),
 
                   const SizedBox(height: 20),
@@ -471,58 +427,11 @@ class _CatGalleryPageState extends State<CatGalleryPage> {
                   ),
                   const SizedBox(height: 10),
 
-                  GestureDetector(
+                  GamePhotoCard(
+                    cat: widget.cat,
+                    height: 200,
+                    showName: false,
                     onTap: () => _view(widget.cat.photoPath, 'Foto principal'),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(AppRadius.card),
-                        border: Border.all(
-                          color: AppColors.borderLight,
-                          width: 1.2,
-                        ),
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          CatPhotoView(
-                            widget.cat.photoPath,
-                            height: 200,
-                            fit: BoxFit.cover,
-                            borderRadius: 0,
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 12,
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.greenLight,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    'Principal',
-                                    style: GoogleFonts.nunito(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.greenLink,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
 
                   const SizedBox(height: 24),
@@ -530,15 +439,17 @@ class _CatGalleryPageState extends State<CatGalleryPage> {
                   // Seção Ângulos de Referência
                   Row(
                     children: [
-                      Text(
-                        'Ângulos Adicionais',
-                        style: GoogleFonts.fredoka(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textTitle,
+                      Expanded(
+                        child: Text(
+                          'Ângulos Adicionais',
+                          style: GoogleFonts.fredoka(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textTitle,
+                          ),
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
@@ -626,7 +537,9 @@ class _CatGalleryPageState extends State<CatGalleryPage> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Row(
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 6,
                                         children: [
                                           Text(
                                             label,
@@ -636,7 +549,6 @@ class _CatGalleryPageState extends State<CatGalleryPage> {
                                               color: AppColors.textTitle,
                                             ),
                                           ),
-                                          const SizedBox(width: 8),
                                           if (photo != null)
                                             Container(
                                               padding:

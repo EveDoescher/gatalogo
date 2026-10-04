@@ -23,11 +23,22 @@ SUPERSAMPLE = 3
 
 def render(path: Path) -> dict:
     meshes = load_model(path)
+    origin, scale = framing(meshes)
+    render_meshes(meshes, origin, scale).save(OUTPUT / f"{path.stem}.png")
+    return {"origin": origin.round(4).tolist(), "scale": round(scale, 4)}
+
+
+def framing(meshes, size=SIZE, padding=16):
     coordinates = np.concatenate([project(mesh.positions) for mesh in meshes])
     minimum, maximum = coordinates.min(axis=0), coordinates.max(axis=0)
-    scale = (SIZE - 16) / (maximum - minimum).max()
-    origin = np.array([SIZE / 2, SIZE / 2]) - (minimum + maximum) / 2 * scale
-    size = SIZE * SUPERSAMPLE
+    scale = (size - padding) / (maximum - minimum).max()
+    origin = np.array([size / 2, size / 2]) - (minimum + maximum) / 2 * scale
+    return origin, scale
+
+
+def render_meshes(meshes, origin, scale, size=SIZE, supersample=SUPERSAMPLE):
+    output_size = size
+    size *= supersample
     pixels = np.zeros((size, size, 4), dtype=np.float32)
     depth_buffer = np.full((size, size), -np.inf)
     light = np.array([0.60, 1, -0.16])
@@ -35,7 +46,7 @@ def render(path: Path) -> dict:
     view = np.array([math.sqrt(3 / 8), 0.5, math.sqrt(3 / 8)])
     for mesh in meshes:
         texture = np.asarray(Image.open(mesh.texture).convert("RGBA")) / 255 if mesh.texture else np.ones((1, 1, 4))
-        projected = (project(mesh.positions) * scale + origin) * SUPERSAMPLE
+        projected = (project(mesh.positions) * scale + origin) * supersample
         depth = mesh.positions @ view
         for indices in mesh.indices:
             a, b, c = projected[indices]
@@ -67,8 +78,7 @@ def render(path: Path) -> dict:
             pixels[top:bottom + 1, left:right + 1][mask] = color[mask]
             target_depth[mask] = fragment_depth[mask]
     image = Image.fromarray((pixels * 255).round().astype(np.uint8))
-    image.resize((SIZE, SIZE), Image.Resampling.LANCZOS).save(OUTPUT / f"{path.stem}.png")
-    return {"origin": origin.round(4).tolist(), "scale": round(scale, 4)}
+    return image.resize((output_size, output_size), Image.Resampling.LANCZOS)
 
 
 def main() -> None:

@@ -45,9 +45,9 @@ void main() {
       expect(state.targetXp, equals(100));
       expect(state.streak, equals(0));
       expect(state.multiplier, equals(1.0));
-      expect(state.freezeShields, equals(1));
-      expect(state.dailyMissions.length, equals(3));
-      expect(state.weeklyMission, isNotNull);
+      expect(state.freezeShields, equals(0));
+      expect(state.dailyMissions, isEmpty);
+      expect(state.weeklyMission, isNull);
       expect(state.totalAchievements, equals(28));
     });
 
@@ -161,87 +161,15 @@ void main() {
     });
   });
 
-  group('Journey 28 Achievements Local Calculations', () {
-    test('localJourney returns exactly 28 achievements', () {
+  group('Confirmed journey cache', () {
+    test('local records never invent rewards or achievements', () {
       final session = SessionStore();
       final store = GamificationMockStore(session);
-      final journey = localJourney(store);
-
-      expect(journey.length, equals(28));
-      final ids = journey.map((it) => it['id'] as String).toSet();
-      expect(ids.length, equals(28));
-
-      expect(ids, contains('first'));
-      expect(ids, contains('collector_5'));
-      expect(ids, contains('collector_10'));
-      expect(ids, contains('master_collector'));
-      expect(ids, contains('legend_collector'));
-      expect(ids, contains('black_cat'));
-      expect(ids, contains('orange_tabby'));
-      expect(ids, contains('calico'));
-      expect(ids, contains('siamese_pattern'));
-      expect(ids, contains('bicolor'));
-      expect(ids, contains('neighborhood_3'));
-      expect(ids, contains('city_wanderer'));
-      expect(ids, contains('night_owl'));
-      expect(ids, contains('early_bird'));
-      expect(ids, contains('days'));
-      expect(ids, contains('streak_3'));
-      expect(ids, contains('streak_7'));
-      expect(ids, contains('streak_30'));
-      expect(ids, contains('angles'));
-      expect(ids, contains('portrait'));
-      expect(ids, contains('angles_master'));
-      expect(ids, contains('helper'));
-      expect(ids, contains('guardian_shield'));
-      expect(ids, contains('poster_share'));
-      expect(ids, contains('social_heart'));
-      expect(ids, contains('commentator'));
-      expect(ids, contains('first_share'));
-      expect(ids, contains('owned_pet'));
-    });
-
-    test('localJourney calculates coat, location and owned pet progress', () {
-      final session = SessionStore();
-      final store = GamificationMockStore(session);
-
-      store.mockCats.add(
-        Cat(
-          id: 'cat_black',
-          captureNumber: 1,
-          photoPath: 'black.jpg',
-          capturedAt: DateTime(2026, 9, 10, 22, 0), // night owl!
-          locationName: 'Parque Central',
-          status: 'completed',
-        ),
-      );
-      store.mockAnalyses['cat_black'] = const CatAnalysis(
-        catId: 'cat_black',
-        status: AnalysisStatus.completed,
-        confidence: 0.9,
-        primaryColor: 'preto',
-        coatType: 'curto',
-      );
-
-      store.mockCats.add(
-        Cat(
-          id: 'cat_pet',
-          captureNumber: 2,
-          photoPath: 'pet.jpg',
-          capturedAt: DateTime(2026, 9, 11, 7, 0), // early bird!
-          locationName: 'Casa',
-          isOwned: true,
-        ),
-      );
-
-      final journey = localJourney(store);
-      final blackAchievement = journey.firstWhere((it) => it['id'] == 'black_cat');
-      final nightAchievement = journey.firstWhere((it) => it['id'] == 'night_owl');
-      final petAchievement = journey.firstWhere((it) => it['id'] == 'owned_pet');
-
-      expect(blackAchievement['progress'], equals(1));
-      expect(nightAchievement['progress'], equals(1));
-      expect(petAchievement['progress'], equals(1));
+      store.mockCats.add(Cat(id: 'one', captureNumber: 1, photoPath: 'missing.jpg', capturedAt: DateTime(2026, 9, 22)));
+      expect(localJourney(store), isEmpty);
+      store.progress.summary = {'challenges': [{'id': 'first', 'progress': 1, 'completed': true}]};
+      expect(localJourney(store).single['completed'], isTrue);
+      store.dispose(); session.dispose();
     });
   });
 
@@ -270,13 +198,17 @@ void main() {
       final session = SessionStore();
       final store = GamificationMockStore(session);
       store.mockCats.add(Cat(id: 'one', captureNumber: 1, photoPath: 'missing.jpg', capturedAt: DateTime(2026, 9, 22)));
+      store.progress.summary = {'challenges': [
+        {'id': 'first', 'title': 'Primeira descoberta', 'target': 1, 'progress': 1, 'completed': true},
+        {'id': 'collector_5', 'title': 'Olhar curioso', 'target': 5, 'progress': 1, 'completed': false},
+      ]};
       await tester.pumpWidget(MaterialApp(home: JourneyPage(store: store)));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Conquistadas'));
+      await tester.tap(find.text('Concluídas'));
       await tester.pumpAndSettle();
-      expect(find.text('Conquistas'), findsOneWidget);
-      expect(find.text('Primeira Descoberta'), findsOneWidget);
-      expect(find.text('Olhar Curioso'), findsNothing);
+      expect(find.text('Missões e conquistas'), findsOneWidget);
+      expect(find.text('Primeira descoberta'), findsOneWidget);
+      expect(find.text('Olhar curioso'), findsNothing);
       expect(find.textContaining('Conquistas e jornada'), findsNothing);
       await tester.pumpWidget(const SizedBox());
       store.dispose(); session.dispose();

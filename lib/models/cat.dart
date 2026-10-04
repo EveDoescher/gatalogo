@@ -1,5 +1,6 @@
 class Cat {
   final bool isOwned;
+  final String? individualId;
   String get displayName => name?.trim().isNotEmpty == true
       ? name!.trim()
       : 'Gato #${captureNumber.toString().padLeft(3, '0')}';
@@ -31,6 +32,7 @@ class Cat {
 
   const Cat({
     this.isOwned = false,
+    this.individualId,
     required this.id,
     required this.captureNumber,
     required this.photoPath,
@@ -57,6 +59,7 @@ class Cat {
   Map<String, dynamic> toMap() {
     return {
       'is_owned': isOwned ? 1 : 0,
+      'individual_id': individualId,
       'id': id,
       'capture_number': captureNumber,
       'name': name,
@@ -84,6 +87,7 @@ class Cat {
   factory Cat.fromMap(Map<String, dynamic> map) {
     return Cat(
       isOwned: map['is_owned'] == 1 || map['is_owned'] == true,
+      individualId: map['individual_id'] as String?,
       id: map['id'],
       captureNumber: map['capture_number'] ?? 0,
       name: map['name'],
@@ -115,6 +119,7 @@ class Cat {
   Cat withFavorite(bool favorite) {
     return Cat(
       isOwned: isOwned,
+      individualId: individualId,
       id: id,
       captureNumber: captureNumber,
       name: name,
@@ -142,6 +147,7 @@ class Cat {
   Cat withNotes(String? newNotes) {
     return Cat(
       isOwned: isOwned,
+      individualId: individualId,
       id: id,
       captureNumber: captureNumber,
       name: name,
@@ -169,6 +175,7 @@ class Cat {
   Cat withName(String? newName) {
     return Cat(
       isOwned: isOwned,
+      individualId: individualId,
       id: id,
       captureNumber: captureNumber,
       name: newName,
@@ -203,6 +210,7 @@ class Cat {
   }) {
     return Cat(
       isOwned: isOwned,
+      individualId: individualId,
       id: id,
       captureNumber: captureNumber,
       name: name ?? this.name,
@@ -234,6 +242,7 @@ class Cat {
   }) {
     return Cat(
       isOwned: isOwned,
+      individualId: individualId,
       id: id,
       captureNumber: captureNumber,
       name: name,
@@ -253,6 +262,8 @@ class Cat {
       microchip: microchip,
       collar: collar,
       distinguishingMarks: distinguishingMarks,
+      isFavorite: isFavorite,
+      notes: notes,
     );
   }
 
@@ -263,6 +274,7 @@ class Cat {
   }) {
     return Cat(
       isOwned: isOwned,
+      individualId: individualId,
       id: id,
       captureNumber: captureNumber,
       name: name,
@@ -282,6 +294,8 @@ class Cat {
       microchip: microchip,
       collar: collar,
       distinguishingMarks: distinguishingMarks,
+      isFavorite: isFavorite,
+      notes: notes,
     );
   }
 
@@ -297,6 +311,7 @@ class Cat {
     String? name,
     String? status,
     bool? isOwned,
+    String? individualId,
     String? microchip,
     String? collar,
     String? distinguishingMarks,
@@ -305,6 +320,7 @@ class Cat {
   }) {
     return Cat(
       isOwned: isOwned ?? this.isOwned,
+      individualId: individualId ?? this.individualId,
       id: id,
       captureNumber: captureNumber,
       name: name ?? this.name,

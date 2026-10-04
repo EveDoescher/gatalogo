@@ -40,6 +40,7 @@ class VisionApiService {
     required double latitude,
     required double longitude,
     String? note,
+    String? clientEventId,
     DateTime? observedAt,
   }) async {
     await _request(
@@ -50,6 +51,7 @@ class VisionApiService {
         'latitude': latitude,
         'longitude': longitude,
         'note': ?note,
+        'client_event_id': ?clientEventId,
         if (observedAt != null)
           'observed_at': observedAt.toUtc().toIso8601String(),
       },

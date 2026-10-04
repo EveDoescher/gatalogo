@@ -19,21 +19,35 @@ class HabitatSpritePreview extends StatelessWidget {
   final double size;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    width: size,
-    height: size,
-    child: FutureBuilder<ui.Image>(
-      future: sprites.ready(keyName),
-      builder: (context, snapshot) => snapshot.hasData
-          ? CustomPaint(
-              painter: _HabitatSpritePainter(
-                snapshot.data!,
-                sprites.bounds(keyName),
+  Widget build(BuildContext context) {
+    final cached = sprites.cached(keyName);
+    if (cached != null) {
+      return SizedBox(
+        width: size,
+        height: size,
+        child: CustomPaint(
+          painter: _HabitatSpritePainter(cached, sprites.bounds(keyName)),
+        ),
+      );
+    }
+    return SizedBox(
+      width: size,
+      height: size,
+      child: FutureBuilder<ui.Image>(
+        future: sprites.ready(keyName),
+        builder: (context, snapshot) => snapshot.hasData
+            ? CustomPaint(
+                painter: _HabitatSpritePainter(
+                  snapshot.data!,
+                  sprites.bounds(keyName),
+                ),
+              )
+            : const Center(
+                child: Icon(LucideIcons.leaf, color: AppColors.green),
               ),
-            )
-          : const Center(child: Icon(LucideIcons.leaf, color: AppColors.green)),
-    ),
-  );
+      ),
+    );
+  }
 }
 
 class _HabitatSpritePainter extends CustomPainter {

@@ -1,3 +1,7 @@
+import '../widgets/botanical_scene.dart';
+import 'discovery_result_page.dart';
+import 'result_history_page.dart';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -46,7 +50,18 @@ class _NotificationsPageState extends State<NotificationsPage> {
       final items = widget.store.notifications.items;
       if (mounted) {
         setState(() {
-          _items = items;
+          final grouped = <String, Map<String, dynamic>>{};
+          for (final item in items) {
+            final payload = item['payload'] as Map? ?? {};
+            final target =
+                payload['match_id'] ??
+                payload['conversation_id'] ??
+                payload['event_id'] ??
+                item['id'];
+            grouped.putIfAbsent('${item['type']}:$target', () => item);
+          }
+          _items = grouped.values.toList()
+            ..sort((a, b) => _section(a).compareTo(_section(b)));
           _error = null;
         });
       }
@@ -63,7 +78,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
     }
   }
 
+  int _section(Map<String, dynamic> item) => switch (item['type']) {
+    'possible_match' || 'match_confirmed' => 0,
+    'message' || 'friend_invite' || 'friend_accepted' => 1,
+    _ => 2,
+  };
+
   String _title(Map<String, dynamic> item) => switch (item['type']) {
+    'progress_result' => 'Seu resultado está pronto',
     'possible_match' => 'Possível avistamento do seu gato',
     'match_confirmed' => 'Seu avistamento ajudou uma busca!',
     'friend_invite' => 'Novo convite de amizade',
@@ -73,33 +95,33 @@ class _NotificationsPageState extends State<NotificationsPage> {
     _ => 'Novidade no Gatálogo',
   };
 
-  IconData _iconForType(String? type) => switch (type) {
-    'possible_match' || 'match_confirmed' => Icons.pets,
-    'friend_invite' || 'friend_accepted' => LucideIcons.users,
-    'message' => LucideIcons.messageCircle,
-    'achievement' => LucideIcons.trophy,
-    _ => LucideIcons.bell,
-  };
-
-  Color _colorForType(String? type) => switch (type) {
-    'possible_match' || 'match_confirmed' => AppColors.green,
-    'friend_invite' || 'friend_accepted' => AppColors.socialPurpleText,
-    'message' => AppColors.primary,
-    'achievement' => AppColors.achievementText,
-    _ => AppColors.textMedium,
-  };
-
-  Color _bgForType(String? type) => switch (type) {
-    'possible_match' || 'match_confirmed' => AppColors.greenLight,
-    'friend_invite' || 'friend_accepted' => AppColors.socialPurpleBg,
-    'message' => AppColors.primaryLight,
-    'achievement' => AppColors.achievementBg,
-    _ => AppColors.cardAltBackground,
+  String _artForType(String? type) => switch (type) {
+    'possible_match' => 'icons/icon_search_paw_magnifier',
+    'match_confirmed' => 'icons/icon_heart_coral',
+    'friend_invite' || 'friend_accepted' => 'ui/ui_speech_heart',
+    'message' => 'ui/ui_speech_ellipsis',
+    'achievement' => 'rewards/reward_medal_star_gold_ribbon_01',
+    'progress_result' => 'ui/ui_notebook_cat',
+    _ => 'icons/icon_bell_gold_coral',
   };
 
   Future<void> _open(Map<String, dynamic> item) async {
     try {
-      await widget.store.notifications.markRead(item['id'].toString());
+      final source = item['payload'] as Map? ?? {};
+      final target =
+          source['match_id'] ?? source['conversation_id'] ?? source['event_id'];
+      for (final notice in widget.store.notifications.items.toList()) {
+        final data = notice['payload'] as Map? ?? {};
+        if (notice['id'] == item['id'] ||
+            (target != null &&
+                notice['type'] == item['type'] &&
+                (data['match_id'] ??
+                        data['conversation_id'] ??
+                        data['event_id']) ==
+                    target)) {
+          await widget.store.notifications.markRead(notice['id'].toString());
+        }
+      }
       final payload = Map<String, dynamic>.from(item['payload'] as Map? ?? {});
       Widget? page;
       if (item['type'] == 'message' && payload['conversation_id'] != null) {
@@ -107,8 +129,19 @@ class _NotificationsPageState extends State<NotificationsPage> {
           sessionStore: widget.store.sessionStore,
           conversationId: payload['conversation_id'] as String,
         );
-      } else if (item['type'] == 'achievement' ||
-          item['type'] == 'match_confirmed') {
+      } else if (item['type'] == 'progress_result' &&
+          payload['event_id'] != null) {
+        page = DiscoveryResultPage(
+          store: widget.store,
+          eventId: payload['event_id'] as String,
+        );
+      } else if (item['type'] == 'match_confirmed' &&
+          payload['match_id'] != null) {
+        page = ContributionPage(
+          store: widget.store,
+          matchId: payload['match_id'] as String,
+        );
+      } else if (item['type'] == 'achievement') {
         page = JourneyPage(store: widget.store);
       } else if (item['type'] == 'possible_match') {
         final matches = await _api.list('/vision/matches');
@@ -139,7 +172,15 @@ class _NotificationsPageState extends State<NotificationsPage> {
         page = SocialPage(sessionStore: widget.store.sessionStore);
       }
       if (mounted) {
-        await Navigator.push(context, MaterialPageRoute(builder: (_) => page!));
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            settings: RouteSettings(
+              name: page is DiscoveryResultPage ? '/result' : null,
+            ),
+            builder: (_) => page!,
+          ),
+        );
       }
       if (mounted) _load();
     } catch (error) {
@@ -149,35 +190,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BotanicalScaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Stack(
           children: [
-            // Folhagens decorativas
-            Positioned(
-              top: -10,
-              right: -10,
-              child: IgnorePointer(
-                child: Image.asset(
-                  'assets/images/Folha_3.png',
-                  width: 70,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 0,
-              left: -15,
-              child: IgnorePointer(
-                child: Image.asset(
-                  'assets/images/Folha_6.png',
-                  width: 100,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-
             // Conteúdo
             RefreshIndicator(
               onRefresh: _load,
@@ -212,6 +229,16 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     ),
                   ),
 
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(20, 0, 20, 18),
+                      child: IllustratedPaperHeading(
+                        title: 'Seu correio do Gatálogo',
+                        description: 'Avistamentos, mensagens e conquistas chegam por aqui.',
+                        art: 'icons/icon_bell_gold_coral',
+                      ),
+                    ),
+                  ),
                   if (_loading)
                     const SliverToBoxAdapter(
                       child: Padding(
@@ -283,9 +310,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Image.asset(
-                                'assets/images/gato_2.png',
-                                width: 120,
+                              IllustratedGardenStage(
+                                height: 172,
+                                child: GatalogoArt.image(
+                                  'environment/environment_mailbox_coral',
+                                  width: 132,
+                                  height: 140,
+                                ),
                               ),
                               const SizedBox(height: AppSpacing.md),
                               Text(
@@ -323,9 +354,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
                           final item = _items[index];
                           final isUnread = item['read_at'] == null;
                           final type = item['type'] as String?;
-                          final icon = _iconForType(type);
-                          final color = _colorForType(type);
-                          final bgColor = _bgForType(type);
 
                           return Padding(
                             padding: const EdgeInsets.only(
@@ -339,14 +367,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Container(
-                                    width: 40,
-                                    height: 40,
-                                    decoration: BoxDecoration(
-                                      color: bgColor,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(icon, color: color, size: 20),
+                                  GatalogoArt.image(
+                                    _artForType(type),
+                                    width: 44,
+                                    height: 48,
                                   ),
                                   const SizedBox(width: AppSpacing.md),
                                   Expanded(
@@ -358,7 +382,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                           children: [
                                             Expanded(
                                               child: Text(
-                                                _title(item),
+                                                '${_items.indexOf(item) == 0 || _section(_items[_items.indexOf(item) - 1]) != _section(item) ? '${const ['Buscas e pistas', 'Conversas', 'Novidades do jogo'][_section(item)]}\n' : ''}${_title(item)}',
                                                 style: GoogleFonts.fredoka(
                                                   fontSize: 15,
                                                   fontWeight: isUnread

@@ -1,3 +1,4 @@
+import '../widgets/botanical_scene.dart';
 import '../widgets/app_header_actions.dart';
 
 import 'package:flutter/material.dart';
@@ -43,11 +44,13 @@ class MissingCatPosterPage extends StatelessWidget {
     );
     final locStr = poster.address ?? 'Endereço não informado';
 
-    return Scaffold(
+    return BotanicalScaffold(
+      level: BotanicalLevel.tertiary,
+      mood: BotanicalMood.care,
       backgroundColor: AppColors.background,
       appBar: AppBar(
         actions: const [AppHeaderActions()],
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: GestureDetector(
           onTap: () => Navigator.maybePop(context),
@@ -82,13 +85,18 @@ class MissingCatPosterPage extends StatelessWidget {
           AppSpacing.xxl,
         ),
         children: [
+          const IllustratedSectionTitle(
+            title: 'Seu cartaz de busca',
+            art: 'ui/ui_clipboard_paw',
+          ),
+          const SizedBox(height: 16),
           // O Cartaz
           Container(
             padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(AppRadius.card),
-              border: Border.all(color: AppColors.error, width: 3.5),
+              border: Border.all(color: AppColors.error, width: 1.8),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.08),
@@ -283,7 +291,9 @@ class MissingCatPosterPage extends StatelessWidget {
               if (shared) {
                 await catStore?.recordGamificationAction('share');
                 await catStore?.recordHabitatAction(
-                  'share', targetType: 'report', targetId: report['id']?.toString(),
+                  'share',
+                  targetType: 'report',
+                  targetId: report['id']?.toString(),
                 );
               }
             },

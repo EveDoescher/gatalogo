@@ -9,12 +9,13 @@ import 'package:catlogue/stores/session_store.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _Account extends SessionStore {
+  String userId = 'account';
   @override
   bool get isSignedIn => true;
 
   @override
   AuthSession get session => AuthSession(
-    userId: 'account',
+    userId: userId,
     email: 'account@example.com',
     accessToken: 'test',
     refreshToken: 'test',
@@ -121,8 +122,119 @@ class _LayoutApi extends ProductApiService {
   }
 }
 
+class _CareApi extends ProductApiService {
+  _CareApi(super.session);
+  final keys = <String>[];
+  @override
+  Future<Map<String, dynamic>> get(String path) async =>
+      throw const ProductApiException('offline');
+  @override
+  Future<Map<String, dynamic>> post(
+    String path, [
+    Map<String, dynamic>? body,
+  ]) async {
+    keys.add(body!['idempotency_key'] as String);
+    if (keys.length == 1) {
+      throw const ProductApiException('Resposta interrompida.');
+    }
+    return {
+      'balance': 0,
+      'items': [],
+      'cats': [],
+      'selected_cat_ids': [],
+      'care': {
+        'server_now': DateTime.now().toUtc().toIso8601String(),
+        'cats': {
+          'cat': {'affinity': 5},
+        },
+      },
+    };
+  }
+}
+
+class _DelayedCareApi extends ProductApiService {
+  _DelayedCareApi(super.session);
+  final started = Completer<void>();
+  final response = Completer<Map<String, dynamic>>();
+
+  @override
+  Future<Map<String, dynamic>> post(String path, [Map<String, dynamic>? body]) {
+    started.complete();
+    return response.future;
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  for (final closeService in [false, true]) {
+    test(
+      'care response is ignored after ${closeService ? 'disposal' : 'account switch'}',
+      () async {
+        final session = _Account();
+        final store = CatStore(session);
+        final database = _HabitatDatabase();
+        final api = _DelayedCareApi(session);
+        final habitat = HabitatService(
+          session,
+          store,
+          database: database,
+          api: api,
+        );
+        final result = expectLater(
+          habitat.interact('pet', 'cat'),
+          throwsA(isA<ProductApiException>()),
+        );
+        await api.started.future;
+        if (closeService) {
+          habitat.dispose();
+        } else {
+          session.userId = 'other-account';
+        }
+        api.response.complete({
+          'balance': 99,
+          'care': {
+            'cats': {
+              'cat': {'affinity': 50},
+            },
+          },
+        });
+        await result;
+        expect(habitat.affinity('cat'), 0);
+        expect(habitat.balance, 0);
+        expect(database.snapshot!['balance'], 0);
+        if (!closeService) habitat.dispose();
+        store.dispose();
+        session.dispose();
+      },
+    );
+  }
+  test('care retries reuse persisted keys after restart and award only confirmed affinity', () async {
+    final session = _Account();
+    final store = CatStore(session);
+    final database = _HabitatDatabase();
+    final api = _CareApi(session);
+    final first = HabitatService(session, store, database: database, api: api);
+    await expectLater(
+      first.interact('feed', 'cat', bowlId: 'bowl'),
+      throwsA(isA<ProductApiException>()),
+    );
+    expect(first.affinity('cat'), 0);
+    first.dispose();
+    final restored = HabitatService(
+      session,
+      store,
+      database: database,
+      api: api,
+    );
+    await restored.load();
+    restored.offline = false;
+    await restored.interact('feed', 'cat', bowlId: 'bowl');
+    expect(api.keys[0], api.keys[1]);
+    expect(restored.affinity('cat'), 5);
+    restored.dispose();
+    store.dispose();
+    session.dispose();
+  });
   test(
     'placement respects occupied cells, item footprint and scene capacity',
     () {
@@ -294,7 +406,7 @@ void main() {
       ];
       expect(service.canPlace(service.items[3], 1, 1, 0), isFalse);
       expect(service.canPlace(service.items[1], 1, 1, 0), isTrue);
-      final painted = await service.paintPath('pebble_path', [
+      final painted = await service.paintGround('pebble_path', [
         (1, 1),
         (1, 2),
         (1, 3),

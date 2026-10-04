@@ -1,3 +1,4 @@
+import '../widgets/botanical_scene.dart';
 import '../widgets/app_header_actions.dart';
 
 import 'dart:async';
@@ -271,28 +272,17 @@ class _LocationPageState extends State<LocationPage> {
       catMarkers.add(
         Marker(
           point: pos,
-          width: isSelected ? 54 : 44,
-          height: isSelected ? 54 : 44,
+          alignment: Alignment.topCenter,
+          width: isSelected ? 58 : 48,
+          height: isSelected ? 68 : 58,
           child: GestureDetector(
             onTap: () => _showCatInfo(cat),
-            child: Container(
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primaryDark : AppColors.primary,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2.5),
-              ),
-              child: Center(
-                child: ClipOval(
-                  child: SizedBox(
-                    width: isSelected ? 42 : 34,
-                    height: isSelected ? 42 : 34,
-                    child: CatPhotoView(
-                      cat.photoPath,
-                      fit: BoxFit.cover,
-                      borderRadius: 0,
-                    ),
-                  ),
-                ),
+            child: IllustratedPhotoPin(
+              selected: isSelected,
+              photo: CatPhotoView(
+                cat.photoPath,
+                fit: BoxFit.cover,
+                borderRadius: 0,
               ),
             ),
           ),
@@ -321,11 +311,11 @@ class _LocationPageState extends State<LocationPage> {
         ? 'Meus Avistamentos'
         : 'Localização';
 
-    return Scaffold(
+    return BotanicalScaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         actions: const [AppHeaderActions()],
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: GestureDetector(
           onTap: () => Navigator.maybePop(context),
@@ -401,10 +391,10 @@ class _LocationPageState extends State<LocationPage> {
                             point: _point!,
                             width: 44,
                             height: 44,
-                            child: const Icon(
-                              Icons.location_on,
-                              size: 44,
-                              color: AppColors.primaryDark,
+                            child: GatalogoArt.image(
+                              'environment/environment_map_pin_cat_coral_grass',
+                              width: 44,
+                              height: 44,
                             ),
                           ),
                         ],
@@ -500,33 +490,13 @@ class _LocationPageState extends State<LocationPage> {
                           ),
                         ],
                         const SizedBox(height: 10),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.pill,
-                                ),
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                            ),
-                            onPressed: _point == null || _saving ? null : _save,
-                            child: Text(
-                              _saving
-                                  ? 'Salvando…'
-                                  : widget.catId == null
-                                  ? 'Usar este ponto'
-                                  : 'Registrar avistamento',
-                              style: GoogleFonts.nunito(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
+                        BotanicalAction(
+                          label: widget.catId == null
+                              ? 'Usar este ponto'
+                              : 'Registrar avistamento',
+                          icon: LucideIcons.mapPin,
+                          busy: _saving,
+                          onPressed: _point == null || _saving ? null : _save,
                         ),
                       ],
                     ],
