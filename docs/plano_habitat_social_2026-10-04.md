@@ -2,7 +2,7 @@
 
 Data: 04/10/2026. Estado: plano de implementação; funcionalidades ainda não implementadas nesta rodada.
 
-Branch nos dois repositórios: `codex/habitat-social-improvements`, criada a partir da `main` sincronizada com o remoto. Gatálogo: base `def9876`. API: base `94e9827`.
+Branch nos dois repositórios: `feature/habitat-social-improvements`, criada a partir da `main` sincronizada com o remoto. Gatálogo: base `def9876`. API: base `94e9827`.
 
 ## Objetivo e regras compartilhadas
 
