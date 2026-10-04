@@ -1,0 +1,2656 @@
+[
+  {
+    "file": "avatars/avatar_boy.png",
+    "original_file": "bapinho.png",
+    "category": "avatars",
+    "type": "avatar",
+    "width": 434,
+    "height": 487,
+    "mode": "RGBA",
+    "colors": [
+      "gray",
+      "cream",
+      "brown",
+      "dark_brown"
+    ],
+    "suggested_uses": [
+      "profile avatar",
+      "character portrait"
+    ],
+    "sha256_original": "f6fd75669d57241e980151fa4ae06e39970193a228f75be97173b1f9c47a39bb"
+  },
+  {
+    "file": "avatars/avatar_boy_floral_frame.png",
+    "original_file": "bapinho_moldura.png",
+    "category": "avatars",
+    "type": "avatar_frame",
+    "width": 533,
+    "height": 569,
+    "mode": "RGBA",
+    "colors": [
+      "beige",
+      "gray",
+      "dark_brown",
+      "cream"
+    ],
+    "suggested_uses": [
+      "profile avatar",
+      "profile header",
+      "account card"
+    ],
+    "sha256_original": "fc70b6a398b55ce8fc4c687befa31569ff97cf9fc460539dffbe08e15d27ab3b"
+  },
+  {
+    "file": "avatars/avatar_girl.png",
+    "original_file": "bapinha.png",
+    "category": "avatars",
+    "type": "avatar",
+    "width": 451,
+    "height": 480,
+    "mode": "RGBA",
+    "colors": [
+      "gray",
+      "cream",
+      "dark_brown",
+      "brown"
+    ],
+    "suggested_uses": [
+      "profile avatar",
+      "character portrait"
+    ],
+    "sha256_original": "ca67fe85cd0f5d8f12684ad814c6aa6ce5618b02bae1e1bec87376f55df91b14"
+  },
+  {
+    "file": "avatars/avatar_girl_floral_frame.png",
+    "original_file": "bapinha_moldura.png",
+    "category": "avatars",
+    "type": "avatar_frame",
+    "width": 550,
+    "height": 608,
+    "mode": "RGBA",
+    "colors": [
+      "gray",
+      "cream",
+      "dark_brown",
+      "beige"
+    ],
+    "suggested_uses": [
+      "profile avatar",
+      "profile header",
+      "account card"
+    ],
+    "sha256_original": "56a86dcd59bc038ab1a5e14a5a8ab482b1b9845c2cf9324765981e3541afb5f5"
+  },
+  {
+    "file": "backgrounds/background_garden_frame.png",
+    "original_file": "background.png",
+    "category": "backgrounds",
+    "type": "screen_background",
+    "width": 941,
+    "height": 1672,
+    "mode": "RGB",
+    "colors": [
+      "cream",
+      "green",
+      "dark_green",
+      "light_green"
+    ],
+    "suggested_uses": [
+      "screen background",
+      "menu background",
+      "empty state background"
+    ],
+    "sha256_original": "2df0b0ecae2c6927a4ebce52bf5d08279fcde980746b96d5032577d4d45b969d"
+  },
+  {
+    "file": "branding/brand_gatalogo_logo.png",
+    "original_file": "Logo.png",
+    "category": "branding",
+    "type": "logo",
+    "width": 876,
+    "height": 286,
+    "mode": "RGBA",
+    "colors": [
+      "brown",
+      "dark_brown",
+      "light_green",
+      "pink"
+    ],
+    "suggested_uses": [
+      "app branding",
+      "splash screen",
+      "header"
+    ],
+    "sha256_original": "8455d5438cb5bca9cc0bbd567bd72cba67d61e5c5d5ba5898b79d3215ecfe7b2"
+  },
+  {
+    "file": "branding/brand_google_logo.png",
+    "original_file": "google_logo.png",
+    "category": "branding",
+    "type": "external_brand",
+    "width": 54,
+    "height": 54,
+    "mode": "RGBA",
+    "colors": [
+      "red",
+      "blue",
+      "green",
+      "gold"
+    ],
+    "suggested_uses": [
+      "google sign-in",
+      "integration"
+    ],
+    "sha256_original": "549a81cda776769840f37f184d34eb673ff9e5c0671c67172818e91273753e1a"
+  },
+  {
+    "file": "cats/cat_calico_face.png",
+    "original_file": "cat.png",
+    "category": "cats",
+    "type": "cat_illustration",
+    "width": 215,
+    "height": 182,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "yellow",
+      "dark_brown",
+      "orange"
+    ],
+    "suggested_uses": [
+      "mascot",
+      "empty state",
+      "cat icon"
+    ],
+    "sha256_original": "9692806de8315b0c026cbd2b28c3c38581091e9e7942459039f0c82b6afee420"
+  },
+  {
+    "file": "cats/cat_calico_peeking.png",
+    "original_file": "Cat_2.png",
+    "category": "cats",
+    "type": "cat_illustration",
+    "width": 293,
+    "height": 165,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "beige",
+      "gray",
+      "green"
+    ],
+    "suggested_uses": [
+      "card header",
+      "empty state",
+      "decorative mascot"
+    ],
+    "sha256_original": "100579308da9a63db5072e9f95b09b7f6e2d921f51bb2780468bab459e6b8069"
+  },
+  {
+    "file": "cats/cat_orange_camera.png",
+    "original_file": "gato_1.png",
+    "category": "cats",
+    "type": "cat_illustration",
+    "width": 423,
+    "height": 432,
+    "mode": "RGBA",
+    "colors": [
+      "beige",
+      "white",
+      "cream",
+      "black"
+    ],
+    "suggested_uses": [
+      "gatalogar screen",
+      "photo action",
+      "mascot"
+    ],
+    "sha256_original": "c38b0bf9d80b907b6f23318f95ea58a7081f1f132c8501a85a486572a19fc7ea"
+  },
+  {
+    "file": "cats/cat_orange_crouching.png",
+    "original_file": "gato_3.png",
+    "category": "cats",
+    "type": "cat_illustration",
+    "width": 529,
+    "height": 384,
+    "mode": "RGBA",
+    "colors": [
+      "white",
+      "beige",
+      "black",
+      "tan"
+    ],
+    "suggested_uses": [
+      "empty state",
+      "discovery state",
+      "mascot"
+    ],
+    "sha256_original": "7c9a5086e31e7175c185a2d8315d4714a70b4d90de70ddd8bc60f92f88f33fd4"
+  },
+  {
+    "file": "cats/cat_orange_sleeping.png",
+    "original_file": "gato_2.png",
+    "category": "cats",
+    "type": "cat_illustration",
+    "width": 467,
+    "height": 337,
+    "mode": "RGBA",
+    "colors": [
+      "beige",
+      "white",
+      "tan",
+      "gray"
+    ],
+    "suggested_uses": [
+      "empty state",
+      "rest state",
+      "mascot"
+    ],
+    "sha256_original": "6e9e1456363cbc00f999c7a263d8741e7021873fa42dc1161752891ec58e0359"
+  },
+  {
+    "file": "environment/environment_cat_map.png",
+    "original_file": "Map.png",
+    "category": "environment",
+    "type": "map",
+    "width": 590,
+    "height": 475,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "light_green",
+      "beige",
+      "brown"
+    ],
+    "suggested_uses": [
+      "map screen",
+      "nearby cats",
+      "exploration"
+    ],
+    "sha256_original": "e1c9f77cd07195b2e8d0458c0a508e368c60ff31642fe99d042b3987b8069f51"
+  },
+  {
+    "file": "environment/environment_dirt_plot.png",
+    "original_file": "ground 3.png",
+    "category": "environment",
+    "type": "ground_patch",
+    "width": 236,
+    "height": 169,
+    "mode": "RGBA",
+    "colors": [
+      "orange",
+      "red",
+      "tan",
+      "yellow"
+    ],
+    "suggested_uses": [
+      "habitat ground",
+      "placement tile",
+      "garden plot"
+    ],
+    "sha256_original": "10d55032761d1b09658db2218efc0d639bb9a1dda84a8593fe3e0453ece0af34"
+  },
+  {
+    "file": "environment/environment_grass_stones_flowers.png",
+    "original_file": "ground.png",
+    "category": "environment",
+    "type": "ground_patch",
+    "width": 339,
+    "height": 219,
+    "mode": "RGBA",
+    "colors": [
+      "light_green",
+      "dark_green",
+      "beige",
+      "brown"
+    ],
+    "suggested_uses": [
+      "habitat ground",
+      "scene decoration",
+      "map decoration"
+    ],
+    "sha256_original": "ef3d62b2c5d4d304e108b337a8d9487e146e1553aeb3f1192b9c4a55f8e34d5f"
+  },
+  {
+    "file": "environment/environment_house_coral_roof.png",
+    "original_file": "casa.png",
+    "category": "environment",
+    "type": "building",
+    "width": 264,
+    "height": 240,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "tan",
+      "coral",
+      "beige"
+    ],
+    "suggested_uses": [
+      "home location",
+      "map point",
+      "habitat structure"
+    ],
+    "sha256_original": "b72470a2426bc5c51936918fa46ed482e533627e7675a7b1989203d822b6e65b"
+  },
+  {
+    "file": "environment/environment_mailbox_coral.png",
+    "original_file": "correio.png",
+    "category": "environment",
+    "type": "mailbox",
+    "width": 193,
+    "height": 244,
+    "mode": "RGBA",
+    "colors": [
+      "beige",
+      "cream",
+      "dark_brown",
+      "tan"
+    ],
+    "suggested_uses": [
+      "messages",
+      "mail",
+      "daily rewards"
+    ],
+    "sha256_original": "9be67e29ff34f03cf6833be1cef6390da0f31df93f72ad41714401f91553ba47"
+  },
+  {
+    "file": "environment/environment_map_pin_cat_coral_grass.png",
+    "original_file": "point.png",
+    "category": "environment",
+    "type": "map_pin",
+    "width": 246,
+    "height": 265,
+    "mode": "RGBA",
+    "colors": [
+      "coral",
+      "tan",
+      "cream",
+      "light_green"
+    ],
+    "suggested_uses": [
+      "map marker",
+      "cat sighting",
+      "location"
+    ],
+    "sha256_original": "c4022db477456624a3b587bc6178f3043c0dfd7226e1dd518ef611cff8c2c399"
+  },
+  {
+    "file": "environment/environment_map_pin_cat_gold.png",
+    "original_file": "point_2.png",
+    "category": "environment",
+    "type": "map_pin",
+    "width": 182,
+    "height": 232,
+    "mode": "RGBA",
+    "colors": [
+      "yellow",
+      "cream",
+      "orange",
+      "beige"
+    ],
+    "suggested_uses": [
+      "map marker",
+      "special location",
+      "location"
+    ],
+    "sha256_original": "4b4dc78e5b10b752da3c2423b33c94d6a1410e0d33d378cc7598bfbc738df464"
+  },
+  {
+    "file": "environment/environment_route_dotted_pin_flag.png",
+    "original_file": "caminho.png",
+    "category": "environment",
+    "type": "route",
+    "width": 353,
+    "height": 166,
+    "mode": "RGBA",
+    "colors": [
+      "brown",
+      "light_green",
+      "coral",
+      "dark_brown"
+    ],
+    "suggested_uses": [
+      "map route",
+      "progress path",
+      "exploration"
+    ],
+    "sha256_original": "50dd75308cf52a76314e26bbed5d2eba57bb13ece482e35807b5721fc044e7ad"
+  },
+  {
+    "file": "environment/environment_shop_coral_awning.png",
+    "original_file": "store.png",
+    "category": "environment",
+    "type": "building",
+    "width": 294,
+    "height": 247,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "tan",
+      "coral",
+      "pink"
+    ],
+    "suggested_uses": [
+      "shop location",
+      "store screen",
+      "map point"
+    ],
+    "sha256_original": "2cc51a001e7b48e0a4903dba54351f53e83fda939bacae4ba53c02fb7c60fda8"
+  },
+  {
+    "file": "environment/environment_signpost_cat.png",
+    "original_file": "placa.png",
+    "category": "environment",
+    "type": "signpost",
+    "width": 248,
+    "height": 303,
+    "mode": "RGBA",
+    "colors": [
+      "red",
+      "orange",
+      "dark_brown",
+      "coral"
+    ],
+    "suggested_uses": [
+      "habitat navigation",
+      "map decoration",
+      "section marker"
+    ],
+    "sha256_original": "27bfcc8eb0618eb3da5ac3a950be82ee21134c59cac0204b23e15a93919ee966"
+  },
+  {
+    "file": "environment/environment_stepping_stones_plants.png",
+    "original_file": "ground_2.png",
+    "category": "environment",
+    "type": "ground_patch",
+    "width": 275,
+    "height": 223,
+    "mode": "RGBA",
+    "colors": [
+      "beige",
+      "tan",
+      "light_green",
+      "cream"
+    ],
+    "suggested_uses": [
+      "habitat path",
+      "scene decoration",
+      "map decoration"
+    ],
+    "sha256_original": "72bc3639d3aa977e5dfda111b8b1b66852c55e9851607761bec00cacac628faa"
+  },
+  {
+    "file": "environment/environment_wall_foliage_corner.png",
+    "original_file": "Folha_6.png",
+    "category": "environment",
+    "type": "scene_foliage",
+    "width": 434,
+    "height": 374,
+    "mode": "RGBA",
+    "colors": [
+      "light_green",
+      "beige",
+      "cream",
+      "gray"
+    ],
+    "suggested_uses": [
+      "habitat edge",
+      "scene background",
+      "corner decoration"
+    ],
+    "sha256_original": "f2dd0c18e36a6a04636318f8dce3764b3b00a2c280c6881c12a5e0d2c466908f"
+  },
+  {
+    "file": "environment/environment_wood_gate_paw.png",
+    "original_file": "portao.png",
+    "category": "environment",
+    "type": "gate",
+    "width": 307,
+    "height": 211,
+    "mode": "RGBA",
+    "colors": [
+      "orange",
+      "tan",
+      "green",
+      "dark_brown"
+    ],
+    "suggested_uses": [
+      "habitat entrance",
+      "scene decoration",
+      "location"
+    ],
+    "sha256_original": "4124b6eab38e40f44d62b6f32fa36396dca32cc837577e312f7c932aa4870cd9"
+  },
+  {
+    "file": "flora/flora_branch_pale_diagonal_01.png",
+    "original_file": "Folha_2.png",
+    "category": "flora",
+    "type": "leaf_branch",
+    "width": 439,
+    "height": 369,
+    "mode": "RGBA",
+    "colors": [
+      "light_green",
+      "gray"
+    ],
+    "suggested_uses": [
+      "background foliage",
+      "edge decoration",
+      "soft overlay"
+    ],
+    "sha256_original": "4ee6a333bd1c60b8c69e831ee4e9c0555ea2cb1eb5e033d7ca76e81013adcc4a"
+  },
+  {
+    "file": "flora/flora_branch_pale_long_01.png",
+    "original_file": "Folha_1.png",
+    "category": "flora",
+    "type": "leaf_branch",
+    "width": 328,
+    "height": 510,
+    "mode": "RGBA",
+    "colors": [
+      "light_green",
+      "gray"
+    ],
+    "suggested_uses": [
+      "background foliage",
+      "edge decoration",
+      "soft overlay"
+    ],
+    "sha256_original": "d0eb011926580949c192e4a9044b3103bd3e09e2a1ab11de04b554769b332841"
+  },
+  {
+    "file": "flora/flora_branch_pale_long_02.png",
+    "original_file": "Folha_5.png",
+    "category": "flora",
+    "type": "leaf_branch",
+    "width": 237,
+    "height": 311,
+    "mode": "RGBA",
+    "colors": [
+      "light_green",
+      "gray"
+    ],
+    "suggested_uses": [
+      "background foliage",
+      "edge decoration",
+      "soft overlay"
+    ],
+    "sha256_original": "bd2bdf397af0c5e6a39e2b1633c1268acf4e8fff11e7eaa7b1760354da4d2e0e"
+  },
+  {
+    "file": "flora/flora_branch_two_pink_buds_horizontal.png",
+    "original_file": "flor_22.png",
+    "category": "flora",
+    "type": "flower_branch",
+    "width": 239,
+    "height": 219,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "beige",
+      "dark_brown",
+      "light_green"
+    ],
+    "suggested_uses": [
+      "card corner",
+      "background accent",
+      "divider end"
+    ],
+    "sha256_original": "fb26f2017a3d02b154562f4140d9c29d40579dd39e4a87e7161ccda1c7e873a1"
+  },
+  {
+    "file": "flora/flora_branch_two_pink_buds_upright.png",
+    "original_file": "flor_21.png",
+    "category": "flora",
+    "type": "flower_branch",
+    "width": 140,
+    "height": 188,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "dark_green",
+      "beige",
+      "coral"
+    ],
+    "suggested_uses": [
+      "card corner",
+      "background accent",
+      "divider end"
+    ],
+    "sha256_original": "e64a566413f74192a98cf8ee8c86bb21a933b6cafefbc3c22fc946426e62bd47"
+  },
+  {
+    "file": "flora/flora_bush_round_green_01.png",
+    "original_file": "folha_10.png",
+    "category": "flora",
+    "type": "bush",
+    "width": 270,
+    "height": 146,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "light_green",
+      "dark_green",
+      "black"
+    ],
+    "suggested_uses": [
+      "background decoration",
+      "ground decoration",
+      "habitat accent"
+    ],
+    "sha256_original": "4aa396b22da2d03400b3f6a7424ffc4d1eadd3f00fdf4f3c6ce08118c80dad21"
+  },
+  {
+    "file": "flora/flora_bush_round_green_02.png",
+    "original_file": "folha_21.png",
+    "category": "flora",
+    "type": "bush",
+    "width": 380,
+    "height": 250,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "dark_green",
+      "black",
+      "light_green"
+    ],
+    "suggested_uses": [
+      "background decoration",
+      "ground decoration",
+      "habitat accent"
+    ],
+    "sha256_original": "c4e7aab1ed39336edd913a0d8737d713316f19e2b13f2d70ca32c3e9c3a9db6a"
+  },
+  {
+    "file": "flora/flora_bush_white_flower_round.png",
+    "original_file": "flor_26.png",
+    "category": "flora",
+    "type": "flower_bush",
+    "width": 312,
+    "height": 265,
+    "mode": "RGBA",
+    "colors": [
+      "dark_green",
+      "green",
+      "cream",
+      "black"
+    ],
+    "suggested_uses": [
+      "background decoration",
+      "ground decoration",
+      "habitat accent"
+    ],
+    "sha256_original": "818719449b6e156f8a4239197c477a1a02826c8207a458702bc7976528c4c43d"
+  },
+  {
+    "file": "flora/flora_bush_white_flowers.png",
+    "original_file": "bush.png",
+    "category": "flora",
+    "type": "bush",
+    "width": 312,
+    "height": 228,
+    "mode": "RGBA",
+    "colors": [
+      "dark_green",
+      "green",
+      "cream",
+      "black"
+    ],
+    "suggested_uses": [
+      "background decoration",
+      "card footer",
+      "habitat decoration"
+    ],
+    "sha256_original": "c6766b2a092bbc01ac15eced955b87f87314d3115d331c31fc612fe217c36ee8"
+  },
+  {
+    "file": "flora/flora_corner_white_flower_dense_01.png",
+    "original_file": "flor_11.png",
+    "category": "flora",
+    "type": "corner_foliage",
+    "width": 324,
+    "height": 311,
+    "mode": "RGBA",
+    "colors": [
+      "dark_green",
+      "green",
+      "black",
+      "cream"
+    ],
+    "suggested_uses": [
+      "card corner",
+      "panel corner",
+      "frame decoration"
+    ],
+    "sha256_original": "a3c0552853f109a36e23e77deca7b656a469a69ef935069f05e9773a70fd0b35"
+  },
+  {
+    "file": "flora/flora_corner_white_flower_dense_02.png",
+    "original_file": "flor_2 (2).png",
+    "category": "flora",
+    "type": "corner_foliage",
+    "width": 368,
+    "height": 301,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "dark_green",
+      "cream",
+      "black"
+    ],
+    "suggested_uses": [
+      "card corner",
+      "panel corner",
+      "frame decoration"
+    ],
+    "sha256_original": "b3a3bb258c04869d2cb5fe96ff1a686b980931de174ecef77c5c4ea2412bb1d9"
+  },
+  {
+    "file": "flora/flora_corner_white_flower_dense_03.png",
+    "original_file": "flor_30.png",
+    "category": "flora",
+    "type": "corner_foliage",
+    "width": 326,
+    "height": 303,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "dark_green",
+      "black",
+      "cream"
+    ],
+    "suggested_uses": [
+      "card corner",
+      "panel corner",
+      "frame decoration"
+    ],
+    "sha256_original": "79f0cf2f3941ea5e934d95eb6467aceb6f135840da2bd1f565a6a2bf6d5742db"
+  },
+  {
+    "file": "flora/flora_corner_white_flower_leaves_01.png",
+    "original_file": "flor_17.png",
+    "category": "flora",
+    "type": "corner_foliage",
+    "width": 230,
+    "height": 232,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "white",
+      "cream",
+      "black"
+    ],
+    "suggested_uses": [
+      "card corner",
+      "panel corner",
+      "frame decoration"
+    ],
+    "sha256_original": "6b19ee05eb4a20b5375796a84466cd7a03c5d1f9d56bb1744c919752ad7654a4"
+  },
+  {
+    "file": "flora/flora_corner_white_flower_leaves_02.png",
+    "original_file": "flor_19.png",
+    "category": "flora",
+    "type": "corner_foliage",
+    "width": 241,
+    "height": 237,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "black",
+      "dark_green",
+      "white"
+    ],
+    "suggested_uses": [
+      "card corner",
+      "panel corner",
+      "frame decoration"
+    ],
+    "sha256_original": "f2f42cb0ad5213e92e0fea3f029133109d95fd34da7e57723392fa42a9cc6b93"
+  },
+  {
+    "file": "flora/flora_divider_white_flower_short.png",
+    "original_file": "flor_16.png",
+    "category": "flora",
+    "type": "divider",
+    "width": 457,
+    "height": 117,
+    "mode": "RGBA",
+    "colors": [
+      "white",
+      "green",
+      "cream",
+      "dark_green"
+    ],
+    "suggested_uses": [
+      "card divider",
+      "section separator",
+      "header decoration"
+    ],
+    "sha256_original": "8557bc59f0fccb7805ef9c76c8f1a7b58f47aece9fd05fee19de98e721519c5e"
+  },
+  {
+    "file": "flora/flora_flower_white_large_three_leaves.png",
+    "original_file": "flor_6.png",
+    "category": "flora",
+    "type": "flower_cluster",
+    "width": 172,
+    "height": 154,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "white",
+      "green",
+      "dark_green"
+    ],
+    "suggested_uses": [
+      "card corner",
+      "icon accent",
+      "background decoration"
+    ],
+    "sha256_original": "80efc64ed3d00b5b8271f15431b62c2caec9d7723a286adc6ebea657af1c8cb2"
+  },
+  {
+    "file": "flora/flora_flower_white_large_two_leaves.png",
+    "original_file": "flor_5.png",
+    "category": "flora",
+    "type": "flower_cluster",
+    "width": 205,
+    "height": 168,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "white",
+      "green",
+      "dark_green"
+    ],
+    "suggested_uses": [
+      "card corner",
+      "icon accent",
+      "background decoration"
+    ],
+    "sha256_original": "373ea407fbe1b439050c6f35bd0e4b027bd3e17df109b24269023b7116da45be"
+  },
+  {
+    "file": "flora/flora_flower_white_leaf_cluster_01.png",
+    "original_file": "Flor.png",
+    "category": "flora",
+    "type": "flower_cluster",
+    "width": 275,
+    "height": 210,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "dark_green",
+      "cream",
+      "white"
+    ],
+    "suggested_uses": [
+      "card corner",
+      "small decoration",
+      "background accent"
+    ],
+    "sha256_original": "e9ff0a6f92b30631edc0cffb6abbd475bc9cfac5402b7b6582372d0dbef7cac3"
+  },
+  {
+    "file": "flora/flora_flower_white_leaf_cluster_02.png",
+    "original_file": "flor_10.png",
+    "category": "flora",
+    "type": "flower_cluster",
+    "width": 328,
+    "height": 300,
+    "mode": "RGBA",
+    "colors": [
+      "dark_green",
+      "green",
+      "black",
+      "cream"
+    ],
+    "suggested_uses": [
+      "card corner",
+      "small decoration",
+      "background accent"
+    ],
+    "sha256_original": "b33ae03a8160d716fe8f57e0bdc8911f9342c6294488b700594a85ff48699e7e"
+  },
+  {
+    "file": "flora/flora_flower_white_leaf_cluster_03.png",
+    "original_file": "flor_7.png",
+    "category": "flora",
+    "type": "flower_cluster",
+    "width": 192,
+    "height": 183,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "white",
+      "cream",
+      "dark_green"
+    ],
+    "suggested_uses": [
+      "card corner",
+      "small decoration",
+      "background accent"
+    ],
+    "sha256_original": "be6612f583b06bc0892727b73eb590286420aafaa808a20a5859cb2807b02c02"
+  },
+  {
+    "file": "flora/flora_flower_white_pink_bud_cluster.png",
+    "original_file": "flor_4.png",
+    "category": "flora",
+    "type": "flower_cluster",
+    "width": 227,
+    "height": 240,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "dark_green",
+      "green",
+      "black"
+    ],
+    "suggested_uses": [
+      "card corner",
+      "reward decoration",
+      "background accent"
+    ],
+    "sha256_original": "aa1300f1d56bb13718441f384b8edf692374de0ebdb57bc7b84dc72a90fe124c"
+  },
+  {
+    "file": "flora/flora_flower_white_symmetrical_leaves.png",
+    "original_file": "flor_9.png",
+    "category": "flora",
+    "type": "flower_cluster",
+    "width": 388,
+    "height": 267,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "black",
+      "green",
+      "dark_green"
+    ],
+    "suggested_uses": [
+      "card footer",
+      "section accent",
+      "small decoration"
+    ],
+    "sha256_original": "7538232e77b46f254e1a161ee5326c19e93aeb323454bbbaa74ad5e039f4699f"
+  },
+  {
+    "file": "flora/flora_flower_white_three_leaves_horizontal.png",
+    "original_file": "flor_8.png",
+    "category": "flora",
+    "type": "flower_cluster",
+    "width": 334,
+    "height": 199,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "black",
+      "green",
+      "dark_green"
+    ],
+    "suggested_uses": [
+      "divider end",
+      "small decoration",
+      "card accent"
+    ],
+    "sha256_original": "b6ddd5e03a21b86d2711cd93bacf962d86bc20758f07ee3801bad7067d7e6ad3"
+  },
+  {
+    "file": "flora/flora_flower_white_two_leaves_small.png",
+    "original_file": "flor_2.png",
+    "category": "flora",
+    "type": "flower_cluster",
+    "width": 169,
+    "height": 214,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "cream",
+      "dark_green",
+      "light_green"
+    ],
+    "suggested_uses": [
+      "small decoration",
+      "icon accent",
+      "card corner"
+    ],
+    "sha256_original": "8e020ccfe927842200842471de4c8e2548957d01dc12e8cb2b15c641cc11e81e"
+  },
+  {
+    "file": "flora/flora_flower_white_two_leaves_tiny.png",
+    "original_file": "Flor_3.png",
+    "category": "flora",
+    "type": "flower_cluster",
+    "width": 148,
+    "height": 151,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "green",
+      "white",
+      "dark_green"
+    ],
+    "suggested_uses": [
+      "tiny decoration",
+      "icon accent",
+      "card corner"
+    ],
+    "sha256_original": "95981ae67bbb1f732aff47bb30dfe8bcc8ca298893c566bd98ee8850015f9b52"
+  },
+  {
+    "file": "flora/flora_grass_pink_flowers_pair.png",
+    "original_file": "flor_24.png",
+    "category": "flora",
+    "type": "flower_tuft",
+    "width": 232,
+    "height": 133,
+    "mode": "RGBA",
+    "colors": [
+      "beige",
+      "green",
+      "coral",
+      "dark_green"
+    ],
+    "suggested_uses": [
+      "card footer",
+      "ground decoration",
+      "section accent"
+    ],
+    "sha256_original": "16db2ef685a66905e3f37dc4839c81f618d030637a0bc939a16b944811d01e2c"
+  },
+  {
+    "file": "flora/flora_grass_tuft_three_blades.png",
+    "original_file": "folha_7.png",
+    "category": "flora",
+    "type": "grass",
+    "width": 161,
+    "height": 115,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "dark_green",
+      "light_green",
+      "black"
+    ],
+    "suggested_uses": [
+      "ground decoration",
+      "card footer",
+      "habitat accent"
+    ],
+    "sha256_original": "1566dc52699db2a3ee0585028b0a3c8e148681a42e7a0c2bdbf81824fa9cdacb"
+  },
+  {
+    "file": "flora/flora_grass_tuft_wide_01.png",
+    "original_file": "folha_11.png",
+    "category": "flora",
+    "type": "grass",
+    "width": 268,
+    "height": 141,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "dark_green",
+      "light_green",
+      "black"
+    ],
+    "suggested_uses": [
+      "ground decoration",
+      "card footer",
+      "habitat accent"
+    ],
+    "sha256_original": "5d753e222d59767c4f13f70ccd6b5f273a8eef653773065f47ebb91bb7d8a9a4"
+  },
+  {
+    "file": "flora/flora_grass_white_flower_center.png",
+    "original_file": "flor_31.png",
+    "category": "flora",
+    "type": "flower_tuft",
+    "width": 366,
+    "height": 233,
+    "mode": "RGBA",
+    "colors": [
+      "dark_green",
+      "green",
+      "cream",
+      "black"
+    ],
+    "suggested_uses": [
+      "card footer",
+      "ground decoration",
+      "section accent"
+    ],
+    "sha256_original": "3d22acc0ec53d1d3b36c528a742c4ce50c4b1c0c43bfb63c0885a28827be32f4"
+  },
+  {
+    "file": "flora/flora_grass_white_flowers_pair.png",
+    "original_file": "flor_23.png",
+    "category": "flora",
+    "type": "flower_tuft",
+    "width": 236,
+    "height": 156,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "white",
+      "dark_green",
+      "cream"
+    ],
+    "suggested_uses": [
+      "card footer",
+      "ground decoration",
+      "section accent"
+    ],
+    "sha256_original": "188d2eabf089dc733b21b445b1841d58157163668eba21d8c26f17cb5918f930"
+  },
+  {
+    "file": "flora/flora_leaf_cluster_flat_dark_01.png",
+    "original_file": "Folha_2 (2).png",
+    "category": "flora",
+    "type": "leaf_cluster",
+    "width": 214,
+    "height": 167,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "dark_green",
+      "black",
+      "light_green"
+    ],
+    "suggested_uses": [
+      "ground decoration",
+      "card footer",
+      "habitat accent"
+    ],
+    "sha256_original": "7d9b03eea6541cfb13a8a7cbe66bf6d487218b94685a81c8c33e680ede3e0ab6"
+  },
+  {
+    "file": "flora/flora_leaf_cluster_flat_dark_02.png",
+    "original_file": "Folha_3 (2).png",
+    "category": "flora",
+    "type": "leaf_cluster",
+    "width": 230,
+    "height": 191,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "dark_green",
+      "black",
+      "white"
+    ],
+    "suggested_uses": [
+      "ground decoration",
+      "card footer",
+      "habitat accent"
+    ],
+    "sha256_original": "18f837a96cf1fddb49e48669a5aa2b0638406cb7fb1d25de6fbd0f3e11d526f6"
+  },
+  {
+    "file": "flora/flora_leaf_cluster_ground_green.png",
+    "original_file": "folha_8.png",
+    "category": "flora",
+    "type": "leaf_cluster",
+    "width": 246,
+    "height": 153,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "dark_green",
+      "black",
+      "light_green"
+    ],
+    "suggested_uses": [
+      "ground decoration",
+      "card footer",
+      "habitat accent"
+    ],
+    "sha256_original": "751e00b6d64f4d4b8916a3099e9e0184141611e737d713b24ddbcfe684c56199"
+  },
+  {
+    "file": "flora/flora_leaf_cluster_three_dark.png",
+    "original_file": "folha_12.png",
+    "category": "flora",
+    "type": "leaf_cluster",
+    "width": 197,
+    "height": 142,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "dark_green",
+      "black",
+      "light_green"
+    ],
+    "suggested_uses": [
+      "ground decoration",
+      "card footer",
+      "small accent"
+    ],
+    "sha256_original": "e7b07479b5b2d0134dd198629b4599701da389eeb164a76b2e3dee173336c7d8"
+  },
+  {
+    "file": "flora/flora_leaves_loose_green_three.png",
+    "original_file": "folha_20.png",
+    "category": "flora",
+    "type": "loose_leaves",
+    "width": 262,
+    "height": 195,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "black",
+      "dark_green",
+      "light_green"
+    ],
+    "suggested_uses": [
+      "background sprinkle",
+      "small decoration",
+      "motion accent"
+    ],
+    "sha256_original": "059ad24ed7b6160da86b6d1009e2d77a5e08834b9658b2ee2cd18f2827391231"
+  },
+  {
+    "file": "flora/flora_leaves_loose_pale_three.png",
+    "original_file": "Folha_4.png",
+    "category": "flora",
+    "type": "loose_leaves",
+    "width": 143,
+    "height": 204,
+    "mode": "RGBA",
+    "colors": [
+      "light_green",
+      "gray"
+    ],
+    "suggested_uses": [
+      "background sprinkle",
+      "soft overlay",
+      "small decoration"
+    ],
+    "sha256_original": "05b8af0426d015628e10e7dea960a175754db87da578718b23d71e033e7d0393"
+  },
+  {
+    "file": "flora/flora_leaves_loose_pale_two.png",
+    "original_file": "Folha_3.png",
+    "category": "flora",
+    "type": "loose_leaves",
+    "width": 149,
+    "height": 212,
+    "mode": "RGBA",
+    "colors": [
+      "light_green",
+      "gray"
+    ],
+    "suggested_uses": [
+      "background sprinkle",
+      "soft overlay",
+      "small decoration"
+    ],
+    "sha256_original": "9652cc2101e760efce1f543a039abbe38285b2d1a056f695f871a3e7c59a6cd1"
+  },
+  {
+    "file": "flora/flora_leaves_pair_outline.png",
+    "original_file": "Folha.png",
+    "category": "flora",
+    "type": "leaf_cluster",
+    "width": 180,
+    "height": 168,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "dark_green",
+      "black",
+      "gray"
+    ],
+    "suggested_uses": [
+      "small decoration",
+      "card corner",
+      "background accent"
+    ],
+    "sha256_original": "25a896b660e9eeb947d3146082e001ffe61b0552db6f865a4185fb9f3a90030b"
+  },
+  {
+    "file": "flora/flora_pink_bud_bouquet.png",
+    "original_file": "flor_25.png",
+    "category": "flora",
+    "type": "flower_bouquet",
+    "width": 300,
+    "height": 267,
+    "mode": "RGBA",
+    "colors": [
+      "dark_green",
+      "black",
+      "pink",
+      "beige"
+    ],
+    "suggested_uses": [
+      "illustration accent",
+      "reward decoration",
+      "card corner"
+    ],
+    "sha256_original": "5004f7130f526d654c9a49a00a9c86a4a72f835c55d33900a21e7c30d12b36ae"
+  },
+  {
+    "file": "flora/flora_pink_bud_leaf_tuft.png",
+    "original_file": "flor_20.png",
+    "category": "flora",
+    "type": "bud_cluster",
+    "width": 223,
+    "height": 142,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "dark_green",
+      "black",
+      "light_green"
+    ],
+    "suggested_uses": [
+      "small decoration",
+      "card footer",
+      "background accent"
+    ],
+    "sha256_original": "9b024a243bf0774125f101803c0969e19e3e7d64d6fa6d65fd5d4ec2436c7d4a"
+  },
+  {
+    "file": "flora/flora_pink_flower_scatter_leaves.png",
+    "original_file": "flor_14.png",
+    "category": "flora",
+    "type": "flower_scatter",
+    "width": 210,
+    "height": 174,
+    "mode": "RGBA",
+    "colors": [
+      "beige",
+      "green",
+      "light_green",
+      "coral"
+    ],
+    "suggested_uses": [
+      "background sprinkle",
+      "card decoration",
+      "transition accent"
+    ],
+    "sha256_original": "3f20fdcb8405872f1874f38ece43cdf725fd4f7448e2a45e0b2b5c5aff3bd5ac"
+  },
+  {
+    "file": "flora/flora_sprout_three_leaves_bright_01.png",
+    "original_file": "folha_14.png",
+    "category": "flora",
+    "type": "sprout",
+    "width": 268,
+    "height": 271,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "black",
+      "dark_green",
+      "light_green"
+    ],
+    "suggested_uses": [
+      "small decoration",
+      "icon accent",
+      "card corner"
+    ],
+    "sha256_original": "553aff82e25f493dad46bef27c74badd0025d25b7a0ba2a576e06688ec1027f9"
+  },
+  {
+    "file": "flora/flora_sprout_three_leaves_bright_02.png",
+    "original_file": "folha_5 (2).png",
+    "category": "flora",
+    "type": "sprout",
+    "width": 197,
+    "height": 214,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "dark_green",
+      "black",
+      "light_green"
+    ],
+    "suggested_uses": [
+      "small decoration",
+      "icon accent",
+      "card corner"
+    ],
+    "sha256_original": "4bf856d2b9af096ccebbcc242e130d521be477dfa622177786de4432f7b9e8d7"
+  },
+  {
+    "file": "flora/flora_sprout_two_leaves_bright_01.png",
+    "original_file": "folha_13.png",
+    "category": "flora",
+    "type": "sprout",
+    "width": 242,
+    "height": 197,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "black",
+      "dark_green",
+      "light_green"
+    ],
+    "suggested_uses": [
+      "small decoration",
+      "icon accent",
+      "card corner"
+    ],
+    "sha256_original": "09f89a84f831ef527c374e4f73f208cdc7f1786e4fc8ef7905bb45572315608f"
+  },
+  {
+    "file": "flora/flora_sprout_two_leaves_bright_02.png",
+    "original_file": "folha_4 (2).png",
+    "category": "flora",
+    "type": "sprout",
+    "width": 169,
+    "height": 177,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "dark_green",
+      "black",
+      "light_green"
+    ],
+    "suggested_uses": [
+      "small decoration",
+      "icon accent",
+      "card corner"
+    ],
+    "sha256_original": "1c92abc47bec4894825e3b22a011c5eb4c96bb9fe12cb6c0610f230d6be8cced"
+  },
+  {
+    "file": "flora/flora_sprout_two_leaves_bright_03.png",
+    "original_file": "folha_6 (2).png",
+    "category": "flora",
+    "type": "sprout",
+    "width": 210,
+    "height": 160,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "dark_green",
+      "black",
+      "light_green"
+    ],
+    "suggested_uses": [
+      "small decoration",
+      "icon accent",
+      "card corner"
+    ],
+    "sha256_original": "32883371e90aae69ccffa3a9f774abed87e7dfa91a34792e631f680b69fcb623"
+  },
+  {
+    "file": "flora/flora_vine_curved_green_01.png",
+    "original_file": "folha_15.png",
+    "category": "flora",
+    "type": "vine",
+    "width": 530,
+    "height": 225,
+    "mode": "RGBA",
+    "colors": [
+      "black",
+      "dark_green",
+      "green",
+      "dark_brown"
+    ],
+    "suggested_uses": [
+      "card divider",
+      "corner decoration",
+      "background accent"
+    ],
+    "sha256_original": "07b1235edd6f2da300a73c4aaf31436214b32cb99fa97215c64f51bb650bbf9f"
+  },
+  {
+    "file": "flora/flora_vine_curved_green_02.png",
+    "original_file": "folha_16.png",
+    "category": "flora",
+    "type": "vine",
+    "width": 558,
+    "height": 201,
+    "mode": "RGBA",
+    "colors": [
+      "black",
+      "dark_green",
+      "green",
+      "light_green"
+    ],
+    "suggested_uses": [
+      "card divider",
+      "corner decoration",
+      "background accent"
+    ],
+    "sha256_original": "f6907de09d9a26bbcbff0b2aa0111aeb4b38b15c2178e6da8e42c75fbf443b8c"
+  },
+  {
+    "file": "flora/flora_vine_white_flowers_horizontal.png",
+    "original_file": "flor_18.png",
+    "category": "flora",
+    "type": "vine",
+    "width": 470,
+    "height": 118,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "white",
+      "cream",
+      "dark_green"
+    ],
+    "suggested_uses": [
+      "card divider",
+      "footer decoration",
+      "background accent"
+    ],
+    "sha256_original": "fdb191e4c0065e7d3aa8d6ca9a89a4a6747729ae599b188526cb63c583501bbf"
+  },
+  {
+    "file": "flora/flora_white_flower_scatter_leaves.png",
+    "original_file": "flor_13.png",
+    "category": "flora",
+    "type": "flower_scatter",
+    "width": 171,
+    "height": 173,
+    "mode": "RGBA",
+    "colors": [
+      "white",
+      "cream",
+      "light_green",
+      "green"
+    ],
+    "suggested_uses": [
+      "background sprinkle",
+      "card decoration",
+      "transition accent"
+    ],
+    "sha256_original": "b70dabe8a3174d0aad7ba11fb2ae9f4aee49047ca2947f9782e904a2851bb0c1"
+  },
+  {
+    "file": "flora/flora_white_flowers_scatter_01.png",
+    "original_file": "flor_12.png",
+    "category": "flora",
+    "type": "flower_scatter",
+    "width": 234,
+    "height": 221,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "black",
+      "dark_brown",
+      "white"
+    ],
+    "suggested_uses": [
+      "background sprinkle",
+      "small decoration",
+      "particle accent"
+    ],
+    "sha256_original": "d71d4fb669f80b73e5e521d7a3d7f66982409087c519c95ba4ac0836323ef6eb"
+  },
+  {
+    "file": "icons/icon_bell_gold_coral.png",
+    "original_file": "sino.png",
+    "category": "icons",
+    "type": "bell",
+    "width": 212,
+    "height": 212,
+    "mode": "RGBA",
+    "colors": [
+      "gold",
+      "yellow",
+      "dark_brown",
+      "coral"
+    ],
+    "suggested_uses": [
+      "notifications",
+      "alerts",
+      "navigation icon"
+    ],
+    "sha256_original": "6b2c14df9eb5cc48855cba8d7a20ad999af8d50a9af486b71f92192f620b8787"
+  },
+  {
+    "file": "icons/icon_camera_cream_coral.png",
+    "original_file": "camera.png",
+    "category": "icons",
+    "type": "camera",
+    "width": 263,
+    "height": 236,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "dark_brown",
+      "tan",
+      "white"
+    ],
+    "suggested_uses": [
+      "gatalogar action",
+      "photo action",
+      "navigation icon"
+    ],
+    "sha256_original": "74439f1f1cb9205559bb3f456f3e10736bfae65c4a3903f3ee72accf96b5eab0"
+  },
+  {
+    "file": "icons/icon_cat_collar_medallion.png",
+    "original_file": "coleira.png",
+    "category": "icons",
+    "type": "collar",
+    "width": 211,
+    "height": 192,
+    "mode": "RGBA",
+    "colors": [
+      "yellow",
+      "coral",
+      "dark_brown",
+      "red"
+    ],
+    "suggested_uses": [
+      "cat equipment",
+      "profile detail",
+      "inventory"
+    ],
+    "sha256_original": "9e4e6b429f12da9ee50819cbc757c5f0f2baede2f57c2625748d36cb82e3996d"
+  },
+  {
+    "file": "icons/icon_compass_gold.png",
+    "original_file": "bulssola_2.png",
+    "category": "icons",
+    "type": "compass",
+    "width": 222,
+    "height": 279,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "yellow",
+      "dark_brown",
+      "brown"
+    ],
+    "suggested_uses": [
+      "exploration",
+      "navigation",
+      "map action"
+    ],
+    "sha256_original": "9dcca8e02e213da773e42a7c5cea396c897c3ed962b7633a106346728fced523"
+  },
+  {
+    "file": "icons/icon_compass_gold_leaf.png",
+    "original_file": "bussula.png",
+    "category": "icons",
+    "type": "compass",
+    "width": 267,
+    "height": 267,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "yellow",
+      "dark_brown",
+      "beige"
+    ],
+    "suggested_uses": [
+      "exploration",
+      "navigation",
+      "map action"
+    ],
+    "sha256_original": "9008a9d742cb24fcb0ae4874b243b4483642b590aaaa122424cefa5cdcbe79ab"
+  },
+  {
+    "file": "icons/icon_fish_bone_blue.png",
+    "original_file": "peixe.png",
+    "category": "icons",
+    "type": "fish",
+    "width": 266,
+    "height": 192,
+    "mode": "RGBA",
+    "colors": [
+      "dark_brown",
+      "blue",
+      "cream",
+      "black"
+    ],
+    "suggested_uses": [
+      "cat item",
+      "food or toy",
+      "inventory"
+    ],
+    "sha256_original": "b5e2210b2f1bf3b280b5c0fb8e285582a8d2300bc9cadee28de490c77aaceaee"
+  },
+  {
+    "file": "icons/icon_gift_coral_bow.png",
+    "original_file": "presente.png",
+    "category": "icons",
+    "type": "gift",
+    "width": 244,
+    "height": 252,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "coral",
+      "beige",
+      "red"
+    ],
+    "suggested_uses": [
+      "daily reward",
+      "gift",
+      "unlock"
+    ],
+    "sha256_original": "65048d65e254813cf1336beeb763fff17e79e3378cdae78d4b298d9770a56022"
+  },
+  {
+    "file": "icons/icon_heart_coral.png",
+    "original_file": "coracao.png",
+    "category": "icons",
+    "type": "heart",
+    "width": 202,
+    "height": 163,
+    "mode": "RGBA",
+    "colors": [
+      "coral",
+      "pink",
+      "dark_brown",
+      "cream"
+    ],
+    "suggested_uses": [
+      "favorite",
+      "affection",
+      "health or bond"
+    ],
+    "sha256_original": "258924ca9fc940fb4a1954f649b35681d1dd781c3001042291a3abdc473e8f16"
+  },
+  {
+    "file": "icons/icon_reward_chest_star.png",
+    "original_file": "bau.png",
+    "category": "icons",
+    "type": "chest",
+    "width": 259,
+    "height": 212,
+    "mode": "RGBA",
+    "colors": [
+      "coral",
+      "cream",
+      "beige",
+      "dark_brown"
+    ],
+    "suggested_uses": [
+      "reward chest",
+      "inventory",
+      "unlockable content"
+    ],
+    "sha256_original": "783ed036df0bd3708847f00e47882a07a9517d71f050ebc238ee9fdf63a62f97"
+  },
+  {
+    "file": "icons/icon_search_paw_magnifier.png",
+    "original_file": "lupa.png",
+    "category": "icons",
+    "type": "search",
+    "width": 244,
+    "height": 247,
+    "mode": "RGBA",
+    "colors": [
+      "yellow",
+      "white",
+      "coral",
+      "dark_brown"
+    ],
+    "suggested_uses": [
+      "search",
+      "cat discovery",
+      "navigation icon"
+    ],
+    "sha256_original": "1d5bef49160ac754718b1afb2bbd117e178b3d788f06de940660f0ed79dbfbd8"
+  },
+  {
+    "file": "icons/icon_settings_gear.png",
+    "original_file": "gear.png",
+    "category": "icons",
+    "type": "settings",
+    "width": 194,
+    "height": 195,
+    "mode": "RGBA",
+    "colors": [
+      "beige",
+      "gray",
+      "dark_brown",
+      "black"
+    ],
+    "suggested_uses": [
+      "settings",
+      "configuration",
+      "navigation icon"
+    ],
+    "sha256_original": "7cdf6469eafa6824805349646f8441e686d6595fd40a19d5d52bd264ddefc28f"
+  },
+  {
+    "file": "icons/icon_yarn_ball_pink.png",
+    "original_file": "novelo.png",
+    "category": "icons",
+    "type": "yarn",
+    "width": 233,
+    "height": 235,
+    "mode": "RGBA",
+    "colors": [
+      "pink",
+      "beige",
+      "coral",
+      "dark_brown"
+    ],
+    "suggested_uses": [
+      "cat toy",
+      "inventory",
+      "shop item"
+    ],
+    "sha256_original": "67f3869e58bdada5795b1fa9c5bd29d02ec7f216e554e1cd4b48ced413a68dc3"
+  },
+  {
+    "file": "rewards/reward_badge_cat_gold_blank.png",
+    "original_file": "Badge.png",
+    "category": "rewards",
+    "type": "badge",
+    "width": 412,
+    "height": 363,
+    "mode": "RGBA",
+    "colors": [
+      "beige",
+      "cream",
+      "yellow",
+      "dark_green"
+    ],
+    "suggested_uses": [
+      "achievement badge",
+      "reward emblem",
+      "progress milestone"
+    ],
+    "sha256_original": "ec4fb09514cd60f604592103c3ead578690fbc182224cbfc7814ae5c03bbbf92"
+  },
+  {
+    "file": "rewards/reward_coin_paw_gold.png",
+    "original_file": "Coin.png",
+    "category": "rewards",
+    "type": "currency",
+    "width": 248,
+    "height": 256,
+    "mode": "RGBA",
+    "colors": [
+      "orange",
+      "yellow",
+      "gold",
+      "brown"
+    ],
+    "suggested_uses": [
+      "currency",
+      "shop",
+      "reward"
+    ],
+    "sha256_original": "c320f4dfa7e46ef22ba21d014cab2a999634c545f09351f816f34358766aa512"
+  },
+  {
+    "file": "rewards/reward_medal_paw_coral.png",
+    "original_file": "medalha_5.png",
+    "category": "rewards",
+    "type": "medal",
+    "width": 194,
+    "height": 218,
+    "mode": "RGBA",
+    "colors": [
+      "coral",
+      "pink",
+      "red",
+      "cream"
+    ],
+    "suggested_uses": [
+      "achievement",
+      "reward",
+      "progress milestone"
+    ],
+    "sha256_original": "6c03c51df0d06cb11f5ea487cee39307daad4cb7b4afdc060d598674ba630110"
+  },
+  {
+    "file": "rewards/reward_medal_paw_gold.png",
+    "original_file": "medalha.png",
+    "category": "rewards",
+    "type": "medal",
+    "width": 201,
+    "height": 206,
+    "mode": "RGBA",
+    "colors": [
+      "beige",
+      "coral",
+      "yellow",
+      "dark_brown"
+    ],
+    "suggested_uses": [
+      "achievement",
+      "reward",
+      "progress milestone"
+    ],
+    "sha256_original": "700fd2bff6bd1a840fa5c8e51161614f09e691185ab8ee0afd7dfcdc691648b8"
+  },
+  {
+    "file": "rewards/reward_medal_star_gold_ribbon_01.png",
+    "original_file": "medalha_2.png",
+    "category": "rewards",
+    "type": "medal",
+    "width": 215,
+    "height": 295,
+    "mode": "RGBA",
+    "colors": [
+      "yellow",
+      "gold",
+      "coral",
+      "pink"
+    ],
+    "suggested_uses": [
+      "achievement",
+      "reward",
+      "progress milestone"
+    ],
+    "sha256_original": "68301ca39f69939283da2e8c55cc3d946dfc78bc98250f550f45d8b8da3cd7a8"
+  },
+  {
+    "file": "rewards/reward_medal_star_gold_ribbon_02.png",
+    "original_file": "medalha_3.png",
+    "category": "rewards",
+    "type": "medal",
+    "width": 212,
+    "height": 269,
+    "mode": "RGBA",
+    "colors": [
+      "yellow",
+      "gold",
+      "coral",
+      "dark_brown"
+    ],
+    "suggested_uses": [
+      "achievement",
+      "reward",
+      "progress milestone"
+    ],
+    "sha256_original": "c3375952951f00560e9df185eae88cdf00827fe38cff163a11b68c4fd94728fa"
+  },
+  {
+    "file": "rewards/reward_seal_paw_coral.png",
+    "original_file": "selo_2.png",
+    "category": "rewards",
+    "type": "seal",
+    "width": 235,
+    "height": 244,
+    "mode": "RGBA",
+    "colors": [
+      "coral",
+      "red",
+      "brown",
+      "orange"
+    ],
+    "suggested_uses": [
+      "achievement",
+      "stamp",
+      "reward"
+    ],
+    "sha256_original": "ca0f07a90b96054a4162068e14bc9f0ff5644f5b16e2ff283991dff18ca06425"
+  },
+  {
+    "file": "rewards/reward_shield_paw_gold.png",
+    "original_file": "medalha_4.png",
+    "category": "rewards",
+    "type": "shield",
+    "width": 230,
+    "height": 238,
+    "mode": "RGBA",
+    "colors": [
+      "yellow",
+      "orange",
+      "dark_brown",
+      "coral"
+    ],
+    "suggested_uses": [
+      "achievement",
+      "rank",
+      "profile badge"
+    ],
+    "sha256_original": "ef96774b936739f5e310418c6451c145b7e787b1a826997988561e17693e61e2"
+  },
+  {
+    "file": "rewards/reward_star_gold.png",
+    "original_file": "Star.png",
+    "category": "rewards",
+    "type": "star",
+    "width": 253,
+    "height": 247,
+    "mode": "RGBA",
+    "colors": [
+      "yellow",
+      "dark_brown",
+      "brown",
+      "gold"
+    ],
+    "suggested_uses": [
+      "rating",
+      "achievement",
+      "reward"
+    ],
+    "sha256_original": "3584920839cfdd22a0b287c83815437d20a2b14c95aa14e6102aca2ed8daf1db"
+  },
+  {
+    "file": "rewards/reward_stars_trio_gold.png",
+    "original_file": "star_2.png",
+    "category": "rewards",
+    "type": "stars",
+    "width": 246,
+    "height": 151,
+    "mode": "RGBA",
+    "colors": [
+      "yellow",
+      "brown",
+      "dark_brown",
+      "gold"
+    ],
+    "suggested_uses": [
+      "rating",
+      "achievement",
+      "completion"
+    ],
+    "sha256_original": "1f1f9c7180bf2c5ee155e5e7d9e7e535d42b1425a6560942311dcc0586cefa78"
+  },
+  {
+    "file": "rewards/reward_trophy_paw_gold.png",
+    "original_file": "trofeu.png",
+    "category": "rewards",
+    "type": "trophy",
+    "width": 218,
+    "height": 232,
+    "mode": "RGBA",
+    "colors": [
+      "yellow",
+      "dark_brown",
+      "dark_green",
+      "green"
+    ],
+    "suggested_uses": [
+      "achievement",
+      "competition",
+      "major reward"
+    ],
+    "sha256_original": "9daf8237421f9c6e21732a2e3e4c1340aef7a38bb22447fbaa10e13ff5ef40ce"
+  },
+  {
+    "file": "ui/ui_avatar_frame_floral_round.png",
+    "original_file": "moldura.png",
+    "category": "ui",
+    "type": "frame",
+    "width": 528,
+    "height": 570,
+    "mode": "RGBA",
+    "colors": [
+      "beige",
+      "cream",
+      "dark_brown",
+      "green"
+    ],
+    "suggested_uses": [
+      "profile image",
+      "cat portrait",
+      "collection portrait"
+    ],
+    "sha256_original": "f5b9568f42020d09cfa0afd325bf7b71b9f318a9de093c177e9085219775caf7"
+  },
+  {
+    "file": "ui/ui_banner_coral_floral.png",
+    "original_file": "faixa.png",
+    "category": "ui",
+    "type": "banner",
+    "width": 328,
+    "height": 182,
+    "mode": "RGBA",
+    "colors": [
+      "coral",
+      "pink",
+      "white",
+      "dark_brown"
+    ],
+    "suggested_uses": [
+      "section title",
+      "event banner",
+      "highlight label"
+    ],
+    "sha256_original": "447179b456abdc65d65d27e4047f1cf70000e5302afbd2a8a6ab7253c9f4d3f0"
+  },
+  {
+    "file": "ui/ui_bar_foliage_dark_green.png",
+    "original_file": "Bar.png",
+    "category": "ui",
+    "type": "bar",
+    "width": 1548,
+    "height": 254,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "dark_green",
+      "black",
+      "light_green"
+    ],
+    "suggested_uses": [
+      "bottom navigation",
+      "section bar",
+      "footer decoration"
+    ],
+    "sha256_original": "d83a9e9876cef0d0b3cc683e02a5d82d6d8137df0f3b90488998e260a2304eab"
+  },
+  {
+    "file": "ui/ui_bookmark_green_cat.png",
+    "original_file": "faixa_2.png",
+    "category": "ui",
+    "type": "bookmark",
+    "width": 203,
+    "height": 231,
+    "mode": "RGBA",
+    "colors": [
+      "light_green",
+      "green",
+      "cream",
+      "dark_brown"
+    ],
+    "suggested_uses": [
+      "collection marker",
+      "favorite",
+      "category marker"
+    ],
+    "sha256_original": "351e633db54421d05bc010724c6fd7bdbbf981eb10ff91f03c9ead61a87cba48"
+  },
+  {
+    "file": "ui/ui_bookmark_green_pin.png",
+    "original_file": "faixa_3.png",
+    "category": "ui",
+    "type": "bookmark",
+    "width": 151,
+    "height": 266,
+    "mode": "RGBA",
+    "colors": [
+      "light_green",
+      "dark_brown",
+      "beige",
+      "brown"
+    ],
+    "suggested_uses": [
+      "marker",
+      "progress flag",
+      "category marker"
+    ],
+    "sha256_original": "beffde74a8e2dd98175d83530be15ce34e2849406b38eaf02c412b6719fc524f"
+  },
+  {
+    "file": "ui/ui_burst_gold_blank.png",
+    "original_file": "spark.png",
+    "category": "ui",
+    "type": "burst",
+    "width": 231,
+    "height": 232,
+    "mode": "RGBA",
+    "colors": [
+      "yellow",
+      "beige",
+      "gold",
+      "dark_brown"
+    ],
+    "suggested_uses": [
+      "highlight label",
+      "reward callout",
+      "new item badge"
+    ],
+    "sha256_original": "310c4fa4edcb19793367041d965cf40e3b4f261455c6cf32c4c4482b74b12a79"
+  },
+  {
+    "file": "ui/ui_button_green_foliage.png",
+    "original_file": "Button.png",
+    "category": "ui",
+    "type": "button",
+    "width": 1102,
+    "height": 229,
+    "mode": "RGBA",
+    "colors": [
+      "green",
+      "dark_green",
+      "black",
+      "light_green"
+    ],
+    "suggested_uses": [
+      "primary button",
+      "navigation button",
+      "call to action"
+    ],
+    "sha256_original": "0b067694577c4ac0cabee21d4581060c6ed274d590b56962c4c01423dd710ef0"
+  },
+  {
+    "file": "ui/ui_card_blank_sprout_tab.png",
+    "original_file": "etiqueta_4.png",
+    "category": "ui",
+    "type": "card",
+    "width": 301,
+    "height": 195,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "beige",
+      "tan",
+      "brown"
+    ],
+    "suggested_uses": [
+      "small info card",
+      "category header",
+      "status panel"
+    ],
+    "sha256_original": "37a644efcf4a4ef13bd8358b4cbef1b9fdc43b15c72331fc547580cc39919504"
+  },
+  {
+    "file": "ui/ui_card_notebook_floral.png",
+    "original_file": "Card.png",
+    "category": "ui",
+    "type": "card",
+    "width": 1478,
+    "height": 521,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "beige",
+      "tan",
+      "brown"
+    ],
+    "suggested_uses": [
+      "large content card",
+      "journal page",
+      "profile summary"
+    ],
+    "sha256_original": "23261807d78035cfa6f3ceb0ee49d89c88b278c29e0d721bf4e00c66adf471b2"
+  },
+  {
+    "file": "ui/ui_cat_cards_stack.png",
+    "original_file": "carta.png",
+    "category": "ui",
+    "type": "card_stack",
+    "width": 239,
+    "height": 240,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "beige",
+      "white",
+      "gray"
+    ],
+    "suggested_uses": [
+      "collection preview",
+      "cat cards",
+      "discovery"
+    ],
+    "sha256_original": "07cbd750ed0bf5f0172c0fc71338555a572922c7c9a1b3f47a79fedf3dd4390e"
+  },
+  {
+    "file": "ui/ui_cat_photos_stack.png",
+    "original_file": "Photo.png",
+    "category": "ui",
+    "type": "photo_stack",
+    "width": 544,
+    "height": 477,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "white",
+      "brown",
+      "green"
+    ],
+    "suggested_uses": [
+      "gallery",
+      "collection preview",
+      "memories"
+    ],
+    "sha256_original": "f1dfe3cc4a1ccec62b9260bbea49d65bc53b6b4bd284938a9f27cf0122d68e26"
+  },
+  {
+    "file": "ui/ui_clipboard_checklist.png",
+    "original_file": "board.png",
+    "category": "ui",
+    "type": "clipboard",
+    "width": 247,
+    "height": 287,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "red",
+      "dark_brown",
+      "yellow"
+    ],
+    "suggested_uses": [
+      "missions",
+      "tasks",
+      "checklist"
+    ],
+    "sha256_original": "139abd095464d12a33e5e16c61cc1d60929768005dd71aa1d465a90cde3441d1"
+  },
+  {
+    "file": "ui/ui_clipboard_paw.png",
+    "original_file": "Board_2.png",
+    "category": "ui",
+    "type": "clipboard",
+    "width": 412,
+    "height": 438,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "coral",
+      "tan",
+      "white"
+    ],
+    "suggested_uses": [
+      "pet record",
+      "cat profile",
+      "task panel"
+    ],
+    "sha256_original": "ebc67b02884b5692025a98a5858810fdadadcc200df7e89bb433a502454e107b"
+  },
+  {
+    "file": "ui/ui_label_cream_green_stitch.png",
+    "original_file": "etiqueta_2.png",
+    "category": "ui",
+    "type": "label",
+    "width": 350,
+    "height": 156,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "white",
+      "brown",
+      "light_green"
+    ],
+    "suggested_uses": [
+      "short label",
+      "button caption",
+      "status chip"
+    ],
+    "sha256_original": "2d4f96384eb8e5f3e138b98be416261dc3d829f579fc4429aeabde3ff586eae6"
+  },
+  {
+    "file": "ui/ui_label_green_sprout.png",
+    "original_file": "etiqueta_5.png",
+    "category": "ui",
+    "type": "label",
+    "width": 439,
+    "height": 129,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "light_green",
+      "green",
+      "dark_brown"
+    ],
+    "suggested_uses": [
+      "filter chip",
+      "status label",
+      "small button"
+    ],
+    "sha256_original": "d305f71eedb5b2c983181e95a03ed3ef47148161d4b45b972c000b4e9a270ea4"
+  },
+  {
+    "file": "ui/ui_note_pinned.png",
+    "original_file": "anotacao.png",
+    "category": "ui",
+    "type": "note",
+    "width": 214,
+    "height": 255,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "brown",
+      "white",
+      "beige"
+    ],
+    "suggested_uses": [
+      "notes",
+      "tooltips",
+      "small text panel"
+    ],
+    "sha256_original": "f076a34ac8df9e5589db345d140994d6ee6a49ee44d04e77386e2b84c0bd7214"
+  },
+  {
+    "file": "ui/ui_notebook_cat.png",
+    "original_file": "caderno.png",
+    "category": "ui",
+    "type": "notebook",
+    "width": 240,
+    "height": 231,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "beige",
+      "brown",
+      "dark_brown"
+    ],
+    "suggested_uses": [
+      "collection",
+      "journal",
+      "cat log"
+    ],
+    "sha256_original": "0a9ca61ecee719b8faf64cbe17cbafdc0bae8b2d05ca719027dd1bff6b5d8eab"
+  },
+  {
+    "file": "ui/ui_photo_placeholder_landscape.png",
+    "original_file": "foto.png",
+    "category": "ui",
+    "type": "photo_frame",
+    "width": 268,
+    "height": 285,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "light_green",
+      "white",
+      "beige"
+    ],
+    "suggested_uses": [
+      "photo placeholder",
+      "gallery",
+      "collection"
+    ],
+    "sha256_original": "cfa44423fe7e7b2f4809f4a43c3c5add473409d6da171cb6e6c2171def3257a0"
+  },
+  {
+    "file": "ui/ui_seal_cream_green_blank.png",
+    "original_file": "selo.png",
+    "category": "ui",
+    "type": "seal",
+    "width": 248,
+    "height": 269,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "light_green",
+      "dark_brown",
+      "beige"
+    ],
+    "suggested_uses": [
+      "badge background",
+      "label",
+      "reward background"
+    ],
+    "sha256_original": "73d0e4dd2a9dc44fe203e2a4c535f7cca398d4a53e4b4b387082d5aef5f01663"
+  },
+  {
+    "file": "ui/ui_speech_alert.png",
+    "original_file": "baloon_4.png",
+    "category": "ui",
+    "type": "speech_bubble",
+    "width": 190,
+    "height": 174,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "coral",
+      "dark_brown",
+      "white"
+    ],
+    "suggested_uses": [
+      "warning",
+      "notification",
+      "attention state"
+    ],
+    "sha256_original": "bfef6cc65a62d146f491c7c8519582826d209561d0765a8961cfc286b8af2b3a"
+  },
+  {
+    "file": "ui/ui_speech_ellipsis.png",
+    "original_file": "ballon_3.png",
+    "category": "ui",
+    "type": "speech_bubble",
+    "width": 257,
+    "height": 217,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "white",
+      "dark_brown",
+      "beige"
+    ],
+    "suggested_uses": [
+      "dialogue",
+      "loading conversation",
+      "social feedback"
+    ],
+    "sha256_original": "ace8d9eba71571613902cd21425dae289899cb84d0698e22e2a7be0b3d9afbf3"
+  },
+  {
+    "file": "ui/ui_speech_ellipsis_heart.png",
+    "original_file": "ballon_2.png",
+    "category": "ui",
+    "type": "speech_bubble",
+    "width": 247,
+    "height": 210,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "beige",
+      "dark_brown",
+      "pink"
+    ],
+    "suggested_uses": [
+      "dialogue",
+      "social feedback",
+      "status"
+    ],
+    "sha256_original": "83ec260df3e0e8acee498bd0de48da87237af58ea2957ec67da1634c17667b32"
+  },
+  {
+    "file": "ui/ui_speech_heart.png",
+    "original_file": "baloon.png",
+    "category": "ui",
+    "type": "speech_bubble",
+    "width": 169,
+    "height": 164,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "coral",
+      "pink",
+      "white"
+    ],
+    "suggested_uses": [
+      "like feedback",
+      "affection",
+      "social reaction"
+    ],
+    "sha256_original": "45d565b53cea4de1dacf788187a857d4d077e43042087bc9be7b8287e6654ed7"
+  },
+  {
+    "file": "ui/ui_tag_cream_floral.png",
+    "original_file": "etiqueta.png",
+    "category": "ui",
+    "type": "tag",
+    "width": 330,
+    "height": 198,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "beige",
+      "dark_brown",
+      "white"
+    ],
+    "suggested_uses": [
+      "label",
+      "price tag",
+      "category chip"
+    ],
+    "sha256_original": "b5204b8cd182534489a59478643cde4e4766328f08017aaaeee26732455842a9"
+  },
+  {
+    "file": "ui/ui_tape_pink_polka_dot.png",
+    "original_file": "fita.png",
+    "category": "ui",
+    "type": "tape",
+    "width": 407,
+    "height": 257,
+    "mode": "RGBA",
+    "colors": [
+      "pink",
+      "cream",
+      "beige",
+      "dark_brown"
+    ],
+    "suggested_uses": [
+      "scrapbook decoration",
+      "photo decoration",
+      "card accent"
+    ],
+    "sha256_original": "b008e0bdea28de25bdc442648469df2d58ea91cb625426b5e4365625e0919dee"
+  },
+  {
+    "file": "ui/ui_ticket_blank_perforated.png",
+    "original_file": "etiqueta_3.png",
+    "category": "ui",
+    "type": "ticket",
+    "width": 353,
+    "height": 215,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "brown",
+      "white",
+      "tan"
+    ],
+    "suggested_uses": [
+      "coupon",
+      "ticket",
+      "redeemable item"
+    ],
+    "sha256_original": "f1ceca5cd4acbe5cf83fbf8507931fa4aecc43ef585a543afa20438852afcaaa"
+  },
+  {
+    "file": "ui/ui_ticket_cat.png",
+    "original_file": "cupom.png",
+    "category": "ui",
+    "type": "ticket",
+    "width": 271,
+    "height": 205,
+    "mode": "RGBA",
+    "colors": [
+      "cream",
+      "tan",
+      "yellow",
+      "dark_brown"
+    ],
+    "suggested_uses": [
+      "coupon",
+      "voucher",
+      "reward ticket"
+    ],
+    "sha256_original": "fa72866e0de8ca3276134de5c2f27406ee564809a631b6ef7b7778808d8dab8d"
+  },
+  {
+    "file": "ui/ui_wood_sign_hanging_blank.png",
+    "original_file": "placa_2.png",
+    "category": "ui",
+    "type": "sign",
+    "width": 365,
+    "height": 272,
+    "mode": "RGBA",
+    "colors": [
+      "orange",
+      "dark_brown",
+      "brown",
+      "black"
+    ],
+    "suggested_uses": [
+      "section title",
+      "label",
+      "habitat sign"
+    ],
+    "sha256_original": "b48ee3b689d45699840a2bbc271ce37c83b3b9ea14debc971dfa74f2f73fde32"
+  }
+]

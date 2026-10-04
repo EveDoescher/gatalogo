@@ -1,5 +1,8 @@
+import '../widgets/botanical_scene.dart';
+
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -49,6 +52,97 @@ class _AuthPageState extends State<AuthPage> {
   int _resendSeconds = 0;
   Timer? _timer;
   bool _showPassword = false;
+  bool _agreeTerms = false;
+
+  void _showTermsDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.dialog),
+        ),
+        title: Text(
+          'Termos de Servico',
+          style: GoogleFonts.fredoka(
+            fontWeight: FontWeight.w600,
+            color: AppColors.textTitle,
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: Text(
+            'Bem-vindo ao Gatalogo!\n\n'
+            '1. Uso do Aplicativo: O Gatalogo destina-se a catalogacao, identificacao visual de caracteristicas de felinos e interacao comunitaria.\n\n'
+            '2. Contas de Usuario: Voce e responsavel por manter suas credenciais confidenciais.\n\n'
+            '3. Conteudo: Fotos e notas compartilhadas no feed devem respeitar as diretrizes da comunidade.\n\n'
+            '4. Cancelamento: Voce pode desativar sua conta a qualquer momento nas configuracoes.',
+            style: GoogleFonts.nunito(
+              fontSize: 13,
+              color: AppColors.textDark,
+              height: 1.4,
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Fechar',
+              style: GoogleFonts.nunito(
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPrivacyDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.dialog),
+        ),
+        title: Text(
+          'Politica de Privacidade',
+          style: GoogleFonts.fredoka(
+            fontWeight: FontWeight.w600,
+            color: AppColors.textTitle,
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: Text(
+            'Sua privacidade e respeitada no Gatalogo.\n\n'
+            '1. Dados Coletados: E-mail, apelido de usuario e imagens de gatos enviadas para catalogo.\n\n'
+            '2. Localizacao: Utilizada apenas quando autorizada para marcar avistamentos.\n\n'
+            '3. Seguranca: Credenciais e tokens de acesso sao criptografados.\n\n'
+            '4. Exclusao: Voce pode solicitar a desativacao de sua conta e dados a qualquer momento.',
+            style: GoogleFonts.nunito(
+              fontSize: 13,
+              color: AppColors.textDark,
+              height: 1.4,
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Fechar',
+              style: GoogleFonts.nunito(
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -152,8 +246,19 @@ class _AuthPageState extends State<AuthPage> {
       setState(() => _error = 'Informe seu e-mail.');
       return;
     }
-    if (_needsPassword && _password.text.length < 12) {
+    if (_mode == _AuthMode.login && _password.text.isEmpty) {
+      setState(() => _error = 'Informe sua senha.');
+      return;
+    }
+    if ((_mode == _AuthMode.register || _mode == _AuthMode.resetConfirm) &&
+        _password.text.length < 12) {
       setState(() => _error = 'A senha precisa ter pelo menos 12 caracteres.');
+      return;
+    }
+    if (_mode == _AuthMode.register && !_agreeTerms) {
+      setState(
+        () => _error = 'Aceite os Termos de Servico e Politica de Privacidade para continuar.',
+      );
       return;
     }
     if (_needsCode && _otpCode.length != 6) {
@@ -248,7 +353,8 @@ class _AuthPageState extends State<AuthPage> {
     _AuthMode.resetRequest => 'Informe o e-mail cadastrado na sua conta.',
     _AuthMode.resetVerify =>
       'Digite o código que enviamos para ${_maskedEmail(_email.text)}.',
-    _AuthMode.resetConfirm => 'Crie uma senha segura com pelo menos 12 dígitos.',
+    _AuthMode.resetConfirm =>
+      'Crie uma senha segura com pelo menos 12 dígitos.',
   };
 
   String get _buttonLabel => switch (_mode) {
@@ -272,7 +378,8 @@ class _AuthPageState extends State<AuthPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BotanicalScaffold(
+      level: BotanicalLevel.authentication,
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
@@ -284,7 +391,7 @@ class _AuthPageState extends State<AuthPage> {
               child: Transform.rotate(
                 angle: 0.38, // ~22 graus no sentido horário para alinhar o caule horizontalmente
                 child: Image.asset(
-                  'assets/images/Folha_2.png',
+                  'assets/gatalogo_asset_library/flora/flora_branch_pale_diagonal_01.png',
                   width: 310,
                   fit: BoxFit.contain,
                 ),
@@ -297,7 +404,7 @@ class _AuthPageState extends State<AuthPage> {
             right: 42,
             child: IgnorePointer(
               child: Image.asset(
-                'assets/images/Folha_3.png',
+                'assets/gatalogo_asset_library/flora/flora_leaves_loose_pale_two.png',
                 width: 36,
                 fit: BoxFit.contain,
               ),
@@ -309,7 +416,7 @@ class _AuthPageState extends State<AuthPage> {
             left: -4,
             child: IgnorePointer(
               child: Image.asset(
-                'assets/images/Folha_4.png',
+                'assets/gatalogo_asset_library/flora/flora_leaves_loose_pale_three.png',
                 width: 44,
                 fit: BoxFit.contain,
               ),
@@ -321,7 +428,7 @@ class _AuthPageState extends State<AuthPage> {
             right: -8,
             child: IgnorePointer(
               child: Image.asset(
-                'assets/images/Folha_6.png',
+                'assets/gatalogo_asset_library/environment/environment_wall_foliage_corner.png',
                 width: 250,
                 fit: BoxFit.contain,
               ),
@@ -332,7 +439,10 @@ class _AuthPageState extends State<AuthPage> {
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 36,
+                  vertical: 12,
+                ),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 340),
                   child: AnimatedBuilder(
@@ -352,7 +462,7 @@ class _AuthPageState extends State<AuthPage> {
                                 Positioned(
                                   top: 0,
                                   child: Image.asset(
-                                    'assets/images/gato_3.png',
+                                    'assets/gatalogo_asset_library/cats/cat_orange_crouching.png',
                                     width: 172,
                                     fit: BoxFit.contain,
                                   ),
@@ -360,7 +470,7 @@ class _AuthPageState extends State<AuthPage> {
                                 Positioned(
                                   top: 92,
                                   child: Image.asset(
-                                    'assets/images/Logo.png',
+                                    'assets/gatalogo_asset_library/branding/brand_gatalogo_logo.png',
                                     width: 215,
                                     fit: BoxFit.contain,
                                   ),
@@ -376,10 +486,10 @@ class _AuthPageState extends State<AuthPage> {
                         Text(
                           _title,
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.nunito(
-                            fontSize: 20,
+                          style: GoogleFonts.fredoka(
+                            fontSize: 22,
                             height: 1.1,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w600,
                             color: AppColors.textTitle,
                           ),
                         ),
@@ -536,7 +646,8 @@ class _AuthPageState extends State<AuthPage> {
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
-                              onPressed: _resendSeconds > 0 ||
+                              onPressed:
+                                  _resendSeconds > 0 ||
                                       widget.sessionStore.isBusy
                                   ? null
                                   : _resend,
@@ -640,8 +751,8 @@ class _AuthPageState extends State<AuthPage> {
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFDE8E8),
-                              borderRadius: BorderRadius.circular(10),
+                              color: AppColors.errorBg,
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
                             ),
                             child: Text(
                               _error!,
@@ -649,9 +760,85 @@ class _AuthPageState extends State<AuthPage> {
                               style: GoogleFonts.nunito(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: const Color(0xFFC81E1E),
+                                color: AppColors.errorText,
                               ),
                             ),
+                          ),
+                        ],
+
+                        // Consentimento de Termos e Politica no Cadastro
+                        if (_mode == _AuthMode.register) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: Checkbox(
+                                  value: _agreeTerms,
+                                  activeColor: AppColors.primary,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  onChanged: (val) => setState(
+                                    () => _agreeTerms = val ?? false,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Wrap(
+                                  children: [
+                                    Text(
+                                      'Li e concordo com os ',
+                                      style: GoogleFonts.nunito(
+                                        fontSize: 12,
+                                        color: AppColors.textMedium,
+                                      ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: _showTermsDialog,
+                                      child: Text(
+                                        'Termos de Servico',
+                                        style: GoogleFonts.nunito(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.primary,
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                      ),
+                                    ),
+                                    Text(
+                                      ' e a ',
+                                      style: GoogleFonts.nunito(
+                                        fontSize: 12,
+                                        color: AppColors.textMedium,
+                                      ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: _showPrivacyDialog,
+                                      child: Text(
+                                        'Politica de Privacidade',
+                                        style: GoogleFonts.nunito(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.primary,
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                      ),
+                                    ),
+                                    Text(
+                                      '.',
+                                      style: GoogleFonts.nunito(
+                                        fontSize: 12,
+                                        color: AppColors.textMedium,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ],
 
@@ -661,7 +848,9 @@ class _AuthPageState extends State<AuthPage> {
                         SizedBox(
                           height: 48,
                           child: ElevatedButton(
-                            onPressed: widget.sessionStore.isBusy ? null : _submit,
+                            onPressed: widget.sessionStore.isBusy
+                                ? null
+                                : _submit,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               elevation: 0,
@@ -708,8 +897,8 @@ class _AuthPageState extends State<AuthPage> {
                             children: [
                               const Expanded(
                                 child: Divider(
-                                  color: Color(0xFFDDD5CA),
-                                  thickness: 0.8,
+                                  color: AppColors.border,
+                                  thickness: 1.0,
                                 ),
                               ),
                               Padding(
@@ -727,8 +916,8 @@ class _AuthPageState extends State<AuthPage> {
                               ),
                               const Expanded(
                                 child: Divider(
-                                  color: Color(0xFFDDD5CA),
-                                  thickness: 0.8,
+                                  color: AppColors.border,
+                                  thickness: 1.0,
                                 ),
                               ),
                             ],
@@ -754,8 +943,7 @@ class _AuthPageState extends State<AuthPage> {
                                       } catch (_) {
                                         if (mounted) {
                                           setState(
-                                            () => _error =
-                                                'Não foi possível entrar com Google.',
+                                            () => _error = 'Não foi possível entrar com Google.',
                                           );
                                         }
                                       }
@@ -774,24 +962,70 @@ class _AuthPageState extends State<AuthPage> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Image.asset(
-                                    'assets/images/google_logo.png',
+                                    'assets/gatalogo_asset_library/branding/brand_google_logo.png',
                                     width: 20,
                                     height: 20,
                                     fit: BoxFit.contain,
                                   ),
                                   const SizedBox(width: 8),
-                                  Text(
-                                    'Continuar com Google',
-                                    style: GoogleFonts.nunito(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.textTitle,
+                                  Flexible(
+                                    child: Text(
+                                      'Continuar com Google',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.nunito(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.textTitle,
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
                           ),
+
+                          if (!kIsWeb &&
+                              defaultTargetPlatform == TargetPlatform.iOS) ...[
+                            const SizedBox(height: 10),
+                            ElevatedButton(
+                              onPressed: widget.sessionStore.isBusy
+                                  ? null
+                                  : () => setState(
+                                      () => _error = 'Servico Apple Sign-In em inicializacao.',
+                                    ),
+                              style: ElevatedButton.styleFrom(
+                                minimumSize: const Size(double.infinity, 48),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                                backgroundColor: Colors.black,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(LucideIcons.apple, size: 19),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      'Continuar com a Apple',
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.nunito(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ],
 
                         const SizedBox(height: 12),
@@ -846,9 +1080,10 @@ class _AuthPageState extends State<AuthPage> {
                             onTap: widget.onContinueOffline,
                             borderRadius: BorderRadius.circular(18),
                             child: Container(
-                              height: 62,
+                              constraints: const BoxConstraints(minHeight: 62),
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
+                                vertical: 8,
                               ),
                               decoration: BoxDecoration(
                                 color: AppColors.guestCardBg,
@@ -972,4 +1207,3 @@ class _OtpCodeInput extends StatelessWidget {
     );
   }
 }
-

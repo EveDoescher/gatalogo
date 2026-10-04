@@ -11,11 +11,17 @@ import '../data/cat_database.dart';
 import '../models/cat.dart';
 import '../models/cat_analysis.dart';
 import '../models/cat_reference_photo.dart';
+import '../models/gamification.dart';
 import '../services/analysis_api_service.dart';
 import '../services/catalog_sync_service.dart';
+import '../services/favorites_manager.dart';
+import '../services/gamification_service.dart';
+import '../services/progress_service.dart';
 import '../services/location_service.dart';
 import '../services/vision_api_service.dart';
 import 'session_store.dart';
+import 'notification_store.dart';
+import '../services/product_api_service.dart';
 
 class SavedCatResult {
   const SavedCatResult({required this.cat, required this.awaitingConnection});
@@ -34,21 +40,66 @@ class CatStore extends ChangeNotifier {
   final Map<String, List<CatReferencePhoto>> _referencePhotos = {};
   final Set<String> _deletedCatIds = {};
 
-  CatStore(this._sessionStore) {
+  CatStore(
+    this._sessionStore, {
+    CatalogSyncService? catalogSync,
+    this.networkAvailable,
+  }) {
     _analysisApi = AnalysisApiService(
       accessToken: _sessionStore.accessToken,
       refreshAccessToken: () => _sessionStore.accessToken(refresh: true),
     );
-    _catalogSync = CatalogSyncService(_sessionStore);
+    _catalogSync = catalogSync ?? CatalogSyncService(_sessionStore);
     _visionApi = VisionApiService(_sessionStore);
+    _gamificationService = GamificationService(_sessionStore);
+    progress = ProgressService(_sessionStore)..addListener(notifyListeners);
+    final productApi = ProductApiService(_sessionStore);
+    notifications = NotificationStore(
+      loadItems: () async => _sessionStore.isSignedIn
+          ? productApi.list('/vision/notifications')
+          : [],
+      saveRead: (id) async {
+        await productApi.post('/app/notifications/$id/read');
+      },
+    );
+    _notificationSubscription = _sessionStore.webSocket.onNotification.listen((
+      _,
+    ) {
+      unawaited(refreshNotifications());
+      unawaited(refreshGamification());
+    });
+    _pushSubscription = _sessionStore.pushNotifications.onNotification.listen((
+      _,
+    ) {
+      unawaited(refreshNotifications());
+      unawaited(refreshGamification());
+    });
     _sessionStore.addListener(_onSessionChanged);
+  }
+
+  late final NotificationStore notifications;
+  late final ProgressService progress;
+  StreamSubscription? _notificationSubscription;
+  StreamSubscription? _pushSubscription;
+
+  Future<void> refreshNotifications() async {
+    try {
+      await notifications.refresh();
+    } catch (_) {
+      // Retain the shared snapshot when offline.
+    }
   }
 
   final SessionStore _sessionStore;
   late final AnalysisApiService _analysisApi;
   late final CatalogSyncService _catalogSync;
   late final VisionApiService _visionApi;
+  late final GamificationService _gamificationService;
   final Connectivity _connectivity = Connectivity();
+  final Future<bool> Function()? networkAvailable;
+
+  GamificationState get gamification => progress.summary.isNotEmpty
+      ? GamificationState.fromMap(progress.summary) : _gamificationService.currentState;
 
   bool _isLoading = false;
   bool _disposed = false;
@@ -64,6 +115,19 @@ class CatStore extends ChangeNotifier {
 
   List<Cat> get cats => List.unmodifiable(_cats);
   List<Cat> get discoveries => cats.where((cat) => !cat.isOwned).toList();
+
+  List<Cat> get individuals {
+    final groups = <String, Cat>{};
+    for (final cat in discoveries) {
+      final key = cat.individualId ?? cat.id;
+      if (!groups.containsKey(key) || cat.id == key) groups[key] = cat;
+    }
+    return groups.values.toList();
+  }
+
+  List<Cat> photosOf(Cat cat) => cats.where((photo) =>
+      (photo.individualId ?? photo.id) == (cat.individualId ?? cat.id)).toList();
+
   List<Cat> get pets => cats.where((cat) => cat.isOwned).toList();
   SessionStore get sessionStore => _sessionStore;
 
@@ -77,6 +141,13 @@ class CatStore extends ChangeNotifier {
 
   List<CatReferencePhoto> referencePhotosFor(String catId) =>
       List.unmodifiable(_referencePhotos[catId] ?? const []);
+
+  Future<List<CatReferencePhoto>> loadReferencePhotos(String catId) async {
+    final photos = await _database.getReferencePhotos(catId);
+    _referencePhotos[catId] = photos;
+    notifyListeners();
+    return photos;
+  }
 
   Future<void> loadCats() async {
     _isLoading = true;
@@ -112,10 +183,71 @@ class CatStore extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
 
+    unawaited(progress.refresh());
     _startPendingAnalysisSync();
+    unawaited(refreshNotifications());
     unawaited(syncCatalog());
     unawaited(syncPendingAnalyses());
     unawaited(resolvePendingLocations());
+    unawaited(
+      _gamificationService.loadGamification().then((_) => notifyListeners()),
+    );
+  }
+
+  Future<GamificationActionResult> recordGamificationAction(
+    String action, {
+    String? contextId,
+  }) async {
+    await refreshGamification();
+    return GamificationActionResult(
+      state: gamification,
+      earnedXp: 0,
+      multiplier: 1,
+      levelUp: false,
+      level: gamification.level,
+      levelTitle: gamification.levelTitle,
+      missionsCompleted: const [],
+    );
+  }
+
+  Future<void> identifyRecord(String catId, String individualId) async {
+    final cat = _cats.firstWhere((c) => c.id == catId);
+    final updated = cat.withSync(
+      individualId: individualId,
+      syncState: 'dirty',
+      localUpdatedAt: DateTime.now().toUtc(),
+    );
+    await _database.insertCatWithAnalysis(
+      updated,
+      _analyses[catId] ??
+          CatAnalysis(catId: catId, status: AnalysisStatus.pending),
+    );
+    _replaceCat(catId, (_) => updated);
+    notifyListeners();
+    await syncCatalog();
+    await progress.refresh();
+  }
+
+  Future<void> refreshGamification() async {
+    await progress.refresh();
+    notifyListeners();
+  }
+
+  Future<void> recordHabitatAction(
+    String action, {
+    String? targetType,
+    String? targetId,
+  }) async {
+    if (!_sessionStore.isSignedIn) return;
+    try {
+      await ProductApiService(_sessionStore).post('/app/habitat/actions', {
+        'action': action,
+        'target_type': targetType,
+        'target_id': targetId,
+      });
+    } catch (_) {
+      // A moeda só aparece após confirmação no servidor.
+    }
   }
 
   Future<SavedCatResult> addFromTempPhoto(
@@ -124,8 +256,12 @@ class CatStore extends ChangeNotifier {
     double? longitude,
     String? locationName,
     bool isOwned = false,
+    String? individualId,
     String? name,
     DateTime? capturedAt,
+    String? microchip,
+    String? collar,
+    String? distinguishingMarks,
   }) async {
     const uuid = Uuid();
 
@@ -154,6 +290,7 @@ class CatStore extends ChangeNotifier {
     final deviceId = await _database.getOrCreateDeviceId();
     final cat = Cat(
       isOwned: isOwned,
+      individualId: individualId,
       name: name?.trim(),
       id: id,
       captureNumber: captureNumber,
@@ -165,6 +302,11 @@ class CatStore extends ChangeNotifier {
       status: 'pending_analysis',
       ownerId: ownerId,
       syncDeviceId: deviceId,
+      microchip: microchip?.trim().isEmpty == true ? null : microchip?.trim(),
+      collar: collar?.trim().isEmpty == true ? null : collar?.trim(),
+      distinguishingMarks: distinguishingMarks?.trim().isEmpty == true
+          ? null
+          : distinguishingMarks?.trim(),
     );
 
     final analysis = CatAnalysis(catId: id, status: AnalysisStatus.pending);
@@ -172,6 +314,7 @@ class CatStore extends ChangeNotifier {
     await _database.insertCatWithAnalysis(cat, analysis);
 
     _cats.insert(0, cat);
+    unawaited(progress.track('capture_saved'));
 
     _analyses[id] = analysis;
 
@@ -185,7 +328,8 @@ class CatStore extends ChangeNotifier {
     return SavedCatResult(cat: cat, awaitingConnection: awaitingConnection);
   }
 
-  Future<void> syncPendingAnalyses() async {
+  Future<void> syncPendingAnalyses({bool manual = false}) async {
+    if (!manual && !_sessionStore.autoSyncEnabled) return;
     if (_sessionStore.session == null ||
         _isSynchronizing ||
         _isLoading ||
@@ -250,6 +394,7 @@ class CatStore extends ChangeNotifier {
       _replaceCat(cat.id, (current) => current.withStatus('completed'));
       notifyListeners();
       unawaited(syncCatalog());
+      unawaited(refreshGamification());
       return true;
     } on AnalysisConnectionException {
       await _scheduleAutomaticRetry(cat);
@@ -338,10 +483,12 @@ class CatStore extends ChangeNotifier {
       unawaited(syncPendingAnalyses());
       unawaited(syncCatalog());
       unawaited(resolvePendingLocations());
+      unawaited(refreshNotifications());
     });
   }
 
   Future<bool> _hasNetworkTransport() async {
+    if (networkAvailable != null) return networkAvailable!();
     try {
       final results = await _connectivity.checkConnectivity().timeout(
         const Duration(seconds: 2),
@@ -368,7 +515,7 @@ class CatStore extends ChangeNotifier {
       'pending_analysis',
       automaticRetryCount: 0,
     );
-    await syncPendingAnalyses();
+    await syncPendingAnalyses(manual: true);
   }
 
   Future<void> deleteCat(String catId) async {
@@ -449,6 +596,46 @@ class CatStore extends ChangeNotifier {
     unawaited(syncCatalog());
   }
 
+  Future<void> updateCatDetails(
+    String id, {
+    String? name,
+    String? microchip,
+    String? collar,
+    String? distinguishingMarks,
+  }) async {
+    final normalizedName = name?.trim();
+    final savedName = normalizedName == null || normalizedName.isEmpty
+        ? null
+        : normalizedName;
+    final savedMicrochip = microchip?.trim().isEmpty == true
+        ? null
+        : microchip?.trim();
+    final savedCollar = collar?.trim().isEmpty == true ? null : collar?.trim();
+    final savedMarks = distinguishingMarks?.trim().isEmpty == true
+        ? null
+        : distinguishingMarks?.trim();
+
+    await _database.updateCatDetails(
+      id,
+      name: savedName,
+      microchip: savedMicrochip,
+      collar: savedCollar,
+      distinguishingMarks: savedMarks,
+    );
+
+    final index = _cats.indexWhere((cat) => cat.id == id);
+    if (index != -1) {
+      _cats[index] = _cats[index].withDetails(
+        name: savedName,
+        microchip: savedMicrochip,
+        collar: savedCollar,
+        distinguishingMarks: savedMarks,
+      );
+      notifyListeners();
+      unawaited(syncCatalog());
+    }
+  }
+
   Future<void> updateCatLocation(
     String id, {
     required double latitude,
@@ -513,6 +700,7 @@ class CatStore extends ChangeNotifier {
         if (cat.ownerId != _sessionStore.session?.userId) continue;
         await _visionApi.createSighting(
           catId: cat.id,
+          clientEventId: item['queue_key'] as String,
           latitude: (item['latitude'] as num).toDouble(),
           longitude: (item['longitude'] as num).toDouble(),
           note: item['note'] as String?,
@@ -632,7 +820,30 @@ class CatStore extends ChangeNotifier {
     }
   }
 
-  Future<void> syncCatalog() async {
+  Future<void> toggleFavorite(String catId) async {
+    await FavoritesManager.instance.toggleFavorite(
+      catId,
+      sessionStore: _sessionStore,
+    );
+    final index = _cats.indexWhere((c) => c.id == catId);
+    if (index != -1) {
+      final isFav = FavoritesManager.instance.isFavorite(catId);
+      _cats[index] = _cats[index].withFavorite(isFav);
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateCatNotes(String catId, String? notes) async {
+    await _database.updateCatNotes(catId, notes);
+    final index = _cats.indexWhere((c) => c.id == catId);
+    if (index != -1) {
+      _cats[index] = _cats[index].withNotes(notes);
+      notifyListeners();
+    }
+  }
+
+  Future<void> syncCatalog({bool manual = false}) async {
+    if (!manual && !_sessionStore.autoSyncEnabled) return;
     try {
       if (_isLoading ||
           _sessionStore.session == null ||
@@ -642,6 +853,7 @@ class CatStore extends ChangeNotifier {
       final synced = await _catalogSync.sync();
       if (!synced) return;
       await _sendQueuedSightings();
+      await FavoritesManager.instance.syncWithServer(_sessionStore);
       final cats = await _database.getCats(
         ownerId: _sessionStore.session?.userId,
       );
@@ -660,13 +872,16 @@ class CatStore extends ChangeNotifier {
       }
       notifyListeners();
     } catch (error, stackTrace) {
-      debugPrint('Sincronização do catálogo adiada: $error');
+      debugPrint('Sincronizacao do catalogo adiada: $error');
       debugPrintStack(stackTrace: stackTrace);
     }
   }
 
   void _onSessionChanged() {
     if (_loadedOwnerId != _sessionStore.session?.userId) {
+      notifications.clear();
+      _gamificationService.reset();
+      progress.reset();
       _cats.clear();
       _analyses.clear();
       _referencePhotos.clear();
@@ -682,10 +897,15 @@ class CatStore extends ChangeNotifier {
 
   @override
   void dispose() {
+    progress.removeListener(notifyListeners);
+    progress.dispose();
     _disposed = true;
     _sessionStore.removeListener(_onSessionChanged);
     _connectivitySubscription?.cancel();
     _retryTimer?.cancel();
+    _notificationSubscription?.cancel();
+    _pushSubscription?.cancel();
+    notifications.dispose();
     super.dispose();
   }
 }

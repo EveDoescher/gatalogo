@@ -239,6 +239,7 @@ class CatalogSyncService {
     }
     final cat = Cat(
       isOwned: payload['is_owned'] == 1 || payload['is_owned'] == true,
+      individualId: payload['individual_id'] as String?,
       id: id,
       captureNumber:
           (payload['capture_number'] as num?)?.toInt() ??
@@ -260,6 +261,9 @@ class CatalogSyncService {
       localUpdatedAt: DateTime.parse(record['updated_at'] as String).toUtc(),
       syncDeviceId: record['device_id'] as String? ?? deviceId,
       syncRevision: revision,
+      microchip: payload['microchip'] as String?,
+      collar: payload['collar'] as String?,
+      distinguishingMarks: payload['distinguishing_marks'] as String?,
     );
     CatAnalysis? analysis;
     final analysisRaw = record['analysis'];

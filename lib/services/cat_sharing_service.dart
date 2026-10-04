@@ -1,0 +1,214 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
+import 'package:share_plus/share_plus.dart';
+
+import '../models/cat.dart';
+import '../models/missing_poster.dart';
+import '../models/cat_analysis.dart';
+
+class CatSharingService {
+  const CatSharingService._();
+
+  static String buildShareText({required Cat cat, CatAnalysis? analysis}) {
+    final buffer = StringBuffer();
+    buffer.writeln('Gatálogo — Descoberta Felina');
+    buffer.writeln(
+      '${cat.displayName} (Gato #${cat.captureNumber.toString().padLeft(3, '0')})',
+    );
+
+    if (analysis != null) {
+      buffer.writeln('Padrão: ${analysis.coatType}');
+      buffer.writeln('Pelagem: ${analysis.primaryColor}');
+      if (analysis.confidence != null) {
+        final conf = (analysis.confidence! * 100).round();
+        buffer.writeln('Confiança da IA: $conf%');
+      }
+    }
+
+    if (cat.locationName != null && cat.locationName!.trim().isNotEmpty) {
+      buffer.writeln('Local: ${cat.locationName!.trim()}');
+    }
+
+    buffer.writeln('Identificado e protegido no Gatálogo.');
+    return buffer.toString().trim();
+  }
+
+  static Future<bool> shareCat({
+    required Cat cat,
+    CatAnalysis? analysis,
+  }) async {
+    final text = buildShareText(cat: cat, analysis: analysis);
+    try {
+      final file = File(cat.photoPath);
+      if (await file.exists()) {
+        final result = await SharePlus.instance.share(
+          ShareParams(
+            files: [XFile(file.path)],
+            text: text,
+            subject: 'Gato ${cat.displayName} no Gatálogo',
+          ),
+        );
+        return result.status == ShareResultStatus.success;
+      } else {
+        final result = await SharePlus.instance.share(
+          ShareParams(
+            text: text,
+            subject: 'Gato ${cat.displayName} no Gatálogo',
+          ),
+        );
+        return result.status == ShareResultStatus.success;
+      }
+    } catch (e) {
+      debugPrint('Erro ao compartilhar gato: $e');
+      return false;
+    }
+  }
+
+  static String buildMissingPosterText({
+    required Cat cat,
+    required Map<String, dynamic> report,
+    String? locationName,
+  }) {
+    return MissingPoster(
+      cat: cat,
+      report: report,
+      locationName: locationName,
+    ).text;
+  }
+
+  static Future<bool> shareMissingPoster({
+    required Cat cat,
+    required Map<String, dynamic> report,
+    String? locationName,
+  }) async {
+    final text = buildMissingPosterText(
+      cat: cat,
+      report: report,
+      locationName: locationName,
+    );
+    try {
+      final file = File(cat.photoPath);
+      if (await file.exists()) {
+        final result = await SharePlus.instance.share(
+          ShareParams(
+            files: [XFile(file.path)],
+            text: text,
+            subject: 'PROCURA-SE: ${cat.displayName}',
+          ),
+        );
+        return result.status == ShareResultStatus.success;
+      } else {
+        final result = await SharePlus.instance.share(
+          ShareParams(text: text, subject: 'PROCURA-SE: ${cat.displayName}'),
+        );
+        return result.status == ShareResultStatus.success;
+      }
+    } catch (e) {
+      debugPrint('Erro ao compartilhar cartaz: $e');
+      return false;
+    }
+  }
+
+  static String buildPostShareText({
+    required String catName,
+    required String author,
+    String? location,
+    String? note,
+  }) {
+    final buffer = StringBuffer();
+    buffer.writeln('$catName no Gatálogo');
+    buffer.writeln('Descoberta registrada por @$author');
+    if (location != null && location.trim().isNotEmpty) {
+      buffer.writeln('Local: ${location.trim()}');
+    }
+    if (note != null && note.trim().isNotEmpty) {
+      buffer.writeln('Nota: ${note.trim()}');
+    }
+    buffer.writeln('');
+    buffer.writeln(
+      'Baixe o Gatálogo e participe da rede de catalogação e resgate felino!',
+    );
+    return buffer.toString().trim();
+  }
+
+  static Future<bool> sharePost({
+    required String catName,
+    required String author,
+    String? location,
+    String? note,
+    String? localPhotoPath,
+  }) async {
+    final text = buildPostShareText(
+      catName: catName,
+      author: author,
+      location: location,
+      note: note,
+    );
+    try {
+      if (localPhotoPath != null) {
+        final file = File(localPhotoPath);
+        if (await file.exists()) {
+          final result = await SharePlus.instance.share(
+            ShareParams(
+              files: [XFile(file.path)],
+              text: text,
+              subject: '$catName no Gatálogo',
+            ),
+          );
+          return result.status == ShareResultStatus.success ||
+              result.status == ShareResultStatus.dismissed;
+        }
+      }
+      final result = await SharePlus.instance.share(
+        ShareParams(text: text, subject: '$catName no Gatálogo'),
+      );
+      return result.status == ShareResultStatus.success ||
+          result.status == ShareResultStatus.dismissed;
+    } catch (e) {
+      debugPrint('Erro ao compartilhar post: $e');
+      return false;
+    }
+  }
+
+  static String buildAchievementShareText({
+    required String title,
+    String? description,
+    String? rarity,
+  }) {
+    final buffer = StringBuffer();
+    buffer.writeln('Conquista Desbloqueada no Gatálogo!');
+    buffer.writeln('Marco: $title');
+    if (rarity != null && rarity.trim().isNotEmpty) {
+      buffer.writeln('Raridade: $rarity');
+    }
+    if (description != null && description.trim().isNotEmpty) {
+      buffer.writeln('Detalhes: $description');
+    }
+    buffer.writeln('');
+    buffer.writeln('Acompanhe minha jornada felina no app Gatálogo!');
+    return buffer.toString().trim();
+  }
+
+  static Future<bool> shareAchievement({
+    required String title,
+    String? description,
+    String? rarity,
+  }) async {
+    final text = buildAchievementShareText(
+      title: title,
+      description: description,
+      rarity: rarity,
+    );
+    try {
+      final result = await SharePlus.instance.share(
+        ShareParams(text: text, subject: 'Nova conquista no Gatálogo: $title'),
+      );
+      return result.status == ShareResultStatus.success ||
+          result.status == ShareResultStatus.dismissed;
+    } catch (e) {
+      debugPrint('Erro ao compartilhar conquista: $e');
+      return false;
+    }
+  }
+}

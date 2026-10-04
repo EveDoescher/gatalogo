@@ -1,5 +1,6 @@
 class Cat {
   final bool isOwned;
+  final String? individualId;
   String get displayName => name?.trim().isNotEmpty == true
       ? name!.trim()
       : 'Gato #${captureNumber.toString().padLeft(3, '0')}';
@@ -23,9 +24,15 @@ class Cat {
   final String? syncDeviceId;
   final int syncRevision;
   final DateTime? deletedAt;
+  final String? microchip;
+  final String? collar;
+  final String? distinguishingMarks;
+  final bool isFavorite;
+  final String? notes;
 
   const Cat({
     this.isOwned = false,
+    this.individualId,
     required this.id,
     required this.captureNumber,
     required this.photoPath,
@@ -42,11 +49,17 @@ class Cat {
     this.syncDeviceId,
     this.syncRevision = 0,
     this.deletedAt,
+    this.microchip,
+    this.collar,
+    this.distinguishingMarks,
+    this.isFavorite = false,
+    this.notes,
   }) : localUpdatedAt = localUpdatedAt ?? capturedAt;
 
   Map<String, dynamic> toMap() {
     return {
       'is_owned': isOwned ? 1 : 0,
+      'individual_id': individualId,
       'id': id,
       'capture_number': captureNumber,
       'name': name,
@@ -63,12 +76,18 @@ class Cat {
       'sync_device_id': syncDeviceId,
       'sync_revision': syncRevision,
       'deleted_at': deletedAt?.toUtc().toIso8601String(),
+      'microchip': microchip,
+      'collar': collar,
+      'distinguishing_marks': distinguishingMarks,
+      'is_favorite': isFavorite ? 1 : 0,
+      'notes': notes,
     };
   }
 
   factory Cat.fromMap(Map<String, dynamic> map) {
     return Cat(
       isOwned: map['is_owned'] == 1 || map['is_owned'] == true,
+      individualId: map['individual_id'] as String?,
       id: map['id'],
       captureNumber: map['capture_number'] ?? 0,
       name: map['name'],
@@ -89,12 +108,74 @@ class Cat {
       deletedAt: map['deleted_at'] == null
           ? null
           : DateTime.parse(map['deleted_at'] as String).toUtc(),
+      microchip: map['microchip'] as String?,
+      collar: map['collar'] as String?,
+      distinguishingMarks: map['distinguishing_marks'] as String?,
+      isFavorite: map['is_favorite'] == 1 || map['is_favorite'] == true,
+      notes: map['notes'] as String?,
+    );
+  }
+
+  Cat withFavorite(bool favorite) {
+    return Cat(
+      isOwned: isOwned,
+      individualId: individualId,
+      id: id,
+      captureNumber: captureNumber,
+      name: name,
+      photoPath: photoPath,
+      capturedAt: capturedAt,
+      latitude: latitude,
+      longitude: longitude,
+      locationName: locationName,
+      status: status,
+      automaticRetryCount: automaticRetryCount,
+      ownerId: ownerId,
+      syncState: 'dirty',
+      localUpdatedAt: DateTime.now().toUtc(),
+      syncDeviceId: syncDeviceId,
+      syncRevision: syncRevision,
+      deletedAt: deletedAt,
+      microchip: microchip,
+      collar: collar,
+      distinguishingMarks: distinguishingMarks,
+      isFavorite: favorite,
+      notes: notes,
+    );
+  }
+
+  Cat withNotes(String? newNotes) {
+    return Cat(
+      isOwned: isOwned,
+      individualId: individualId,
+      id: id,
+      captureNumber: captureNumber,
+      name: name,
+      photoPath: photoPath,
+      capturedAt: capturedAt,
+      latitude: latitude,
+      longitude: longitude,
+      locationName: locationName,
+      status: status,
+      automaticRetryCount: automaticRetryCount,
+      ownerId: ownerId,
+      syncState: 'dirty',
+      localUpdatedAt: DateTime.now().toUtc(),
+      syncDeviceId: syncDeviceId,
+      syncRevision: syncRevision,
+      deletedAt: deletedAt,
+      microchip: microchip,
+      collar: collar,
+      distinguishingMarks: distinguishingMarks,
+      isFavorite: isFavorite,
+      notes: newNotes,
     );
   }
 
   Cat withName(String? newName) {
     return Cat(
       isOwned: isOwned,
+      individualId: individualId,
       id: id,
       captureNumber: captureNumber,
       name: newName,
@@ -111,6 +192,46 @@ class Cat {
       syncDeviceId: syncDeviceId,
       syncRevision: syncRevision,
       deletedAt: deletedAt,
+      microchip: microchip,
+      collar: collar,
+      distinguishingMarks: distinguishingMarks,
+      isFavorite: isFavorite,
+      notes: notes,
+    );
+  }
+
+  Cat withDetails({
+    String? name,
+    String? microchip,
+    String? collar,
+    String? distinguishingMarks,
+    String? notes,
+    bool? isFavorite,
+  }) {
+    return Cat(
+      isOwned: isOwned,
+      individualId: individualId,
+      id: id,
+      captureNumber: captureNumber,
+      name: name ?? this.name,
+      photoPath: photoPath,
+      capturedAt: capturedAt,
+      latitude: latitude,
+      longitude: longitude,
+      locationName: locationName,
+      status: status,
+      automaticRetryCount: automaticRetryCount,
+      ownerId: ownerId,
+      syncState: 'dirty',
+      localUpdatedAt: DateTime.now().toUtc(),
+      syncDeviceId: syncDeviceId,
+      syncRevision: syncRevision,
+      deletedAt: deletedAt,
+      microchip: microchip ?? this.microchip,
+      collar: collar ?? this.collar,
+      distinguishingMarks: distinguishingMarks ?? this.distinguishingMarks,
+      isFavorite: isFavorite ?? this.isFavorite,
+      notes: notes ?? this.notes,
     );
   }
 
@@ -121,6 +242,7 @@ class Cat {
   }) {
     return Cat(
       isOwned: isOwned,
+      individualId: individualId,
       id: id,
       captureNumber: captureNumber,
       name: name,
@@ -137,6 +259,11 @@ class Cat {
       syncDeviceId: syncDeviceId,
       syncRevision: syncRevision,
       deletedAt: deletedAt,
+      microchip: microchip,
+      collar: collar,
+      distinguishingMarks: distinguishingMarks,
+      isFavorite: isFavorite,
+      notes: notes,
     );
   }
 
@@ -147,6 +274,7 @@ class Cat {
   }) {
     return Cat(
       isOwned: isOwned,
+      individualId: individualId,
       id: id,
       captureNumber: captureNumber,
       name: name,
@@ -163,6 +291,11 @@ class Cat {
       syncDeviceId: syncDeviceId,
       syncRevision: syncRevision,
       deletedAt: deletedAt,
+      microchip: microchip,
+      collar: collar,
+      distinguishingMarks: distinguishingMarks,
+      isFavorite: isFavorite,
+      notes: notes,
     );
   }
 
@@ -178,9 +311,16 @@ class Cat {
     String? name,
     String? status,
     bool? isOwned,
+    String? individualId,
+    String? microchip,
+    String? collar,
+    String? distinguishingMarks,
+    bool? isFavorite,
+    String? notes,
   }) {
     return Cat(
       isOwned: isOwned ?? this.isOwned,
+      individualId: individualId ?? this.individualId,
       id: id,
       captureNumber: captureNumber,
       name: name ?? this.name,
@@ -197,6 +337,11 @@ class Cat {
       syncDeviceId: syncDeviceId ?? this.syncDeviceId,
       syncRevision: syncRevision ?? this.syncRevision,
       deletedAt: clearDeletedAt ? null : (deletedAt ?? this.deletedAt),
+      microchip: microchip ?? this.microchip,
+      collar: collar ?? this.collar,
+      distinguishingMarks: distinguishingMarks ?? this.distinguishingMarks,
+      isFavorite: isFavorite ?? this.isFavorite,
+      notes: notes ?? this.notes,
     );
   }
 }

@@ -10,4 +10,6 @@ class AuthSession {
   final String email;
   final String accessToken;
   final String refreshToken;
+
+  String get username => email.contains('@') ? email.split('@').first : email;
 }

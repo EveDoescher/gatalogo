@@ -6,7 +6,6 @@ import 'package:uuid/uuid.dart';
 
 import '../models/cat.dart';
 import '../models/cat_analysis.dart';
-import '../models/cat_avatar.dart';
 import '../models/cat_reference_photo.dart';
 
 class CatDatabase {
@@ -33,7 +32,7 @@ class CatDatabase {
 
     return openDatabase(
       path,
-      version: 11,
+      version: 17,
 
       onCreate: (db, version) async {
         await db.execute('''
@@ -55,6 +54,12 @@ class CatDatabase {
         ,sync_device_id TEXT
         ,sync_revision INTEGER NOT NULL DEFAULT 0
         ,deleted_at TEXT
+        ,microchip TEXT
+        ,collar TEXT
+        ,distinguishing_marks TEXT
+        ,is_favorite INTEGER NOT NULL DEFAULT 0
+        ,individual_id TEXT
+        ,notes TEXT
       )
     ''');
         await db.execute('''
@@ -62,6 +67,7 @@ class CatDatabase {
     cat_id TEXT PRIMARY KEY,
     analysis_status TEXT NOT NULL,
     coat_type TEXT,
+    hair_type TEXT,
     primary_color TEXT,
     colors_json TEXT NOT NULL,
     confidence REAL,
@@ -76,10 +82,60 @@ class CatDatabase {
     value TEXT NOT NULL
   )
 ''');
-        await _createAvatarTables(db);
+        await _createReferencePhotoTable(db);
+        await _createHabitatCacheTable(db);
       },
 
       onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 17) {
+          await db.execute('ALTER TABLE cats ADD COLUMN individual_id TEXT');
+        }
+        if (oldVersion == 15) {
+          await db.execute(
+            'ALTER TABLE habitat_cache ADD COLUMN pending_purchases TEXT',
+          );
+        }
+        if (oldVersion < 15) {
+          await _createHabitatCacheTable(db);
+        }
+        if (oldVersion < 14) {
+          final columns = await db.rawQuery('PRAGMA table_info(cats)');
+          final names = columns.map((c) => c['name'] as String).toSet();
+          if (!names.contains('is_favorite')) {
+            await db.execute(
+              'ALTER TABLE cats ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0',
+            );
+          }
+          if (!names.contains('notes')) {
+            await db.execute('ALTER TABLE cats ADD COLUMN notes TEXT');
+          }
+        }
+        if (oldVersion < 13) {
+          final columns = await db.rawQuery('PRAGMA table_info(cats)');
+          final names = columns.map((c) => c['name'] as String).toSet();
+          if (!names.contains('microchip')) {
+            await db.execute('ALTER TABLE cats ADD COLUMN microchip TEXT');
+          }
+          if (!names.contains('collar')) {
+            await db.execute('ALTER TABLE cats ADD COLUMN collar TEXT');
+          }
+          if (!names.contains('distinguishing_marks')) {
+            await db.execute(
+              'ALTER TABLE cats ADD COLUMN distinguishing_marks TEXT',
+            );
+          }
+        }
+        if (oldVersion < 12) {
+          final columns = await db.rawQuery('PRAGMA table_info(cat_analyses)');
+          final hasHairType = columns.any(
+            (column) => column['name'] == 'hair_type',
+          );
+          if (!hasHairType) {
+            await db.execute(
+              'ALTER TABLE cat_analyses ADD COLUMN hair_type TEXT',
+            );
+          }
+        }
         if (oldVersion < 11) {
           await db.execute(
             'ALTER TABLE cats ADD COLUMN is_owned INTEGER NOT NULL DEFAULT 0',
@@ -177,25 +233,13 @@ class CatDatabase {
           ''');
         }
         if (oldVersion < 10) {
-          await _createAvatarTables(db);
+          await _createReferencePhotoTable(db);
         }
       },
     );
   }
 
-  Future<void> _createAvatarTables(DatabaseExecutor db) async {
-    await db.execute('''
-      CREATE TABLE IF NOT EXISTS cat_avatars (
-        cat_id TEXT PRIMARY KEY,
-        version INTEGER NOT NULL DEFAULT 0,
-        status TEXT NOT NULL DEFAULT 'pending',
-        preview_path TEXT,
-        texture_paths_json TEXT NOT NULL DEFAULT '{}',
-        coat_map_json TEXT,
-        error_message TEXT,
-        updated_at TEXT NOT NULL
-      )
-    ''');
+  Future<void> _createReferencePhotoTable(DatabaseExecutor db) async {
     await db.execute('''
       CREATE TABLE IF NOT EXISTS cat_reference_photos (
         cat_id TEXT NOT NULL,
@@ -208,6 +252,80 @@ class CatDatabase {
         PRIMARY KEY (cat_id, kind)
       )
     ''');
+  }
+
+  Future<void> _createHabitatCacheTable(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS habitat_cache (
+        owner_id TEXT PRIMARY KEY,
+        snapshot TEXT,
+        draft TEXT,
+        pending_purchases TEXT
+      )
+    ''');
+  }
+
+  Future<Map<String, dynamic>?> readHabitatCache(String ownerId) async {
+    final rows = await (await database).query(
+      'habitat_cache',
+      where: 'owner_id = ?',
+      whereArgs: [ownerId],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return {
+      'snapshot': rows.first['snapshot'] == null
+          ? null
+          : jsonDecode(rows.first['snapshot'] as String),
+      'draft': rows.first['draft'] == null
+          ? null
+          : jsonDecode(rows.first['draft'] as String),
+      'pending_purchases': rows.first['pending_purchases'] == null
+          ? null
+          : jsonDecode(rows.first['pending_purchases'] as String),
+    };
+  }
+
+  Future<void> saveHabitatSnapshot(
+    String ownerId,
+    Map<String, dynamic> snapshot,
+  ) async {
+    await (await database).rawInsert(
+      '''
+      INSERT INTO habitat_cache (owner_id, snapshot)
+      VALUES (?, ?)
+      ON CONFLICT(owner_id) DO UPDATE SET snapshot = excluded.snapshot
+    ''',
+      [ownerId, jsonEncode(snapshot)],
+    );
+  }
+
+  Future<void> saveHabitatDraft(
+    String ownerId,
+    Map<String, dynamic>? draft,
+  ) async {
+    await (await database).rawInsert(
+      '''
+      INSERT INTO habitat_cache (owner_id, draft)
+      VALUES (?, ?)
+      ON CONFLICT(owner_id) DO UPDATE SET draft = excluded.draft
+    ''',
+      [ownerId, draft == null ? null : jsonEncode(draft)],
+    );
+  }
+
+  Future<void> saveHabitatPendingPurchases(
+    String ownerId,
+    Map<String, String> pendingPurchases,
+  ) async {
+    await (await database).rawInsert(
+      '''
+      INSERT INTO habitat_cache (owner_id, pending_purchases)
+      VALUES (?, ?)
+      ON CONFLICT(owner_id) DO UPDATE SET pending_purchases = excluded.pending_purchases
+    ''',
+      [ownerId, jsonEncode(pendingPurchases)],
+    );
   }
 
   Future<void> insertCat(Cat cat) async {
@@ -311,6 +429,30 @@ class CatDatabase {
     );
   }
 
+  Future<void> updateCatDetails(
+    String id, {
+    String? name,
+    String? microchip,
+    String? collar,
+    String? distinguishingMarks,
+  }) async {
+    final db = await database;
+
+    await db.update(
+      'cats',
+      {
+        'name': name,
+        'microchip': microchip,
+        'collar': collar,
+        'distinguishing_marks': distinguishingMarks,
+        'sync_state': 'dirty',
+        'local_updated_at': DateTime.now().toUtc().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   Future<void> updateCatLocation(
     String id, {
     required double latitude,
@@ -346,6 +488,34 @@ class CatDatabase {
         ...?automaticRetryCount == null
             ? null
             : {'automatic_retry_count': automaticRetryCount},
+        'sync_state': 'dirty',
+        'local_updated_at': DateTime.now().toUtc().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> updateCatFavorite(String id, bool isFavorite) async {
+    final db = await database;
+    await db.update(
+      'cats',
+      {
+        'is_favorite': isFavorite ? 1 : 0,
+        'sync_state': 'dirty',
+        'local_updated_at': DateTime.now().toUtc().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> updateCatNotes(String id, String? notes) async {
+    final db = await database;
+    await db.update(
+      'cats',
+      {
+        'notes': notes,
         'sync_state': 'dirty',
         'local_updated_at': DateTime.now().toUtc().toIso8601String(),
       },
@@ -511,26 +681,6 @@ class CatDatabase {
         );
       }
     });
-  }
-
-  Future<CatAvatar?> getAvatar(String catId) async {
-    final db = await database;
-    final rows = await db.query(
-      'cat_avatars',
-      where: 'cat_id = ?',
-      whereArgs: [catId],
-      limit: 1,
-    );
-    return rows.isEmpty ? null : CatAvatar.fromMap(rows.first);
-  }
-
-  Future<void> upsertAvatar(CatAvatar avatar) async {
-    final db = await database;
-    await db.insert(
-      'cat_avatars',
-      avatar.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
   }
 
   Future<List<CatReferencePhoto>> getReferencePhotos(String catId) async {

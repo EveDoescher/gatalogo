@@ -80,6 +80,21 @@ class AuthApiService {
     });
   }
 
+  Future<AuthSession> loginWithApple({
+    required String idToken,
+    required String deviceId,
+    String? userIdentifier,
+    String? email,
+  }) {
+    final payload = <String, dynamic>{
+      'id_token': idToken,
+      'device_id': deviceId,
+    };
+    if (userIdentifier != null) payload['user_identifier'] = userIdentifier;
+    if (email != null) payload['email'] = email;
+    return _tokens('/auth/apple', payload);
+  }
+
   Future<AuthSession> refresh({
     required String refreshToken,
     required String deviceId,
@@ -106,6 +121,27 @@ class AuthApiService {
     await _post(
       '/auth/password-reset/confirm',
       {'email': email, 'code': code, 'password': password},
+      accepted: {204},
+    );
+  }
+
+  Future<void> requestDeactivationCode(String accessToken) async {
+    await _post(
+      '/auth/deactivate/request',
+      const {},
+      accessToken: accessToken,
+      accepted: {202},
+    );
+  }
+
+  Future<void> confirmDeactivate(
+    String accessToken, {
+    required String code,
+  }) async {
+    await _post(
+      '/auth/deactivate/confirm',
+      {'code': code},
+      accessToken: accessToken,
       accepted: {204},
     );
   }

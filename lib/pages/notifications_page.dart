@@ -1,12 +1,22 @@
+import '../widgets/botanical_scene.dart';
+import 'discovery_result_page.dart';
+import 'result_history_page.dart';
+
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../services/product_api_service.dart';
 import '../stores/cat_store.dart';
+import '../theme/app_theme.dart';
 import '../widgets/app_widgets.dart';
+import '../widgets/app_header_actions.dart';
+import '../widgets/gatalogo_components.dart';
 import 'missing_cats_page.dart';
 import 'conversation_page.dart';
 import 'social_page.dart';
 import 'journey_page.dart';
+import 'friends_page.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({
@@ -26,6 +36,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
   String? _error;
   late final ProductApiService _api;
   bool _openedInitialNotification = false;
+
   @override
   void initState() {
     super.initState();
@@ -35,10 +46,22 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   Future<void> _load() async {
     try {
-      final items = await _api.list('/vision/notifications');
+      await widget.store.notifications.refresh();
+      final items = widget.store.notifications.items;
       if (mounted) {
         setState(() {
-          _items = items;
+          final grouped = <String, Map<String, dynamic>>{};
+          for (final item in items) {
+            final payload = item['payload'] as Map? ?? {};
+            final target =
+                payload['match_id'] ??
+                payload['conversation_id'] ??
+                payload['event_id'] ??
+                item['id'];
+            grouped.putIfAbsent('${item['type']}:$target', () => item);
+          }
+          _items = grouped.values.toList()
+            ..sort((a, b) => _section(a).compareTo(_section(b)));
           _error = null;
         });
       }
@@ -55,18 +78,50 @@ class _NotificationsPageState extends State<NotificationsPage> {
     }
   }
 
+  int _section(Map<String, dynamic> item) => switch (item['type']) {
+    'possible_match' || 'match_confirmed' => 0,
+    'message' || 'friend_invite' || 'friend_accepted' => 1,
+    _ => 2,
+  };
+
   String _title(Map<String, dynamic> item) => switch (item['type']) {
+    'progress_result' => 'Seu resultado está pronto',
     'possible_match' => 'Possível avistamento do seu gato',
-    'match_confirmed' => 'Seu avistamento ajudou uma busca',
+    'match_confirmed' => 'Seu avistamento ajudou uma busca!',
     'friend_invite' => 'Novo convite de amizade',
     'friend_accepted' => 'Convite de amizade aceito',
-    'message' => 'Nova mensagem',
-    'achievement' => 'Nova conquista',
+    'message' => 'Nova mensagem no chat',
+    'achievement' => 'Nova conquista desbloqueada!',
     _ => 'Novidade no Gatálogo',
   };
+
+  String _artForType(String? type) => switch (type) {
+    'possible_match' => 'icons/icon_search_paw_magnifier',
+    'match_confirmed' => 'icons/icon_heart_coral',
+    'friend_invite' || 'friend_accepted' => 'ui/ui_speech_heart',
+    'message' => 'ui/ui_speech_ellipsis',
+    'achievement' => 'rewards/reward_medal_star_gold_ribbon_01',
+    'progress_result' => 'ui/ui_notebook_cat',
+    _ => 'icons/icon_bell_gold_coral',
+  };
+
   Future<void> _open(Map<String, dynamic> item) async {
     try {
-      await _api.post('/app/notifications/${item['id']}/read');
+      final source = item['payload'] as Map? ?? {};
+      final target =
+          source['match_id'] ?? source['conversation_id'] ?? source['event_id'];
+      for (final notice in widget.store.notifications.items.toList()) {
+        final data = notice['payload'] as Map? ?? {};
+        if (notice['id'] == item['id'] ||
+            (target != null &&
+                notice['type'] == item['type'] &&
+                (data['match_id'] ??
+                        data['conversation_id'] ??
+                        data['event_id']) ==
+                    target)) {
+          await widget.store.notifications.markRead(notice['id'].toString());
+        }
+      }
       final payload = Map<String, dynamic>.from(item['payload'] as Map? ?? {});
       Widget? page;
       if (item['type'] == 'message' && payload['conversation_id'] != null) {
@@ -74,8 +129,19 @@ class _NotificationsPageState extends State<NotificationsPage> {
           sessionStore: widget.store.sessionStore,
           conversationId: payload['conversation_id'] as String,
         );
-      } else if (item['type'] == 'achievement' ||
-          item['type'] == 'match_confirmed') {
+      } else if (item['type'] == 'progress_result' &&
+          payload['event_id'] != null) {
+        page = DiscoveryResultPage(
+          store: widget.store,
+          eventId: payload['event_id'] as String,
+        );
+      } else if (item['type'] == 'match_confirmed' &&
+          payload['match_id'] != null) {
+        page = ContributionPage(
+          store: widget.store,
+          matchId: payload['match_id'] as String,
+        );
+      } else if (item['type'] == 'achievement') {
         page = JourneyPage(store: widget.store);
       } else if (item['type'] == 'possible_match') {
         final matches = await _api.list('/vision/matches');
@@ -99,14 +165,22 @@ class _NotificationsPageState extends State<NotificationsPage> {
           catStore: widget.store,
           sessionStore: widget.store.sessionStore,
         );
+      } else if (item['type'] == 'friend_invite' ||
+          item['type'] == 'friend_accepted') {
+        page = FriendsPage(sessionStore: widget.store.sessionStore);
       } else {
-        page = Scaffold(
-          appBar: AppBar(title: const Text('Amigos')),
-          body: SocialPage(sessionStore: widget.store.sessionStore),
-        );
+        page = SocialPage(sessionStore: widget.store.sessionStore);
       }
       if (mounted) {
-        await Navigator.push(context, MaterialPageRoute(builder: (_) => page!));
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            settings: RouteSettings(
+              name: page is DiscoveryResultPage ? '/result' : null,
+            ),
+            builder: (_) => page!,
+          ),
+        );
       }
       if (mounted) _load();
     } catch (error) {
@@ -115,59 +189,250 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text('Notificações'),
-      actions: [
-        IconButton(
-          tooltip: 'Atualizar',
-          onPressed: _load,
-          icon: const Icon(Icons.refresh),
-        ),
-      ],
-    ),
-    body: RefreshIndicator(
-      onRefresh: _load,
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          if (_loading) const LinearProgressIndicator(),
-          if (_error != null)
-            EmptyContent(
-              'Não foi possível carregar',
-              _error!,
-              action: TextButton(
-                onPressed: _load,
-                child: const Text('Tentar novamente'),
-              ),
-            ),
-          if (!_loading && _error == null && _items.isEmpty)
-            const EmptyContent(
-              'Tudo em dia',
-              'Novas pistas, mensagens e conquistas aparecerão aqui.',
-            ),
-          ..._items.map(
-            (item) => ListTile(
-              leading: Icon(
-                item['read_at'] == null
-                    ? Icons.notifications_active_outlined
-                    : Icons.notifications_none,
-              ),
-              title: Text(
-                _title(item),
-                style: TextStyle(
-                  fontWeight: item['read_at'] == null
-                      ? FontWeight.bold
-                      : FontWeight.normal,
+  Widget build(BuildContext context) {
+    return BotanicalScaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Conteúdo
+            RefreshIndicator(
+              onRefresh: _load,
+              color: AppColors.primary,
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
                 ),
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        children: [
+                          const BackButton(),
+                          const Expanded(
+                            child: Text(
+                              'Notificações',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textTitle,
+                              ),
+                            ),
+                          ),
+                          AppHeaderActions(store: widget.store),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(20, 0, 20, 18),
+                      child: IllustratedPaperHeading(
+                        title: 'Seu correio do Gatálogo',
+                        description: 'Avistamentos, mensagens e conquistas chegam por aqui.',
+                        art: 'icons/icon_bell_gold_coral',
+                      ),
+                    ),
+                  ),
+                  if (_loading)
+                    const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppSpacing.xl,
+                        ),
+                        child: LinearProgressIndicator(
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+
+                  if (_error != null)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSpacing.xl),
+                        child: GatalogoCard(
+                          backgroundColor: AppColors.errorBg,
+                          child: Column(
+                            children: [
+                              const Icon(
+                                LucideIcons.alertCircle,
+                                size: 28,
+                                color: AppColors.error,
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              Text(
+                                'Não foi possível carregar',
+                                style: GoogleFonts.fredoka(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.errorText,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
+                              Text(
+                                _error!,
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.nunito(
+                                  fontSize: 12,
+                                  color: AppColors.errorText,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              TextButton(
+                                onPressed: _load,
+                                child: Text(
+                                  'Tentar novamente',
+                                  style: GoogleFonts.nunito(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  if (!_loading && _error == null && _items.isEmpty)
+                    SliverToBoxAdapter(
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.xl,
+                            vertical: AppSpacing.xxxl,
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IllustratedGardenStage(
+                                height: 172,
+                                child: GatalogoArt.image(
+                                  'environment/environment_mailbox_coral',
+                                  width: 132,
+                                  height: 140,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              Text(
+                                'Tudo calmo por aqui',
+                                style: GoogleFonts.fredoka(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textTitle,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
+                              Text(
+                                'Quando surgirem novos avistamentos, mensagens de amigos ou conquistas, você verá os avisos aqui.',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.nunito(
+                                  fontSize: 13,
+                                  color: AppColors.textMedium,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.xl,
+                        AppSpacing.xs,
+                        AppSpacing.xl,
+                        AppSpacing.xxxl,
+                      ),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final item = _items[index];
+                          final isUnread = item['read_at'] == null;
+                          final type = item['type'] as String?;
+
+                          return Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: AppSpacing.sm,
+                            ),
+                            child: GatalogoCard(
+                              backgroundColor: isUnread
+                                  ? AppColors.surface
+                                  : AppColors.cardAltBackground,
+                              onTap: () => _open(item),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  GatalogoArt.image(
+                                    _artForType(type),
+                                    width: 44,
+                                    height: 48,
+                                  ),
+                                  const SizedBox(width: AppSpacing.md),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                '${_items.indexOf(item) == 0 || _section(_items[_items.indexOf(item) - 1]) != _section(item) ? '${const ['Buscas e pistas', 'Conversas', 'Novidades do jogo'][_section(item)]}\n' : ''}${_title(item)}',
+                                                style: GoogleFonts.fredoka(
+                                                  fontSize: 15,
+                                                  fontWeight: isUnread
+                                                      ? FontWeight.w600
+                                                      : FontWeight.w500,
+                                                  color: AppColors.textTitle,
+                                                ),
+                                              ),
+                                            ),
+                                            if (isUnread)
+                                              Container(
+                                                width: 8,
+                                                height: 8,
+                                                decoration: const BoxDecoration(
+                                                  color: AppColors.primary,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          displayDate(item['created_at']),
+                                          style: GoogleFonts.nunito(
+                                            fontSize: 12,
+                                            color: AppColors.textLight,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSpacing.xs),
+                                  const Icon(
+                                    LucideIcons.chevronRight,
+                                    size: 16,
+                                    color: AppColors.textLight,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }, childCount: _items.length),
+                      ),
+                    ),
+                ],
               ),
-              subtitle: Text(displayDate(item['created_at'])),
-              onTap: () => _open(item),
-              trailing: const Icon(Icons.chevron_right),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }

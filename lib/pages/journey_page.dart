@@ -1,51 +1,15 @@
+import '../widgets/botanical_scene.dart';
+
 import 'package:flutter/material.dart';
 
-import '../services/product_api_service.dart';
 import '../stores/cat_store.dart';
-import '../widgets/app_widgets.dart';
+import '../services/product_api_service.dart';
+import '../widgets/progress_components.dart';
+import '../widgets/game_components.dart';
 
-List<Map<String, dynamic>> localJourney(CatStore store) {
-  final days = store.discoveries
-      .map((cat) => displayDate(cat.capturedAt))
-      .toSet()
-      .length;
-  final angles = store.cats.fold<int>(
-    0,
-    (best, cat) => store.referencePhotosFor(cat.id).length > best
-        ? store.referencePhotosFor(cat.id).length
-        : best,
-  );
-  return [
-    {
-      'id': 'first',
-      'title': 'Primeira descoberta',
-      'description': 'Fotografe seu primeiro gato em um passeio.',
-      'target': 1,
-      'progress': store.discoveries.isEmpty ? 0 : 1,
-    },
-    {
-      'id': 'angles',
-      'title': 'Um novo olhar',
-      'description': 'Adicione fotos complementares a um gato.',
-      'target': 2,
-      'progress': angles.clamp(0, 2),
-    },
-    {
-      'id': 'days',
-      'title': 'Olhar atento',
-      'description': 'Registre descobertas em três dias diferentes.',
-      'target': 3,
-      'progress': days.clamp(0, 3),
-    },
-    {
-      'id': 'helper',
-      'title': 'Rede de cuidado',
-      'description': 'Contribua com um avistamento de um gato desaparecido.',
-      'target': 1,
-      'progress': 0,
-    },
-  ];
-}
+/// Offline views use confirmed cached progress only.
+List<Map<String, dynamic>> localJourney(CatStore store) =>
+    store.progress.challenges;
 
 class JourneyPage extends StatefulWidget {
   const JourneyPage({super.key, required this.store});
@@ -55,8 +19,9 @@ class JourneyPage extends StatefulWidget {
 }
 
 class _JourneyPageState extends State<JourneyPage> {
-  List<Map<String, dynamic>>? _remote;
-  bool _busy = false;
+  String _filter = 'all';
+  List<Map<String, dynamic>> _history = [];
+  String? _error;
   @override
   void initState() {
     super.initState();
@@ -64,112 +29,104 @@ class _JourneyPageState extends State<JourneyPage> {
   }
 
   Future<void> _load() async {
+    await widget.store.refreshGamification();
     if (!widget.store.sessionStore.isSignedIn) return;
     try {
-      await widget.store.syncCatalog();
-      final data = await ProductApiService(widget.store.sessionStore)
+      final rows = await ProductApiService(widget.store.sessionStore)
           .list('/app/journey');
-      if (mounted) setState(() => _remote = data);
+      if (mounted) {
+        setState(() {
+          _history = rows;
+          _error = null;
+        });
+      }
     } catch (_) {
-      /* Local collection progress remains available offline. */
+      if (mounted) {
+        setState(
+          () => _error = 'Sem conexão. Exibindo o último progresso confirmado.',
+        );
+      }
     }
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Sua jornada')),
+  Widget build(BuildContext context) => BotanicalScaffold(
+    mood: BotanicalMood.album,
+    backgroundColor: GameStyle.canvas,
+    appBar: AppBar(title: const Text('Missões e conquistas')),
     body: AnimatedBuilder(
       animation: widget.store,
       builder: (context, _) {
-        final items = _remote ?? localJourney(widget.store);
-        return ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            Text(
-              'Cada encontro conta',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Explore com cuidado, complete os álbuns e ajude outros gatos a voltar para casa.',
-            ),
-            const SizedBox(height: 24),
-            ...items.map((item) {
-              final unlocked =
-                  item['unlocked_at'] != null ||
-                  (item['progress'] as num) >= (item['target'] as num);
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(
-                        unlocked
-                            ? Icons.emoji_events
-                            : Icons.emoji_events_outlined,
-                      ),
-                      title: Text(item['title'] as String),
-                      subtitle: Text(item['description'] as String),
-                      onTap: () => showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: Text(item['title'] as String),
-                          content: Text(
-                            '${item['description']}\n\n${unlocked ? 'Conquista alcançada!' : '${item['progress']} de ${item['target']}'}',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text('Fechar'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    LinearProgressIndicator(
-                      value:
-                          ((item['progress'] as num) / (item['target'] as num))
-                              .clamp(0, 1)
-                              .toDouble(),
-                      semanticsLabel: item['title'] as String,
-                    ),
-                    if (item['unlocked_at'] != null)
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: TextButton.icon(
-                          onPressed: _busy
-                              ? null
-                              : () async {
-                                  setState(() => _busy = true);
-                                  try {
-                                    await ProductApiService(
-                                      widget.store.sessionStore,
-                                    ).post('/app/journey/${item['id']}/share');
-                                    if (context.mounted) {
-                                      showMessage(
-                                        context,
-                                        'Conquista compartilhada com seus amigos.',
-                                      );
-                                    }
-                                  } catch (error) {
-                                    if (context.mounted) {
-                                      showMessage(context, error);
-                                    }
-                                  } finally {
-                                    if (mounted) setState(() => _busy = false);
-                                  }
-                                },
-                          icon: const Icon(Icons.share_outlined),
-                          label: const Text('Compartilhar com amigos'),
-                        ),
-                      ),
-                  ],
+        final goals = _history.isEmpty ? localJourney(widget.store) : _history;
+        return RefreshIndicator(
+          onRefresh: _load,
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              const IllustratedPaperHeading(
+                title: 'Pequenas missões, novas histórias',
+                description: 'Uma missão diária e duas semanais. Sem perder XP por fazer uma pausa.',
+                art: 'ui/ui_clipboard_checklist',
+              ),
+              const SizedBox(height: 24),
+              for (final mission in widget.store.progress.missions)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: GoalCard(goal: mission),
                 ),
-              );
-            }),
-          ],
+              if (widget.store.progress.missions.isEmpty)
+                const RecordStateNotice(
+                  state: 'local',
+                  reason: 'Conecte sua conta para acompanhar as missões confirmadas.',
+                ),
+              const SizedBox(height: 16),
+              Text('Seu mural de medalhas', style: GameStyle.title(26)),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final option in const {
+                    'all': 'Todas',
+                    'progress': 'Em andamento',
+                    'done': 'Concluídas',
+                    'available': 'Disponíveis',
+                  }.entries)
+                    ChoiceChip(
+                      label: Text(option.value),
+                      selected: _filter == option.key,
+                      onSelected: (_) => setState(() => _filter = option.key),
+                    ),
+                ],
+              ),
+              if (_error != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text(_error!),
+                ),
+              const SizedBox(height: 16),
+              for (final goal in goals.where(
+                (g) => switch (_filter) {
+                  'done' => g['completed'] == true || g['unlocked'] == true,
+                  'progress' =>
+                    g['completed'] != true && (g['progress'] as num? ?? 0) > 0,
+                  'available' =>
+                    g['completed'] != true && (g['progress'] as num? ?? 0) == 0,
+                  _ => true,
+                },
+              ))
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: GoalCard(
+                    goal: {
+                      ...goal,
+                      'completed':
+                          goal['completed'] == true || goal['unlocked'] == true,
+                    },
+                  ),
+                ),
+            ],
+          ),
         );
       },
     ),

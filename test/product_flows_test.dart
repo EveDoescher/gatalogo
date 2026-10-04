@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:catlogue/models/cat.dart';
+import 'package:catlogue/models/cat_reference_photo.dart';
 import 'package:catlogue/stores/cat_store.dart';
 import 'package:catlogue/stores/session_store.dart';
 import 'package:catlogue/pages/home_page.dart';
@@ -32,6 +33,10 @@ class LocalStore extends CatStore {
   ];
   @override
   List<Cat> get cats => sample;
+
+  @override
+  Future<List<CatReferencePhoto>> loadReferencePhotos(String catId) async =>
+      const [];
 }
 
 void main() {
@@ -69,7 +74,7 @@ void main() {
     expect(find.text('Meu gato'), findsNothing);
     await tester.enterText(find.byType(TextField), 'ausente');
     await tester.pumpAndSettle();
-    expect(find.text('Nenhuma descoberta aqui'), findsOneWidget);
+    expect(find.text('Nenhum gato encontrado'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     store.dispose();
     session.dispose();
