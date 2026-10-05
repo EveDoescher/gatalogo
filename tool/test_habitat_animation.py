@@ -46,7 +46,8 @@ class HabitatAnimationTest(unittest.TestCase):
                     self.assertGreater(min(box[:2]), 0)
                     self.assertLess(max(box[2:]), SIZE)
                 first = image.crop((0, 0, SIZE, SIZE)).tobytes()
-                later = image.crop((SIZE * (count // 2), 0, SIZE * (count // 2 + 1), SIZE)).tobytes()
+                sample = 4 if clip == 'play' else count // 2
+                later = image.crop((SIZE * sample, 0, SIZE * (sample + 1), SIZE)).tobytes()
                 self.assertNotEqual(first, later)
                 image.close()
                 shadow.close()

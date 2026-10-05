@@ -17,7 +17,8 @@ import 'screen_corrections_test.dart' show ScreenStore, screenApp;
 import 'gamification_service_test.dart' show Account;
 
 class CommunityFixture extends SocialApiService {
-  CommunityFixture(super.session, this.photo);
+  CommunityFixture(super.session, this.photo, {this.textOnlyFirst = false});
+  final bool textOnlyFirst;
   final String photo;
   final modes = <String>[];
   int liked = 0;
@@ -43,7 +44,7 @@ class CommunityFixture extends SocialApiService {
             'note': 'Um encontro tranquilo no fim da tarde.',
             'location_name': 'Bairro Centro',
             'author_avatar_url': '/app/account/avatar/preset/bapinha',
-            'photo_base64': photo,
+            if (!textOnlyFirst || i != 0) 'photo_base64': photo,
             'likes_count': 23,
             'comments_count': 4,
             'comments': [],

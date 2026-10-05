@@ -5,7 +5,7 @@ extension HabitatCare on HabitatService {
   String get careDay => serverNow.toIso8601String().substring(0, 10);
   int get freePortions => care['day'] == careDay
       ? (care['free_portions'] as num?)?.toInt() ?? catCapacity
-      : catCapacity;
+      : catCapacity + ((care['bonus_portions'] as num?)?.toInt() ?? 0);
   int get treatPrice => (care['treat_price'] as num?)?.toInt() ?? 4;
   int affinity(String catId) =>
       ((care['cats'] as Map?)?[catId]?['affinity'] as num?)?.toInt() ?? 0;
@@ -87,7 +87,7 @@ extension HabitatCare on HabitatService {
   void _verifyCareOwner(String owner) {
     if (_disposed || owner != _ownerId) {
       throw const ProductApiException(
-        'O cuidado foi interrompido. Abra o Habitat novamente.',
+        'O cuidado foi interrompido. Abra o Quintal novamente.',
       );
     }
   }

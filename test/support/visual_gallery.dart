@@ -4,13 +4,33 @@ import 'dart:io';
 const visualGalleryDirectory = 'build/galeria-visual';
 
 const _labels = {
+  'missions_paused': 'Missões — concessões pausadas nesta conta',
+  'public_profile_medals': 'Perfil público — medalha em destaque',
+  'missions_initial_progress': 'Missões iniciais — etapas para conhecer o app',
+  'missions_weekly_progress': 'Missões semanais — segunda a domingo',
+  'seasonal_challenges': 'Desafios — temporada ainda não iniciada',
+  'medal_celebration_progress': 'Medalha — apresentação da conquista',
+  'poster_details': 'Cartaz — contatos e compartilhamento',
+  'poster_settings': 'Cartaz — escolher informações públicas',
+  'poster_contacts': 'Cartaz — telefones e WhatsApp',
+  'habitat_outskirts_north': 'Quintal — limite norte da câmera',
+  'habitat_outskirts_south': 'Quintal — limite sul da câmera',
+  'habitat_outskirts_east': 'Quintal — limite leste da câmera',
+  'habitat_outskirts_west': 'Quintal — limite oeste da câmera',
+  'social_text': 'Social — texto e fotografia na mesma timeline',
+  'habitat_gift': 'Quintal — presente externo destacado',
+  'habitat_expanded': 'Quintal — expansão e presente reposicionado',
+  'habitat_edit_ground': 'Quintal — ferramentas de chão',
+  'habitat_reward': 'Quintal — recompensa confirmada',
+  'composer_text': 'Nova publicação — texto e espaço do teclado',
+  'composer_photo': 'Nova publicação — fotografia anexada',
   'home': 'Início',
   'social': 'Social — comunidade',
   'navigation': 'Navegação principal',
   'capture': 'Gatalogar',
   'collection': 'Coleção',
   'challenges': 'Missões',
-  'habitat': 'Habitat — com menu',
+  'habitat': 'Quintal — com menu',
   'profile': 'Meu perfil',
   'achievements': 'Conquistas',
   'friends': 'Amigos',
@@ -47,7 +67,7 @@ const _labels = {
   'clue_detail': 'Detalhes da pista',
   'missing_map': 'Mapa das buscas',
   'shop': 'Loja',
-  'habitat_help': 'Ajuda do Habitat',
+  'habitat_help': 'Ajuda do Quintal',
   'inbox_filled': 'Conversas — com mensagens',
   'notifications_filled': 'Notificações — com avisos',
   'missing_cats_filled': 'Buscas — ativas e concluídas',
@@ -95,7 +115,8 @@ a:focus-visible,input:focus-visible{outline:3px solid #d97e9c;outline-offset:4px
 </style><main><header><h1>Gatálogo — galeria visual</h1>
 <p>Atualizada: $timestamp · ${names.length} capturas</p>
 <p class="notice">$notice</p><p>Clique na imagem para abrir o PNG completo.</p>
-<label for="search">Buscar tela</label><br><input id="search" type="search" placeholder="Perfil, Habitat, coleção…">
+<p><a href="movimentos.html">Ver animais e brincadeira em movimento</a> · <a href="quintal-auditoria/index.html">Quintal: câmera, rio e sobreposições</a> · <a href="cartaz-impressao.pdf">Cartaz completo para impressão (dados de teste)</a></p>
+<label for="search">Buscar tela</label><br><input id="search" type="search" placeholder="Perfil, Quintal, coleção…">
 </header><div class="grid">
 ''');
   final markdown = StringBuffer(

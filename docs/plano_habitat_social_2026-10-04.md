@@ -1,12 +1,12 @@
-# Habitat vivo, cartazes exportáveis e feed de conversas
+# Quintal vivo, cartazes exportáveis e feed de conversas
 
-Data: 04/10/2026. Estado: plano de implementação; funcionalidades ainda não implementadas nesta rodada.
+Data: 04/10/2026. Estado: implementação aplicada nos dois repositórios; validação nativa de compartilhamento, salvamento e impressão em aparelho ainda pendente.
 
 Branch nos dois repositórios: `feature/habitat-social-improvements`, criada a partir da `main` sincronizada com o remoto. Gatálogo: base `def9876`. API: base `94e9827`.
 
 ## Objetivo e regras compartilhadas
 
-Implementar os sete pedidos do usuário mantendo a direção cozy e a hierarquia de superfícies já definida em `DESIGN.md`. O feed ganhará a organização de uma timeline de conversas, preservando cores, fontes e assets do Gatálogo. O Habitat ficará mais vivo sem comprometer a leitura do espaço editável.
+Implementar os sete pedidos do usuário mantendo a direção cozy e a hierarquia de superfícies já definida em `DESIGN.md`. O feed ganhará a organização de uma timeline de conversas, preservando cores, fontes e assets do Gatálogo. O Quintal ficará mais vivo sem comprometer a leitura do espaço editável.
 
 - Reutilizar componentes e separar apresentação, interação local e regras persistidas.
 - Moedas, inventário, cuidados e recompensas continuam reais e controlados pela API. Animações e relógio do aparelho não concedem itens.
@@ -22,7 +22,7 @@ Implementar os sete pedidos do usuário mantendo a direção cozy e a hierarquia
 | Brincadeira | `HabitatCatMotion.clip` usa `happy`, cujo asset `gesture-positive` dura 0,25 s. Durante visitas, o gato é aproximado do centro do móvel. | Criar uma ação de brincar com fases, orientação e pontos de interação próprios; apenas diminuir a velocidade pode não resolver. |
 | Cartaz | `CatSharingService.shareMissingPoster` envia a foto original e texto. O modelo `MissingPoster` já concentra contatos e características. | Extrair um cartaz reutilizável e gerar arquivos a partir dele, sem incluir os controles da tela. |
 | Feed | `CommunityPostCard` usa papel com mídia obrigatória na interface; o composer e a API exigem nome de gato. Curtidas, comentários e compartilhamento já existem. | Tornar texto o elemento central e mídia/gato opcionais, adaptando o contrato sem quebrar publicações antigas. |
-| Entorno do Habitat | O cenário e uma abelha já são desenhados em `habitat_game.dart`. | Separar cenário externo, visitantes e objetos editáveis; aproveitar os sprites existentes. |
+| Entorno do Quintal | O cenário e uma abelha já são desenhados em `habitat_game.dart`. | Separar cenário externo, visitantes e objetos editáveis; aproveitar os sprites existentes. |
 | Caminhos | `itemAtScreen` exclui chão; existe fallback por célula em `_itemAt`. Um item de chão selecionado ativa pintura nos gestos de toque/escala. | Reproduzir a falha e separar seleção/movimentação de uma peça da ferramenta de pintar; não tratar como simples ausência de seleção no código. |
 | Baús e satisfação | Há afinidade persistida, cuidados diários, carteira e transações idempotentes. Não há estado de satisfação nem sistema de encontros/baús. | Definir satisfação separadamente e acrescentar encontros persistidos com sorteio e resgate no servidor. |
 
@@ -110,7 +110,7 @@ Aceite: cenário visivelmente mais rico, com continuidade de rios/trilhas e deco
 
 ## Etapa 6 — satisfação, encontros e presentes
 
-Criar um ciclo: cuidar dos gatos → melhorar satisfação do Habitat → aumentar a chance de um visitante entregar presente → tocar para recolher → receber moedas, porções ou decoração real.
+Criar um ciclo: cuidar dos gatos → melhorar satisfação do Quintal → aumentar a chance de um visitante entregar presente → tocar para recolher → receber moedas, porções ou decoração real.
 
 ### Proposta inicial de satisfação
 
@@ -121,7 +121,7 @@ A fórmula e os pesos serão parametrizados e cobertos por testes. Considerar um
 ### Proposta inicial de encontros
 
 - Parâmetros de partida para calibrar: janela de 20 minutos, chance base de 10% chegando a 35% com satisfação máxima, até 3 presentes por dia e um presente pendente por vez. Estes números são proposta de balanceamento, não resultados já validados.
-- Avaliar janelas elegíveis apenas durante visitas ao Habitat; não acumular uma fila infinita em segundo plano. Tempo, elegibilidade, limites e sorteio são do servidor. Abrir/fechar a tela, atualizar ou alternar gatos não gera novos sorteios na mesma janela.
+- Avaliar janelas elegíveis apenas durante visitas ao Quintal; não acumular uma fila infinita em segundo plano. Tempo, elegibilidade, limites e sorteio são do servidor. Abrir/fechar a tela, atualizar ou alternar gatos não gera novos sorteios na mesma janela.
 - Persistir resultado e satisfação usada por janela, com unicidade por usuário/janela; não usar posição visual ou taxa de quadros como fonte de probabilidade. A sinalização do cliente de tela ativa não é prova de cuidado; recompensas continuam limitadas no servidor.
 - Persistir o presente entregue e seu conteúdo. Um visitante o deixa **do lado de fora do quintal editável**, em um ponto de entrega visível próximo à borda; depois conclui sua visita e vai embora. A câmera permite chegar a esse ponto. O presente não entra no inventário nem concede saldo até o resgate. No modo de edição, suspender a cena do encontro e manter o indicador do presente pendente.
 - Recolher é uma transação idempotente com bloqueio da carteira, validação de propriedade e atualização do inventário. Duplo toque, timeout, reinício e dois dispositivos não duplicam prêmios.
@@ -132,9 +132,9 @@ A fórmula e os pesos serão parametrizados e cobertos por testes. Considerar um
 
 1. O animal entra, explora e realiza suas atividades. O entregador carrega um encontro autorizado; o visitante decorativo realiza sua rotina e sai normalmente.
 2. O entregador se aproxima do ponto externo, faz uma pequena ação de deixar o baú/item, e o presente passa a estar disponível. Persistir estados separados de encontro e recompensa: visita autorizada, entrega disponível, resgate confirmado. A animação não decide o conteúdo ou concede saldo; uma interrupção da tela não perde o encontro.
-3. A disponibilidade do presente cria uma notificação interna única, ligada ao ID do presente: “Um visitante deixou um presente no seu Habitat!”. Exibir aviso discreto e badge do Habitat. O registro fica na central de notificações; abrir ou ler a notificação não significa resgatar o presente. Push, se habilitado, usa as preferências existentes e não repete a mensagem a cada retorno.
+3. A disponibilidade do presente cria uma notificação interna única, ligada ao ID do presente: “Um visitante deixou um presente no seu Quintal!”. Exibir aviso discreto e badge do Quintal. O registro fica na central de notificações; abrir ou ler a notificação não significa resgatar o presente. Push, se habilitado, usa as preferências existentes e não repete a mensagem a cada retorno.
 4. Baú ou item permanece no cenário externo com contorno claro creme/dourado, sombra de chão e pequeno sinal de interação. Um brilho lento pode complementar a indicação; com movimento reduzido, manter contorno estático. Não depender só da cor: formato/ícone, alvo de toque confortável e rótulo acessível identificam a recompensa.
-5. Tocar na notificação ou no indicador do Habitat abre a aba e leva a câmera suavemente até o presente; não coleta automaticamente. Se ele estiver fora do enquadramento, mostrar um indicador de borda ou “Ver presente”. Preservar a opção de continuar cuidando dos gatos sem recolher imediatamente.
+5. Tocar na notificação ou no indicador do Quintal abre a aba e leva a câmera suavemente até o presente; não coleta automaticamente. Se ele estiver fora do enquadramento, mostrar um indicador de borda ou “Ver presente”. Preservar a opção de continuar cuidando dos gatos sem recolher imediatamente.
 6. Tocar no presente inicia o pedido de resgate, bloqueia toques repetidos e mostra uma abertura/revelação curta. Só após confirmação do servidor, exibir os itens reais recebidos, atualizar saldo/inventário e retirar o objeto e o indicador de pendência. Evitar modal longo que interrompa o jogo; usar uma apresentação de recompensa reutilizável.
 7. Se houver erro, manter o presente e permitir tentar novamente; se o resultado do pedido for incerto, consultar o estado antes de repetir a animação/concessão. Ao reabrir o app, restaurar o presente disponível. Se foi resgatado em outro dispositivo, sincronizar e removê-lo localmente.
 
@@ -162,4 +162,83 @@ App: `habitat_page.dart`, `habitat_game.dart`, `habitat_interactions.dart`, `hab
 
 API: `app/routers/habitat.py`, `app/services/habitat_service.py`, `app/services/habitat_interactions.py`, `app/routers/social.py`, schemas, progressão, modelos e migrações. Acrescentar serviços próprios para encontros/satisfação; não concentrar toda a mecânica nova no router.
 
-Documento canônico no app. A API mantém `docs/plano_habitat_social_2026-10-04.md` com seu escopo e referência a este plano. Nenhum código funcional foi alterado na elaboração deste documento.
+Documento canônico no app. A API mantém `docs/plano_habitat_social_2026-10-04.md` com seu escopo e referência a este plano. A elaboração inicial deste documento precedeu o código. O registro abaixo descreve a implementação atual.
+
+
+## Registro da implementação — 04/10/2026
+
+Os sete blocos foram aplicados na branch `feature/habitat-social-improvements` do app e da API:
+
+- Loja, expansão e petiscos usam preço efetivo zero no modo temporário de teste. Preços base, exclusividade de recompensas, saldo, limites e repetição segura permanecem controlados pelo servidor. `HABITAT_FREE_SHOP=false` restaura os preços normais.
+- Editor separa selecionar/mover, pintar e recolher chão. A seleção por camada permite acessar caminhos sob objetos. IDs são preservados ao mover/guardar/recolocar; remoção de água sob pontes é validada antes de modificar o rascunho. Pinça não edita, inclusive quando um dedo é solto antes do outro; sair da edição impede qualquer alteração por arraste da câmera.
+- Brincadeira usa um clip próprio de toques alternados das patas, mantendo o corpo estável. Os atlases têm quatro direções e sombras.
+- Cartaz usa o modelo público compartilhado para preview, PNG completo e PDF A4. Exporta arquivo, compartilha imagem e oferece impressão nativa. Data de abertura do alerta é identificada como abertura, sem inventar a data de desaparecimento. Cancelar exportação não concede recompensa. Não há QR com endereço fictício.
+- Composer virou uma tela dedicada com texto amplo, audiência, fotografia removível e associação opcional a gato/local. Posts somente de texto são válidos. Erros de upload/publicação preservam o rascunho. A tentativa inalterada mantém a chave de publicação; conteúdo alterado recebe outra chave. A API rejeita reaproveitar uma chave com outro conteúdo e preserva a autorização das fotografias.
+- Entorno deriva da área editável atual, com vegetação em grupos, margens, rio e caminho externo. Expandir remove/reorganiza o cenário das novas células sem mexer no inventário. Layout ambiental é calculado uma vez por área; desenhos fora do enquadramento são descartados.
+- Fauna usa abelha, cachorro, coelho, pintinho, cervo, raposa, castor, papagaio e peixe. Visitantes alternam caminhada, bebida/forrageio, observação, brincadeira, pouso/voo e nado conforme a espécie. Animais visíveis carregam seus clips sob demanda; os que saem liberam os atlases. Entregadores podem ser abelha, coelho, pintinho, raposa e papagaio; visitantes decorativos nunca concedem itens.
+- Satisfação vem de gatos presentes, conforto alcançável, carinho e alimentação reais. Padrão: 20 de base, até 40 de conforto e 40 de cuidados do dia UTC. Chance padrão de presente: 10–35%, uma janela de 20 minutos, até três por dia e um pendente. Pesos e limites podem ser configurados na API.
+- Visita, entrega e coleta são estados separados. A disponibilidade cria uma notificação interna única e badge. Abrir notificação foca suavemente o presente e não coleta. O objeto permanece externo, com sombra, contorno e alternativa acessível de abertura, até o servidor confirmar a coleta. A revelação mostra moedas, porções ou item efetivamente recebido. Expandir mantém ID/conteúdo e reposiciona o baú fora da nova área. A origem dos previews de 64 px foi corrigida para que a posição visível coincida com a âncora.
+
+### Decisão sobre persistência
+
+A tabela `HabitatEncounter` era uma proposta inicial. Nesta implementação, janela, limite diário e presente pendente são dados limitados no JSON `HabitatWallet.care_state` já existente. A carteira é travada durante sorteio, entrega e resgate; `HabitatTransaction` registra a coleta idempotente. Não houve alteração de schema nem migração, reset de saldo, inventário, afinidade ou layout. O prêmio é sorteado uma vez, preservado no servidor e convertido em moedas se o SKU estiver no limite. Entregas interrompidas são recuperadas pelo snapshot após o tempo de recuperação.
+
+### Evidências e limites
+
+- Suíte do app: 129 testes passaram; quatro testes de capturas optativas foram ignorados nessa execução e as capturas desta entrega foram executadas separadamente.
+- Suíte da API: 143 testes passaram; 23 testes dependentes de serviços/integrações externos foram ignorados pelo ambiente. As garantias transacionais usam a trava da carteira; a suíte em memória não substitui teste concorrente com PostgreSQL.
+- Geometria/inventário/cartaz: 19 testes passaram após corrigir a origem do baú. Gestos do editor passaram com dois ponteiros e com a liberação de um deles.
+- Ferramentas dos assets: sete testes Python passaram, incluindo interpolação e atlas sem recorte nas quatro direções.
+- Análise Flutter sem problemas e APK Android de depuração compilado.
+- Galeria permanente: 70 capturas; prévias dos atlases reais de nove visitantes mais o gato; sequência de 72 frames do próprio renderizador, em tempo acelerado 4×, mostrando visita, entrega, saída e baú persistente. Dados da galeria ficam somente nos testes.
+- PDF completo conferido como uma página, com endereço, características e contatos públicos.
+- Não há celular conectado. Share sheet, diálogo de arquivos, rasterização PNG/impressão nativos e desempenho em aparelho ainda exigem conferência em Android/iOS. Os mapas de ruas não carregam no ambiente de captura. Não houve publicação/deploy remoto desta implementação.
+
+Galeria: `build/galeria-visual/galeria.html`. Movimento: `build/galeria-visual/movimentos.html`. APK: `build/app/outputs/flutter-apk/app-debug.apk`.
+
+
+### Paisagem exterior até os limites da câmera
+
+A faixa fixa de decoração foi substituída por geração determinística em blocos de 8 × 8 células conforme a área visível da câmera. A projeção inversa considera deslocamento, zoom e margem para copas: não há uma borda vazia ao afastar a câmera. Apenas os blocos necessários são gerados, com cache limitado e descarte visual dos elementos fora da tela.
+
+Foram recuperados mais 12 modelos e suas imagens originais da branch `feature/etapa9-3d-metagame`, incluindo pedras pequenas, achatadas, grandes e altas, capins, arbustos e árvores menores. A composição usa 32 variantes, tamanhos e deslocamentos individuais, bosques, clareiras, flores em manchas e vegetação de margem. O rio e a trilha também atravessam toda a área visível. Cada expansão regenera os elementos externos, preservando o terreno editável, a passagem dos visitantes e a clareira de entrega.
+
+Verificação adicional: 9 testes de mundo/câmera aprovados, incluindo extremos de deslocamento nos três níveis de zoom, as quatro expansões, carregamento de todos os sprites e estabilidade da paisagem ao revisitar locais. A galeria inclui quatro novas capturas nos limites norte, sul, leste e oeste (70 telas ao todo).
+
+
+### Correções solicitadas: publicação, câmera, rio e cartaz
+
+- Nova publicação: texto ocupa a largura do editor; identidade e público ficam juntos; ações Foto, Gato e Local têm rótulos. Detalhes opcionais abrem painéis próprios, com edição e remoção explícitas. A tela mantém o rascunho após falhas e acomoda teclado e fonte ampliada em 320 px.
+- Câmera: deslocamento máximo reduzido de 65% para 40% da dimensão da tela, inclusive ao aproximar/afastar ou focalizar um presente; zoom mínimo passou de 0,65 para 0,8.
+- Presente: baú de 0,55 para 0,95 da largura de uma célula, com contorno e área de toque correspondentes; clareira de entrega ampliada para evitar sobreposição com copas.
+- Rio: curvas compartilham pelo menos duas células em toda a extensão. Margens em relevo usam os modelos originais ground_riverSide e ground_riverCorner, recuperados da branch dos modelos 3D. A superfície possui variação de profundidade e reflexos animados; o peixe é desenhado submerso, sem sombra terrestre e abaixo dos reflexos.
+- Cartaz: faixa vermelha PROCURA-SE, ícones nas informações, contato destacado e QR code restaurados na tela e nos arquivos exportados. O QR usa o ID real do relatório na mesma URL utilizada pelo cartaz anterior; rascunhos sem ID codificam os próprios dados públicos. Nunca é inventado um ID. A galeria inclui uma captura adicional da parte do cartaz com contato e QR.
+
+Verificação direcionada: 2 testes da publicação e 10 do mundo/câmera aprovados; os 5 testes do cartaz também passaram. PDF conferido com uma página e dados públicos preservados. Capturas de validação incluem 71 telas e a demonstração do habitat com 72 quadros.
+
+
+### Rio: paleta integrada e cotovelos largos
+
+O rio passou a usar uma paleta compartilhada de água em verde suave, reflexos e margens em tons de terra. O tratamento de cor é aplicado em tempo de desenho aos modelos originais: o ciano das bordas e o laranja saturado não contaminam a paisagem. A superfície mantém as cores estáveis ao mover a câmera.
+
+As duas linhas que formam cada virada agora contêm toda a largura do cotovelo (três células em comum). O teste anterior verificava apenas duas células entre linhas; foi ampliado para exigir as duas linhas largas em cada mudança de direção, nas quatro expansões. As margens são desenhadas por último, acima da água, do peixe e dos reflexos, preservando o relevo dos modelos. A água é desenhada uma única vez; os cotovelos largos garantem a continuidade do canal.
+
+Verificação: os 10 testes de mundo e câmera passaram; galeria e demonstração animada atualizadas com esta versão do rio.
+
+
+### Delimitação visual da nova publicação
+
+O editor separa identidade e público, mensagem e anexos. O público usa seletor sálvia contornado; a mensagem tem papel claro, limite marrom e foco verde, com contador junto ao campo. A fotografia recebe identificação de anexo, e a barra inferior sálvia reúne ações reutilizáveis contornadas para Foto, Gato e Local. Mantidos envio real, preservação do rascunho, privacidade e comportamento com teclado. Validação: testes do compositor, análise Flutter e capturas da galeria permanente.
+
+
+### Fluxo de alerta e personalização do cartaz — 05/10/2026
+
+A criação do alerta reúne gato, foto e área de busca. Após ativar, abre a personalização do cartaz, mantendo o detalhe do alerta acessível ao voltar. Telefones e WhatsApp deixam o formulário inicial e passam ao editor reutilizável do cartaz. O tutor escolhe endereço, data, coleira, marcas, microchip, QR code e quais dos até cinco telefones divulgar. A prévia, PNG, PDF e detalhes públicos usam a mesma seleção. Telefones desmarcados são preservados somente na resposta do tutor; a projeção pública nunca os retorna.
+
+`PUT /vision/missing-reports/{id}/poster` salva opções e contatos em `poster_details`, sem nova tabela. Somente o tutor pode editar; alerta encerrado responde 409. `POST /social/reports/{id}/publish` publica o cartaz do tutor vinculado ao alerta, com idempotência por busca/usuário. Reposts continuam em sua rota própria; o feed abre o caso para compartilhar a arte completa. As ações de exportação são um widget reutilizável nos cartazes próprios e nos casos da comunidade, com validação e salvamento antes de divulgar.
+
+O QR passa a apontar para `${API_BASE_URL}/public/busca/{id}`, uma página implementada na API que não exige login. A página e sua foto retornam `no-store` e não são indexáveis; informações ocultas não entram no HTML. Desmarcar QR revoga a página enquanto ativa. Após encerrar, a página informa o encerramento e não mostra foto nem contatos; o endpoint da foto também bloqueia acesso. Arquivos já salvos ou enviados por terceiros não podem ser recolhidos.
+
+Para que QR codes funcionem fora da rede local, gerar o aplicativo com `API_BASE_URL` configurado para uma API HTTPS pública, com estas rotas implantadas. O endereço local de desenvolvimento não é um domínio público. Não foi realizado deploy nem envio de cartazes a terceiros nesta rodada.
+
+Validação: testes de modelo/exportação e controles Flutter, análise estática, testes de persistência/projeção pública/idempotência da API e galeria permanente. Os testes com PostgreSQL descartável continuam opcionais; integração nativa de impressão/compartilhamento precisa de validação em aparelho.

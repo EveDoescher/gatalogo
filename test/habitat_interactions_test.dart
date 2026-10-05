@@ -79,7 +79,7 @@ void main() {
     final arrival = motion.goTo('crate', [], 'play');
     motion.advance(0, Random(1), (_, _) => true);
     expect(await arrival, isTrue);
-    expect(motion.clip, HabitatCatClip.happy);
+    expect(motion.clip, HabitatCatClip.play);
     expect(motion.targetItemId, 'crate');
     motion.advance(9, Random(1), (_, _) => true);
     expect(motion.visiting, isFalse);

@@ -99,7 +99,8 @@ class CatStore extends ChangeNotifier {
   final Future<bool> Function()? networkAvailable;
 
   GamificationState get gamification => progress.summary.isNotEmpty
-      ? GamificationState.fromMap(progress.summary) : _gamificationService.currentState;
+      ? GamificationState.fromMap(progress.summary)
+      : GamificationState.initial();
 
   bool _isLoading = false;
   bool _disposed = false;
@@ -118,15 +119,22 @@ class CatStore extends ChangeNotifier {
 
   List<Cat> get individuals {
     final groups = <String, Cat>{};
-    for (final cat in discoveries) {
+    for (final cat in discoveries.where((c) => c.individualId != 'pending')) {
       final key = cat.individualId ?? cat.id;
       if (!groups.containsKey(key) || cat.id == key) groups[key] = cat;
     }
     return groups.values.toList();
   }
 
-  List<Cat> photosOf(Cat cat) => cats.where((photo) =>
-      (photo.individualId ?? photo.id) == (cat.individualId ?? cat.id)).toList();
+  List<Cat> photosOf(Cat cat) => cat.individualId == 'pending'
+      ? [cat]
+      : cats
+            .where(
+              (photo) =>
+                  (photo.individualId ?? photo.id) ==
+                  (cat.individualId ?? cat.id),
+            )
+            .toList();
 
   List<Cat> get pets => cats.where((cat) => cat.isOwned).toList();
   SessionStore get sessionStore => _sessionStore;
@@ -189,9 +197,6 @@ class CatStore extends ChangeNotifier {
     unawaited(syncCatalog());
     unawaited(syncPendingAnalyses());
     unawaited(resolvePendingLocations());
-    unawaited(
-      _gamificationService.loadGamification().then((_) => notifyListeners()),
-    );
   }
 
   Future<GamificationActionResult> recordGamificationAction(
@@ -210,7 +215,18 @@ class CatStore extends ChangeNotifier {
     );
   }
 
-  Future<void> identifyRecord(String catId, String individualId) async {
+  Future<void> identifyRecord(
+    String catId,
+    String individualId, {
+    String contributionType = 'encounter',
+  }) async {
+    if (_sessionStore.isSignedIn) {
+      await syncCatalog();
+      await ProductApiService(_sessionStore).put(
+        '/app/progress/records/$catId/identity',
+        {'individual_id': individualId, 'contribution_type': contributionType},
+      );
+    }
     final cat = _cats.firstWhere((c) => c.id == catId);
     final updated = cat.withSync(
       individualId: individualId,

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:http/http.dart' as http;
 
@@ -216,8 +217,9 @@ class AuthApiService {
       return response;
     } on AuthApiException {
       rethrow;
-    } catch (_) {
-      throw const AuthApiException('Não foi possível acessar sua conta agora.');
+    } catch (e, st) {
+      log('Login Error: $e\n$st');
+      throw AuthApiException('Erro de conexão: $e');
     }
   }
 

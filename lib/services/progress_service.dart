@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:uuid/uuid.dart';
 
 import 'package:flutter/foundation.dart';
@@ -6,8 +7,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../stores/session_store.dart';
 import 'product_api_service.dart';
-
-import 'package:flutter_timezone/flutter_timezone.dart';
 
 /// Read-through cache of server outcomes; never adds a local reward.
 class ProgressService extends ChangeNotifier {
@@ -27,7 +26,13 @@ class ProgressService extends ChangeNotifier {
   bool _disposed = false;
   int _generation = 0;
   Future<void> _pending = Future.value();
-  List<Map<String, dynamic>> get dailyMissions => _maps(summary['daily_missions']);
+  List<Map<String, dynamic>> get dailyMissions =>
+      _maps(summary['daily_missions']);
+  List<Map<String, dynamic>> get achievements => _maps(summary['achievements']);
+  List<Map<String, dynamic>> get initialMissions =>
+      _maps(summary['initial_missions']);
+  List<Map<String, dynamic>> get weeklyMissions =>
+      _maps(summary['weekly_missions']);
   List<Map<String, dynamic>> get challenges => _maps(summary['challenges']);
   List<Map<String, dynamic>> get missions => [
     ..._maps(summary['daily_missions']),
@@ -52,7 +57,9 @@ class ProgressService extends ChangeNotifier {
     _owner = null;
     summary = {};
     results = [];
+    offline = false;
     hasMore = false;
+    if (!_disposed) notifyListeners();
   }
 
   Future<void> refresh() {
@@ -86,12 +93,6 @@ class ProgressService extends ChangeNotifier {
         return;
       }
       try {
-        try {
-          final timezone = await FlutterTimezone.getLocalTimezone();
-          await api.put('/app/preferences', {'timezone': timezone.identifier});
-        } catch (_) {
-          /* Keep the last account timezone when unavailable. */
-        }
         final data = await api.get('/app/progress');
         final history = await api.list('/app/progress/results?limit=200');
         if (!current()) return;
@@ -116,24 +117,40 @@ class ProgressService extends ChangeNotifier {
     if (loadingOlder || !hasMore || results.isEmpty) return;
     final owner = session.session?.userId;
     final generation = _generation;
-    bool current() => !_disposed && owner == session.session?.userId && generation == _generation;
+    bool current() =>
+        !_disposed &&
+        owner == session.session?.userId &&
+        generation == _generation;
     loadingOlder = true;
     notifyListeners();
     try {
-      final page = await api.list('/app/progress/results?limit=200&cursor=${results.last['event_id']}');
+      final page = await api.list(
+        '/app/progress/results?limit=200&cursor=${results.last['event_id']}',
+      );
       if (!current()) return;
       final ids = results.map((e) => e['event_id']).toSet();
       results.addAll(page.where((e) => !ids.contains(e['event_id'])));
       hasMore = page.length == 200;
-    } catch (_) { if (current()) offline = true; }
-    finally { if (current()) { loadingOlder = false; notifyListeners(); } }
+    } catch (_) {
+      if (current()) offline = true;
+    } finally {
+      if (current()) {
+        loadingOlder = false;
+        notifyListeners();
+      }
+    }
   }
 
   Future<void> track(String name) async {
     if (!session.isSignedIn) return;
     try {
-      await api.post('/app/progress/experience', {'event_id': const Uuid().v4(), 'name': name});
-    } catch (_) { /* Optional measurement never blocks the experience. */ }
+      await api.post('/app/progress/experience', {
+        'event_id': const Uuid().v4(),
+        'name': name,
+      });
+    } catch (_) {
+      /* Optional measurement never blocks the experience. */
+    }
   }
 
   Future<Map<String, dynamic>> fetchResult(String eventId) async {
@@ -144,6 +161,7 @@ class ProgressService extends ChangeNotifier {
       results.insert(0, result);
       notifyListeners();
     }
+    await refresh();
     return result;
   }
 

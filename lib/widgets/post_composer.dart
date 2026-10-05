@@ -9,8 +9,9 @@ import '../services/social_api_service.dart';
 import '../stores/session_store.dart';
 import '../theme/app_theme.dart';
 import 'app_widgets.dart';
-import 'botanical_scene.dart';
-import 'game_components.dart';
+import 'illustrated_home_components.dart';
+
+import 'package:uuid/uuid.dart';
 
 Future<Map<String, dynamic>?> showPostComposer(
   BuildContext context, {
@@ -24,17 +25,17 @@ Future<Map<String, dynamic>?> showPostComposer(
     showMessage(context, 'Entre na sua conta para publicar na comunidade.');
     return null;
   }
-  return showModalBottomSheet<Map<String, dynamic>>(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    backgroundColor: AppColors.surface,
-    builder: (_) => PostComposer(
-      session: session,
-      cats: cats,
-      initialCat: initialCat,
-      initialNote: initialNote,
-      initialLocation: initialLocation,
+  return Navigator.push<Map<String, dynamic>>(
+    context,
+    MaterialPageRoute(
+      fullscreenDialog: true,
+      builder: (_) => PostComposer(
+        session: session,
+        cats: cats,
+        initialCat: initialCat,
+        initialNote: initialNote,
+        initialLocation: initialLocation,
+      ),
     ),
   );
 }
@@ -60,14 +61,16 @@ class _PostComposerState extends State<PostComposer> {
   late final TextEditingController _name, _note, _location;
   Cat? _cat;
   String? _photo;
-  bool _busy = false, _public = true;
+  bool _busy = false, _public = true, _allowExit = false;
+  String _requestId = const Uuid().v4();
+  String? _attemptContent;
+  String? _uploadedPhoto;
   String? _error;
 
   @override
   void initState() {
     super.initState();
-    _cat =
-        widget.initialCat ?? (widget.cats.isEmpty ? null : widget.cats.first);
+    _cat = widget.initialCat;
     _photo = _cat?.photoPath;
     _name = TextEditingController(text: _cat?.displayName ?? '');
     _note = TextEditingController(text: widget.initialNote ?? '');
@@ -94,6 +97,7 @@ class _PostComposerState extends State<PostComposer> {
       if (file != null && mounted) {
         setState(() {
           _photo = file.path;
+          _uploadedPhoto = null;
           _cat = null;
         });
       }
@@ -108,8 +112,8 @@ class _PostComposerState extends State<PostComposer> {
 
   Future<void> _publish() async {
     if (_busy) return;
-    if (_name.text.trim().isEmpty || _photo == null) {
-      setState(() => _error = 'Adicione uma foto e o nome do gato.');
+    if (_note.text.trim().isEmpty && _photo == null) {
+      setState(() => _error = 'Escreva algo ou adicione uma foto.');
       return;
     }
     setState(() {
@@ -117,27 +121,50 @@ class _PostComposerState extends State<PostComposer> {
       _error = null;
     });
     try {
-      final file = File(_photo!);
-      if (!await file.exists()) {
-        throw const FormatException(
-          'A foto não está disponível. Escolha outra imagem.',
-        );
-      }
       final api = SocialApiService(widget.session);
-      final bytes = await ImageCompressionService.compressImage(
-        await file.readAsBytes(),
-      );
-      final photoUrl = await api.uploadPostPhoto(bytes, 'post.jpg');
+      if (_photo != null && _uploadedPhoto == null) {
+        final file = File(_photo!);
+        if (!await file.exists()) {
+          throw const FormatException(
+            'A foto não está disponível. Escolha outra imagem.',
+          );
+        }
+        final bytes = await ImageCompressionService.compressImage(
+          await file.readAsBytes(),
+        );
+        _uploadedPhoto = await api.uploadPostPhoto(bytes, 'post.jpg');
+        if (_uploadedPhoto == null) {
+          throw const FormatException(
+            'Não foi possível enviar a foto. Sua publicação foi preservada para tentar novamente.',
+          );
+        }
+      }
+      final content = [
+        _name.text.trim(),
+        _note.text.trim(),
+        _location.text.trim(),
+        _uploadedPhoto ?? '',
+        _public.toString(),
+      ].join('\u0000');
+      if (_attemptContent != null && _attemptContent != content) {
+        _requestId = const Uuid().v4();
+      }
+      _attemptContent = content;
       final post = await api.createPost(
         catName: _name.text.trim(),
         note: _note.text.trim(),
         locationName: _location.text.trim().isEmpty
             ? null
             : _location.text.trim(),
-        photoUrl: photoUrl,
+        photoUrl: _uploadedPhoto,
+        requestId: _requestId,
         isPublic: _public,
       );
-      if (mounted) Navigator.pop(context, post);
+      if (mounted) {
+        setState(() => _allowExit = true);
+        await WidgetsBinding.instance.endOfFrame;
+        if (mounted) Navigator.pop(context, post);
+      }
     } catch (error) {
       if (mounted) {
         setState(
@@ -149,135 +176,469 @@ class _PostComposerState extends State<PostComposer> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) => PopScope(
-    canPop: !_busy,
-    child: Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Postar no feed',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textTitle,
-                    ),
+  bool get _hasDraft =>
+      _note.text.isNotEmpty ||
+      _photo != null ||
+      _name.text.isNotEmpty ||
+      _location.text.isNotEmpty;
+  Future<void> _close() async {
+    if (_busy) return;
+    final leave =
+        !_hasDraft ||
+        await showDialog<bool>(
+              context: context,
+              builder: (_) => AlertDialog(
+                title: const Text('Descartar publicação?'),
+                content: const Text(
+                  'Seu texto e os anexos ainda não foram publicados.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text('Continuar escrevendo'),
                   ),
-                ),
-                IconButton(
-                  tooltip: 'Fechar',
-                  onPressed: _busy ? null : () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const IllustratedSectionTitle(
-              title: 'Uma lembrança para compartilhar',
-              art: 'ui/ui_speech_heart',
-            ),
-            const SizedBox(height: 18),
-            if (widget.cats.isNotEmpty) ...[
-              DropdownButtonFormField<String>(
-                key: ValueKey(_cat?.id),
-                initialValue: _cat?.id,
-                isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Gato da coleção'),
-                items: widget.cats
-                    .map(
-                      (cat) => DropdownMenuItem(
+                  FilledButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text('Descartar'),
+                  ),
+                ],
+              ),
+            ) ==
+            true;
+    if (leave && mounted) {
+      setState(() => _allowExit = true);
+      await WidgetsBinding.instance.endOfFrame;
+      if (mounted) Navigator.pop(context);
+    }
+  }
+
+  Future<void> _editDetails({required bool location}) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: AppColors.surface,
+      builder: (sheetContext) => SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            20,
+            20,
+            MediaQuery.viewInsetsOf(sheetContext).bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                location ? 'Adicionar local' : 'Gato da publicação',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 16),
+              if (!location && widget.cats.isNotEmpty) ...[
+                DropdownButtonFormField<String>(
+                  initialValue: _cat?.id ?? '',
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Selecionar um dos meus gatos',
+                  ),
+                  items: [
+                    const DropdownMenuItem(
+                      value: '',
+                      child: Text('Sem associação'),
+                    ),
+                    for (final cat in widget.cats)
+                      DropdownMenuItem(
                         value: cat.id,
-                        child: Text(
-                          cat.displayName,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                        child: Text(cat.displayName),
                       ),
-                    )
-                    .toList(),
-                onChanged: _busy
-                    ? null
-                    : (id) => setState(() {
-                        _cat = widget.cats.firstWhere((cat) => cat.id == id);
-                        _photo = _cat!.photoPath;
-                        _name.text = _cat!.displayName;
-                        _location.text = _cat!.locationName ?? '';
-                      }),
+                  ],
+                  onChanged: (id) => setState(() {
+                    _cat = id == null || id.isEmpty
+                        ? null
+                        : widget.cats.firstWhere((cat) => cat.id == id);
+                    _name.text = _cat?.displayName ?? '';
+                  }),
+                ),
+                const SizedBox(height: 12),
+              ],
+              TextField(
+                controller: location ? _location : _name,
+                autofocus: true,
+                maxLength: location ? 500 : 100,
+                onChanged: (_) => setState(() {}),
+                decoration: InputDecoration(
+                  labelText: location
+                      ? 'Local (opcional)'
+                      : 'Nome do gato (opcional)',
+                ),
               ),
               const SizedBox(height: 12),
+              FilledButton(
+                onPressed: () => Navigator.pop(sheetContext),
+                child: const Text('Concluir'),
+              ),
             ],
-            if (_photo != null)
-              GamePhotoMount(
-                child: CatPhotoView(_photo!, height: 170, borderRadius: 4),
+          ),
+        ),
+      ),
+    );
+    if (mounted) setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) => PopScope(
+    canPop: _allowExit || (!_busy && !_hasDraft),
+    onPopInvokedWithResult: (didPop, _) {
+      if (!didPop) _close();
+    },
+    child: Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.surface,
+        elevation: 0,
+        leading: IconButton(
+          tooltip: 'Fechar publicação',
+          onPressed: _busy ? null : _close,
+          icon: const Icon(Icons.close),
+        ),
+        title: const Text('Nova publicação', style: TextStyle(fontSize: 19)),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(88, 40),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
               ),
-            TextButton.icon(
-              onPressed: _busy ? null : _pickPhoto,
-              icon: const Icon(Icons.photo_library_outlined),
-              label: Text(
-                _photo == null ? 'Adicionar foto' : 'Escolher outra foto',
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _name,
-              enabled: !_busy,
-              maxLength: 100,
-              decoration: const InputDecoration(labelText: 'Nome do gato'),
-            ),
-            TextField(
-              controller: _note,
-              enabled: !_busy,
-              minLines: 3,
-              maxLines: 6,
-              maxLength: 2000,
-              decoration: const InputDecoration(
-                labelText: 'O que você quer compartilhar?',
-              ),
-            ),
-            TextField(
-              controller: _location,
-              enabled: !_busy,
-              maxLength: 500,
-              decoration: const InputDecoration(labelText: 'Local (opcional)'),
-            ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              value: _public,
-              onChanged: _busy
+              onPressed: _busy || (_note.text.trim().isEmpty && _photo == null)
                   ? null
-                  : (value) => setState(() => _public = value),
-              title: const Text('Publicar para toda a comunidade'),
-              subtitle: Text(
-                _public
-                    ? 'Todos podem ver esta postagem.'
-                    : 'Somente seus amigos podem ver esta postagem.',
-              ),
+                  : _publish,
+              child: Text(_busy ? 'Publicando…' : 'Publicar'),
             ),
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Text(
-                  _error!,
-                  style: const TextStyle(color: AppColors.errorText),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            const Divider(height: 1, color: AppColors.borderLight),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        FramedUserAvatar(
+                          url: widget.session.avatarUrl,
+                          size: 44,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.session.session?.username ??
+                                    'Sua publicação',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              PopupMenuButton<bool>(
+                                enabled: !_busy,
+                                initialValue: _public,
+                                tooltip: 'Quem pode ver a publicação',
+                                onSelected: (value) =>
+                                    setState(() => _public = value),
+                                itemBuilder: (_) => const [
+                                  PopupMenuItem(
+                                    value: true,
+                                    child: Text('Toda a comunidade'),
+                                  ),
+                                  PopupMenuItem(
+                                    value: false,
+                                    child: Text('Somente amigos'),
+                                  ),
+                                ],
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 10,
+                                    horizontal: 12,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.greenLight,
+                                    borderRadius: BorderRadius.circular(24),
+                                    border: Border.all(color: AppColors.green),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        _public
+                                            ? Icons.public
+                                            : Icons.people_outline,
+                                        size: 16,
+                                        color: AppColors.greenLink,
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Flexible(
+                                        child: Text(
+                                          _public
+                                              ? 'Toda a comunidade'
+                                              : 'Somente amigos',
+                                          maxLines: 2,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            color: AppColors.greenLink,
+                                          ),
+                                        ),
+                                      ),
+                                      const Icon(
+                                        Icons.expand_more,
+                                        size: 17,
+                                        color: AppColors.greenLink,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Sua mensagem',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '${_note.text.characters.length}/2000',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textMedium,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _note,
+                      enabled: !_busy,
+                      minLines: _photo == null ? 5 : 3,
+                      maxLines: null,
+                      maxLength: 2000,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        height: 1.5,
+                        color: AppColors.textDark,
+                      ),
+                      onChanged: (_) => setState(() {}),
+                      decoration: const InputDecoration(
+                        hintText: 'Compartilhe algo com a comunidade…',
+                        hintStyle: TextStyle(color: AppColors.textMedium),
+                        contentPadding: EdgeInsets.all(16),
+                        counterText: '',
+                        filled: true,
+                        fillColor: AppColors.cardAltBackground,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(16)),
+                          borderSide: BorderSide(
+                            color: AppColors.border,
+                            width: 1.5,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(16)),
+                          borderSide: BorderSide(
+                            color: AppColors.border,
+                            width: 1.5,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(16)),
+                          borderSide: BorderSide(
+                            color: AppColors.greenLink,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (_photo != null) ...[
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Foto anexada',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(14),
+                            child: CatPhotoView(_photo!, height: 240),
+                          ),
+                          Positioned(
+                            right: 6,
+                            top: 6,
+                            child: IconButton.filled(
+                              tooltip: 'Remover foto',
+                              onPressed: _busy
+                                  ? null
+                                  : () => setState(() {
+                                      _photo = null;
+                                      _uploadedPhoto = null;
+                                    }),
+                              icon: const Icon(Icons.close),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (_name.text.isNotEmpty || _location.text.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: [
+                          if (_name.text.isNotEmpty)
+                            InputChip(
+                              avatar: const Icon(Icons.pets_outlined, size: 16),
+                              label: Text(_name.text),
+                              onPressed: _busy
+                                  ? null
+                                  : () => _editDetails(location: false),
+                              onDeleted: _busy
+                                  ? null
+                                  : () => setState(() {
+                                      _name.clear();
+                                      _cat = null;
+                                    }),
+                            ),
+                          if (_location.text.isNotEmpty)
+                            InputChip(
+                              avatar: const Icon(
+                                Icons.location_on_outlined,
+                                size: 16,
+                              ),
+                              label: Text(
+                                _location.text,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              onPressed: _busy
+                                  ? null
+                                  : () => _editDetails(location: true),
+                              onDeleted: _busy
+                                  ? null
+                                  : () => setState(_location.clear),
+                            ),
+                        ],
+                      ),
+                    ],
+                    if (_error != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: Semantics(
+                          liveRegion: true,
+                          child: Text(
+                            _error!,
+                            style: const TextStyle(color: AppColors.errorText),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
-            FilledButton(
-              onPressed: _busy ? null : _publish,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(_busy ? 'Publicando…' : 'Publicar'),
+            ),
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              decoration: const BoxDecoration(
+                color: AppColors.greenLight,
+                border: Border(top: BorderSide(color: AppColors.border)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Adicionar à publicação',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.greenLink,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _ComposerAction(
+                        label: 'Foto',
+                        icon: Icons.photo_library_outlined,
+                        onPressed: _busy ? null : _pickPhoto,
+                      ),
+                      _ComposerAction(
+                        label: 'Gato',
+                        icon: Icons.pets_outlined,
+                        onPressed: _busy
+                            ? null
+                            : () => _editDetails(location: false),
+                      ),
+                      _ComposerAction(
+                        label: 'Local',
+                        icon: Icons.location_on_outlined,
+                        onPressed: _busy
+                            ? null
+                            : () => _editDetails(location: true),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
         ),
       ),
+    ),
+  );
+}
+
+class _ComposerAction extends StatelessWidget {
+  const _ComposerAction({
+    required this.label,
+    required this.icon,
+    required this.onPressed,
+  });
+  final String label;
+  final IconData icon;
+  final VoidCallback? onPressed;
+  @override
+  Widget build(BuildContext context) => OutlinedButton.icon(
+    onPressed: onPressed,
+    icon: Icon(icon, size: 20),
+    label: Text(label),
+    style: OutlinedButton.styleFrom(
+      foregroundColor: AppColors.greenLink,
+      backgroundColor: AppColors.surface,
+      side: const BorderSide(color: AppColors.green),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      minimumSize: const Size(64, 48),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
     ),
   );
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../game/habitat_sprites.dart';
+import '../game/habitat_palette.dart';
 import '../theme/app_theme.dart';
 
 class HabitatSpritePreview extends StatelessWidget {
@@ -20,26 +21,17 @@ class HabitatSpritePreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cached = sprites.cached(keyName);
-    if (cached != null) {
-      return SizedBox(
-        width: size,
-        height: size,
-        child: CustomPaint(
-          painter: _HabitatSpritePainter(cached, sprites.bounds(keyName)),
-        ),
-      );
-    }
     return SizedBox(
       width: size,
       height: size,
-      child: FutureBuilder<ui.Image>(
-        future: sprites.ready(keyName),
+      child: FutureBuilder<(ui.Image, ui.Rect)>(
+        future: sprites.preview(keyName),
         builder: (context, snapshot) => snapshot.hasData
             ? CustomPaint(
                 painter: _HabitatSpritePainter(
-                  snapshot.data!,
-                  sprites.bounds(keyName),
+                  snapshot.data!.$1,
+                  snapshot.data!.$2,
+                  HabitatPalette.forSprite(keyName),
                 ),
               )
             : const Center(
@@ -51,7 +43,8 @@ class HabitatSpritePreview extends StatelessWidget {
 }
 
 class _HabitatSpritePainter extends CustomPainter {
-  const _HabitatSpritePainter(this.image, this.source);
+  const _HabitatSpritePainter(this.image, this.source, this.palette);
+  final ColorFilter? palette;
   final ui.Image image;
   final Rect source;
 
@@ -72,11 +65,15 @@ class _HabitatSpritePainter extends CustomPainter {
         width,
         height,
       ),
-      Paint()..filterQuality = FilterQuality.medium,
+      Paint()
+        ..filterQuality = FilterQuality.high
+        ..colorFilter = palette,
     );
   }
 
   @override
   bool shouldRepaint(covariant _HabitatSpritePainter oldDelegate) =>
-      oldDelegate.image != image || oldDelegate.source != source;
+      oldDelegate.image != image ||
+      oldDelegate.source != source ||
+      oldDelegate.palette != palette;
 }

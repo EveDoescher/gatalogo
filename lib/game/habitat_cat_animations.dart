@@ -8,6 +8,7 @@ enum HabitatCatClip {
   walk('walk'),
   run('run'),
   eat('eat'),
+  play('play'),
   dance('dance'),
   happy('gesture-positive'),
   upset('gesture-negative');
@@ -18,7 +19,8 @@ enum HabitatCatClip {
 
 /// Atlases are shared by every cat; each clip is decoded only when requested.
 class HabitatCatAnimations {
-  static const _path = 'assets/habitat/cat';
+  HabitatCatAnimations({this.path = 'assets/habitat/cat'});
+  final String path;
   final Map<HabitatCatClip, Future<void>> _loading = {};
   final Map<HabitatCatClip, (ui.Image, ui.Image)> _atlases = {};
   late Map<String, dynamic> _data;
@@ -38,14 +40,14 @@ class HabitatCatAnimations {
 
   Future<void> _initialize() async {
     _data = jsonDecode(
-      await rootBundle.loadString('$_path/animations.json'),
+      await rootBundle.loadString('$path/animations.json'),
     ) as Map<String, dynamic>;
   }
 
   double get restHeight => (_data['restHeight'] as num).toDouble();
 
   Future<ui.Image> _image(String name) async {
-    final bytes = await rootBundle.load('$_path/$name.png');
+    final bytes = await rootBundle.load('$path/$name.png');
     final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
     try {
       return (await codec.getNextFrame()).image;

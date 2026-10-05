@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:catlogue/game/habitat_game.dart';
+import 'package:catlogue/game/habitat_world.dart';
 import 'package:catlogue/game/habitat_path_style.dart';
 import 'package:catlogue/game/habitat_sprites.dart';
 import 'package:catlogue/services/habitat_service.dart';
@@ -38,6 +39,56 @@ void main() {
       );
       await tester.pumpWidget(MaterialApp(home: GameWidget(game: game)));
       await tester.pump(const Duration(milliseconds: 300));
+      for (var level = 0; level <= 3; level++) {
+        habitat.buildableCells = HabitatService.yardCells(level);
+        expect(
+          (game.giftBounds.bottomCenter - game.giftPosition).distance,
+          lessThan(.001),
+          reason:
+              'the visible gift must be anchored at the external delivery cell',
+        );
+        expect(
+          game.cellAt(game.giftBounds.bottomCenter),
+          isNull,
+          reason:
+              'the visible chest must remain outside editable land at expansion $level',
+        );
+      }
+      for (final zoom in [.65, 1.0, 1.9]) {
+        game.scaleCamera(zoom, Offset(game.size.x / 2, game.size.y / 2));
+        for (final direction in [
+          const Offset(-1, -1),
+          const Offset(1, -1),
+          const Offset(-1, 1),
+          const Offset(1, 1),
+        ]) {
+          game.moveCamera(
+            Offset(
+              direction.dx * game.size.x * 10,
+              direction.dy * game.size.y * 10,
+            ),
+          );
+          final region = game.sceneryRegion;
+          final world = HabitatWorld(habitat.buildableCells);
+          expect(
+            world
+                .decorationsWithin(
+                  region.left.toInt(),
+                  region.top.toInt(),
+                  region.right.toInt(),
+                  region.bottom.toInt(),
+                )
+                .length,
+            greaterThan(20),
+          );
+        }
+      }
+      game.pan = Offset.zero;
+      game.zoom = 1;
+      for (final key in HabitatWorld.scenerySprites) {
+        expect(sprites.cached(key), isNotNull, reason: key);
+      }
+      habitat.buildableCells = HabitatService.yardCells(0);
       for (final type in habitat.shop.where(
         (item) => !item.isGround && item.sku != 'low_fence',
       )) {

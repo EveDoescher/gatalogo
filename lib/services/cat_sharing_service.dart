@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import '../models/cat.dart';
 import '../models/missing_poster.dart';
 import '../models/cat_analysis.dart';
+import 'missing_poster_export.dart';
 
 class CatSharingService {
   const CatSharingService._();
@@ -82,32 +83,9 @@ class CatSharingService {
     required Map<String, dynamic> report,
     String? locationName,
   }) async {
-    final text = buildMissingPosterText(
-      cat: cat,
-      report: report,
-      locationName: locationName,
+    return MissingPosterExport.share(
+      MissingPoster(cat: cat, report: report, locationName: locationName),
     );
-    try {
-      final file = File(cat.photoPath);
-      if (await file.exists()) {
-        final result = await SharePlus.instance.share(
-          ShareParams(
-            files: [XFile(file.path)],
-            text: text,
-            subject: 'PROCURA-SE: ${cat.displayName}',
-          ),
-        );
-        return result.status == ShareResultStatus.success;
-      } else {
-        final result = await SharePlus.instance.share(
-          ShareParams(text: text, subject: 'PROCURA-SE: ${cat.displayName}'),
-        );
-        return result.status == ShareResultStatus.success;
-      }
-    } catch (e) {
-      debugPrint('Erro ao compartilhar cartaz: $e');
-      return false;
-    }
   }
 
   static String buildPostShareText({

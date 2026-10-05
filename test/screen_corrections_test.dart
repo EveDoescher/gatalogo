@@ -191,7 +191,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.textContaining('Região monitorada'), findsNothing);
       expect(find.textContaining('Rua das Flores'), findsOneWidget);
-      final community = find.text('Compartilhar na comunidade');
+      final community = find.text('Publicar na comunidade');
       await tester.scrollUntilVisible(community, 300);
       final external = find.text('Compartilhar em outros apps');
       expect(
@@ -206,7 +206,7 @@ void main() {
   );
 
   testWidgets(
-    'five navigation actions fit and Habitat opens the playable scene',
+    'five navigation actions fit and Quintal opens the playable scene',
     (tester) async {
       tester.view.physicalSize = const Size(320, 720);
       tester.view.devicePixelRatio = 1;
@@ -223,12 +223,12 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 400));
       expect(tester.takeException(), isNull);
-      await tester.tap(find.text('Habitat').last);
+      await tester.tap(find.text('Quintal').last);
       await tester.pump(const Duration(milliseconds: 400));
       expect(find.text('Um cantinho para descansar'), findsNothing);
-      expect(find.byTooltip('Abrir ações do Habitat'), findsOneWidget);
+      expect(find.byTooltip('Abrir ações do Quintal'), findsOneWidget);
       expect(tester.takeException(), isNull);
-      await tester.tap(find.byTooltip('Ajuda do Habitat'));
+      await tester.tap(find.byTooltip('Ajuda do Quintal'));
       await tester.pump(const Duration(milliseconds: 400));
       await tester.scrollUntilVisible(
         find.text('Como ganhar moedas'),
@@ -339,75 +339,58 @@ void main() {
   );
 
   testWidgets(
-    'alert supports multiple optional contacts and independent WhatsApp choices',
+    'poster editor supports multiple contacts and independent WhatsApp choices',
     (tester) async {
       final session = SessionStore();
       final store = ScreenStore(session);
       await tester.pumpWidget(
         screenApp(
-          CreateMissingReportPage(store: store, initialCat: store.pets.first),
+          MissingCatPosterPage(
+            catStore: store,
+            cat: store.pets.first,
+            report: {...sampleReport, 'contacts': []},
+            initialEditing: true,
+          ),
           store,
         ),
       );
+      Future<void> tapVisible(Finder target) async {
+        await tester.ensureVisible(target);
+        await tester.pumpAndSettle();
+        await tester.tap(target);
+        await tester.pumpAndSettle();
+      }
+
       final add = find.text('Adicionar telefone');
-      await tester.scrollUntilVisible(
-        add,
-        250,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.tap(add);
-      await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(
-        add,
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.tap(add);
-      await tester.pumpAndSettle();
-      final first = find.widgetWithText(TextField, 'Telefone 1');
-      await tester.scrollUntilVisible(
-        first,
-        -200,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.enterText(first, '(11) 99999-1234');
-      final second = find.widgetWithText(TextField, 'Telefone 2');
-      await tester.scrollUntilVisible(
-        second,
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.enterText(second, '(11) 3333-1234');
-      final firstChoice = find.byKey(const ValueKey('contact_whatsapp_0'));
-      final secondChoice = find.byKey(const ValueKey('contact_whatsapp_1'));
-      await tester.scrollUntilVisible(
-        firstChoice,
-        -200,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.tap(firstChoice);
-      await tester.pumpAndSettle();
-      expect(tester.widget<CheckboxListTile>(firstChoice).value, true);
-      await tester.scrollUntilVisible(
-        secondChoice,
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
-      expect(tester.widget<CheckboxListTile>(secondChoice).value, false);
-      await tester.scrollUntilVisible(
-        find.byTooltip('Remover contato 1'),
-        -200,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.tap(find.byTooltip('Remover contato 1'));
-      await tester.pumpAndSettle();
-      expect(
-        tester
-            .widget<TextField>(find.widgetWithText(TextField, 'Telefone 1'))
-            .controller
-            ?.text,
-        '(11) 3333-1234',
-      );
+      await tapVisible(add);
+      final confirm = find.byKey(const ValueKey('confirm_poster_contact'));
+      final phone = find.byKey(const ValueKey('poster_contact_phone'));
+      await tapVisible(confirm);
+      expect(find.text('Informe um telefone válido com DDD.'), findsOneWidget);
+      await tester.enterText(phone, '(11) 99999-1234');
+      await tapVisible(find.byKey(const ValueKey('poster_contact_whatsapp')));
+      await tapVisible(confirm);
+      expect(find.text('(11) 99999-1234'), findsOneWidget);
+      expect(find.text('Telefone e WhatsApp'), findsOneWidget);
+      expect(find.byType(TextFormField), findsNothing);
+      await tapVisible(find.text('Adicionar outro telefone'));
+      await tester.enterText(phone, '(11) 3333-1234');
+      await tapVisible(confirm);
+      expect(find.text('Telefone adicionado'), findsNWidgets(2));
+      expect(find.text('Somente telefone'), findsOneWidget);
+      await tapVisible(find.byTooltip('Editar contato 1'));
+      await tester.enterText(phone, '(11) 99999-5678');
+      await tapVisible(find.text('Cancelar'));
+      expect(find.text('(11) 99999-1234'), findsOneWidget);
+      expect(find.text('(11) 99999-5678'), findsNothing);
+      await tapVisible(find.byTooltip('Editar contato 1'));
+      await tester.enterText(phone, '(11) 99999-5678');
+      await tapVisible(confirm);
+      expect(find.text('(11) 99999-5678'), findsOneWidget);
+      await tapVisible(find.byTooltip('Remover contato 1'));
+      expect(find.text('(11) 99999-5678'), findsNothing);
+      expect(find.text('(11) 3333-1234'), findsOneWidget);
+      expect(find.text('Telefone adicionado'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
       store.dispose();

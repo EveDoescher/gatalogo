@@ -257,8 +257,6 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
   final _quickMarks = TextEditingController();
   final _quickMicrochip = TextEditingController();
   final _address = TextEditingController();
-  final List<TextEditingController> _phones = [];
-  final List<bool> _whatsapp = [];
 
   String? _catId;
   String? _quickPhoto;
@@ -283,9 +281,6 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
     _quickMarks.dispose();
     _quickMicrochip.dispose();
     _address.dispose();
-    for (final phone in _phones) {
-      phone.dispose();
-    }
     super.dispose();
   }
 
@@ -329,18 +324,6 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
 
     if (_address.text.trim().isEmpty) {
       showMessage(context, 'Informe o endereço do último local visto.');
-      return;
-    }
-    if (_phones.any((phone) {
-      final digits = phone.text.replaceAll(RegExp(r'[^0-9]'), '').length;
-      return digits < 8 ||
-          digits > 15 ||
-          !RegExp(r'^[+0-9 ()\-]+$').hasMatch(phone.text.trim());
-    })) {
-      showMessage(
-        context,
-        'Informe um telefone válido ou remova o contato vazio.',
-      );
       return;
     }
 
@@ -391,10 +374,6 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
             'longitude': _location!.point.longitude,
             'radius_meters': _location!.radius,
             'last_seen_address': _address.text.trim(),
-            'contacts': [
-              for (var i = 0; i < _phones.length; i++)
-                {'phone': _phones[i].text.trim(), 'whatsapp': _whatsapp[i]},
-            ],
           });
       data['name'] = catName;
 
@@ -402,8 +381,11 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                MissingReportDetailPage(report: data, store: widget.store),
+            builder: (_) => MissingReportDetailPage(
+              report: data,
+              store: widget.store,
+              openPosterInitially: true,
+            ),
           ),
         );
       }
@@ -698,7 +680,7 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Defina o ponto e o raio da busca. O endereço informado abaixo será incluído no cartaz quando você compartilhar o alerta.',
+              'Defina a área usada para procurar avistamentos. Você poderá escolher se o endereço aparece no cartaz.',
               style: GoogleFonts.nunito(
                 fontSize: 12,
                 color: AppColors.textMedium,
@@ -796,70 +778,17 @@ class _CreateMissingReportPageState extends State<CreateMissingReportPage> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Contatos no cartaz (opcional)',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: AppColors.textTitle,
+            const BotanicalPaper(
+              foliage: false,
+              child: Text(
+                'Ao ativar o alerta, o Gatálogo começa a procurar correspondências. Na próxima tela você escolhe o que divulgar, os telefones e o WhatsApp do cartaz.',
               ),
             ),
-            const SizedBox(height: 4),
-            const Text(
-              'Adicione somente os números que deseja divulgar no cartaz e ao compartilhar o alerta.',
-            ),
-            for (var i = 0; i < _phones.length; i++) ...[
-              const SizedBox(height: 12),
-              TextField(
-                key: ObjectKey(_phones[i]),
-                controller: _phones[i],
-                enabled: !_saving,
-                keyboardType: TextInputType.phone,
-                maxLength: 32,
-                style: const TextStyle(color: AppColors.textDark),
-                decoration: inputDecoration.copyWith(
-                  labelText: 'Telefone ${i + 1}',
-                  suffixIcon: IconButton(
-                    tooltip: 'Remover contato ${i + 1}',
-                    onPressed: _saving
-                        ? null
-                        : () {
-                            final removed = _phones[i];
-                            setState(() {
-                              _phones.removeAt(i);
-                              _whatsapp.removeAt(i);
-                            });
-                            WidgetsBinding.instance.addPostFrameCallback(
-                              (_) => removed.dispose(),
-                            );
-                          },
-                    icon: const Icon(Icons.close),
-                  ),
-                ),
-              ),
-              CheckboxListTile(
-                key: ValueKey('contact_whatsapp_$i'),
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Também atende pelo WhatsApp'),
-                value: _whatsapp[i],
-                onChanged: _saving
-                    ? null
-                    : (value) => setState(() => _whatsapp[i] = value ?? false),
-              ),
-            ],
-            if (_phones.length < 5)
-              TextButton.icon(
-                onPressed: _saving
-                    ? null
-                    : () => setState(() {
-                        _phones.add(TextEditingController());
-                        _whatsapp.add(false);
-                      }),
-                icon: const Icon(Icons.add),
-                label: const Text('Adicionar telefone'),
-              ),
             const SizedBox(height: 20),
             GatalogoButton(
-              text: _saving ? 'Ativando alerta…' : 'Ativar Alerta de Busca',
+              text: _saving
+                  ? 'Ativando alerta…'
+                  : 'Ativar alerta e preparar cartaz',
               isLoading: _saving,
               onPressed: _saving ? null : _create,
             ),
@@ -875,9 +804,11 @@ class MissingReportDetailPage extends StatefulWidget {
     super.key,
     required this.report,
     required this.store,
+    this.openPosterInitially = false,
   });
   final Map<String, dynamic> report;
   final CatStore store;
+  final bool openPosterInitially;
   @override
   State<MissingReportDetailPage> createState() =>
       _MissingReportDetailPageState();
@@ -890,6 +821,15 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
   void initState() {
     super.initState();
     _report = Map.of(widget.report);
+    if (widget.openPosterInitially) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final cat = widget.store.pets
+            .where((cat) => cat.id == _report['cat_client_id'])
+            .firstOrNull;
+        if (cat != null) _openPoster(cat, editing: true);
+      });
+    }
   }
 
   Future<void> _editArea() async {
@@ -928,7 +868,7 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
     }
   }
 
-  Future<void> _openPoster(Cat cat) async {
+  Future<void> _openPoster(Cat cat, {bool editing = false}) async {
     String? address = _report['last_seen_address']?.toString();
     address ??= await LocationService.getLocationName(
       (_report['latitude'] as num).toDouble(),
@@ -940,12 +880,17 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
       MaterialPageRoute(
         builder: (_) => MissingCatPosterPage(
           cat: cat,
+          initialEditing: editing,
+          onUpdated: (data) {
+            if (mounted) setState(() => _report.addAll(data));
+          },
           report: _report,
           catStore: widget.store,
           locationName: address,
         ),
       ),
     );
+    if (mounted) setState(() {});
   }
 
   Future<void> _resolve() async {
@@ -1299,7 +1244,7 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
           ),
 
           // Card 4: Cartaz Digital de Busca
-          if (cat != null) ...[
+          if (cat != null && isActive) ...[
             const SizedBox(height: AppSpacing.md),
             GatalogoCard(
               backgroundColor: AppColors.surface,
@@ -1332,7 +1277,7 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Cartaz com QR code para compartilhar no WhatsApp e redes sociais.',
+                          'Escolha informações e contatos, publique na comunidade ou exporte para compartilhar e imprimir.',
                           style: GoogleFonts.nunito(
                             fontSize: 12,
                             color: AppColors.textMedium,
@@ -1357,7 +1302,7 @@ class _MissingReportDetailPageState extends State<MissingReportDetailPage> {
                     ),
                     onPressed: () => _openPoster(cat),
                     child: Text(
-                      'Gerar',
+                      'Abrir',
                       style: GoogleFonts.nunito(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -2475,14 +2420,13 @@ class _ClueDetailPageState extends State<ClueDetailPage> {
                       imagePath: myCat.photoPath,
                       title: myCat.displayName,
                     ),
-                    child: Stack(
-                      children: [
-                        CatPhotoView(
-                          myCat.photoPath,
-                          height: 170,
-                          borderRadius: AppRadius.photo,
-                        ),
-                      ],
+                    child: GamePhotoMount(
+                      child: CatPhotoView(
+                        myCat.photoPath,
+                        height: 240,
+                        fit: BoxFit.contain,
+                        borderRadius: 4,
+                      ),
                     ),
                   ),
                 ],

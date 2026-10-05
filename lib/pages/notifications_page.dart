@@ -1,5 +1,6 @@
 import '../widgets/botanical_scene.dart';
 import 'discovery_result_page.dart';
+import '../services/habitat_navigation.dart';
 import 'result_history_page.dart';
 
 import 'package:flutter/material.dart';
@@ -85,6 +86,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
   };
 
   String _title(Map<String, dynamic> item) => switch (item['type']) {
+    'habitat_gift' => 'Um visitante deixou um presente!',
     'progress_result' => 'Seu resultado está pronto',
     'possible_match' => 'Possível avistamento do seu gato',
     'match_confirmed' => 'Seu avistamento ajudou uma busca!',
@@ -101,6 +103,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     'friend_invite' || 'friend_accepted' => 'ui/ui_speech_heart',
     'message' => 'ui/ui_speech_ellipsis',
     'achievement' => 'rewards/reward_medal_star_gold_ribbon_01',
+    'habitat_gift' => 'icons/icon_reward_chest_star',
     'progress_result' => 'ui/ui_notebook_cat',
     _ => 'icons/icon_bell_gold_coral',
   };
@@ -123,12 +126,27 @@ class _NotificationsPageState extends State<NotificationsPage> {
         }
       }
       final payload = Map<String, dynamic>.from(item['payload'] as Map? ?? {});
+      if (item['type'] == 'habitat_gift') {
+        if (!mounted) return;
+        Navigator.pop(context);
+        HabitatNavigation.focusGift.value = payload['gift_id']?.toString();
+        return;
+      }
       Widget? page;
       if (item['type'] == 'message' && payload['conversation_id'] != null) {
         page = ConversationPage(
           sessionStore: widget.store.sessionStore,
           conversationId: payload['conversation_id'] as String,
         );
+      } else if (item['type'] == 'progress_result' &&
+          const [
+            'care',
+            'review',
+            'post',
+            'comment',
+            'repost',
+          ].contains(payload['record_type'])) {
+        page = JourneyPage(store: widget.store);
       } else if (item['type'] == 'progress_result' &&
           payload['event_id'] != null) {
         page = DiscoveryResultPage(
@@ -142,7 +160,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           matchId: payload['match_id'] as String,
         );
       } else if (item['type'] == 'achievement') {
-        page = JourneyPage(store: widget.store);
+        page = JourneyPage(store: widget.store, initialSection: 'achievement');
       } else if (item['type'] == 'possible_match') {
         final matches = await _api.list('/vision/matches');
         final target = matches.where(

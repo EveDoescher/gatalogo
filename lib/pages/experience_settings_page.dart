@@ -99,7 +99,7 @@ class _ExperienceSettingsPageState extends State<ExperienceSettingsPage> {
             contentPadding: EdgeInsets.zero,
             title: const Text('Música'),
             subtitle: const Text(
-              'Somente em Início, Coleção, Resultado e Habitat',
+              'Somente em Início, Coleção, Resultado e Quintal',
             ),
             value: _experience.music,
             onChanged: (v) => _audio('music', v),
@@ -146,7 +146,7 @@ class _ExperienceSettingsPageState extends State<ExperienceSettingsPage> {
             for (final section in const {
               'gallery': 'Galeria',
               'medals': 'Medalhas',
-              'habitat': 'Prévia do Habitat',
+              'habitat': 'Prévia do Quintal',
             }.entries)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),

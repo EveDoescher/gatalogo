@@ -170,7 +170,7 @@ A paleta mantém os tons botânicos existentes e acrescenta materiais de caderno
 ### Secondary
 - **Verde da home / home-green:** títulos de ação, avatar e seleção do menu ilustrado; home-progress-fill preenche a trilha de XP e missão.
 - **Verde botânico / green:** natureza e progresso; green-link mantém leitura dos links e ícones de crescimento.
-- **Sálvia de ação / game-sage-action:** ações secundárias ligadas ao Habitat.
+- **Sálvia de ação / game-sage-action:** ações secundárias ligadas ao Quintal.
 - **Papéis verdes / game-green-paper e game-xp-paper:** notas concluídas e XP; game-progress preenche a trilha de crescimento.
 - **Acesso sem conta / guest-card-bg:** preserva o cartão de entrada com guest-card-text e guest-card-subtext.
 
@@ -208,7 +208,7 @@ As telas de jogo usam rolagem e largura disponível com margens observadas de 12
 
 A home atual monta as artes do Home.jpg do usuário com conteúdo dinâmico: logo, caixa de mensagens e avatar; nível, XP e moedas; Jornada de hoje; conquistas reais; Gatalogar; atalhos Meus Gatos e Meu Mapa; última descoberta. O corpo é rolável, centralizado e limitado a 560 unidades lógicas, com escala de composição width/390. A logo mede 143 vezes essa escala e usa contain; não deve ocupar o espaço reservado às ações do cabeçalho. Gatalogar usa altura proporcional limitada entre 62 e 95, com ajuste para texto ampliado. No quadro Jornada, a arte Card.png mantém a razão 1478/520 com tipografia e Board.png encaixados nas aberturas; acima de escala de texto 1.2 o conteúdo passa a uma composição vertical que pode crescer.
 
-O menu ilustrado mantém Início, Social, Gatalogar, Coleção e Habitat e preserva a proporção de Bar.png usando cover, que pode recortar a imagem para preencher a faixa, sem esticá-la. Coleção conserva suas abas internas Gatos e Desafios. O editor existente do Habitat permanece o destino funcional. A troca da home não redefine as composições dessas outras superfícies.
+O menu ilustrado mantém Início, Social, Gatalogar, Coleção e Quintal e preserva a proporção de Bar.png usando cover, que pode recortar a imagem para preencher a faixa, sem esticá-la. Coleção conserva suas abas internas Gatos e Desafios. O editor existente do Quintal permanece o destino funcional. A troca da home não redefine as composições dessas outras superfícies.
 
 Autenticação preserva a composição central compacta de 340–360, margens de 24–36, SafeArea e rolagem para teclado. Folhagens perimetrais usam Stack e IgnorePointer, sem capturar toques. O ritmo compartilhado continua baseado em 4, 8, 12, 16 e 24. Foram informadas capturas de widgets Flutter nas larguras 360, 320 com escala de texto 1.5 e 820, incluindo build/home-reference/home-360.png e build/home-reference/home-820.png. Elas não substituem validação em dispositivo nativo, que não estava disponível; não garantem ajuste a todas as larguras, escalas ou equivalência pixel a pixel. Esta revisão documental não gerou nem reviu capturas.
 
@@ -268,9 +268,9 @@ A revelação observada escala a foto de 0.96 a 1 em 420 ms com easeOutCubic. Re
 ## Do's and Don'ts
 
 ### Do:
-- Do preservar fotos reais e usar assets existentes de gatos, folhas e Habitat para contextualizar a coleção.
+- Do preservar fotos reais e usar assets existentes de gatos, folhas e Quintal para contextualizar a coleção.
 - Do usar estados e quantidades reais nos rótulos de XP, moedas, desafios e próximos objetivos.
-- Do manter as cinco entradas principais e o editor existente do Habitat.
+- Do manter as cinco entradas principais e o editor existente do Quintal.
 - Do preservar a proporção da arte do menu e usar Board.png no quadro Jornada da home.
 - Do mostrar indisponibilidade quando a fonte real de XP, moedas, missões ou conquistas estiver ausente.
 - Do manter o asset oficial google_logo.png e a pata sólida branca nas chamadas de autenticação que já os utilizam.
@@ -294,12 +294,12 @@ A revelação observada escala a foto de 0.96 a 1 em 420 ms com easeOutCubic. Re
 
 Fundos são definidos pelo papel da tela na navegação, nunca pelo assunto ou por uma cor escolhida localmente. `BotanicalLevel` e `BotanicalLevelScope` centralizam essa regra:
 
-- Principal: Início, Social, Gatalogar e Coleção usam o jardim ilustrado sobre creme, até a borda inferior atrás da navegação. O Habitat mantém o cenário jogável, com o mesmo menu e controles da família visual.
+- Principal: Início, Social, Gatalogar e Coleção usam o jardim ilustrado sobre creme, até a borda inferior atrás da navegação. O Quintal mantém o cenário jogável, com o mesmo menu e controles da família visual.
 - Secundário: perfis próprio/público, listas, detalhes de descoberta, missões, histórico, configurações e Loja usam creme (`AppColors.background`) com os mesmos ramos discretos nas margens. Cabeçalhos transparentes compartilham a superfície da página.
 - Terciário: cadastro de gato, criação de alerta, detalhe de pista, álbum de fotos, chat, cartaz, preferências de experiência e Ajuda usam papel (`AppColors.surface`) e a mesma folhagem discreta. São ações ou leitura dentro de outra área, com menor presença de cenário.
 - Autenticação e visualização de mídia: login restaurado permanece na composição aprovada; fotos ampliadas mantêm o fundo escuro para leitura da imagem. Mapas e o quintal preservam a superfície funcional da cena.
 
-A profundidade é uma categoria de interface, não a contagem literal de páginas na pilha. O escopo principal envolve somente o corpo das abas: rotas abertas pelo Navigator retornam ao estilo secundário, e páginas terciárias declaram seu nível explicitamente. Loja e Ajuda declaram seus níveis mesmo quando abertas dentro do Habitat.
+A profundidade é uma categoria de interface, não a contagem literal de páginas na pilha. O escopo principal envolve somente o corpo das abas: rotas abertas pelo Navigator retornam ao estilo secundário, e páginas terciárias declaram seu nível explicitamente. Loja e Ajuda declaram seus níveis mesmo quando abertas dentro do Quintal.
 
 `IllustratedProfileIdentity` padroniza o retrato de 116 pontos sobre jardim de 162 pontos e o espaço para o nome. Ambos os perfis usam identidade sem cartão envolvente, nível em caderno e bio em nota presa. Editar a própria conta e interagir com outra pessoa continuam sendo ações diferentes. Não fabricar barra de progresso, amigos ou estatísticas quando a resposta pública não oferece esses dados.
 
@@ -311,13 +311,13 @@ A biblioteca atual é `assets/gatalogo_asset_library`, registrada por categoria 
 
 Assets precisam de uma relação espacial coerente: objetos apoiados na base, fitas presas ao papel e ramos com o caule saindo pela margem. Não acrescentar adereços flutuantes apenas para preencher espaço. `IllustratedGardenStage` usa uma única base sob o avatar ou objeto; não combina arbusto, flores separadas e marcador solto ao redor.
 
-Todas as abas usam `IllustratedNavigationScaffold`: o fundo ocupa a altura inteira da tela, atrás do menu. Conteúdo rolável e controles respeitam o espaço do menu sem deslocar o fundo para cima. Habitat mantém a navegação principal; a captura da aba deve incluí-la.
+Todas as abas usam `IllustratedNavigationScaffold`: o fundo ocupa a altura inteira da tela, atrás do menu. Conteúdo rolável e controles respeitam o espaço do menu sem deslocar o fundo para cima. Quintal mantém a navegação principal; a captura da aba deve incluí-la.
 
 A galeria visual é uma entrega permanente: após qualquer rodada que altere telas, recapturar as telas e atualizar `build/galeria-visual/galeria.html` e `LEIA-ME.md` pelo teste `visual_validation_capture_test.dart` com `GATALOGO_CAPTURE_ALL=1`. O índice é gerado automaticamente junto às imagens, com data, rótulos e limitações. Não apresentar capturas antigas como resultado de alterações novas. Login permanece na composição restaurada.
 
 `IllustratedPaperHeading` associa um único objeto ilustrado à função do conteúdo: álbum para fotos, caderno para cadastro, câmera para escolher fotografia, balão para conversas e sino para avisos. Sem ornamentos independentes ao redor. Meus Gatos, perfil do gato e galeria usam `GamePhotoCard` com a fotografia do registro; o papel e a fita enquadram a foto sem substituí-la por um asset. Perfil público reaproveita `IllustratedGardenStage`, `GameSeal` e `IllustratedStatTile` com valores da resposta real. Estados vazios de correio usam a caixa apoiada na base de jardim.
 
-A Captura usa câmera, lupa e caderno; a Coleção usa fotografias empilhadas e álbum; Missões usa prancheta; Meus Gatos usa coleira; Notificações usa caixa de correio; Conversas usa balão com coração; Cartazes usa lupa e coração; a Loja usa fachada com toldo e jardim. Configurações mantém leitura simples com engrenagem ilustrada. O Habitat preserva seu cenário jogável.
+A Captura usa câmera, lupa e caderno; a Coleção usa fotografias empilhadas e álbum; Missões usa prancheta; Meus Gatos usa coleira; Notificações usa caixa de correio; Conversas usa balão com coração; Cartazes usa lupa e coração; a Loja usa fachada com toldo e jardim. Configurações mantém leitura simples com engrenagem ilustrada. O Quintal preserva seu cenário jogável.
 
 `IllustratedSectionTitle` associa uma ilustração pequena ao título de uma seção e permite quebra de linha. `GamePhotoMount` enquadra fotografias de fontes distintas em papel com fita presa à borda; a fonte e as regras de acesso continuam no widget filho. Usar câmera para fotografias, mapa para área monitorada, lupa para pistas e caderno para história. Controles de alternância usam contornos dos tokens botânicos, sem borda preta padrão no tema claro.
 

@@ -83,7 +83,7 @@ class _HabitatShopPageState extends State<HabitatShopPage> {
       await widget.habitat.expand();
     } on HabitatConflictException {
       _error(
-        'O quintal foi alterado em outro dispositivo. Atualize o Habitat e tente novamente.',
+        'O quintal foi alterado em outro dispositivo. Atualize o Quintal e tente novamente.',
       );
     } on ProductApiException catch (error) {
       _error(error.message);
@@ -110,7 +110,7 @@ class _HabitatShopPageState extends State<HabitatShopPage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         leading: IconButton(
-          tooltip: 'Voltar ao Habitat',
+          tooltip: 'Voltar ao Quintal',
           onPressed: widget.onClose,
           icon: const Icon(LucideIcons.arrowLeft),
         ),
@@ -128,7 +128,7 @@ class _HabitatShopPageState extends State<HabitatShopPage> {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
               child: const IllustratedSectionHeader(
-                title: 'Loja do Habitat',
+                title: 'Loja do Quintal',
                 description:
                     'Um cantinho para descansar, brincar e receber seus gatos.',
                 art: 'environment/environment_shop_coral_awning',
@@ -226,7 +226,7 @@ class _HabitatShopPageState extends State<HabitatShopPage> {
           Text(
             price == null
                 ? 'Seu quintal já tem todo o espaço disponível.'
-                : 'Mais espaço para decorações e mais um gato no Habitat.',
+                : 'Mais espaço para decorações e mais um gato no Quintal.',
             style: GoogleFonts.nunito(color: AppColors.textMedium),
           ),
           const SizedBox(height: 14),
@@ -262,6 +262,8 @@ class _HabitatShopPageState extends State<HabitatShopPage> {
               label: Text(
                 price == null
                     ? 'Terreno completo'
+                    : price == 0
+                    ? 'Expandir grátis para teste'
                     : 'Expandir por $price moedas',
               ),
             ),
@@ -348,19 +350,21 @@ class _HabitatShopPageState extends State<HabitatShopPage> {
             width: double.infinity,
             child: FilledButton.tonal(
               onPressed:
-                  item.price == 0 ||
+                  !item.canBuy ||
                       maxReached ||
                       _workingSku != null ||
                       owned + quantity > item.maxOwned
                   ? null
                   : () => _buy(item, quantity),
               child: Text(
-                item.price == 0
+                !item.canBuy
                     ? item.sku == 'friendship_garden'
                           ? (owned > 0 ? 'Desbloqueado' : '20 de afinidade')
                           : 'Inicial'
                     : maxReached
                     ? 'Adquirido'
+                    : item.price == 0
+                    ? 'Grátis para teste'
                     : '${item.price * quantity} moedas',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

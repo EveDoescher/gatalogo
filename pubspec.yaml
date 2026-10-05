@@ -36,6 +36,9 @@ dependencies:
   flame: ^1.38.2
   audioplayers: ^6.8.1
   flutter_timezone: ^5.1.0
+  pdf: ^3.13.1
+  printing: ^5.15.1
+  file_picker: ^13.1.0
 
 dev_dependencies:
   flutter_test:
@@ -49,6 +52,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/quintal/previews/
     - assets/audio/
     - assets/models/cat_detector.tflite
     - assets/fonts/
@@ -67,6 +71,15 @@ flutter:
     - assets/habitat/building-type-f.png
     - assets/habitat/decor/
     - assets/habitat/cat/
+    - assets/habitat/dog/
+    - assets/habitat/bee/
+    - assets/habitat/bunny/
+    - assets/habitat/chick/
+    - assets/habitat/deer/
+    - assets/habitat/fox/
+    - assets/habitat/beaver/
+    - assets/habitat/parrot/
+    - assets/habitat/fish/
     - assets/3d_assets/kenney_isometric-roads/png/water.png
     - assets/3d_assets/kenney_isometric-roads/png/dirt.png
     - assets/3d_assets/kenney_mini-dungeon/Previews/

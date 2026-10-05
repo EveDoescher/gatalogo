@@ -10,11 +10,11 @@ As 14 imagens reunidas pela usuária em `C:/Users/Evelynn_Doescher/Downloads/ref
 | `051d7ff6911dddd82d499ea1ff5b1b79.jpg` e `8d44895be0ed9b2476f8ffbb0d824182.jpg` | Contornos quentes, controles arredondados legíveis e recursos visíveis. |
 | `f86e42f0-7287-424c-adef-131281709645.jfif` e `596d4c1f-9e8f-4901-bfce-d1d920a0b619.jfif` | Painéis de tarefas pertencem ao mundo do jogo, com condição, progresso e resultado no mesmo lugar. |
 | `4c75ca40-dff7-4277-8963-78c0cff3f135.jfif` | Conteúdo e imagem têm prioridade; a moldura sustenta a leitura. |
-| `c5154232-ce64-42f7-baba-9907798727b2.jfif` e `e3decb8b-4b1c-4697-a1e2-a7ef00fc716c.jfif` | Objetos e ambiente dão presença ao jogo. A entrada do Habitat usa os próprios assets já existentes. |
+| `c5154232-ce64-42f7-baba-9907798727b2.jfif` e `e3decb8b-4b1c-4697-a1e2-a7ef00fc716c.jfif` | Objetos e ambiente dão presença ao jogo. A entrada do Quintal usa os próprios assets já existentes. |
 
 ## Implementação desta rodada
 
-- Home: caderno aberto com álbum e Habitat em páginas equivalentes, progresso confirmado, missão e ação Gatalogar.
+- Home: caderno aberto com álbum e Quintal em páginas equivalentes, progresso confirmado, missão e ação Gatalogar.
 - Coleção: abas de capítulos; desafios em páginas encadernadas, peças alcançáveis, medalhas e prêmios. Duas colunas em telas largas, uma em celulares.
 - Resultado: foto em moldura de papel com fita, atributos, revisão, créditos confirmados e arte do item realmente liberado. Foto limitada em tablets.
 - Captura: câmera e galeria como ações equivalentes, instruções em papel com contorno.
@@ -22,7 +22,7 @@ As 14 imagens reunidas pela usuária em `C:/Users/Evelynn_Doescher/Downloads/ref
 - Navegação: controles em papel com contorno; rosa identifica captura.
 - Componentes: `GameNotebook`, `GameNote`, `GameTape`, `GamePhotoCard`, `GameButton`, `GameSeal`, `GameProgress` e `GameReward` em `lib/widgets/game_components.dart`.
 
-O Habitat e a loja continuam com seus controles e organização existentes. A pequena vinheta da Home é uma porta de entrada ilustrada, não uma representação do layout salvo. As fotos reais do acervo continuam aparecendo no aplicativo; a ilustração usada no teste é uma substituição declarada.
+O Quintal e a loja continuam com seus controles e organização existentes. A pequena vinheta da Home é uma porta de entrada ilustrada, não uma representação do layout salvo. As fotos reais do acervo continuam aparecendo no aplicativo; a ilustração usada no teste é uma substituição declarada.
 
 ## Evidência e limites
 

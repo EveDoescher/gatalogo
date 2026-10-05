@@ -46,7 +46,7 @@ extension HabitatInteractions on HabitatGame {
           ? 'play'
           : 'rest';
       if (activity == 'play') {
-        unawaited(sprites.catAnimations.preload(HabitatCatClip.happy));
+        unawaited(sprites.catAnimations.preload(HabitatCatClip.play));
       }
       unawaited(
         walk.goTo(

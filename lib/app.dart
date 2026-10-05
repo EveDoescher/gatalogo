@@ -1,3 +1,4 @@
+import 'widgets/milestone_widgets.dart';
 import 'services/experience_service.dart';
 
 import 'dart:async';
@@ -10,6 +11,7 @@ import 'pages/auth_page.dart';
 import 'pages/capture_page.dart';
 import 'pages/home_page.dart';
 import 'pages/habitat_page.dart';
+import 'services/habitat_navigation.dart';
 import 'pages/social_page.dart';
 import 'pages/library_page.dart';
 import 'pages/notifications_page.dart';
@@ -123,6 +125,80 @@ class _MainNavigationState extends State<MainNavigation>
   int currentIndex = 0;
   final ValueNotifier<bool> _habitatActive = ValueNotifier(false);
   int _unreadMessages = 0;
+  String? _medalOwner;
+  bool _medalsLoaded = false, _showingMedals = false;
+  final Set<String> _seenMedals = {};
+  final Set<String> _seenMissions = {};
+  final List<Map<String, dynamic>> _medalQueue = [];
+
+  void _milestonesChanged() {
+    final owner = widget.sessionStore.session?.userId;
+    if (_medalOwner != owner) {
+      _medalOwner = owner;
+      _medalsLoaded = false;
+      _seenMedals.clear();
+      _seenMissions.clear();
+      _medalQueue.clear();
+    }
+    if (catStore.progress.summary['rule_version'] != 2 ||
+        catStore.progress.offline) {
+      return;
+    }
+    final completedMissions = [
+      ...catStore.progress.missions,
+      ...catStore.progress.initialMissions,
+    ].where((g) => g['completed'] == true).toList();
+    final earned = catStore.progress.achievements.where(
+      (g) => g['completed'] == true,
+    );
+    if (!_medalsLoaded) {
+      _seenMedals.addAll(earned.map((g) => '${g['id']}'));
+      _seenMissions.addAll(completedMissions.map((g) => '${g['instance_id']}'));
+      _medalsLoaded = true;
+      return;
+    }
+    final newMissions = completedMissions
+        .where((g) => _seenMissions.add('${g['instance_id']}'))
+        .toList();
+    if (newMissions.isNotEmpty && mounted) {
+      final xp = newMissions.fold<int>(
+        0,
+        (sum, g) => sum + (g['xp_reward'] as num? ?? 0).toInt(),
+      );
+      final coins = newMissions.fold<int>(
+        0,
+        (sum, g) => sum + (g['coin_reward'] as num? ?? 0).toInt(),
+      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(ExperienceService.instance.celebrate());
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${newMissions.length == 1 ? 'Missão concluída' : '${newMissions.length} missões concluídas'}! +$xp XP · +$coins moedas',
+            ),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      });
+    }
+    for (final medal in earned) {
+      if (_seenMedals.add('${medal['id']}')) _medalQueue.add(medal);
+    }
+    if (!_showingMedals && _medalQueue.isNotEmpty) {
+      _showingMedals = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        while (mounted &&
+            _medalQueue.isNotEmpty &&
+            owner == widget.sessionStore.session?.userId) {
+          final medal = _medalQueue.removeAt(0);
+          unawaited(ExperienceService.instance.celebrate());
+          await showAchievement(context, medal, celebration: true);
+        }
+        _showingMedals = false;
+      });
+    }
+  }
 
   late final CatStore catStore;
   late final List<Widget> pages;
@@ -134,9 +210,11 @@ class _MainNavigationState extends State<MainNavigation>
   @override
   void initState() {
     super.initState();
+    HabitatNavigation.focusGift.addListener(_visitGift);
     WidgetsBinding.instance.addObserver(this);
 
     catStore = widget.catStore ?? CatStore(widget.sessionStore);
+    catStore.progress.addListener(_milestonesChanged);
     catStore.loadCats();
     unawaited(ExperienceService.instance.initialize());
     ExperienceService.instance.selectTab(0);
@@ -219,12 +297,14 @@ class _MainNavigationState extends State<MainNavigation>
   @override
   void dispose() {
     ExperienceService.instance.routeChanged(null);
+    HabitatNavigation.focusGift.removeListener(_visitGift);
     _habitatActive.dispose();
     _openedNotificationSubscription?.cancel();
     _foregroundNotificationSubscription?.cancel();
     _msgSub?.cancel();
     _readSub?.cancel();
     WidgetsBinding.instance.removeObserver(this);
+    catStore.progress.removeListener(_milestonesChanged);
     if (widget.catStore == null) catStore.dispose();
     super.dispose();
   }
@@ -243,6 +323,10 @@ class _MainNavigationState extends State<MainNavigation>
     }
     setState(() => currentIndex = index);
     _habitatActive.value = index == 4;
+  }
+
+  void _visitGift() {
+    if (mounted && HabitatNavigation.focusGift.value != null) _navigateTo(4);
   }
 
   void _openNotification(String notificationId) {

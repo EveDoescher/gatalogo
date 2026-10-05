@@ -58,7 +58,8 @@ def sample_channel(times, values, time, *, rotation=False, interpolation="LINEAR
 
 
 def load_model(path: Path, *, animation: str | None = None, time: float = 0,
-               ground: float | None = None, rotation: int = 0) -> list[Mesh]:
+               ground: float | None = None, rotation: int = 0, play_time: float | None = None,
+               flight_time: float | None = None) -> list[Mesh]:
     document, binary = read_document(path)
 
     def accessor(index: int) -> np.ndarray:
@@ -87,6 +88,26 @@ def load_model(path: Path, *, animation: str | None = None, time: float = 0,
                 accessor(sampler["input"]).ravel(), accessor(sampler["output"]), time,
                 rotation=property_name == "rotation", interpolation=sampler.get("interpolation", "LINEAR"),
             )
+    if play_time is not None:
+        # Two deliberate paw taps separated by observation, with a stable body.
+        for index, node in enumerate(document["nodes"]):
+            if node.get("name") not in ("leg-front-left", "leg-front-right"):
+                continue
+            start = 0.6 if node["name"].endswith("left") else 2.1
+            phase = (play_time - start) / 0.7
+            lift = float(np.sin(np.pi * phase)) if 0 < phase < 1 else 0.0
+            translation = np.array(node.get("translation", [0, 0, 0]), dtype=float)
+            translation += [0, 0.15 * lift, -0.1 * lift]
+            poses.setdefault(index, {})["translation"] = translation
+    if flight_time is not None:
+        for index, node in enumerate(document['nodes']):
+            if node.get('name') not in ('wing-left', 'wing-right'):
+                continue
+            side = 1 if node['name'].endswith('left') else -1
+            angle = side * (.25 + .55 * np.sin(flight_time * 2 * np.pi / .25))
+            x, y, z, w = node.get('rotation', [0, 0, 0, 1])
+            s, c = np.sin(angle / 2), np.cos(angle / 2)
+            poses.setdefault(index, {})['rotation'] = [c*x-s*y, c*y+s*x, c*z+s*w, c*w-s*z]
     meshes = []
 
     def visit(index: int, parent: np.ndarray) -> None:

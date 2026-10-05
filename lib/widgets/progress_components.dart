@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 import 'game_components.dart';
+import 'milestone_widgets.dart';
 
 class JournalPanel extends StatelessWidget {
   const JournalPanel({super.key, required this.child, this.color});
@@ -47,20 +48,23 @@ class GoalCard extends StatelessWidget {
                     children: [
                       Text('${goal['title']}', style: GameStyle.title(21)),
                       if (done)
-                        const Text(
-                          'Conquista guardada',
-                          style: TextStyle(
+                        Text(
+                          goal['type'] == 'achievement'
+                              ? 'Medalha conquistada'
+                              : 'Concluída · recompensa recebida',
+                          style: const TextStyle(
                             color: AppColors.greenLink,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                       if (!done && goal['period'] != null)
-                        Text(
-                          (goal['id'] as String? ?? '').startsWith('daily')
-                              ? 'Missão de hoje'
-                              : 'Missão da semana',
-                          style: const TextStyle(fontSize: 12),
-                        ),
+                        Text(switch (goal['type']) {
+                          'daily' => 'Missão de hoje',
+                          'weekly' => 'Missão da semana',
+                          'initial' => 'Missão inicial',
+                          'achievement' => 'Conquista permanente',
+                          _ => 'Desafio sazonal',
+                        }, style: const TextStyle(fontSize: 12)),
                     ],
                   ),
                 ),
@@ -72,38 +76,11 @@ class GoalCard extends StatelessWidget {
                 child: Text('${goal['description']}'),
               ),
             const SizedBox(height: 16),
-            if (target > 1 && target <= 7) ...[
-              Wrap(
-                spacing: 7,
-                runSpacing: 7,
-                children: List.generate(
-                  target,
-                  (index) => Container(
-                    width: 35,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: index < current
-                          ? const Color(0xFFFFE8AA)
-                          : const Color(0xFFF0E9D8),
-                      border: Border.all(
-                        color: index < current
-                            ? const Color(0xFFCAAA62)
-                            : GameStyle.edge,
-                      ),
-                      borderRadius: BorderRadius.circular(9),
-                    ),
-                    child: Icon(
-                      index < current ? icon : Icons.add_rounded,
-                      size: 20,
-                      color: index < current
-                          ? AppColors.achievementText
-                          : const Color(0xFF978468),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
+            Text(
+              '$current de $target ${goal['unit'] ?? 'etapas'}',
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
             GameProgress(current: current, target: target, gold: done),
             const SizedBox(height: 12),
             Wrap(
@@ -122,6 +99,18 @@ class GoalCard extends StatelessWidget {
                   ),
               ],
             ),
+            if (goal['reset_at'] != null) ...[
+              const SizedBox(height: 12),
+              MilestoneCountdown(
+                resetAt: goal['reset_at'] as String?,
+                serverNow: goal['server_now'] as String?,
+              ),
+            ],
+            if ((goal['ranking_points'] as num? ?? 0) > 0)
+              Text(
+                '${goal['ranking_points']} pontos no ranking',
+                style: const TextStyle(fontSize: 12),
+              ),
             if (!done && onTap != null)
               TextButton(onPressed: onTap, child: const Text('Continuar')),
           ],
@@ -138,6 +127,7 @@ class RecordStateNotice extends StatelessWidget {
   static String label(String state) => switch (state) {
     'failed' => 'Análise não concluída',
     'confirmed' => 'Confirmado',
+    'recorded' => 'Registro confirmado · recompensas pausadas',
     'needs_review' => 'Precisa de revisão',
     'ineligible' => 'Não elegível para prêmio',
     'analyzing' => 'Em análise',

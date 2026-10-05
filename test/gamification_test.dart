@@ -83,10 +83,7 @@ void main() {
         completed: false,
       );
 
-      final updated = mission.copyWith(
-        progress: 1,
-        completed: true,
-      );
+      final updated = mission.copyWith(progress: 1, completed: true);
 
       expect(updated.id, equals('daily_photo'));
       expect(updated.progress, equals(1));
@@ -102,10 +99,7 @@ void main() {
       });
       expect(stateFromNewXp.xp, equals(250));
 
-      final stateFromXp = GamificationState.fromMap({
-        'xp': 180,
-        'level': 1,
-      });
+      final stateFromXp = GamificationState.fromMap({'xp': 180, 'level': 1});
       expect(stateFromXp.xp, equals(180));
     });
 
@@ -165,16 +159,30 @@ void main() {
     test('local records never invent rewards or achievements', () {
       final session = SessionStore();
       final store = GamificationMockStore(session);
-      store.mockCats.add(Cat(id: 'one', captureNumber: 1, photoPath: 'missing.jpg', capturedAt: DateTime(2026, 9, 22)));
+      store.mockCats.add(
+        Cat(
+          id: 'one',
+          captureNumber: 1,
+          photoPath: 'missing.jpg',
+          capturedAt: DateTime(2026, 9, 22),
+        ),
+      );
       expect(localJourney(store), isEmpty);
-      store.progress.summary = {'challenges': [{'id': 'first', 'progress': 1, 'completed': true}]};
+      store.progress.summary = {
+        'achievements': [
+          {'id': 'first', 'progress': 1, 'completed': true},
+        ],
+      };
       expect(localJourney(store).single['completed'], isTrue);
-      store.dispose(); session.dispose();
+      store.dispose();
+      session.dispose();
     });
   });
 
   group('Gamification Widgets UI', () {
-    testWidgets('GatalogoXPBar renders level and progress correctly', (tester) async {
+    testWidgets('GatalogoXPBar renders level and progress correctly', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
@@ -194,24 +202,53 @@ void main() {
       expect(find.text('150 / 300 XP'), findsOneWidget);
     });
 
-    testWidgets('Conquistas filters unlocked achievements without a journey heading', (tester) async {
-      final session = SessionStore();
-      final store = GamificationMockStore(session);
-      store.mockCats.add(Cat(id: 'one', captureNumber: 1, photoPath: 'missing.jpg', capturedAt: DateTime(2026, 9, 22)));
-      store.progress.summary = {'challenges': [
-        {'id': 'first', 'title': 'Primeira descoberta', 'target': 1, 'progress': 1, 'completed': true},
-        {'id': 'collector_5', 'title': 'Olhar curioso', 'target': 5, 'progress': 1, 'completed': false},
-      ]};
-      await tester.pumpWidget(MaterialApp(home: JourneyPage(store: store)));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Concluídas'));
-      await tester.pumpAndSettle();
-      expect(find.text('Missões e conquistas'), findsOneWidget);
-      expect(find.text('Primeira descoberta'), findsOneWidget);
-      expect(find.text('Olhar curioso'), findsNothing);
-      expect(find.textContaining('Conquistas e jornada'), findsNothing);
-      await tester.pumpWidget(const SizedBox());
-      store.dispose(); session.dispose();
-    });
+    testWidgets(
+      'Conquistas filters unlocked achievements without a journey heading',
+      (tester) async {
+        final session = SessionStore();
+        final store = GamificationMockStore(session);
+        store.mockCats.add(
+          Cat(
+            id: 'one',
+            captureNumber: 1,
+            photoPath: 'missing.jpg',
+            capturedAt: DateTime(2026, 9, 22),
+          ),
+        );
+        store.progress.summary = {
+          'achievements': [
+            {
+              'id': 'first',
+              'title': 'Primeira descoberta',
+              'target': 1,
+              'progress': 1,
+              'completed': true,
+            },
+            {
+              'id': 'collector_5',
+              'title': 'Olhar curioso',
+              'target': 5,
+              'progress': 1,
+              'completed': false,
+            },
+          ],
+        };
+        await tester.pumpWidget(
+          MaterialApp(
+            home: JourneyPage(store: store, initialSection: 'achievement'),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Obtidas'));
+        await tester.pumpAndSettle();
+        expect(find.text('Missões e conquistas'), findsOneWidget);
+        expect(find.text('Primeira descoberta'), findsOneWidget);
+        expect(find.text('Olhar curioso'), findsNothing);
+        expect(find.textContaining('Conquistas e jornada'), findsNothing);
+        await tester.pumpWidget(const SizedBox());
+        store.dispose();
+        session.dispose();
+      },
+    );
   });
 }

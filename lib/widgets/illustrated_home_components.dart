@@ -1,3 +1,5 @@
+import '../services/habitat_navigation.dart';
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -278,7 +280,7 @@ class IllustratedNavigationBar extends StatelessWidget {
                   (LucideIcons.usersRound, 'Social'),
                   (LucideIcons.camera, 'Gatalogar'),
                   (LucideIcons.bookOpen, 'Coleção'),
-                  (LucideIcons.map, 'Habitat'),
+                  (LucideIcons.map, 'Quintal'),
                 ].indexed)
                   Expanded(
                     child: Semantics(
@@ -309,14 +311,19 @@ class IllustratedNavigationBar extends StatelessWidget {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Badge(
-                                  isLabelVisible: entry.$1 == 1 && unread > 0,
-                                  child: Icon(
-                                    entry.$2.$1,
-                                    size: 22,
-                                    color: index == entry.$1
-                                        ? HomeArt.green
-                                        : const Color(0xFFE3E9C7),
+                                ValueListenableBuilder<bool>(
+                                  valueListenable: HabitatNavigation.hasGift,
+                                  builder: (_, gift, _) => Badge(
+                                    isLabelVisible:
+                                        (entry.$1 == 1 && unread > 0) ||
+                                        (entry.$1 == 4 && gift),
+                                    child: Icon(
+                                      entry.$2.$1,
+                                      size: 22,
+                                      color: index == entry.$1
+                                          ? HomeArt.green
+                                          : const Color(0xFFE3E9C7),
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(height: 3),

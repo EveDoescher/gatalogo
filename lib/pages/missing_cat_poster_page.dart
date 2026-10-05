@@ -1,367 +1,245 @@
-import '../widgets/botanical_scene.dart';
 import '../widgets/app_header_actions.dart';
+import '../widgets/botanical_scene.dart';
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:qr_flutter/qr_flutter.dart';
+
+import '../widgets/missing_poster_artwork.dart';
+import '../widgets/poster_export_actions.dart';
 
 import '../models/cat.dart';
 import '../models/missing_poster.dart';
-import '../services/cat_sharing_service.dart';
+import '../services/product_api_service.dart';
+import '../widgets/poster_settings_editor.dart';
 import '../stores/cat_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_widgets.dart';
-import '../widgets/post_composer.dart';
 
-class MissingCatPosterPage extends StatelessWidget {
+class MissingCatPosterPage extends StatefulWidget {
   const MissingCatPosterPage({
     super.key,
     required this.cat,
     required this.report,
     this.locationName,
     this.catStore,
+    this.initialEditing = false,
+    this.onUpdated,
   });
-
   final Cat cat;
   final Map<String, dynamic> report;
   final String? locationName;
   final CatStore? catStore;
+  final bool initialEditing;
+  final ValueChanged<Map<String, dynamic>>? onUpdated;
+  @override
+  State<MissingCatPosterPage> createState() => _MissingCatPosterPageState();
+}
 
-  String get _qrPayload {
-    final reportId = report['id'] ?? '';
-    return 'https://gatalogo.app/busca/$reportId';
+class _MissingCatPosterPageState extends State<MissingCatPosterPage> {
+  late final PosterEditorController _editor;
+  late Map<String, dynamic> _report;
+  bool _editing = false, _busy = false, _allowExit = false;
+  String? _error;
+  bool get _active => _report['status'] == 'active';
+  @override
+  void initState() {
+    super.initState();
+    _report = Map.of(widget.report);
+    _editor = PosterEditorController(_report)..addListener(_changed);
+    _editing = widget.initialEditing;
+  }
+
+  void _changed() {
+    if (mounted) setState(() => _error = null);
   }
 
   @override
-  Widget build(BuildContext context) {
-    final catName = cat.displayName;
-    final dateStr = displayDate(report['created_at']);
-    final poster = MissingPoster(
-      cat: cat,
-      report: report,
-      locationName: locationName,
-    );
-    final locStr = poster.address ?? 'Endereço não informado';
-
-    return BotanicalScaffold(
-      level: BotanicalLevel.tertiary,
-      mood: BotanicalMood.care,
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        actions: const [AppHeaderActions()],
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: GestureDetector(
-          onTap: () => Navigator.maybePop(context),
-          child: Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.borderLight, width: 1.2),
-            ),
-            child: const Icon(
-              LucideIcons.chevronLeft,
-              color: AppColors.textDark,
-              size: 22,
-            ),
-          ),
-        ),
-        title: Text(
-          'Cartaz de busca',
-          style: GoogleFonts.fredoka(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textTitle,
-          ),
-        ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.sm,
-          AppSpacing.lg,
-          AppSpacing.xxl,
-        ),
-        children: [
-          const IllustratedSectionTitle(
-            title: 'Seu cartaz de busca',
-            art: 'ui/ui_clipboard_paw',
-          ),
-          const SizedBox(height: 16),
-          // O Cartaz
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppRadius.card),
-              border: Border.all(color: AppColors.error, width: 1.8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Faixa PROCURA-SE
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppColors.error,
-                    borderRadius: BorderRadius.circular(AppRadius.xs),
-                  ),
-                  child: Text(
-                    'PROCURA-SE',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.fredoka(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      letterSpacing: 3,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-
-                // Foto Grande do Gato
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  child: AspectRatio(
-                    aspectRatio: 1.15,
-                    child: CatPhotoView(cat.photoPath, fit: BoxFit.cover),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-
-                // Nome do Gato em destaque
-                Text(
-                  catName,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.fredoka(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textTitle,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  'Desaparecido desde $dateStr',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.nunito(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.error,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                const Divider(height: 1, color: AppColors.borderLight),
-                const SizedBox(height: AppSpacing.md),
-
-                // Informações e Características
-                _buildPosterField(
-                  icon: LucideIcons.mapPin,
-                  title: 'Último local visto',
-                  value: locStr,
-                ),
-                for (final detail in poster.characteristics.entries) ...[
-                  const SizedBox(height: 8),
-                  _buildPosterField(
-                    icon: LucideIcons.tag,
-                    title: detail.key,
-                    value: detail.value,
-                  ),
-                ],
-                for (final contact in poster.contacts) ...[
-                  const SizedBox(height: 8),
-                  _buildPosterField(
-                    icon: LucideIcons.phone,
-                    title: contact['whatsapp'] == true
-                        ? 'Telefone / WhatsApp'
-                        : 'Telefone',
-                    value: contact['phone'] as String,
-                  ),
-                ],
-                if (poster.contacts.isEmpty) ...[
-                  const SizedBox(height: 8),
-                  _buildPosterField(
-                    icon: LucideIcons.messageCircle,
-                    title: 'Contato',
-                    value: 'Pelo chat do app Gatálogo',
-                  ),
-                ],
-
-                const SizedBox(height: AppSpacing.lg),
-                const Divider(height: 1, color: AppColors.borderLight),
-                const SizedBox(height: AppSpacing.md),
-
-                // QR Code e Chamada para Ação
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: AppColors.borderLight,
-                          width: 1.2,
-                        ),
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                      child: QrImageView(
-                        data: _qrPayload,
-                        version: QrVersions.auto,
-                        size: 82,
-                        gapless: false,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Viu este gato?',
-                            style: GoogleFonts.fredoka(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textTitle,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Escaneie o QR Code ou fotografe pelo aplicativo Gatálogo para alertar o tutor imediatamente.',
-                            style: GoogleFonts.nunito(
-                              fontSize: 11,
-                              color: AppColors.textMedium,
-                              height: 1.3,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: AppSpacing.lg),
-
-          // Botões de Ação
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-              ),
-            ),
-            onPressed: () => _publishToCommunity(context, locStr),
-            icon: const Icon(LucideIcons.globe, size: 18),
-            label: Text(
-              'Compartilhar na comunidade',
-              style: GoogleFonts.nunito(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.textDark,
-              side: const BorderSide(color: AppColors.border),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-              ),
-            ),
-            onPressed: () async {
-              final shared = await CatSharingService.shareMissingPoster(
-                cat: cat,
-                report: report,
-                locationName: locStr,
-              );
-              if (shared) {
-                await catStore?.recordGamificationAction('share');
-                await catStore?.recordHabitatAction(
-                  'share',
-                  targetType: 'report',
-                  targetId: report['id']?.toString(),
-                );
-              }
-            },
-            icon: const Icon(LucideIcons.share2, size: 18),
-            label: Text(
-              'Compartilhar em outros apps',
-              style: GoogleFonts.nunito(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+  void dispose() {
+    _editor.removeListener(_changed);
+    _editor.dispose();
+    super.dispose();
   }
 
-  Future<void> _publishToCommunity(BuildContext context, String locStr) async {
-    final session = catStore?.sessionStore;
-    if (session == null) return;
-    final post = await showPostComposer(
-      context,
-      session: session,
-      initialCat: cat,
-      initialLocation: locStr,
-      initialNote: CatSharingService.buildMissingPosterText(
-        cat: cat,
-        report: report,
-        locationName: locStr,
-      ),
-    );
-    if (post != null) {
-      await catStore?.recordGamificationAction('post');
-      if (context.mounted) {
-        showMessage(context, 'Alerta compartilhado na comunidade.');
+  MissingPoster get _poster => MissingPoster(
+    cat: widget.cat,
+    report: _editor.apply(_report),
+    locationName: widget.locationName,
+  );
+
+  Future<MissingPoster?> _prepare() async {
+    if (!_active) return null;
+    final error = _editor.error;
+    if (error != null) {
+      setState(() {
+        _editing = true;
+        _error = error;
+      });
+      return null;
+    }
+    if (widget.catStore == null) return _poster;
+    try {
+      final data = await ProductApiService(
+        widget.catStore!.sessionStore,
+      ).put('/vision/missing-reports/${_report['id']}/poster', _editor.payload);
+      if (!mounted) return null;
+      setState(() {
+        _report.addAll(data);
+        _editor.dirty = false;
+        _error = null;
+      });
+      widget.onUpdated?.call(Map.of(_report));
+      return _poster;
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _error = '$error';
+          if (error is ProductApiException && error.statusCode == 409) {
+            _report['status'] = 'resolved';
+            widget.onUpdated?.call(Map.of(_report));
+          }
+        });
       }
+      return null;
     }
   }
 
-  Widget _buildPosterField({
-    required IconData icon,
-    required String title,
-    required String value,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 15, color: AppColors.error),
-        const SizedBox(width: 6),
-        Text(
-          '$title: ',
-          style: GoogleFonts.nunito(
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-            color: AppColors.textDark,
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: GoogleFonts.nunito(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textDark,
-            ),
-          ),
-        ),
-      ],
-    );
+  Future<void> _save() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final saved = await _prepare();
+    if (mounted) {
+      setState(() => _busy = false);
+      if (saved != null) showMessage(context, 'Cartaz atualizado.');
+    }
   }
+
+  Future<bool> _publish() async {
+    if (widget.catStore == null) return false;
+    await ProductApiService(widget.catStore!.sessionStore)
+        .post('/social/reports/${_report['id']}/publish');
+    await widget.catStore!.refreshGamification();
+    return true;
+  }
+
+  Future<void> _close() async {
+    if (_busy) return;
+    final leave =
+        !_editor.dirty ||
+        await confirmAction(
+          context,
+          'Sair sem salvar?',
+          'As alterações do cartaz ainda não foram salvas.',
+          'Sair sem salvar',
+        );
+    if (leave && mounted) {
+      setState(() => _allowExit = true);
+      await WidgetsBinding.instance.endOfFrame;
+      if (mounted) Navigator.pop(context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => PopScope(
+    canPop: _allowExit || (!_busy && !_editor.dirty),
+    onPopInvokedWithResult: (didPop, _) {
+      if (!didPop) _close();
+    },
+    child: BotanicalScaffold(
+      level: BotanicalLevel.tertiary,
+      mood: BotanicalMood.care,
+      appBar: AppBar(
+        actions: const [AppHeaderActions()],
+        title: const Text('Cartaz de busca'),
+        leading: IconButton(
+          tooltip: 'Voltar',
+          onPressed: _busy ? null : _close,
+          icon: const Icon(LucideIcons.chevronLeft),
+        ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+        children: [
+          const IllustratedSectionTitle(
+            title: 'Ajude a encontrar meu gato',
+            art: 'ui/ui_clipboard_paw',
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _active
+                ? 'Escolha os detalhes e contatos antes de divulgar. A prévia acompanha suas alterações.'
+                : 'Busca encerrada. Este cartaz não deve ser divulgado como uma busca ativa.',
+            style: const TextStyle(color: AppColors.textMedium),
+          ),
+          const SizedBox(height: 20),
+          if (_active)
+            SegmentedButton<bool>(
+              segments: const [
+                ButtonSegment(
+                  value: false,
+                  icon: Icon(LucideIcons.eye),
+                  label: Text('Prévia'),
+                ),
+                ButtonSegment(
+                  value: true,
+                  icon: Icon(LucideIcons.settings2),
+                  label: Text('Personalizar'),
+                ),
+              ],
+              selected: {_editing},
+              onSelectionChanged: _busy
+                  ? null
+                  : (value) => setState(() => _editing = value.first),
+            ),
+          const SizedBox(height: 16),
+          if (_editing && _active)
+            PosterSettingsEditor(controller: _editor, enabled: !_busy)
+          else
+            MissingPosterArtwork(poster: _poster),
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Semantics(
+                liveRegion: true,
+                child: Text(
+                  _error!,
+                  style: const TextStyle(color: AppColors.errorText),
+                ),
+              ),
+            ),
+          if (_active) ...[
+            const SizedBox(height: 20),
+            if (_editor.dirty) ...[
+              const Text(
+                'Alterações ainda não salvas',
+                style: TextStyle(color: AppColors.textMedium),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: _busy ? null : _save,
+                icon: const Icon(LucideIcons.check),
+                label: const Text('Salvar alterações'),
+              ),
+              const SizedBox(height: 16),
+            ],
+            PosterExportActions(
+              poster: _poster,
+              prepare: _prepare,
+              onBusyChanged: (value) {
+                if (mounted) setState(() => _busy = value);
+              },
+              onCommunity: widget.catStore == null ? null : _publish,
+              onShared: () async {
+                await widget.catStore?.recordGamificationAction('share');
+                await widget.catStore?.recordHabitatAction(
+                  'share',
+                  targetType: 'report',
+                  targetId: _report['id']?.toString(),
+                );
+              },
+            ),
+          ],
+        ],
+      ),
+    ),
+  );
 }

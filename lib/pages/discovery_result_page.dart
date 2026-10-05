@@ -1,7 +1,8 @@
 import '../widgets/botanical_scene.dart';
 
 import 'dart:async';
-import 'dart:io';
+
+import '../widgets/app_widgets.dart';
 
 import 'package:flutter/material.dart';
 
@@ -182,45 +183,89 @@ class _DiscoveryResultPageState extends State<DiscoveryResultPage> {
   Future<void> _identify() async {
     final cat = _cat;
     if (cat == null) return;
+    String query = '';
+    final known = <String, Cat>{};
+    for (final other in widget.store.cats.where(
+      (c) => c.id != cat.id && c.individualId != 'pending',
+    )) {
+      final id = other.individualId ?? other.id;
+      if (!known.containsKey(id) || other.id == id) known[id] = other;
+    }
     final choice = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      builder: (context) => SafeArea(
-        child: SizedBox(
-          height: MediaQuery.sizeOf(context).height * .65,
+      useSafeArea: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, update) => SizedBox(
+          height: MediaQuery.sizeOf(sheetContext).height * .85,
           child: ListView(
+            padding: const EdgeInsets.all(20),
             children: [
-              const Padding(
-                padding: EdgeInsets.all(24),
-                child: Text(
-                  'É um gato que você já conhece?',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+              Text('Qual gato está nesta foto?', style: GameStyle.title(25)),
+              const SizedBox(height: 12),
+              CatPhotoView(cat.photoPath, height: 190, fit: BoxFit.contain),
+              const SizedBox(height: 12),
+              const Text(
+                'Compare os detalhes. A IA sugere semelhanças; você confirma a identidade.',
+              ),
+              FilledButton.icon(
+                onPressed: () => Navigator.pop(sheetContext, cat.id),
+                icon: const Icon(Icons.add),
+                label: const Text('É outro gato · nova descoberta'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(sheetContext),
+                child: const Text('Ainda não sei · manter pendente'),
+              ),
+              TextField(
+                decoration: const InputDecoration(
+                  labelText: 'Procurar no meu catálogo',
+                  prefixIcon: Icon(Icons.search),
                 ),
+                onChanged: (text) => update(() => query = text.toLowerCase()),
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24),
-                child: Text(
-                  'Você decide. Corrigir a identificação também ajusta o progresso, sem apagar a foto.',
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.add),
-                title: const Text('É um novo indivíduo'),
-                onTap: () => Navigator.pop(context, cat.id),
-              ),
-              for (final other in widget.store.cats.where(
-                (c) => c.id != cat.id,
-              ))
-                ListTile(
-                  leading: CircleAvatar(
-                    backgroundImage: FileImage(File(other.photoPath)),
+              const SizedBox(height: 12),
+              for (final other
+                  in (known.values
+                      .where((c) => c.displayName.toLowerCase().contains(query))
+                      .toList()
+                    ..sort(
+                      (a, b) =>
+                          (_suggestions.any((s) => s['client_id'] == b.id)
+                                  ? 1
+                                  : 0)
+                              .compareTo(
+                                _suggestions.any((s) => s['client_id'] == a.id)
+                                    ? 1
+                                    : 0,
+                              ),
+                    )))
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(other.displayName, style: GameStyle.title(20)),
+                      if (_suggestions.any((s) => s['client_id'] == other.id))
+                        const Text('Possível conhecido · sugestão da IA'),
+                      CatPhotoView(
+                        other.photoPath,
+                        height: 170,
+                        fit: BoxFit.contain,
+                      ),
+                      OutlinedButton(
+                        onPressed: () => Navigator.pop(
+                          sheetContext,
+                          other.individualId ?? other.id,
+                        ),
+                        child: const Text('É este gato · acrescentar registro'),
+                      ),
+                    ],
                   ),
-                  title: Text(other.displayName),
-                  subtitle: _suggestions.any((s) => s['client_id'] == other.id)
-                      ? const Text('Sugestão da IA · você confirma')
-                      : null,
-                  onTap: () =>
-                      Navigator.pop(context, other.individualId ?? other.id),
+                ),
+              if (known.isEmpty)
+                const Text(
+                  'Ainda não há outros gatos no seu catálogo para comparar.',
                 ),
             ],
           ),
@@ -228,8 +273,46 @@ class _DiscoveryResultPageState extends State<DiscoveryResultPage> {
       ),
     );
     if (choice == null) return;
+    var contribution = 'encounter';
+    if (choice != cat.id && mounted) {
+      final picked = await showModalBottomSheet<String>(
+        context: context,
+        builder: (context) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'O que esta foto acrescenta?',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                for (final option in const {
+                  'angle': 'Outro ângulo do gato',
+                  'detail': 'Um detalhe novo na ficha',
+                  'clearer': 'Uma foto mais nítida',
+                  'encounter': 'Só registrar este reencontro',
+                }.entries)
+                  ListTile(
+                    title: Text(option.value),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => Navigator.pop(context, option.key),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      );
+      if (picked == null) return;
+      contribution = picked;
+    }
     await _perform(() async {
-      await widget.store.identifyRecord(cat.id, choice);
+      await widget.store.identifyRecord(
+        cat.id,
+        choice,
+        contributionType: contribution,
+      );
       _event = null;
     });
   }
@@ -282,7 +365,9 @@ class _DiscoveryResultPageState extends State<DiscoveryResultPage> {
           !ExperienceService.instance.motion ||
           !_reveal;
       final title = switch (result?['record_type']) {
-        'complement' => 'Mais uma foto para o álbum!',
+        'complement' => 'Um complemento para o álbum!',
+        'encounter' => 'Reencontro guardado no álbum',
+        'pending_identity' => 'Vamos reconhecer este gato',
         'owned' => 'Um registro de cuidado',
         _ =>
           state == 'confirmed' ? 'Descoberta confirmada!' : 'Uma nova história',
@@ -450,7 +535,7 @@ class _DiscoveryResultPageState extends State<DiscoveryResultPage> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          'Novo no seu Habitat!',
+                                          'Novo no seu Quintal!',
                                           style: GameStyle.title(21),
                                         ),
                                         Text(
@@ -508,7 +593,11 @@ class _DiscoveryResultPageState extends State<DiscoveryResultPage> {
                         OutlinedButton.icon(
                           onPressed: _busy ? null : _identify,
                           icon: const Icon(Icons.pets_outlined),
-                          label: const Text('Identificar ou corrigir o gato'),
+                          label: Text(
+                            cat.individualId == 'pending'
+                                ? 'Comparar e confirmar o gato'
+                                : 'Identificar ou corrigir o gato',
+                          ),
                         ),
                       if (cat != null && cat.status == 'failed')
                         TextButton(
@@ -536,7 +625,7 @@ class _DiscoveryResultPageState extends State<DiscoveryResultPage> {
                       ),
                       const SizedBox(height: 10),
                       GameButton(
-                        label: 'Ir ao Habitat',
+                        label: 'Ir ao Quintal',
                         icon: Icons.yard_rounded,
                         green: true,
                         onPressed: () => Navigator.push(

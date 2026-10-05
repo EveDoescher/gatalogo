@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../services/habitat_service.dart';
 import '../theme/app_theme.dart';
+import 'journey_page.dart';
 
 class HabitatHelpPage extends StatelessWidget {
   const HabitatHelpPage({
@@ -19,27 +20,17 @@ class HabitatHelpPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const rewards = {
-      'catalog': 'Catalogar um gato',
-      'reference': 'Adicionar foto de referência',
-      'sighting': 'Registrar avistamento',
-      'post': 'Publicar na comunidade',
-      'comment': 'Comentar',
-      'like': 'Curtir',
-      'share': 'Compartilhar',
-      'care': 'Acompanhar a busca',
-    };
     return BotanicalScaffold(
       level: BotanicalLevel.tertiary,
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         leading: IconButton(
-          tooltip: 'Voltar ao Habitat',
+          tooltip: 'Voltar ao Quintal',
           onPressed: onClose,
           icon: const Icon(LucideIcons.arrowLeft),
         ),
-        title: const Text('Ajuda do Habitat'),
+        title: const Text('Ajuda do Quintal'),
       ),
       body: ListView(
         padding: EdgeInsets.fromLTRB(
@@ -51,7 +42,7 @@ class HabitatHelpPage extends StatelessWidget {
         children: [
           const IllustratedPaperHeading(
             title: 'Seu quintal',
-            description: 'Um guia para cuidar dos gatos e organizar o Habitat.',
+            description: 'Um guia para cuidar dos gatos e organizar o Quintal.',
             art: 'ui/ui_clipboard_checklist',
           ),
           const SizedBox(height: 12),
@@ -67,9 +58,11 @@ class HabitatHelpPage extends StatelessWidget {
             icon: LucideIcons.cat,
             text: 'Arraste um gato da bandeja até uma célula livre do quintal.',
           ),
-          const _Tip(
+          _Tip(
             icon: LucideIcons.heart,
-            text: 'Toque em um gato para dar carinho, uma porção diária gratuita ou um petisco de 4 moedas. Cada cuidado aumenta a afinidade uma vez por dia, sem perda por ausência.',
+            text:
+                'Toque em um gato para dar carinho, alimentar ou oferecer um petisco. '
+                'O petisco custa ${habitat.treatPrice} moedas. Cada cuidado aumenta a afinidade uma vez por dia, sem perda por ausência.',
           ),
           const _Tip(
             icon: LucideIcons.flower,
@@ -89,24 +82,27 @@ class HabitatHelpPage extends StatelessWidget {
             art: 'rewards/reward_coin_paw_gold',
           ),
           const SizedBox(height: 8),
-          for (final entry in rewards.entries)
-            if (habitat.rewards[entry.key] case final amount?)
-              ListTile(
-                dense: true,
-                title: Text(entry.value),
-                trailing: Text(
-                  '+$amount',
-                  style: GoogleFonts.nunito(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.achievementText,
-                  ),
-                ),
-                subtitle: habitat.dailyLimits[entry.key] == null
-                    ? null
-                    : Text(
-                        'Até ${habitat.dailyLimits[entry.key]} vezes por dia',
-                      ),
+          Text(
+            'Descobertas confirmadas, complementos úteis e contribuições à comunidade podem render moedas. '
+            'Cuidar do quintal também avança as missões aplicáveis. Consulte os objetivos para ver condições, prêmios e o que já recebeu.',
+            style: GoogleFonts.nunito(
+              fontSize: 15,
+              color: AppColors.textMedium,
+            ),
+          ),
+          TextButton.icon(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => JourneyPage(store: habitat.catStore),
               ),
+            ),
+            icon: const Icon(LucideIcons.flag),
+            label: const Text('Ver missões e conquistas'),
+          ),
+          const _Tip(
+            icon: LucideIcons.gift,
+            text: 'Alguns visitantes deixam presentes do lado de fora. O baú destacado fica ali até você tocar e recolher; observar a visita não concede a recompensa.',
+          ),
         ],
       ),
     );

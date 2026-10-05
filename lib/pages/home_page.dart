@@ -10,6 +10,7 @@ import '../stores/session_store.dart';
 import '../widgets/active_search_proximity_card.dart';
 import '../widgets/app_widgets.dart';
 import '../widgets/inbox_button.dart';
+import '../widgets/milestone_widgets.dart';
 import '../widgets/illustrated_home_components.dart';
 import 'cat_details_page.dart';
 import 'journey_page.dart';
@@ -181,7 +182,7 @@ class HomePage extends StatelessWidget {
                                       SizedBox(width: 8 * scale),
                                       Semantics(
                                         button: true,
-                                        label: 'Moedas do Habitat',
+                                        label: 'Moedas do Quintal',
                                         child: InkWell(
                                           onTap: () => onNavigate(4),
                                           borderRadius: BorderRadius.circular(
@@ -243,6 +244,19 @@ class HomePage extends StatelessWidget {
                                     ],
                                   ),
                                 ),
+                                if (catStore.progress.offline ||
+                                    catStore
+                                            .progress
+                                            .summary['rewards_enabled'] ==
+                                        false)
+                                  MilestoneNotice(
+                                    offline: catStore.progress.offline,
+                                    enabled:
+                                        catStore
+                                            .progress
+                                            .summary['rewards_enabled'] !=
+                                        false,
+                                  ),
                                 ActiveSearchProximityCard(
                                   sessionStore: sessionStore,
                                   catStore: catStore,
@@ -250,6 +264,15 @@ class HomePage extends StatelessWidget {
                                 SizedBox(height: 4 * scale),
                                 _DailyBoard(
                                   mission: mission,
+                                  resetAt:
+                                      (catStore.progress.summary['calendar']
+                                              as Map?)?['daily_reset_at']
+                                          as String?,
+                                  serverNow:
+                                      (catStore.progress.summary['calendar']
+                                              as Map?)?['server_now']
+                                          as String?,
+                                  onExpired: catStore.refreshGamification,
                                   scale: scale,
                                   signedIn: sessionStore.isSignedIn,
                                   onTap: () => _open(
@@ -264,16 +287,22 @@ class HomePage extends StatelessWidget {
                                   scale: scale,
                                   onTap: () => _open(
                                     context,
-                                    JourneyPage(store: catStore),
+                                    JourneyPage(
+                                      store: catStore,
+                                      initialSection: 'achievement',
+                                    ),
                                   ),
                                 ),
                                 SizedBox(height: 5 * scale),
                                 _AchievementShelf(
-                                  challenges: catStore.progress.challenges,
+                                  challenges: catStore.progress.achievements,
                                   scale: scale,
                                   onTap: () => _open(
                                     context,
-                                    JourneyPage(store: catStore),
+                                    JourneyPage(
+                                      store: catStore,
+                                      initialSection: 'achievement',
+                                    ),
                                   ),
                                 ),
                                 SizedBox(height: 31 * scale),
@@ -390,11 +419,16 @@ class HomePage extends StatelessWidget {
 class _DailyBoard extends StatelessWidget {
   const _DailyBoard({
     required this.mission,
+    this.resetAt,
+    this.serverNow,
+    this.onExpired,
     required this.scale,
     required this.signedIn,
     required this.onTap,
   });
   final Map<String, dynamic>? mission;
+  final String? resetAt, serverNow;
+  final VoidCallback? onExpired;
   final double scale;
   final bool signedIn;
   final VoidCallback onTap;
@@ -402,7 +436,9 @@ class _DailyBoard extends StatelessWidget {
   Widget build(BuildContext context) {
     final enlarged = MediaQuery.textScalerOf(context).scale(1) > 1.2;
     final done = mission?['completed'] == true;
-    final title = mission?['title'] as String? ?? 'Missões indisponíveis';
+    final title = done
+        ? 'Jornada de hoje concluída'
+        : mission?['title'] as String? ?? 'Missões indisponíveis';
     final description = mission == null
         ? (signedIn
               ? 'Sincronize para carregar a jornada de hoje.'
@@ -414,7 +450,10 @@ class _DailyBoard extends StatelessWidget {
     final reward = Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('Recompensas', style: HomeArt.title(11 * scale)),
+        Text(
+          done ? 'Recebido' : 'Recompensas',
+          style: HomeArt.title(11 * scale),
+        ),
         SizedBox(height: 5 * scale),
         Row(
           mainAxisSize: MainAxisSize.min,
@@ -457,6 +496,12 @@ class _DailyBoard extends StatelessWidget {
             target: mission?['target'] as num? ?? 1,
             height: 15 * scale,
           ),
+        MilestoneCountdown(
+          resetAt: resetAt,
+          serverNow: serverNow,
+          onExpired: onExpired,
+          style: TextStyle(fontSize: 9 * scale, color: HomeArt.ink),
+        ),
       ],
     );
     if (!enlarged) {
@@ -673,138 +718,47 @@ class _AchievementShelf extends StatelessWidget {
   final double scale;
   final VoidCallback onTap;
   @override
-  Widget build(BuildContext context) => Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      if (challenges.isEmpty)
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 14 * scale),
-            child: Text(
-              'Suas conquistas aparecem após sincronizar a conta.',
-              style: GoogleFonts.nunito(
-                fontSize: 12 * scale,
-                color: HomeArt.ink,
+  Widget build(BuildContext context) {
+    final ordered = [...challenges]
+      ..sort(
+        (a, b) => (b['completed'] == true ? 1 : 0).compareTo(
+          a['completed'] == true ? 1 : 0,
+        ),
+      );
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (ordered.isEmpty)
+          const Expanded(
+            child: Text('Suas conquistas aparecem após sincronizar a conta.'),
+          ),
+        for (final goal in ordered.take(5))
+          Expanded(
+            child: InkWell(
+              onTap: () => showAchievement(context, goal),
+              child: Column(
+                children: [
+                  AchievementMedal(goal: goal, size: 58 * scale),
+                  Text(
+                    goal['completed'] == true
+                        ? 'Obtida'
+                        : '${goal['progress']} / ${goal['target']}',
+                    style: TextStyle(fontSize: 10 * scale, color: HomeArt.ink),
+                  ),
+                  Text(
+                    '${goal['title']}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 9 * scale, color: HomeArt.ink),
+                  ),
+                ],
               ),
             ),
           ),
-        ),
-      for (var i = 0; i < challenges.length && i < 5; i++)
-        Expanded(
-          child: Builder(
-            builder: (context) {
-              final goal = i < challenges.length ? challenges[i] : null;
-              final earned = goal?['completed'] == true;
-              final started = (goal?['progress'] as num? ?? 0) > 0;
-              return Semantics(
-                button: true,
-                label: goal == null
-                    ? 'Carregar conquistas'
-                    : '${goal['title']}: ${goal['progress']} de ${goal['target']}',
-                child: InkWell(
-                  onTap: onTap,
-                  borderRadius: BorderRadius.circular(40),
-                  child: SizedBox(
-                    height: 66 * scale,
-                    child: Stack(
-                      alignment: Alignment.topCenter,
-                      children: [
-                        Container(
-                          width: 58 * scale,
-                          height: 58 * scale,
-                          padding: EdgeInsets.all(5 * scale),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: earned || started
-                                ? const Color(0xFFFFDFA2)
-                                : const Color(0xFFE8D6B7),
-                            border: Border.all(
-                              color: earned || started
-                                  ? const Color(0xFFAD7F45)
-                                  : const Color(0xFFC7AA85),
-                              width: 1.4,
-                            ),
-                          ),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: i == 0 && (earned || started)
-                                  ? const Color(0xFFF8C8BD)
-                                  : const Color(0xFFF0E8CE),
-                              border: Border.all(
-                                color: const Color(0xFFD6C6A5),
-                                width: 1.4,
-                              ),
-                            ),
-                            child: i == 0 && (earned || started)
-                                ? Padding(
-                                    padding: const EdgeInsets.all(3),
-                                    child: HomeArt.image('Cat'),
-                                  )
-                                : Icon(
-                                    [
-                                      Icons.pets_rounded,
-                                      LucideIcons.sprout,
-                                      LucideIcons.camera,
-                                      Icons.favorite_rounded,
-                                      LucideIcons.house,
-                                    ][i],
-                                    size: 28 * scale,
-                                    color: earned
-                                        ? HomeArt.green
-                                        : const Color(0xFFAFA58B),
-                                  ),
-                          ),
-                        ),
-                        if (earned || started)
-                          Positioned(
-                            bottom: 0,
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 12 * scale,
-                                vertical: 2 * scale,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFBD956C),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                '${goal?['progress']} / ${goal?['target']}',
-                                style: GoogleFonts.nunito(
-                                  fontSize: 10 * scale,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ),
-                          )
-                        else
-                          Positioned(
-                            right: 1 * scale,
-                            bottom: 1 * scale,
-                            child: Container(
-                              padding: EdgeInsets.all(2 * scale),
-                              decoration: const BoxDecoration(
-                                color: HomeArt.paper,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.lock_rounded,
-                                size: 15 * scale,
-                                color: const Color(0xFF967A54),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-    ],
-  );
+      ],
+    );
+  }
 }
 
 class _IllustratedShortcut extends StatelessWidget {

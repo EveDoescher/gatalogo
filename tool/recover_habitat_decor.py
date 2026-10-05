@@ -3,7 +3,7 @@
 import subprocess
 from pathlib import Path
 
-from habitat_assets import DECORATIONS
+from habitat_assets import DECORATIONS, VISITORS
 from habitat_model import read_document
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,7 +20,7 @@ def recover(relative):
 
 
 def main():
-    for asset in DECORATIONS:
+    for asset in (*DECORATIONS, *VISITORS):
         base = f"assets/3d_assets/{asset.pack}"
         model = recover(asset.model_path.as_posix())
         document, _ = read_document(model)

@@ -81,6 +81,10 @@ class HabitatSprites {
   ui.Rect bounds(String key) => _bounds![key]!;
 
   ui.Offset groundOrigin(String key) {
+    if (key == 'chest' || key == 'coin') {
+      final source = bounds(key);
+      return source.bottomCenter;
+    }
     final data = _lightingData[key] as Map?;
     if (data == null) return const ui.Offset(256, 315.5);
     final origin = data['origin'] as List;
@@ -104,6 +108,16 @@ class HabitatSprites {
   /// Horizontal mesh center, projected onto the ground (not the PNG center).
   ui.Offset groundCenter(String key) {
     final center = (_lightingData[key] as Map?)?['groundCenter'] as List?;
+    if (center == null) return ui.Offset.zero;
+    return ui.Offset(
+      (center[0] as num).toDouble(),
+      (center[1] as num).toDouble(),
+    );
+  }
+
+  /// Mesh ground center can differ from the shared tile anchor (fence segments).
+  ui.Offset depthCenter(String key) {
+    final center = (_lightingData[key] as Map?)?['depthCenter'] as List?;
     if (center == null) return ui.Offset.zero;
     return ui.Offset(
       (center[0] as num).toDouble(),
@@ -205,6 +219,45 @@ class HabitatSprites {
       codec.dispose();
     }
   });
+
+  final Map<String, Future<(ui.Image, ui.Rect)>> _previews = {};
+  Future<Map<String, dynamic>>? _previewManifest;
+
+  /// Independent high-resolution thumbnails, never magnified world cutouts.
+  Future<(ui.Image, ui.Rect)> preview(String key) =>
+      _previews.putIfAbsent(key, () async {
+        final manifest = await (_previewManifest ??= () async {
+          try {
+            return Map<String, dynamic>.from(
+              jsonDecode(
+                await rootBundle.loadString(
+                  'assets/quintal/previews/bounds.json',
+                ),
+              ) as Map,
+            );
+          } catch (_) {
+            return <String, dynamic>{};
+          }
+        }());
+        final box = manifest[key] as List?;
+        if (box == null) return (await ready(key), bounds(key));
+        final data = await rootBundle.load('assets/quintal/previews/$key.png');
+        final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+        try {
+          final image = (await codec.getNextFrame()).image;
+          return (
+            image,
+            ui.Rect.fromLTWH(
+              (box[0] as num).toDouble(),
+              (box[1] as num).toDouble(),
+              (box[2] as num).toDouble(),
+              (box[3] as num).toDouble(),
+            ),
+          );
+        } finally {
+          codec.dispose();
+        }
+      });
 
   Future<void> preload(Iterable<String> keys) async {
     await Future.wait(keys.map(load));

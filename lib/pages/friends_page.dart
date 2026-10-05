@@ -1,6 +1,7 @@
 import '../widgets/illustrated_home_components.dart';
 import '../widgets/botanical_scene.dart';
 import '../widgets/app_header_actions.dart';
+import '../widgets/milestone_widgets.dart';
 
 import 'dart:async';
 
@@ -47,6 +48,8 @@ class _FriendsPageState extends State<FriendsPage>
   List<Map<String, dynamic>> _suggestions = [];
   List<Map<String, dynamic>> _nearbySuggestions = [];
   List<Map<String, dynamic>> _leaderboard = [];
+  String _rankCriterion = "cats", _rankPeriod = "weekly";
+  String? _rankingError;
 
   bool _nearbyOptIn = false;
   StreamSubscription? _wsSub;
@@ -75,7 +78,9 @@ class _FriendsPageState extends State<FriendsPage>
     super.dispose();
   }
 
+  int _rankingGeneration = 0;
   Future<void> _loadAll() async {
+    final generation = ++_rankingGeneration;
     if (!widget.sessionStore.isSignedIn) return;
     setState(() => _loading = true);
     try {
@@ -83,14 +88,18 @@ class _FriendsPageState extends State<FriendsPage>
         _api.friends(),
         _api.invites(),
         _api.getSuggestions(nearby: false),
-        _api.getWeeklyLeaderboard(),
+        _api.getWeeklyLeaderboard(
+          criterion: _rankCriterion,
+          period: _rankPeriod,
+        ),
       ]);
-      if (mounted) {
+      if (mounted && generation == _rankingGeneration) {
         setState(() {
           _friends = results[0];
           _invites = results[1];
           _suggestions = results[2];
           _leaderboard = results[3];
+          _rankingError = null;
         });
       }
       if (_nearbyOptIn) {
@@ -98,9 +107,16 @@ class _FriendsPageState extends State<FriendsPage>
         if (mounted) setState(() => _nearbySuggestions = nearby);
       }
     } catch (_) {
-      // Offline fallback
+      if (mounted && generation == _rankingGeneration) {
+        setState(
+          () =>
+              _rankingError = 'Sem conexão. O placar pode estar desatualizado.',
+        );
+      }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted && generation == _rankingGeneration) {
+        setState(() => _loading = false);
+      }
     }
   }
 
@@ -1108,7 +1124,60 @@ class _FriendsPageState extends State<FriendsPage>
   // -------------------------------------------------------------
   // TAB 4: Ranking Semanal (Leaderboard)
   // -------------------------------------------------------------
-  Widget _buildLeaderboardTab() {
+  Widget _buildLeaderboardTab() => Column(
+    children: [
+      SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+        child: Row(
+          children: [
+            for (final item in const {
+              'cats:weekly': 'Gatos · semana',
+              'cats:all': 'Gatos · geral',
+              'missions:weekly': 'Missões',
+              'milestones:all': 'Marcos',
+            }.entries)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(item.value),
+                  selected: '$_rankCriterion:$_rankPeriod' == item.key,
+                  onSelected: (_) {
+                    setState(() {
+                      _rankCriterion = item.key.split(':')[0];
+                      _rankPeriod = item.key.split(':')[1];
+                    });
+                    _loadAll();
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+        child: Text(
+          _rankCriterion == 'cats'
+              ? 'Gatos diferentes confirmados. Reencontros não somam outro gato.'
+              : _rankCriterion == 'missions'
+              ? 'Diária: 10 pontos · semanal: 30 pontos. Iniciais não entram.'
+              : 'Conquistas e desafios concluídos. Pontos permanentes conforme a dificuldade.',
+          textAlign: TextAlign.center,
+        ),
+      ),
+      if (_rankPeriod == 'weekly' && _leaderboard.isNotEmpty)
+        MilestoneCountdown(
+          resetAt: _leaderboard.first['reset_at'] as String?,
+          serverNow: _leaderboard.first['server_now'] as String?,
+          label: 'Nova semana em',
+          onExpired: _loadAll,
+        ),
+      if (_rankingError != null) Text(_rankingError!),
+      Expanded(child: _buildLeaderboardRows()),
+    ],
+  );
+
+  Widget _buildLeaderboardRows() {
     if (_leaderboard.isEmpty) {
       return SingleChildScrollView(
         child: BotanicalEmpty(
@@ -1136,7 +1205,7 @@ class _FriendsPageState extends State<FriendsPage>
           final entry = _leaderboard[index];
           final rank = entry['rank'] as int? ?? (index + 1);
           final username = entry['username']?.toString() ?? 'explorador';
-          final xp = entry['xp'] as int? ?? 0;
+          final score = entry['score'] as int? ?? 0;
           final level = entry['level'] as int? ?? 1;
           final streak = entry['streak'] as int? ?? 0;
           final isSelf = entry['is_self'] == true;
@@ -1272,7 +1341,7 @@ class _FriendsPageState extends State<FriendsPage>
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      '$xp XP',
+                      '$score ${_rankCriterion == 'cats' ? 'gatos' : 'pts'}',
                       style: GoogleFonts.nunito(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,

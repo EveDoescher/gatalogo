@@ -15,6 +15,10 @@ class HabitatAsset:
         return Path("assets/3d_assets") / self.pack / "Models" / self.folder / f"{self.name}.glb"
 
 
+VISITORS = tuple(HabitatAsset(f'animal-{species}', 'kenney_cube-pets_1.0', 'GLB_format')
+                 for species in ('dog', 'bee', 'bunny', 'chick', 'deer', 'fox', 'beaver', 'parrot', 'fish'))
+
+
 DECORATIONS = (
     HabitatAsset("bowl-cereal", "kenney_food-kit", "GLB_format"),
     HabitatAsset("bag", "kenney_food-kit", "GLB_format"),
@@ -45,3 +49,14 @@ DECORATIONS = (
     HabitatAsset("building-type-b", "kenney_city-kit-suburban_20", "GLB format"),
     HabitatAsset("building-type-c", "kenney_city-kit-suburban_20", "GLB format"),
 )
+
+# Exterior scenery uses the original pack camera, palette and lighting.
+EXTERIOR = tuple(HabitatAsset(name, 'kenney_nature-kit', 'GLTF_format') for name in (
+    'rock_smallB', 'rock_smallC', 'rock_smallFlatA', 'rock_largeC',
+    'rock_tallA', 'grass_leafs', 'grass_large', 'plant_flatTall',
+    'plant_bushTriangle', 'tree_small', 'tree_pineSmallA', 'tree_default_dark',
+))
+DECORATIONS += EXTERIOR
+
+RIVER_ASSETS = tuple(HabitatAsset(name, 'kenney_nature-kit', 'GLTF_format') for name in ('ground_riverTile', 'ground_riverSide', 'ground_riverCorner', 'ground_riverRocks'))
+DECORATIONS += RIVER_ASSETS

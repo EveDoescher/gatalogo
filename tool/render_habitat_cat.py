@@ -1,6 +1,7 @@
-"""Bake the original cat clips into shared sprite/shadow atlases, never runtime 3D."""
+"""Bake animal clips into shared sprite/shadow atlases, never runtime 3D."""
 
 import json
+import argparse
 from pathlib import Path
 
 import numpy as np
@@ -16,7 +17,7 @@ OUTPUT = ROOT / "assets/habitat/cat"
 SIZE = 160
 CLIPS = {"idle": (1, 12), "walk": (0.5, 8), "run": (0.25, 4),
          "eat": (0.5, 8), "dance": (0.5, 8),
-         "gesture-positive": (0.25, 4), "gesture-negative": (0.25, 4)}
+         "gesture-positive": (0.25, 4), "gesture-negative": (0.25, 4), "play": (3.6, 18)}
 
 
 def shadow_image(meshes, origin, scale):
@@ -33,6 +34,17 @@ def shadow_image(meshes, origin, scale):
 
 
 def main():
+    global SOURCE, OUTPUT, CLIPS
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--animal', choices=('cat', 'dog', 'bee', 'bunny', 'chick', 'deer', 'fox', 'beaver', 'parrot', 'fish'), default='cat')
+    animal = parser.parse_args().animal
+    SOURCE = SOURCE.with_name(f'animal-{animal}.glb')
+    OUTPUT = OUTPUT.parent / animal
+    CLIPS = ({'idle': (.25, 8), 'walk': (.25, 8)} if animal == 'bee' else
+             {'idle': (1, 12), 'walk': (.25, 8)} if animal == 'parrot' else
+             {'idle': (1, 12), 'walk': (.5, 8)} if animal == 'fish' else
+             {**CLIPS, 'play': (3.6, 18)} if animal == 'cat' else
+             {**{key: CLIPS[key] for key in ('idle', 'walk', 'eat')}, 'play': (3.6, 18)})
     OUTPUT.mkdir(parents=True, exist_ok=True)
     rest = load_model(SOURCE, ground=0)
     ground = min(mesh.positions[:, 1].min() for mesh in rest)
@@ -42,7 +54,10 @@ def main():
         frames = []
         for turn in range(4):
             for index in range(count):
-                meshes = load_model(SOURCE, animation=clip, time=index * duration / count, ground=ground, rotation=turn)
+                time = index * duration / count
+                meshes = load_model(SOURCE, animation=None if clip == 'play' else clip, time=time,
+                                    play_time=time if clip == 'play' else None,
+                                    flight_time=time if animal == 'bee' or animal in ('parrot', 'fish') and clip == 'walk' else None, ground=ground, rotation=turn)
                 frames.append(meshes)
                 vertices = np.concatenate([mesh.positions for mesh in meshes])
                 coordinates.extend((project(vertices), ground_projection(vertices, True)))

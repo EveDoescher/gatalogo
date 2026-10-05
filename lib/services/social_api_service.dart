@@ -72,8 +72,10 @@ class SocialApiService {
     return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
   }
 
-  Future<List<Map<String, dynamic>>> getWeeklyLeaderboard() =>
-      _list('/social/leaderboard/weekly');
+  Future<List<Map<String, dynamic>>> getWeeklyLeaderboard({
+    String criterion = 'cats',
+    String period = 'weekly',
+  }) => _list('/social/leaderboard/weekly?criterion=$criterion&period=$period');
 
   Future<void> registerDeviceToken(String token) async {
     final platform = defaultTargetPlatform == TargetPlatform.iOS
@@ -262,6 +264,7 @@ class SocialApiService {
 
   Future<Map<String, dynamic>> createPost({
     required String catName,
+    String? requestId,
     String note = '',
     String? locationName,
     String? photoBase64,
@@ -273,6 +276,7 @@ class SocialApiService {
       '/social/posts',
       {
         'cat_name': catName,
+        'request_id': ?requestId,
         'note': note,
         'location_name': ?locationName,
         'photo_base64': ?photoBase64,

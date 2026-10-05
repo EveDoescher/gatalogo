@@ -70,7 +70,7 @@ void main() {
               'completed': false,
             },
           ],
-          'challenges': [
+          'achievements': [
             for (var i = 0; i < 5; i++)
               {
                 'id': 'challenge_$i',
@@ -165,7 +165,7 @@ void main() {
             image.dispose();
           });
         }
-        await tester.tap(find.text('Habitat').last);
+        await tester.tap(find.text('Quintal').last);
         expect(selected, 4);
         await tester.pumpWidget(const SizedBox());
         store.dispose();
@@ -212,7 +212,7 @@ void main() {
         'weekly_missions': [
           {'id': 'weekly_record', 'title': 'Missão semanal'},
         ],
-        'challenges': [
+        'achievements': [
           {
             'id': 'first',
             'title': 'Primeira descoberta',
@@ -232,7 +232,7 @@ void main() {
         '2 / 3',
         '+17 XP',
         '+6',
-        '1 / 1',
+        'Obtida',
       ]) {
         expect(find.text(value), findsOneWidget);
       }

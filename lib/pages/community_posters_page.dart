@@ -1,3 +1,8 @@
+import 'package:flutter/services.dart';
+
+import '../models/missing_poster.dart';
+import '../widgets/missing_poster_artwork.dart';
+import '../widgets/poster_export_actions.dart';
 import '../widgets/botanical_scene.dart';
 import '../widgets/game_components.dart';
 import '../widgets/app_header_actions.dart';
@@ -171,9 +176,33 @@ class _CommunityCasePageState extends State<CommunityCasePage> {
     _data = _fetch();
   }
 
-  Future<Map<String, dynamic>> _fetch() =>
-      ProductApiService(widget.session)
-          .get('/social/reports/${widget.reportId}');
+  Future<Map<String, dynamic>> _fetch() async {
+    final api = ProductApiService(widget.session);
+    final data = await api.get('/social/reports/${widget.reportId}');
+    if (data['status'] == 'active' && data['photo_url'] != null) {
+      data['_photoBytes'] = await api.photo(data['photo_url'] as String);
+    }
+    return data;
+  }
+
+  Future<MissingPoster?> _prepare() async {
+    final data = await _fetch();
+    if (mounted) setState(() => _data = Future.value(data));
+    if (data['status'] != 'active') return null;
+    return MissingPoster.publicReport(
+      report: data,
+      photoBytes: data['_photoBytes'],
+    );
+  }
+
+  Future<bool> _publish(Map<String, dynamic> data) async {
+    await ProductApiService(widget.session).post(
+      '/social/reports/${widget.reportId}/${data['is_owner'] == true ? 'publish' : 'repost'}',
+    );
+    if (mounted) await AppStoreScope.maybeOf(context)?.refreshGamification();
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) => BotanicalScaffold(
     mood: BotanicalMood.care,
@@ -215,17 +244,11 @@ class _CommunityCasePageState extends State<CommunityCasePage> {
                 '${active ? 'Busca ativa' : 'Caso encerrado'} · ${data['author']}',
               ),
               const SizedBox(height: 20),
-              if (data['photo_url'] != null)
-                GamePhotoMount(
-                  child: Image.network(
-                    '${ApiConfig.baseUrl}${data['photo_url']}',
-                    headers: {
-                      'Authorization':
-                          'Bearer ${widget.session.session?.accessToken ?? ''}',
-                    },
-                    height: 260,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => const Icon(Icons.pets, size: 80),
+              if (active)
+                MissingPosterArtwork(
+                  poster: MissingPoster.publicReport(
+                    report: data,
+                    photoBytes: data['_photoBytes'],
                   ),
                 ),
               if (data['description'] != null)
@@ -248,12 +271,39 @@ class _CommunityCasePageState extends State<CommunityCasePage> {
                   ListTile(
                     leading: const Icon(Icons.phone_outlined),
                     title: SelectableText('${contact['phone']}'),
+                    trailing: IconButton(
+                      tooltip: 'Copiar telefone',
+                      icon: const Icon(Icons.copy),
+                      onPressed: () async {
+                        await Clipboard.setData(
+                          ClipboardData(text: '${contact['phone']}'),
+                        );
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Telefone copiado.')),
+                          );
+                        }
+                      },
+                    ),
                     subtitle: Text(
                       contact['whatsapp'] == true
                           ? 'Contato do tutor · WhatsApp'
                           : 'Contato do tutor',
                     ),
                   ),
+                const SizedBox(height: 20),
+                PosterExportActions(
+                  poster: MissingPoster.publicReport(
+                    report: data,
+                    photoBytes: data['_photoBytes'],
+                  ),
+                  prepare: _prepare,
+                  onCommunity: () => _publish(data),
+                  onShared: () async {},
+                  communityLabel: data['is_owner'] == true
+                      ? 'Publicar na comunidade'
+                      : 'Repostar na comunidade',
+                ),
               ] else
                 const Padding(
                   padding: EdgeInsets.only(top: 20),

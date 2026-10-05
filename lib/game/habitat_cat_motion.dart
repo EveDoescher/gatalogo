@@ -25,7 +25,7 @@ class HabitatCatMotion {
   HabitatCatClip get clip {
     if (visiting) {
       if (activity == 'feed' && !awaitingConsumption) return HabitatCatClip.eat;
-      if (activity == 'play') return HabitatCatClip.happy;
+      if (activity == 'play') return HabitatCatClip.play;
       return HabitatCatClip.idle;
     }
     return reaction ??
@@ -111,7 +111,14 @@ class HabitatCatMotion {
       if (targetItemId != null && route.isEmpty) {
         visiting = true;
         awaitingConsumption = activity == 'feed';
-        visitDuration = 8;
+        visitDuration = activity == 'play' ? 7.2 : 8;
+        if (activity == 'play' && targetPlacement != null) {
+          final dx = targetPlacement!.$1 - current.$1;
+          final dy = targetPlacement!.$2 - current.$2;
+          direction = dx.abs() >= dy.abs()
+              ? (dx >= 0 ? 3 : 1)
+              : (dy >= 0 ? 0 : 2);
+        }
         visitElapsed = animationTime = 0;
         if (_arrival != null && !_arrival!.isCompleted) {
           _arrival!.complete(true);

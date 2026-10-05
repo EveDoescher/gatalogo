@@ -19,7 +19,7 @@ O login por e-mail requer a API com PostgreSQL e SMTP configurados. Access e
 refresh tokens são guardados somente no armazenamento seguro do sistema; a fila
 e o catálogo permanecem no SQLite para funcionar sem rede.
 
-## Habitat
+## Quintal
 
 O cenário usa Flame com projeção isométrica fixa, sprites PNG e sombras
 pré-calculadas. Os modelos GLB são fontes de arte e não entram no app.
@@ -54,5 +54,29 @@ Para validar alterações e gerar capturas com a navegação do app:
 flutter analyze
 flutter test
 python -m unittest discover -s tool -p "test_habitat_*.py"
-flutter test tool/habitat_preview_test.dart --plain-name "capture Habitat with bottom navigation"
+flutter test tool/habitat_preview_test.dart --plain-name "capture Quintal with bottom navigation"
 ```
+
+
+### Quintal e Social — rodada 04/10/2026
+
+A implementação está detalhada em `docs/plano_habitat_social_2026-10-04.md`.
+O modo de loja gratuita é controlado pela API (`HABITAT_FREE_SHOP=true`),
+sem substituir saldo, inventário ou progressão por dados de demonstração.
+A galeria contém somente fixtures de teste e não usa contas de produção.
+
+Para reproduzir as animações e a galeria no Windows:
+
+```powershell
+$species = 'cat','dog','bee','bunny','chick','deer','fox','beaver','parrot','fish'
+foreach ($animal in $species) { python tool/render_habitat_cat.py --animal $animal }
+$env:GATALOGO_CAPTURE_ALL = '1'
+$env:GATALOGO_CAPTURE_MOTION = '1'
+flutter test test/visual_validation_capture_test.dart test/habitat_visit_capture_test.dart
+python tool/build_habitat_motion_gallery.py
+Remove-Item Env:GATALOGO_CAPTURE_ALL, Env:GATALOGO_CAPTURE_MOTION
+```
+
+Resultado em `build/galeria-visual/galeria.html`, com link para movimentos.
+Os novos GLBs são do mesmo pacote Kenney existente, com sua licença preservada;
+`tool/recover_habitat_decor.py` também recupera as fontes dos visitantes quando faltarem.

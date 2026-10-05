@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../stores/cat_store.dart';
 import '../widgets/progress_components.dart';
 import '../widgets/game_components.dart';
+import 'journey_page.dart';
 
 class ChallengesPage extends StatelessWidget {
   const ChallengesPage({super.key, required this.store});
@@ -27,7 +28,7 @@ class ChallengesPage extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          'Álbum de conquistas',
+                          'Desafios da temporada',
                           style: GameStyle.title(26),
                         ),
                       ),
@@ -41,14 +42,23 @@ class ChallengesPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Um espaço para cada descoberta. Complete as peças no seu ritmo.',
+                    'Jornadas longas, etapas claras e prêmios exclusivos. Cada desafio pertence a uma temporada.',
                   ),
                   const SizedBox(height: 20),
                   if (store.progress.challenges.isEmpty)
                     const RecordStateNotice(
                       state: 'local',
-                      reason: 'Conecte sua conta para acompanhar desafios e créditos confirmados. Suas fotos continuam salvas.',
+                      reason: 'Ainda não há uma temporada ativa. Suas missões e conquistas continuam disponíveis no mural.',
                     ),
+                  TextButton(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => JourneyPage(store: store),
+                      ),
+                    ),
+                    child: const Text('Ver minhas missões e conquistas'),
+                  ),
                   LayoutBuilder(
                     builder: (context, box) {
                       final columns = box.maxWidth >= 620 ? 2 : 1;

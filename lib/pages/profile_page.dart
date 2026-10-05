@@ -1,3 +1,4 @@
+import '../widgets/milestone_widgets.dart';
 import '../widgets/botanical_scene.dart';
 import '../widgets/app_header_actions.dart';
 
@@ -438,7 +439,11 @@ class _ProfilePageState extends State<ProfilePage> {
         _account?['username'] as String? ??
         (isSignedIn && email.isNotEmpty ? email.split('@').first : 'Visitante');
     final discoveries = widget.catStore?.discoveries ?? [];
-    final totalCats = discoveries.length;
+    final totalCats =
+        (widget.catStore?.progress.summary['confirmed_individuals'] as num?)
+            ?.toInt() ??
+        widget.catStore?.individuals.length ??
+        0;
 
     final journeyList = widget.catStore != null
         ? localJourney(widget.catStore!)
@@ -650,7 +655,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       for (final stat in <(String, String, String)>[
                         (
                           '$totalCats',
-                          'Gatos salvos',
+                          'Gatos diferentes',
                           'ui/ui_cat_photos_stack',
                         ),
                         (
@@ -675,6 +680,69 @@ class _ProfilePageState extends State<ProfilePage> {
                     ],
                   ),
                 ),
+                const SizedBox(height: 20),
+                if (widget.catStore != null && isSignedIn)
+                  GameNote(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Medalhas em destaque',
+                                style: GameStyle.title(20),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => JourneyPage(
+                                    store: widget.catStore!,
+                                    initialSection: 'achievement',
+                                  ),
+                                ),
+                              ),
+                              child: const Text('Escolher'),
+                            ),
+                          ],
+                        ),
+                        if ((widget
+                                        .catStore!
+                                        .progress
+                                        .summary['highlighted_medals']
+                                    as List? ??
+                                [])
+                            .isEmpty)
+                          const Text(
+                            'Escolha até cinco medalhas no mural para contar sua história.',
+                          ),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: [
+                            for (final medal in journeyList.where(
+                              (g) =>
+                                  (widget
+                                                  .catStore!
+                                                  .progress
+                                                  .summary['highlighted_medals']
+                                              as List? ??
+                                          [])
+                                      .contains(g['id']) &&
+                                  g['completed'] == true,
+                            ))
+                              AchievementMedal(
+                                goal: medal,
+                                size: 70,
+                                onTap: () => showAchievement(context, medal),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 const SizedBox(height: 28),
 
                 Row(

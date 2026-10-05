@@ -631,6 +631,15 @@ class _SocialPageState extends State<SocialPage> {
       PublicProfilePage(username: author, sessionStore: widget.sessionStore),
     );
     void share() {
+      if (type == 'poster_repost' && payload['report_id'] != null) {
+        _open(
+          CommunityCasePage(
+            session: widget.sessionStore,
+            reportId: payload['report_id'].toString(),
+          ),
+        );
+        return;
+      }
       CatSharingService.sharePost(
         author: author,
         catName: cat,

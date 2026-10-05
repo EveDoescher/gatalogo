@@ -4,6 +4,8 @@ import 'package:catlogue/services/habitat_service.dart';
 import 'package:catlogue/stores/cat_store.dart';
 import 'package:catlogue/stores/session_store.dart';
 import 'package:flutter/material.dart';
+import 'package:flame/game.dart';
+import 'package:catlogue/game/habitat_game.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -30,7 +32,7 @@ class _HabitatDatabase implements CatDatabase {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('Habitat uses a full scene, floating menu, trays and full shop', (
+  testWidgets('Quintal uses a full scene, floating menu, trays and full shop', (
     tester,
   ) async {
     GoogleFonts.config.allowRuntimeFetching = false;
@@ -62,7 +64,7 @@ void main() {
     expect(find.text('Inventário'), findsNothing);
     expect(find.byTooltip('Aproximar'), findsNothing);
 
-    await tester.tap(find.byTooltip('Abrir ações do Habitat'));
+    await tester.tap(find.byTooltip('Abrir ações do Quintal'));
     await tester.pump();
     expect(find.text('Editar'), findsOneWidget);
     expect(find.text('Inventário'), findsOneWidget);
@@ -100,11 +102,65 @@ void main() {
 
     await tester.tap(find.byTooltip('Fechar bandeja'));
     await tester.pump();
-    await tester.tap(find.byTooltip('Abrir ações do Habitat'));
+    await habitat.place('path-0', 4, 4, 0);
+    await tester.pump();
+    await tester.ensureVisible(find.text('Recolher chão'));
+    await tester.pump();
+    await tester.tap(find.text('Recolher chão'));
+    await tester.pump();
+    final game =
+        (tester.widget(
+              find.byWidgetPredicate((w) => w is GameWidget),
+            ) as GameWidget).game
+            as HabitatGame;
+    final scene = find.byWidgetPredicate(
+      (w) => w is GestureDetector && w.onScaleStart != null,
+    );
+    final origin = tester.getTopLeft(scene) + game.groundAnchor(4, 4);
+    final first = await tester.startGesture(origin, pointer: 1);
+    final second = await tester.startGesture(
+      origin + const Offset(24, 0),
+      pointer: 2,
+    );
+    await first.moveBy(const Offset(-20, 0));
+    await second.moveBy(const Offset(20, 0));
+    await tester.pump();
+    await second.up();
+    await first.moveBy(const Offset(0, 24));
+    await first.up();
+    await tester.pump();
+    expect(
+      habitat.items.firstWhere((item) => item.id == 'path-0').isPlaced,
+      true,
+      reason: 'pinching, including release of one finger, must never collect ground',
+    );
+    await tester.tapAt(
+      tester.getTopLeft(scene) + game.groundAnchor(4, 4) + const Offset(0, 2),
+    );
+    await tester.pump();
+    expect(
+      habitat.items.firstWhere((item) => item.id == 'path-0').isPlaced,
+      false,
+      reason: 'an intentional tap must collect ground after the camera gesture',
+    );
+    await habitat.place('path-0', 4, 4, 0);
+    await tester.tap(find.text('Modo edição'));
+    await tester.pump();
+    await tester.dragFrom(
+      tester.getTopLeft(scene) + game.groundAnchor(4, 4),
+      const Offset(-40, 30),
+    );
+    await tester.pump();
+    expect(
+      habitat.items.firstWhere((item) => item.id == 'path-0').isPlaced,
+      true,
+      reason: 'normal panning never edits a previously selected ground tool',
+    );
+    await tester.tap(find.byTooltip('Abrir ações do Quintal'));
     await tester.pump();
     await tester.tap(find.text('Gatos'));
     await tester.pump();
-    expect(find.text('0/3 no habitat'), findsOneWidget);
+    expect(find.text('0/3 no quintal'), findsOneWidget);
     expect(
       find.text('Cadastre um gato em Meus Gatos para vê-lo aqui.'),
       findsOneWidget,
@@ -113,11 +169,11 @@ void main() {
 
     await tester.tap(find.byTooltip('Fechar bandeja'));
     await tester.pump();
-    await tester.tap(find.byTooltip('Abrir ações do Habitat'));
+    await tester.tap(find.byTooltip('Abrir ações do Quintal'));
     await tester.pump();
     await tester.tap(find.text('Loja'));
     await tester.pump();
-    expect(find.text('Loja do Habitat'), findsOneWidget);
+    expect(find.text('Loja do Quintal'), findsOneWidget);
     expect(find.text('Expandir terreno'), findsOneWidget);
     await tester.ensureVisible(find.text('Natureza'));
     await tester.tap(find.text('Natureza'));
@@ -134,10 +190,10 @@ void main() {
     await tester.pump();
     expect(find.text('Lago'), findsOneWidget);
     expect(find.text('Terra'), findsOneWidget);
-    await tester.tap(find.byTooltip('Voltar ao Habitat'));
+    await tester.tap(find.byTooltip('Voltar ao Quintal'));
     await tester.pump();
-    expect(find.text('Loja do Habitat'), findsNothing);
-    expect(find.byTooltip('Abrir ações do Habitat'), findsOneWidget);
+    expect(find.text('Loja do Quintal'), findsNothing);
+    expect(find.byTooltip('Abrir ações do Quintal'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     active.dispose();

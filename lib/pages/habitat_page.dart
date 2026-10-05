@@ -7,10 +7,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../game/habitat_game.dart';
+import '../services/habitat_navigation.dart';
 import '../game/habitat_sprites.dart';
 import '../services/habitat_service.dart';
 import '../services/product_api_service.dart';
 import '../widgets/habitat_care_sheet.dart';
+import '../widgets/habitat_reward_reveal.dart';
 import '../stores/cat_store.dart';
 import '../stores/session_store.dart';
 import '../theme/app_theme.dart';
@@ -19,6 +21,8 @@ import '../widgets/habitat_coin_badge.dart';
 import '../widgets/habitat_sprite_preview.dart';
 import 'habitat_help_page.dart';
 import 'habitat_shop_page.dart';
+
+enum _GroundTool { move, paint, collect }
 
 enum _HabitatTray { none, inventory, cats }
 
@@ -42,7 +46,7 @@ class HabitatPage extends StatefulWidget {
   State<HabitatPage> createState() => _HabitatPageState();
 }
 
-class _HabitatPageState extends State<HabitatPage> {
+class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
   late final HabitatService _habitat;
   late final HabitatSprites _sprites;
   late final HabitatGame _game;
@@ -59,6 +63,14 @@ class _HabitatPageState extends State<HabitatPage> {
   (int, int)? _hovered;
   int _rotation = 0;
   double _scaleStart = 1;
+  _GroundTool _groundTool = _GroundTool.move;
+  String? _groundSku;
+  bool _groundOnly = false, _cameraGesture = false;
+  int _scenePointers = 0;
+  Timer? _visitorTimer;
+  DateTime _nextVisitCheck = DateTime.fromMillisecondsSinceEpoch(0);
+  bool _foreground = true, _claimingGift = false;
+  String? _rewardLabel;
 
   @override
   void initState() {
@@ -71,6 +83,8 @@ class _HabitatPageState extends State<HabitatPage> {
     _game = HabitatGame(_habitat, _sprites);
     if (!widget.active.value) _game.pauseEngine();
     widget.active.addListener(_updateActivity);
+    WidgetsBinding.instance.addObserver(this);
+    HabitatNavigation.focusGift.addListener(_focusGift);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (widget.active.value) {
@@ -84,6 +98,9 @@ class _HabitatPageState extends State<HabitatPage> {
   @override
   void dispose() {
     widget.active.removeListener(_updateActivity);
+    WidgetsBinding.instance.removeObserver(this);
+    HabitatNavigation.focusGift.removeListener(_focusGift);
+    _visitorTimer?.cancel();
     _habitat.removeListener(_onHabitatChanged);
     if (widget.habitatService == null) _habitat.dispose();
     if (widget.sprites == null) _sprites.catAnimations.dispose();
@@ -109,12 +126,89 @@ class _HabitatPageState extends State<HabitatPage> {
     }
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _foreground = state == AppLifecycleState.resumed;
+    _updateActivity();
+  }
+
   void _updateActivity() {
-    if (widget.active.value) {
+    _visitorTimer?.cancel();
+    if (widget.active.value && _foreground) {
       _game.resumeEngine();
-      unawaited(_habitat.load());
+      unawaited(_loadVisit());
+      _visitorTimer = Timer.periodic(
+        const Duration(seconds: 8),
+        (_) => _tickVisit(),
+      );
     } else {
       _game.pauseEngine();
+    }
+  }
+
+  Future<void> _loadVisit() async {
+    await _habitat.load();
+    if (!mounted || !widget.active.value || !_foreground) return;
+    await _tickVisit();
+    _focusGift();
+  }
+
+  Future<void> _tickVisit() async {
+    if (!mounted || _editing || !widget.active.value || !_foreground) return;
+    if (DateTime.now().isAfter(_nextVisitCheck)) {
+      _nextVisitCheck = DateTime.now().add(const Duration(minutes: 1));
+      await _habitat.checkVisitors();
+    }
+    final gift = _habitat.pendingGift;
+    if (gift?['state'] == 'visiting') {
+      final created = DateTime.tryParse(gift!['created_at'].toString());
+      if (created != null &&
+          _habitat.serverNow.difference(created).inSeconds >= 22) {
+        try {
+          await _habitat.giftAction('deliver');
+          if (mounted) {
+            _message('Um visitante deixou um presente do lado de fora!');
+            unawaited(widget.catStore.notifications.refresh());
+          }
+        } on ProductApiException {
+          /* Retry on the next active tick. */
+        }
+      }
+    }
+  }
+
+  void _focusGift() {
+    if (!mounted ||
+        _habitat.loading ||
+        !widget.active.value ||
+        HabitatNavigation.focusGift.value == null) {
+      return;
+    }
+    if (_habitat.pendingGift?['id'] == HabitatNavigation.focusGift.value &&
+        _game.size.x > 0) {
+      _game.focusGift();
+    } else {
+      _message('Este presente já foi recolhido.');
+    }
+    HabitatNavigation.focusGift.value = null;
+  }
+
+  Future<void> _collectGift() async {
+    if (_claimingGift) return;
+    setState(() => _claimingGift = true);
+    try {
+      final reward = await _habitat.giftAction('claim');
+      if (!mounted) return;
+      final label = reward['coins'] != null
+          ? '+${reward['coins']} moedas'
+          : reward['portions'] != null
+          ? '+${reward['portions']} porções'
+          : _habitat.definition(reward['sku'].toString()).name;
+      setState(() => _rewardLabel = label);
+    } on ProductApiException catch (error) {
+      _message(error.message);
+    } finally {
+      if (mounted) setState(() => _claimingGift = false);
     }
   }
 
@@ -133,6 +227,7 @@ class _HabitatPageState extends State<HabitatPage> {
         continue;
       }
       final type = _habitat.definition(item.sku);
+      if (_groundOnly && !type.isGround) continue;
       if (type.isGround) {
         if (_habitat.occupiedCells(item).contains(cell)) groundItem = item;
         continue;
@@ -166,6 +261,10 @@ class _HabitatPageState extends State<HabitatPage> {
       _selectedItemId = item.id;
       _game.selectedItemId = item.id;
       _rotation = item.rotation;
+      _groundTool = _habitat.definition(item.sku).isGround && !item.isPlaced
+          ? _GroundTool.paint
+          : _GroundTool.move;
+      _groundSku = _habitat.definition(item.sku).isGround ? item.sku : null;
     });
     final type = _habitat.definition(item.sku);
     unawaited(
@@ -177,6 +276,8 @@ class _HabitatPageState extends State<HabitatPage> {
   }
 
   void _clearSelection() {
+    _groundTool = _GroundTool.move;
+    _groundSku = null;
     _selectedItemId = null;
     _game.selectedItemId = null;
     _clearPreview();
@@ -236,15 +337,13 @@ class _HabitatPageState extends State<HabitatPage> {
     final item = _habitat.items.where((entry) => entry.id == id).firstOrNull;
     if (item == null) return;
     try {
-      final placed = _habitat.definition(item.sku).isGround
-          ? await _habitat.paintGround(item.sku, [cell]) > 0
-          : await _habitat.place(
-              id,
-              cell.$1,
-              cell.$2,
-              id == _selectedItemId ? _rotation : item.rotation,
-            );
-      if (placed && !_habitat.definition(item.sku).isGround) {
+      final placed = await _habitat.place(
+        id,
+        cell.$1,
+        cell.$2,
+        id == _selectedItemId ? _rotation : item.rotation,
+      );
+      if (placed) {
         setState(_clearSelection);
       } else if (!placed) {
         _message('Esta posição não está disponível.');
@@ -261,7 +360,7 @@ class _HabitatPageState extends State<HabitatPage> {
       if (!placed) {
         _message(
           _habitat.selectedCatIds.length >= _habitat.catCapacity
-              ? 'O Habitat já está na capacidade máxima de gatos.'
+              ? 'O Quintal já está na capacidade máxima de gatos.'
               : 'Escolha uma célula livre para o gato.',
         );
       }
@@ -282,6 +381,10 @@ class _HabitatPageState extends State<HabitatPage> {
 
   Future<void> _tapCell(Offset position) async {
     if (!_editing) {
+      if (_game.giftAt(position)) {
+        await _collectGift();
+        return;
+      }
       if (_game.catAtScreen(position) case final id?) {
         await _showCatCare(id);
       } else if (_game.itemAtScreen(position) case final item?) {
@@ -293,19 +396,20 @@ class _HabitatPageState extends State<HabitatPage> {
       }
       return;
     }
-    if (_selectedItem case final item?) {
-      final cell = _game.cellAt(position);
-      if (cell == null) return;
-      if (_habitat.definition(item.sku).isGround) {
-        await _paintGround(item.sku, [cell]);
-      } else {
-        await _dropItem(item.id, cell);
-      }
+    final target = _game.cellAt(position);
+    if (_groundTool != _GroundTool.move && target != null) {
+      await _applyGroundStroke([target]);
       return;
     }
-    if (_game.itemAtScreen(position) case final item?) {
-      _selectItem(item);
+    if (_selectedItem case final item?) {
+      if (target != null) await _dropItem(item.id, target);
       return;
+    }
+    if (!_groundOnly) {
+      if (_game.itemAtScreen(position) case final item?) {
+        _selectItem(item);
+        return;
+      }
     }
     final cell = _game.cellAt(position);
     if (cell == null) return;
@@ -376,6 +480,7 @@ class _HabitatPageState extends State<HabitatPage> {
     try {
       if (action == 'pet') {
         await _habitat.interact(action, id);
+        await widget.catStore.refreshGamification();
         await _game.greetCat(id);
       } else {
         _message('O gatinho vai até o potinho para comer.');
@@ -445,6 +550,7 @@ class _HabitatPageState extends State<HabitatPage> {
     if (water != true || !mounted) return;
     try {
       await _habitat.interact('water', item.id);
+      await widget.catStore.refreshGamification();
       if (mounted) _message('Canteiro regado.');
     } on HabitatConflictException {
       if (mounted) await _resolveConflict();
@@ -468,7 +574,7 @@ class _HabitatPageState extends State<HabitatPage> {
     final keepLocal = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Habitat atualizado em outro dispositivo'),
+        title: const Text('Quintal atualizado em outro dispositivo'),
         content: const Text(
           'Quer manter a organização feita aqui ou carregar a versão mais recente?',
         ),
@@ -548,90 +654,121 @@ class _HabitatPageState extends State<HabitatPage> {
         unawaited(_dropItem(details.data.substring(5), cell));
       }
     },
-    builder: (context, _, _) => GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapUp: (details) => _tapCell(details.localPosition),
-      onScaleStart: (details) {
-        _scaleStart = _game.zoom;
-        _pathStroke.clear();
-        if (_selectedItem case final item?) {
-          if (_habitat.definition(item.sku).isGround) {
-            if (_game.cellAt(details.localFocalPoint) case final cell?) {
-              _extendPathStroke(cell);
+    builder: (context, _, _) => Listener(
+      onPointerDown: (_) {
+        if (_scenePointers == 0) {
+          _cameraGesture = false;
+        }
+        _scenePointers++;
+        if (_scenePointers > 1) {
+          _cameraGesture = true;
+          _pathStroke.clear();
+        }
+      },
+      onPointerUp: (_) {
+        if (_scenePointers > 0) {
+          _scenePointers--;
+        }
+      },
+      onPointerCancel: (_) {
+        if (_scenePointers > 0) {
+          _scenePointers--;
+        }
+      },
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapUp: (details) => _tapCell(details.localPosition),
+        onScaleStart: (details) {
+          _scaleStart = _game.zoom;
+          _pathStroke.clear();
+          if (_editing &&
+              (_selectedItem != null || _groundTool == _GroundTool.collect)) {
+            if (_groundTool != _GroundTool.move) {
+              if (_game.cellAt(details.localFocalPoint) case final cell?) {
+                _extendPathStroke(cell);
+              }
             }
           }
-        }
-      },
-      onScaleUpdate: (details) {
-        if (details.pointerCount > 1) {
-          _game.scaleCamera(
-            _scaleStart * details.scale,
-            details.localFocalPoint,
-          );
-          setState(() {});
-        } else if (_selectedItem case final item?) {
-          if (_habitat.definition(item.sku).isGround) {
-            if (_game.cellAt(details.localFocalPoint) case final cell?) {
-              _extendPathStroke(cell);
+        },
+        onScaleUpdate: (details) {
+          if (details.pointerCount > 1) {
+            _cameraGesture = true;
+            _pathStroke.clear();
+            _game.scaleCamera(
+              _scaleStart * details.scale,
+              details.localFocalPoint,
+            );
+            setState(() {});
+          } else if (_editing && _groundTool != _GroundTool.move) {
+            if (!_cameraGesture) {
+              if (_game.cellAt(details.localFocalPoint) case final cell?) {
+                _extendPathStroke(cell);
+              }
+            }
+          } else if (_selectedItem != null) {
+            if (!_cameraGesture) _preview(details.localFocalPoint);
+          } else {
+            _game.moveCamera(details.focalPointDelta);
+            if (_editing) setState(() {});
+          }
+        },
+        onScaleEnd: (_) {
+          if (_editing && !_cameraGesture) {
+            if (_groundTool != _GroundTool.move && _pathStroke.isNotEmpty) {
+              unawaited(_applyGroundStroke(Set.of(_pathStroke)));
+            } else if (_selectedItem case final item?) {
+              if (_hovered case final cell?) {
+                unawaited(_dropItem(item.id, cell));
+              }
             }
           }
-          _preview(details.localFocalPoint);
-        } else {
-          _game.moveCamera(details.focalPointDelta);
-          if (_editing) setState(() {});
-        }
-      },
-      onScaleEnd: (_) {
-        if (_selectedItem case final item?) {
-          if (_habitat.definition(item.sku).isGround &&
-              _pathStroke.isNotEmpty) {
-            unawaited(_paintGround(item.sku, Set.of(_pathStroke)));
-          } else if (_hovered case final cell?) {
-            unawaited(_dropItem(item.id, cell));
+          _pathStroke.clear();
+          _clearPreview();
+        },
+        onLongPressStart: (details) {
+          if (!_editing) return;
+          if (!_groundOnly &&
+              _game.itemAtScreen(details.localPosition) != null) {
+            final item = _game.itemAtScreen(details.localPosition)!;
+            _selectItem(item);
+            return;
           }
-        }
-        _pathStroke.clear();
-        _clearPreview();
-      },
-      onLongPressStart: (details) {
-        if (!_editing) return;
-        if (_game.itemAtScreen(details.localPosition) case final item?) {
-          _selectItem(item);
-          return;
-        }
-        if (_game.catAtScreen(details.localPosition) case final id?) {
-          setState(() => _draggingCatId = id);
-          return;
-        }
-        final cell = _game.cellAt(details.localPosition);
-        if (cell == null) return;
-        if (_itemAt(cell) case final item?) {
-          _selectItem(item);
-        } else if (_catAt(cell) case final id?) {
-          setState(() => _draggingCatId = id);
-        }
-      },
-      onLongPressMoveUpdate: (details) {
-        if (_selectedItem != null || _draggingCatId != null) {
-          _preview(details.localPosition);
-        }
-      },
-      onLongPressEnd: (_) {
-        if (_hovered case final cell?) {
-          if (_draggingCatId case final id?) {
-            unawaited(_dropCat(id, cell));
-          } else if (_selectedItem case final item?) {
-            unawaited(_dropItem(item.id, cell));
+          if (!_groundOnly) {
+            if (_game.catAtScreen(details.localPosition) case final id?) {
+              setState(() => _draggingCatId = id);
+              return;
+            }
           }
-        }
-        setState(() => _draggingCatId = null);
-        _clearPreview();
-      },
-      child: GameWidget(
-        game: _game,
-        loadingBuilder: (_) => const ColoredBox(
-          color: Color(0xFFA4C77A),
-          child: Center(child: CircularProgressIndicator()),
+          final cell = _game.cellAt(details.localPosition);
+          if (cell == null) return;
+          if (_itemAt(cell) case final item?) {
+            _selectItem(item);
+          } else if (_catAt(cell) case final id?) {
+            setState(() => _draggingCatId = id);
+          }
+        },
+        onLongPressMoveUpdate: (details) {
+          if (_selectedItem != null || _draggingCatId != null) {
+            _preview(details.localPosition);
+          }
+        },
+        onLongPressEnd: (_) {
+          if (_hovered case final cell?) {
+            if (_draggingCatId case final id?) {
+              unawaited(_dropCat(id, cell));
+            } else if (_selectedItem case final item?) {
+              unawaited(_dropItem(item.id, cell));
+            }
+          }
+          setState(() => _draggingCatId = null);
+          _clearPreview();
+        },
+        child: GameWidget(
+          game: _game,
+          loadingBuilder: (_) => const ColoredBox(
+            color: Color(0xFFA4C77A),
+            child: Center(child: CircularProgressIndicator()),
+          ),
         ),
       ),
     ),
@@ -709,7 +846,7 @@ class _HabitatPageState extends State<HabitatPage> {
           color: AppColors.greenButton,
           onTap: () => setState(() => _menuOpen = !_menuOpen),
           size: 52,
-          tooltip: _menuOpen ? 'Fechar ações' : 'Abrir ações do Habitat',
+          tooltip: _menuOpen ? 'Fechar ações' : 'Abrir ações do Quintal',
         ),
       ],
     ),
@@ -796,12 +933,20 @@ class _HabitatPageState extends State<HabitatPage> {
           ],
         ),
         const SizedBox(height: 9),
+        if (_habitat.selectedCatIds.isNotEmpty && !_editing)
+          Tooltip(
+            message: 'Conforto acessível, carinho e alimentação de hoje aumentam a satisfação e a chance de presentes.',
+            child: Chip(
+              avatar: const Icon(LucideIcons.heart, size: 18),
+              label: Text('Satisfação ${_habitat.satisfaction}%'),
+            ),
+          ),
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             HabitatCoinBadge(balance: _habitat.balance),
             IconButton.filledTonal(
-              tooltip: 'Ajuda do Habitat',
+              tooltip: 'Ajuda do Quintal',
               onPressed: () => setState(() {
                 _showHelp = true;
                 _menuOpen = false;
@@ -828,6 +973,69 @@ class _HabitatPageState extends State<HabitatPage> {
             ),
           ),
       ],
+    ),
+  );
+
+  Future<void> _applyGroundStroke(Iterable<(int, int)> cells) async {
+    try {
+      if (_groundTool == _GroundTool.collect) {
+        await _habitat.collectGround(cells);
+      } else if (_groundSku != null) {
+        await _paintGround(_groundSku!, cells);
+      }
+    } on ProductApiException catch (error) {
+      _message(error.message);
+    }
+  }
+
+  Widget _groundTools() => Positioned(
+    left: 12,
+    right: 12,
+    top: MediaQuery.paddingOf(context).top + 88,
+    child: Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(16),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (final tool in _GroundTool.values)
+              TextButton(
+                onPressed: tool == _GroundTool.paint && _groundSku == null
+                    ? null
+                    : () => setState(() {
+                        _groundTool = tool;
+                        _clearPreview();
+                      }),
+                style: TextButton.styleFrom(
+                  foregroundColor: _groundTool == tool
+                      ? AppColors.primaryDark
+                      : AppColors.textMedium,
+                ),
+                child: Text(switch (tool) {
+                  _GroundTool.move => 'Selecionar / mover',
+                  _GroundTool.paint => 'Pintar',
+                  _GroundTool.collect => 'Recolher chão',
+                }),
+              ),
+            IconButton(
+              tooltip: _groundOnly
+                  ? 'Selecionar objetos'
+                  : 'Selecionar chão sob objetos',
+              onPressed: () => setState(() {
+                _clearSelection();
+                _groundOnly = !_groundOnly;
+              }),
+              icon: Icon(
+                LucideIcons.layers,
+                color: _groundOnly
+                    ? AppColors.primaryDark
+                    : AppColors.textMedium,
+              ),
+            ),
+          ],
+        ),
+      ),
     ),
   );
 
@@ -926,7 +1134,7 @@ class _HabitatPageState extends State<HabitatPage> {
                   ),
                   if (!isInventory)
                     Text(
-                      '${_habitat.selectedCatIds.length}/${_habitat.catCapacity} no habitat',
+                      '${_habitat.selectedCatIds.length}/${_habitat.catCapacity} no quintal',
                       style: GoogleFonts.nunito(color: AppColors.textMedium),
                     ),
                   IconButton(
@@ -1103,8 +1311,51 @@ class _HabitatPageState extends State<HabitatPage> {
         Positioned.fill(child: _scene()),
         if (_habitat.loading) const Center(child: CircularProgressIndicator()),
         if (_editing) _selectedControls(),
+        if (_editing) _groundTools(),
+        if (_habitat.pendingGift?['state'] == 'available')
+          Positioned(
+            left: 12,
+            right: 12,
+            top:
+                MediaQuery.paddingOf(context).top +
+                (_editing
+                    ? 144
+                    : _habitat.selectedCatIds.isEmpty
+                    ? 108
+                    : 160),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _claimingGift ? null : _game.focusGift,
+                    icon: const Icon(LucideIcons.gift),
+                    label: Text(
+                      _claimingGift ? 'Abrindo…' : 'Ver presente lá fora',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                IconButton.filledTonal(
+                  tooltip: 'Abrir presente disponível',
+                  onPressed: _claimingGift ? null : _collectGift,
+                  icon: const Icon(LucideIcons.packageOpen),
+                ),
+              ],
+            ),
+          ),
         if (_tray != _HabitatTray.none) _trayPanel(),
         SafeArea(child: Stack(children: [_hud(), _floatingMenu()])),
+        if (_rewardLabel case final label?)
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: MediaQuery.paddingOf(context).bottom + 82,
+            child: HabitatRewardReveal(
+              label: label,
+              onClose: () => setState(() => _rewardLabel = null),
+            ),
+          ),
         if (_showShop)
           Positioned.fill(
             child: HabitatShopPage(

@@ -1,4 +1,8 @@
+import 'package:catlogue/widgets/milestone_widgets.dart';
 import 'package:catlogue/game/habitat_game.dart';
+import 'package:flame/game.dart';
+import 'package:catlogue/services/habitat_navigation.dart';
+import 'package:catlogue/widgets/habitat_reward_reveal.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'dart:convert';
@@ -98,6 +102,19 @@ void main() {
     tester,
   ) async {
     FlutterSecureStorage.setMockInitialValues({});
+    // No native audio plugin is available in renderer-only widget captures.
+    for (final name in [
+      'xyz.luan/audioplayers.global/events',
+      'xyz.luan/audioplayers.global',
+    ]) {
+      final channel = MethodChannel(name);
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (_) async => null);
+      addTearDown(
+        () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(channel, null),
+      );
+    }
     const paths = MethodChannel('plugins.flutter.io/path_provider');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
@@ -133,27 +150,12 @@ void main() {
         ).absolute.path,
       );
     }
-    store.progress.summary = {
-      'xp': 130,
-      'level': 2,
-      'level_title': 'Explorador',
-      'level_min_xp': 100,
-      'target_xp': 300,
-      'balance': 47,
-      'daily_missions': [
-        {
-          'id': 'daily',
-          'title': 'Registre uma nova descoberta',
-          'description': 'Encontre e fotografe um gato no seu dia.',
-          'progress': 0,
-          'target': 1,
-          'xp_reward': 50,
-          'coin_reward': 50,
-        },
-      ],
-      'weekly_missions': [],
-      'challenges': [],
-    };
+    final milestoneFixture = jsonDecode(
+      File('test/fixtures/milestones_v2.json').readAsStringSync(),
+    ) as Map;
+    store.progress.summary = Map<String, dynamic>.from(
+      milestoneFixture['basic'] as Map,
+    );
     store.progress.results = [
       {
         'event_id': 'event',
@@ -366,52 +368,122 @@ void main() {
         body: LibraryPage(catStore: store, initialTab: 1),
       ),
       'achievements_progress': JourneyPage(store: store),
-      'achievements_medals': JourneyPage(store: store),
+      'achievements_medals': JourneyPage(
+        store: store,
+        initialSection: 'achievement',
+      ),
     };
     final basicProgress = store.progress.summary;
-    final populatedProgress = {
-      ...basicProgress,
-      'weekly_missions': [
-        for (final title in ['Guarde uma nova lembrança', 'Volte ao seu álbum'])
-          {
-            'id': title,
-            'title': title,
-            'progress': 1,
-            'target': 2,
-            'xp_reward': 30,
-            'coin_reward': 15,
-          },
+    final populatedProgress = Map<String, dynamic>.from(
+      milestoneFixture['populated'] as Map,
+    );
+    screens['missions_paused'] = JourneyPage(store: store);
+    screens['public_profile_medals'] = screens['public_profile']!;
+    screens['missions_initial_progress'] = JourneyPage(
+      store: store,
+      initialSection: 'initial',
+    );
+    screens['missions_weekly_progress'] = JourneyPage(
+      store: store,
+      initialSection: 'weekly',
+    );
+    screens['seasonal_challenges'] = JourneyPage(
+      store: store,
+      initialSection: 'challenge',
+    );
+    screens['medal_celebration_progress'] = Scaffold(
+      body: SafeArea(
+        child: AchievementPresentation(
+          goal: Map<String, dynamic>.from(
+            (populatedProgress['achievements'] as List).first as Map,
+          ),
+          celebration: true,
+        ),
+      ),
+    );
+    for (final name in [
+      'habitat_gift',
+      'habitat_expanded',
+      'habitat_edit_ground',
+      'habitat_outskirts_north',
+      'habitat_outskirts_south',
+      'habitat_outskirts_east',
+      'habitat_outskirts_west',
+    ]) {
+      screens[name] = screens['habitat']!;
+    }
+    screens['poster_details'] = screens['poster']!;
+    screens['poster_settings'] = MissingCatPosterPage(
+      catStore: store,
+      cat: store.pets.first,
+      report: Map.of(sampleReport),
+      initialEditing: true,
+    );
+    screens['poster_contacts'] = screens['poster_settings']!;
+    screens['composer_text'] = PostComposer(
+      session: signedSession,
+      initialNote: 'Hoje encontrei um gatinho na praça. Ficou observando as folhas por um tempão. 🌿',
+    );
+    screens['social_text'] = IllustratedNavigationScaffold(
+      index: 1,
+      onSelect: (_) {},
+      body: SocialPage(
+        sessionStore: signedSession,
+        catStore: store,
+        api: CommunityFixture(signedSession, photo, textOnlyFirst: true),
+      ),
+    );
+    screens['composer_photo'] = PostComposer(
+      session: signedSession,
+      initialCat: store.pets.first,
+      initialNote: 'Uma pausa no sol da tarde.',
+    );
+    screens['habitat_reward'] = Stack(
+      children: [
+        screens['habitat']!,
+        Positioned(
+          left: 16,
+          right: 16,
+          bottom: 180,
+          child: HabitatRewardReveal(label: '+12 moedas', onClose: () {}),
+        ),
       ],
-      'challenges': [
-        for (var i = 0; i < 5; i++)
-          {
-            'id': 'album-$i',
-            'title': [
-              'Primeira descoberta',
-              'Novas histórias',
-              'Olhares curiosos',
-              'Meu álbum',
-              'Dias de passeio',
-            ][i],
-            'progress': i == 0 ? 5 : (i == 1 ? 2 : 0),
-            'target': 5,
-            'completed': i == 0,
-            'xp_reward': 50,
-            'coin_reward': 25,
-          },
-      ],
-    };
+    );
     var filled = false;
     await http.runWithClient(
       () async {
         for (final entry in screens.entries) {
+          final only = Platform.environment['GATALOGO_CAPTURE_ONLY'];
+          if (only != null && entry.key != only) continue;
           filled = entry.key.endsWith('_filled');
           store.progress.summary =
               entry.key.endsWith('_progress') ||
                   entry.key == 'achievements_medals'
               ? populatedProgress
+              : entry.key == 'missions_paused'
+              ? {...basicProgress, 'rewards_enabled': false}
               : basicProgress;
           store.notifications.clear();
+          if (entry.key == 'shop') {
+            habitat.freeShop = true;
+            habitat.shop = [
+              for (final item in habitat.shop)
+                HabitatShopItem.fromMap({
+                  ...item.toMap(),
+                  'base_price': item.price,
+                  'price': 0,
+                  'purchasable': item.price > 0,
+                }),
+            ];
+          }
+          if (entry.key == 'shop') {
+            await tester.runAsync(
+              () => Future.wait([
+                for (final item in habitat.shop)
+                  sprites.preview(sprites.keyFor(item.sprite, 0)),
+              ]),
+            );
+          }
           debugPrint('CAPTURE ${entry.key}: start');
           final captureKey = GlobalKey();
           await tester.pumpWidget(
@@ -447,14 +519,73 @@ void main() {
             await tester.tap(find.text(friendTab).first);
             await tester.pump(const Duration(milliseconds: 400));
           }
-          if (entry.key == 'habitat') {
+          if (entry.key.startsWith('habitat') && entry.key != 'habitat_help') {
+            final game =
+                (tester.widget(
+                      find.byWidgetPredicate((w) => w is GameWidget),
+                    ) as GameWidget).game
+                    as HabitatGame;
+            var loaded = false;
+            Future<void>.value(game.toBeLoaded()).then((_) => loaded = true);
+            for (var attempt = 0; attempt < 40 && !loaded; attempt++) {
+              await tester.runAsync(
+                () => Future<void>.delayed(const Duration(milliseconds: 50)),
+              );
+              await tester.pump(const Duration(milliseconds: 50));
+            }
+            expect(loaded, true, reason: '${entry.key}: scene assets loaded');
+            if (entry.key.startsWith('habitat_outskirts_')) {
+              game.scaleCamera(.65, Offset(game.size.x / 2, game.size.y / 2));
+              final direction = switch (entry.key) {
+                'habitat_outskirts_north' => const Offset(0, 1),
+                'habitat_outskirts_south' => const Offset(0, -1),
+                'habitat_outskirts_east' => const Offset(-1, 0),
+                _ => const Offset(1, 0),
+              };
+              game.moveCamera(
+                Offset(
+                  direction.dx * game.size.x * .65,
+                  direction.dy * game.size.y * .65,
+                ),
+              );
+            }
+            if (entry.key == 'habitat_expanded') {
+              habitat.expansionLevel = 2;
+              habitat.buildableCells = HabitatService.yardCells(2);
+            }
+            if (entry.key == 'habitat_gift' ||
+                entry.key == 'habitat_expanded') {
+              habitat.pendingGift = {
+                'id': 'fixture-gift',
+                'state': 'available',
+                'visitor': 'bee',
+              };
+              HabitatNavigation.hasGift.value = true;
+              await habitat.place('guest-cat_bed', 2, 2, 0);
+              game.focusGift();
+            }
             await tester.pump(const Duration(seconds: 2));
+            await tester.pump(const Duration(seconds: 1));
+            for (var frame = 0; frame < 45; frame++) {
+              await tester.pump(const Duration(milliseconds: 16));
+            }
+            if (entry.key == 'habitat_edit_ground') {
+              await tester.tap(find.byTooltip('Abrir ações do Quintal'));
+              await tester.pump();
+              await tester.tap(find.text('Editar'));
+              await tester.pump();
+            }
           } else {
             await tester.pump(const Duration(milliseconds: 600));
           }
-          if (entry.key == 'add_pet_details' ||
-              entry.key == 'cat_gallery_angles' ||
-              entry.key == 'achievements_medals') {
+          if (entry.key == 'composer_text') {
+            tester.view.viewInsets = const FakeViewPadding(bottom: 280);
+            await tester.pump(const Duration(milliseconds: 300));
+          }
+          if (entry.key == 'poster_details' ||
+              entry.key == 'poster_contacts' ||
+              entry.key == 'add_pet_details' ||
+              entry.key == 'cat_gallery_angles') {
             await tester.drag(
               find.byType(ListView).first,
               const Offset(0, -570),
@@ -510,6 +641,9 @@ void main() {
             }
           }
           expect(tester.takeException(), isNull, reason: entry.key);
+          if (entry.key == 'shop') {
+            expect(find.text('Expandir grátis para teste'), findsOneWidget);
+          }
           await tester.runAsync(() async {
             final boundary =
                 captureKey.currentContext!.findRenderObject()
@@ -525,6 +659,7 @@ void main() {
             debugPrint('CAPTURE ${entry.key}: saved');
           });
           await tester.pumpWidget(const SizedBox());
+          tester.view.resetViewInsets();
           await tester.pump(const Duration(milliseconds: 600));
         }
         for (final width in [320.0, 820.0]) {
@@ -544,6 +679,7 @@ void main() {
             'registered_alert',
             'active_alert',
             'poster',
+            'poster_settings',
             'clues',
             'clue_detail',
             'contribution',
@@ -629,6 +765,11 @@ void main() {
             'bio': 'Passeios pelo bairro e novas descobertas.',
             'avatar_url': '/app/account/avatar/preset/bapinha',
             'reason': 'Exploradora ativa',
+            'score': 1,
+            'criterion': 'cats',
+            'period': 'weekly',
+            'server_now': '2026-10-05T12:00:00-03:00',
+            'reset_at': '2026-10-12T00:00:00-03:00',
             'rank': 1,
             'xp': 180,
             'level': 2,
@@ -745,6 +886,7 @@ void main() {
             'id': 'ana',
             'username': 'ana',
             'bio': 'Gatos e passeios tranquilos.',
+            'achievements': [(populatedProgress['achievements'] as List).first],
             'avatar_url': '/app/account/avatar/preset/bapinha',
             'level': 2,
             'level_title': 'Explorador',

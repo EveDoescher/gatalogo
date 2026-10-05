@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'habitat_navigation.dart';
+
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
@@ -10,6 +12,7 @@ import 'product_api_service.dart';
 
 part 'habitat_catalog.g.dart';
 part 'habitat_care.dart';
+part 'habitat_encounters.dart';
 part 'habitat_layout.dart';
 
 class HabitatItem {
@@ -71,6 +74,8 @@ class HabitatShopItem {
     required this.width,
     required this.height,
     required this.maxOwned,
+    this.basePrice,
+    this.purchasable,
     this.layer = 'solid',
     this.rotatable = true,
   });
@@ -80,6 +85,9 @@ class HabitatShopItem {
   final String category;
   final String sprite;
   final int price;
+  final int? basePrice;
+  final bool? purchasable;
+  bool get canBuy => purchasable ?? (basePrice ?? price) > 0;
   final int width;
   final int height;
   final int maxOwned;
@@ -96,6 +104,8 @@ class HabitatShopItem {
         category: value['category'].toString(),
         sprite: value['sprite'].toString(),
         price: (value['price'] as num).toInt(),
+        basePrice: (value['base_price'] as num?)?.toInt(),
+        purchasable: value['purchasable'] as bool?,
         width: (value['width'] as num).toInt(),
         height: (value['height'] as num).toInt(),
         maxOwned: (value['max_owned'] as num).toInt(),
@@ -109,6 +119,8 @@ class HabitatShopItem {
     'category': category,
     'sprite': sprite,
     'price': price,
+    'base_price': basePrice,
+    'purchasable': purchasable,
     'width': width,
     'height': height,
     'max_owned': maxOwned,
@@ -167,16 +179,28 @@ class HabitatService extends ChangeNotifier {
     'red_flowers',
   ];
 
+  int satisfaction = 0;
+  Map<String, dynamic>? pendingGift;
+  bool _visitorRequest = false;
+  void _notifyVisitors() {
+    if (!_disposed) notifyListeners();
+  }
+
   int balance = 0;
   int revision = 0;
   int expansionLevel = 0;
+  bool freeShop = false;
+  int? _nextExpansionPrice;
   bool layoutAdjusted = false;
   Map<String, (int, int)> catAnchors = {};
   Set<(int, int)> buildableCells = yardCells(0);
   int get catCapacity => 3 + expansionLevel;
   int get decorationCapacity => 24 + 8 * expansionLevel;
-  int? get nextExpansionPrice =>
-      expansionLevel < 3 ? const [80, 180, 320][expansionLevel] : null;
+  int? get nextExpansionPrice => expansionLevel < 3
+      ? (freeShop
+            ? 0
+            : _nextExpansionPrice ?? const [80, 180, 320][expansionLevel])
+      : null;
 
   static Set<(int, int)> yardCells(int level) {
     var cells = <(int, int)>{
@@ -255,11 +279,20 @@ class HabitatService extends ChangeNotifier {
   int _editVersion = 0;
 
   String get _ownerId => session.session?.userId ?? 'guest';
+  String? _loadedOwner;
   HabitatShopItem definition(String sku) =>
-      _catalog[sku] ?? (throw StateError('Item desconhecido no Habitat: $sku'));
+      _catalog[sku] ?? (throw StateError('Item desconhecido no Quintal: $sku'));
 
   Future<void> load() async {
     final owner = _ownerId;
+    if (_loadedOwner != owner) {
+      _loadedOwner = owner;
+      _readSnapshot({});
+      shop = _offlineShop;
+      hasDraft = false;
+      _clockOffset = Duration.zero;
+      _pendingInteractions.clear();
+    }
     loading = true;
     notifyListeners();
     Map<String, dynamic>? cached;
@@ -344,6 +377,11 @@ class HabitatService extends ChangeNotifier {
 
   void _seedGuest() {
     care = {};
+    pendingGift = null;
+    satisfaction = 0;
+    freeShop = false;
+    _nextExpansionPrice = null;
+    HabitatNavigation.hasGift.value = false;
     _pendingInteractions.clear();
     _clockOffset = Duration.zero;
     items = [
@@ -385,7 +423,15 @@ class HabitatService extends ChangeNotifier {
     }
     balance = (data['balance'] as num?)?.toInt() ?? 0;
     revision = (data['revision'] as num?)?.toInt() ?? 0;
+    satisfaction =
+        ((data['satisfaction'] as Map?)?['value'] as num?)?.toInt() ?? 0;
+    pendingGift = data['pending_gift'] is Map
+        ? Map<String, dynamic>.from(data['pending_gift'])
+        : null;
+    HabitatNavigation.hasGift.value = pendingGift?['state'] == 'available';
     expansionLevel = (data['expansion_level'] as num?)?.toInt() ?? 0;
+    freeShop = data['free_shop'] == true;
+    _nextExpansionPrice = (data['next_expansion_price'] as num?)?.toInt();
     layoutAdjusted = data['layout_adjusted'] == true;
     buildableCells = data['buildable_cells'] is List
         ? {
@@ -444,6 +490,10 @@ class HabitatService extends ChangeNotifier {
     'balance': balance,
     'revision': revision,
     'expansion_level': expansionLevel,
+    'satisfaction': {'value': satisfaction},
+    'pending_gift': pendingGift,
+    'free_shop': freeShop,
+    'next_expansion_price': nextExpansionPrice,
     'buildable_cells': [
       for (final cell in buildableCells) [cell.$1, cell.$2],
     ],
@@ -593,6 +643,32 @@ class HabitatService extends ChangeNotifier {
     items[index] = proposed[index];
     notifyListeners();
     await _saveDraft();
+  }
+
+  Future<int> collectGround(Iterable<(int, int)> cells) async {
+    final selected = cells.toSet();
+    var collected = 0;
+    final proposed = [
+      for (final item in items)
+        if (item.isPlaced &&
+            definition(item.sku).isGround &&
+            occupiedCells(item).intersection(selected).isNotEmpty)
+          (() {
+            collected++;
+            return item.at(null, null, 0);
+          })()
+        else
+          item,
+    ];
+    if (layoutProblem(proposed) case final problem?) {
+      throw ProductApiException(problem);
+    }
+    if (collected > 0) {
+      items = proposed;
+      notifyListeners();
+      await _saveDraft();
+    }
+    return collected;
   }
 
   Future<void> selectCats(List<String> ids) async {

@@ -20,7 +20,7 @@ IconData challengeIcon(String id) {
   return Icons.pets_rounded;
 }
 
-/// Shared game materials. Photos, earned resources and Habitat objects stay real.
+/// Shared game materials. Photos, earned resources and Quintal objects stay real.
 class GameStyle {
   static const paper = Color(0xFFFBF6E8);
   static const canvas = Color(0xFFF0F0DD);
@@ -513,7 +513,7 @@ class GameItemArt extends StatelessWidget {
   }
 }
 
-/// A small illustrated doorway to Habitat, using the same licensed game assets.
+/// A small illustrated doorway to Quintal, using the same licensed game assets.
 /// It deliberately does not pretend to be the player's saved layout.
 class HabitatVignette extends StatelessWidget {
   const HabitatVignette({super.key});

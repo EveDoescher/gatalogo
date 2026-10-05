@@ -1,6 +1,7 @@
 import '../widgets/illustrated_home_components.dart';
 import '../widgets/botanical_scene.dart';
 import '../widgets/game_components.dart';
+import '../widgets/milestone_widgets.dart';
 import '../widgets/app_header_actions.dart';
 
 import 'package:flutter/material.dart';
@@ -295,7 +296,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
             Card(
               child: ListTile(
                 leading: const Icon(Icons.yard_outlined),
-                title: const Text('Habitat'),
+                title: const Text('Quintal'),
                 subtitle: Text(
                   '${p['habitat_preview']['cats_count']} gato(s) no quintal · expansão ${p['habitat_preview']['expansion_level']}',
                 ),
@@ -547,77 +548,77 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
             ...achievements.map((ach) {
               final title = ach['title']?.toString() ?? 'Conquista';
               final desc = ach['description']?.toString() ?? '';
-              final xpReward = ach['xp_reward'] as int? ?? 50;
+              final xpReward =
+                  (ach['xp_received'] as num? ?? ach['xp_reward'] as num? ?? 0)
+                      .toInt();
 
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.borderLight),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.achievementBg,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.amberBorder),
+                child: InkWell(
+                  onTap: () => showAchievement(context, ach),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.borderLight),
+                    ),
+                    child: Row(
+                      children: [
+                        AchievementMedal(
+                          goal: ach,
+                          size: 48,
+                          onTap: () => showAchievement(context, ach),
                         ),
-                        child: const Icon(
-                          LucideIcons.award,
-                          size: 18,
-                          color: AppColors.amberDark,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              title,
-                              style: GoogleFonts.fredoka(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textTitle,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: GoogleFonts.fredoka(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textTitle,
+                                ),
                               ),
-                            ),
-                            Text(
-                              desc,
-                              style: GoogleFonts.nunito(
-                                fontSize: 12,
-                                color: AppColors.textMedium,
+                              Text(
+                                desc,
+                                style: GoogleFonts.nunito(
+                                  fontSize: 12,
+                                  color: AppColors.textMedium,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primarySoftBg,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '+$xpReward XP',
-                          style: GoogleFonts.nunito(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.primaryDark,
+                            ],
                           ),
                         ),
-                      ),
-                    ],
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primarySoftBg,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            ach['legacy_reward_unknown'] == true ||
+                                    xpReward == 0
+                                ? 'Obtida'
+                                : '+$xpReward XP',
+                            style: GoogleFonts.nunito(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.primaryDark,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );

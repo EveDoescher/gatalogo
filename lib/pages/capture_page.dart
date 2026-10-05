@@ -222,43 +222,7 @@ class _CapturePageState extends State<CapturePage> {
     });
 
     try {
-      String? individual;
-      if (widget.catStore.cats.isNotEmpty) {
-        individual = await showModalBottomSheet<String>(
-          context: context,
-          isScrollControlled: true,
-          builder: (context) => SafeArea(
-            child: SizedBox(
-              height: MediaQuery.sizeOf(context).height * .6,
-              child: ListView(
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Text('Você já conhece este gato?'),
-                  ),
-                  ListTile(
-                    title: const Text('É uma nova descoberta'),
-                    subtitle: const Text(
-                      'Você pode corrigir a identificação depois.',
-                    ),
-                    onTap: () => Navigator.pop(context, 'new'),
-                  ),
-                  for (final cat in widget.catStore.cats.where(
-                    (c) => c.individualId == null || c.individualId == c.id,
-                  ))
-                    ListTile(
-                      title: Text(cat.displayName),
-                      subtitle: const Text('Adicionar outra foto deste gato'),
-                      onTap: () => Navigator.pop(context, cat.id),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        );
-        if (individual == null) return;
-        if (individual == 'new') individual = null;
-      }
+      const individual = 'pending';
       final saved = await widget.catStore.addFromTempPhoto(
         _foto!.path,
         capturedAt: _capturedAt,
@@ -280,7 +244,7 @@ class _CapturePageState extends State<CapturePage> {
           content: Text(
             saved.awaitingConnection
                 ? 'Foto salva. Ela será enviada quando houver conexão.'
-                : 'Descoberta salva na sua coleção!',
+                : 'Foto salva. Vamos confirmar qual gato é.',
           ),
         ),
       );

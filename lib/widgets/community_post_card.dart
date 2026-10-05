@@ -52,7 +52,7 @@ class CommunityPostCard extends StatelessWidget {
                 children: [
                   Text(
                     author,
-                    style: HomeArt.title(14),
+                    style: HomeArt.title(16),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -97,7 +97,7 @@ class CommunityPostCard extends StatelessWidget {
                       child: Text(
                         note,
                         style: Theme.of(context).textTheme.bodyMedium
-                            ?.copyWith(height: 1.35, fontSize: 11),
+                            ?.copyWith(height: 1.35, fontSize: 15),
                       ),
                     ),
                   media,

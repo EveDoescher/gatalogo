@@ -413,6 +413,18 @@ void main() {
         (1, 4),
       ]);
       expect(painted, 2);
+      final originalIds = service.items.map((item) => item.id).toSet();
+      await service.place('path-1', 3, 3, 0);
+      expect(service.items.firstWhere((item) => item.id == 'path-1').x, 3);
+      expect(service.items.firstWhere((item) => item.id == 'path-2').x, 1);
+      expect(await service.collectGround([(3, 3), (1, 2)]), 2);
+      expect(
+        service.items.firstWhere((item) => item.id == 'bed').isPlaced,
+        isTrue,
+      );
+      expect(service.items.map((item) => item.id).toSet(), originalIds);
+      await service.place('path-1', 1, 1, 0);
+      await service.place('path-2', 1, 2, 0);
       expect(
         service.items
             .where((item) => item.sku == 'pebble_path' && item.isPlaced)

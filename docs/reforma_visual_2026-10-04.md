@@ -16,7 +16,7 @@ Configurações recebeu uma abertura com engrenagem; Experiência usa o novelo p
 
 O compositor associa o balão à publicação e enquadra a fotografia selecionada em papel. A contribuição pendente usa a placa de caminhos sobre jardim; a confirmação usa o troféu somente quando o estado real está confirmado. A Coleção ganhou uma seção própria para a pilha de fotos, afastando a arte dos botões do cabeçalho. Detalhes de descoberta reutilizam a fotografia em papel e o caderno junto à história.
 
-As buscas receberam composições ligadas às ações: prancheta no cadastro e cartaz, mapa na área monitorada, lupa nas pistas e câmera no avistamento. Fotografias protegidas continuam com a mesma regra de acesso. Cartazes públicos e detalhes da comunidade usam as mesmas molduras. Missões e Ajuda do Habitat receberam aberturas em papel com objetos relacionados ao conteúdo.
+As buscas receberam composições ligadas às ações: prancheta no cadastro e cartaz, mapa na área monitorada, lupa nas pistas e câmera no avistamento. Fotografias protegidas continuam com a mesma regra de acesso. Cartazes públicos e detalhes da comunidade usam as mesmas molduras. Missões e Ajuda do Quintal receberam aberturas em papel com objetos relacionados ao conteúdo.
 
 O chat reutiliza a moldura de avatar que suporta foto enviada e presets. Corrigida a rolagem que ultrapassava a última mensagem. Títulos dos detalhes de pistas agora quebram linha em tela estreita com texto ampliado.
 
@@ -43,7 +43,7 @@ Continuação da direção das montagens Home.jpg e Social.jpg e da biblioteca f
 
 ## Evidência
 
-- Nova rodada: `build/validacao-visual-2026-10-04/galeria.html` e `LEIA-ME.md` organizam 42 capturas atuais de telas e estados, incluindo login restaurado, Perfil corrigido e Habitat carregado. Captura automatizada habilitada apenas com `GATALOGO_CAPTURE_ALL=1`; dados e fotos de exemplo ficam restritos ao teste. Os mapas de ruas não carregam neste ambiente. A galeria inclui telas com apenas o tema aplicado, sem declarar toda a reforma concluída.
+- Nova rodada: `build/validacao-visual-2026-10-04/galeria.html` e `LEIA-ME.md` organizam 42 capturas atuais de telas e estados, incluindo login restaurado, Perfil corrigido e Quintal carregado. Captura automatizada habilitada apenas com `GATALOGO_CAPTURE_ALL=1`; dados e fotos de exemplo ficam restritos ao teste. Os mapas de ruas não carregam neste ambiente. A galeria inclui telas com apenas o tema aplicado, sem declarar toda a reforma concluída.
 - O cabeçalho do chat passou a limitar o subtítulo ao espaço disponível para evitar corte em 390 px.
 - Após essas correções: `build/visual-validation-capture.log` registra a captura completa aprovada pelo teste; `build/visual-validation-layout.log` registra 17 testes aprovados; `build/visual-validation-analyze.log` registra análise sem problemas.
 
@@ -55,7 +55,7 @@ Continuação da direção das montagens Home.jpg e Social.jpg e da biblioteca f
 
 ## Padronização por nível de navegação
 
-A rodada de hierarquia visual centraliza a escolha de superfícies em `BotanicalLevel` e `BotanicalLevelScope`. Abas principais usam o jardim compartilhado; páginas secundárias usam creme e folhagem discreta; formulários e ações internas usam papel marfim com a mesma folhagem discreta. A classificação considera a função da página. Rotas abertas a partir de uma aba não herdam indevidamente sua decoração. O cenário jogável do Habitat, a composição restaurada do login e os visualizadores de fotografias mantêm suas características próprias.
+A rodada de hierarquia visual centraliza a escolha de superfícies em `BotanicalLevel` e `BotanicalLevelScope`. Abas principais usam o jardim compartilhado; páginas secundárias usam creme e folhagem discreta; formulários e ações internas usam papel marfim com a mesma folhagem discreta. A classificação considera a função da página. Rotas abertas a partir de uma aba não herdam indevidamente sua decoração. O cenário jogável do Quintal, a composição restaurada do login e os visualizadores de fotografias mantêm suas características próprias.
 
 Meu Perfil e Perfil Público reutilizam `IllustratedProfileIdentity`, com a mesma dimensão do retrato e o mesmo chão. Nível em caderno e bio em nota seguem a mesma composição; ações de amizade, edição e contadores preservam seus dados e permissões. O perfil público não apresenta uma barra de progressão inventada. Os anéis do caderno se ajustam à altura disponível.
 
@@ -73,7 +73,7 @@ Revisão do Impeccable executada inline, usando o fluxo degradado já adotado ne
 
 ### Fundo sob a navegação e galeria permanente
 
-Por orientação do usuário, todas as abas passaram a usar `IllustratedNavigationScaffold`, com o fundo estendido até a borda inferior, atrás do menu. As folhas adicionais da Coleção ficam fora da área segura do conteúdo; câmera, prévia, ferramentas, inventário e conteúdo da loja/ajuda respeitam o espaço da navegação. O Habitat nunca perdeu seu menu no app: a captura anterior foi feita com a página isolada. As novas capturas de Habitat, Loja e Ajuda incluem o menu real compartilhado.
+Por orientação do usuário, todas as abas passaram a usar `IllustratedNavigationScaffold`, com o fundo estendido até a borda inferior, atrás do menu. As folhas adicionais da Coleção ficam fora da área segura do conteúdo; câmera, prévia, ferramentas, inventário e conteúdo da loja/ajuda respeitam o espaço da navegação. O Quintal nunca perdeu seu menu no app: a captura anterior foi feita com a página isolada. As novas capturas de Quintal, Loja e Ajuda incluem o menu real compartilhado.
 
 A entrega atual passa a ter endereço fixo: `build/galeria-visual/galeria.html` e `LEIA-ME.md`. O teste de captura gera o índice automaticamente, com 42 imagens, rótulos, horário e busca por tela. A regra de atualizar a galeria após toda rodada visual está registrada em `DESIGN.md`. A pasta com data preserva a rodada anterior.
 

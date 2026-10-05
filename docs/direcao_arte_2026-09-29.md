@@ -19,7 +19,7 @@ Social tem cabeçalho com saldo, Comunidade/Amigos, filtros de conteúdo, acesso
 | Notificações | Caixa de correio no estado vazio. |
 | Conversas | Balão com coração no estado vazio. |
 | Cartazes | Lupa e coração acompanham o texto de ajuda, sem recompensa fictícia. |
-| Loja do Habitat | Fachada com toldo e pequeno jardim, mantendo itens e preços do serviço. |
+| Loja do Quintal | Fachada com toldo e pequeno jardim, mantendo itens e preços do serviço. |
 | Configurações | Engrenagem ilustrada em uma apresentação discreta e legível. |
 
 ## Reuso
@@ -32,7 +32,7 @@ Social tem cabeçalho com saldo, Comunidade/Amigos, filtros de conteúdo, acesso
 - `CommunityPostCard`: apresentação do post com callbacks para as operações existentes.
 - `FramedUserAvatar`: foto enviada ou Bapinho/Bapinha, com moldura e persistência da escolha.
 
-Os fundos não substituem as composições particulares de Home, Social ou o cenário jogável do Habitat. Formulários e situações de busca priorizam leitura e ações.
+Os fundos não substituem as composições particulares de Home, Social ou o cenário jogável do Quintal. Formulários e situações de busca priorizam leitura e ações.
 
 ## Dados e fluxos
 

@@ -108,6 +108,7 @@ def main() -> None:
             output[key] = bake(rotated)
             if name == "fence_simple":
                 # Perimeter segments must keep their shared tile-edge anchor.
+                output[key]["depthCenter"] = output[key]["groundCenter"]
                 output[key]["groundCenter"] = [0, 0]
                 output[key]["heightScale"] = 1.6
                 output[key]["groundLine"] = [(0.5, -32), (-0.5, 32), (0.5, 32), (-0.5, -32)][rotation]
