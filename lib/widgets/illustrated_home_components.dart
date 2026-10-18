@@ -262,94 +262,115 @@ class IllustratedNavigationBar extends StatelessWidget {
   });
   final int index, unread;
   final ValueChanged<int> onSelect;
+
   @override
-  Widget build(BuildContext context) => DecoratedBox(
-    decoration: const BoxDecoration(),
-    child: Stack(
-      children: [
-        Positioned.fill(child: HomeArt.image('Bar', fit: BoxFit.cover)),
-        SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 4, 14, 4),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                for (final entry in const [
-                  (LucideIcons.house, 'Início'),
-                  (LucideIcons.usersRound, 'Social'),
-                  (LucideIcons.camera, 'Gatalogar'),
-                  (LucideIcons.bookOpen, 'Coleção'),
-                  (LucideIcons.map, 'Quintal'),
-                ].indexed)
-                  Expanded(
-                    child: Semantics(
-                      selected: index == entry.$1,
-                      button: true,
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () => onSelect(entry.$1),
-                          borderRadius: BorderRadius.circular(17),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 5,
-                              horizontal: 1,
-                            ),
-                            decoration: BoxDecoration(
-                              color: index == entry.$1
-                                  ? const Color(0xFFEDF3C9)
-                                  : Colors.transparent,
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final compact =
+          constraints.maxWidth / MediaQuery.textScalerOf(context).scale(1) <
+          360;
+      return Stack(
+        children: [
+          Positioned.fill(child: HomeArt.image('Bar', fit: BoxFit.cover)),
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+              child: Row(
+                children: [
+                  for (final entry in const [
+                    (LucideIcons.house, 'Início'),
+                    (LucideIcons.usersRound, 'Social'),
+                    (LucideIcons.camera, 'Gatalogar'),
+                    (LucideIcons.bookOpen, 'Coleção'),
+                    (LucideIcons.map, 'Quintal'),
+                  ].indexed)
+                    Expanded(
+                      flex: compact && index == entry.$1 ? 2 : 1,
+                      child: Semantics(
+                        label: entry.$2.$2,
+                        selected: index == entry.$1,
+                        button: true,
+                        onTap: () => onSelect(entry.$1),
+                        excludeSemantics: true,
+                        child: Tooltip(
+                          message: entry.$2.$2,
+                          excludeFromSemantics: true,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () => onSelect(entry.$1),
                               borderRadius: BorderRadius.circular(17),
-                              border: index == entry.$1
-                                  ? Border.all(
-                                      color: const Color(0xFF38512B),
-                                      width: 1.5,
-                                    )
-                                  : null,
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                ValueListenableBuilder<bool>(
-                                  valueListenable: HabitatNavigation.hasGift,
-                                  builder: (_, gift, _) => Badge(
-                                    isLabelVisible:
-                                        (entry.$1 == 1 && unread > 0) ||
-                                        (entry.$1 == 4 && gift),
-                                    child: Icon(
-                                      entry.$2.$1,
-                                      size: 22,
-                                      color: index == entry.$1
-                                          ? HomeArt.green
-                                          : const Color(0xFFE3E9C7),
+                              child: Container(
+                                constraints: const BoxConstraints(
+                                  minHeight: 60,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 5,
+                                  horizontal: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: index == entry.$1
+                                      ? const Color(0xFFEDF3C9)
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(17),
+                                  border: index == entry.$1
+                                      ? Border.all(
+                                          color: const Color(0xFF38512B),
+                                          width: 1.5,
+                                        )
+                                      : null,
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    ValueListenableBuilder<bool>(
+                                      valueListenable:
+                                          HabitatNavigation.hasGift,
+                                      builder: (_, gift, _) => Badge(
+                                        isLabelVisible:
+                                            (entry.$1 == 1 && unread > 0) ||
+                                            (entry.$1 == 4 && gift),
+                                        child: Icon(
+                                          entry.$2.$1,
+                                          size: 22,
+                                          color: index == entry.$1
+                                              ? HomeArt.green
+                                              : const Color(0xFFE3E9C7),
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                    if (!compact || index == entry.$1) ...[
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        entry.$2.$2,
+                                        textAlign: TextAlign.center,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.nunito(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w900,
+                                          color: index == entry.$1
+                                              ? HomeArt.green
+                                              : const Color(0xFFF4F5DD),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
-                                const SizedBox(height: 3),
-                                Text(
-                                  entry.$2.$2,
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.nunito(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w900,
-                                    color: index == entry.$1
-                                        ? HomeArt.green
-                                        : const Color(0xFFF4F5DD),
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-      ],
-    ),
+        ],
+      );
+    },
   );
 }

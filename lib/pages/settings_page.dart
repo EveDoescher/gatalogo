@@ -973,6 +973,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final prefs = (_account?['preferences'] as Map?) ?? {};
     final sightingPush = prefs['sighting_notifications'] != false;
     final socialPush = prefs['social_notifications'] != false;
+    final quintalPush = prefs['quintal_notifications'] != false;
     final autoSync = widget.sessionStore.autoSyncEnabled;
 
     return BotanicalScaffold(
@@ -1364,6 +1365,33 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                         subtitle: Text(
                           'Receba alertas quando um gato for avistado perto de você.',
+                          style: GoogleFonts.nunito(
+                            fontSize: 12,
+                            color: AppColors.textMedium,
+                          ),
+                        ),
+                      ),
+                      const Divider(height: 1, color: AppColors.borderLight),
+                      SwitchListTile(
+                        value: quintalPush,
+                        onChanged: _busy
+                            ? null
+                            : (val) => _updatePreference(
+                                'quintal_notifications',
+                                val,
+                              ),
+                        activeThumbColor: AppColors.primary,
+                        activeTrackColor: AppColors.primaryLight,
+                        title: Text(
+                          'Produção e presentes do Quintal',
+                          style: GoogleFonts.nunito(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                        subtitle: Text(
+                          'Avise quando houver colheitas, refeições, melhorias ou presentes prontos.',
                           style: GoogleFonts.nunito(
                             fontSize: 12,
                             color: AppColors.textMedium,

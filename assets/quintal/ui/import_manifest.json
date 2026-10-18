@@ -1,0 +1,192 @@
+[
+  {
+    "source_name": "action_collect_eggs.png",
+    "asset": "assets/quintal/ui/action_collect_eggs.png",
+    "sha256": "491A1D33418F765752ACC40F380535C317487A64A6DC6BD4FD8AB8F7007A42FD"
+  },
+  {
+    "source_name": "action_collect_milk.png",
+    "asset": "assets/quintal/ui/action_collect_milk.png",
+    "sha256": "8B1CC3FEA9B104D539EA8F929864265FBBD0313EE338F1B87E2C88BFF893864D"
+  },
+  {
+    "source_name": "action_cook_pot.png",
+    "asset": "assets/quintal/ui/action_cook_pot.png",
+    "sha256": "90BFBD2E13C135852D5BD5865DD6776CC0736D6798FEE559C1920D4336484A75"
+  },
+  {
+    "source_name": "action_expand_area.png",
+    "asset": "assets/quintal/ui/action_expand_area.png",
+    "sha256": "D1E723E061303EF4939D20206054485F113BEFF66CED96E8FF6743DF6AAB1501"
+  },
+  {
+    "source_name": "action_fish_rod.png",
+    "asset": "assets/quintal/ui/action_fish_rod.png",
+    "sha256": "86207C4DB09BC62FCDE6E0DC42895D0553C9D0CE267045DD5E2B444045203F74"
+  },
+  {
+    "source_name": "action_harvest_basket.png",
+    "asset": "assets/quintal/ui/action_harvest_basket.png",
+    "sha256": "F895F94017404AB93BF5A7FB61557CDC29EA876735DDCD014E86489F64800FB6"
+  },
+  {
+    "source_name": "action_order_market.png",
+    "asset": "assets/quintal/ui/action_order_market.png",
+    "sha256": "D14387C8BA3EF2EE442965F0E259C487595B59D188E68E961A9A2A26AF4CF8ED"
+  },
+  {
+    "source_name": "action_pickup_delivery.png",
+    "asset": "assets/quintal/ui/action_pickup_delivery.png",
+    "sha256": "FB8991B1A7B8C484BF72B9A2394132D00E52D7C86A88F7A06A876A0B2336F539"
+  },
+  {
+    "source_name": "action_plant_seedling.png",
+    "asset": "assets/quintal/ui/action_plant_seedling.png",
+    "sha256": "26B1686482E3AA35A482A801C43B3D5807CD544F8A8E9AC4C6A453D9A9C03FEB"
+  },
+  {
+    "source_name": "action_production_queue.png",
+    "asset": "assets/quintal/ui/action_production_queue.png",
+    "sha256": "64247FC05907DA04B0DDB8DFE901B35ADABEAF1A41E06C4F869B1367DE39E56B"
+  },
+  {
+    "source_name": "action_recipe_book.png",
+    "asset": "assets/quintal/ui/action_recipe_book.png",
+    "sha256": "E6F7D64E53A5C0BDE2590305CA7B1FD7F09C4BD6019205CCED650EE7CC2C40EB"
+  },
+  {
+    "source_name": "action_refill_water.png",
+    "asset": "assets/quintal/ui/action_refill_water.png",
+    "sha256": "DA0D021752D52630758E260B3E56EC15467829FC8687211AFD79549A6165AF42"
+  },
+  {
+    "source_name": "action_repair_tools.png",
+    "asset": "assets/quintal/ui/action_repair_tools.png",
+    "sha256": "22741009D8E4BB1B396B34DC971E955348B761CE9F86E86770BE3FCC2781D540"
+  },
+  {
+    "source_name": "action_serve_food.png",
+    "asset": "assets/quintal/ui/action_serve_food.png",
+    "sha256": "B5CA91C5B61D5BCB009CFB9817702B52CE66FAB769172D6EFF7C2285672CDD40"
+  },
+  {
+    "source_name": "action_water_can.png",
+    "asset": "assets/quintal/ui/action_water_can.png",
+    "sha256": "9B683A809D597AA588A9017D484585504F810BBCAD7952088EA2F6ED0869374A"
+  },
+  {
+    "source_name": "carrot.png",
+    "asset": "assets/quintal/ui/carrot.png",
+    "sha256": "957B5AB2A584F33E601C52FB0BA5B3E3F2306E8A310EA3B27656B7EB9A22A66A"
+  },
+  {
+    "source_name": "chicken.png",
+    "asset": "assets/quintal/ui/chicken.png",
+    "sha256": "08376A94F3EBC347DF8E0F92AACB4ADA16E5CAE60A5789E3EDB8C8B159B4741F"
+  },
+  {
+    "source_name": "corn.png",
+    "asset": "assets/quintal/ui/corn.png",
+    "sha256": "54C0EF103B751D0BB810DB1EE7A8C602214AA40E920DD9A69B4D9208D6CD5750"
+  },
+  {
+    "source_name": "egg.png",
+    "asset": "assets/quintal/ui/egg.png",
+    "sha256": "AC2DFF09C17C602C8E69BC55A45C9F249BC3C845C74FFD30215742169A3FABD5"
+  },
+  {
+    "source_name": "fish.png",
+    "asset": "assets/quintal/ui/fish.png",
+    "sha256": "43072CFEB240A42B70929F2D6960DC3E33FF4CC2C26BA5A46ED147B244399CCB"
+  },
+  {
+    "source_name": "meat.png",
+    "asset": "assets/quintal/ui/meat.png",
+    "sha256": "B10B9CC0998BC7B0ED0F4F1689D975476FB67F084B8B842ED93456A5C4124FDF"
+  },
+  {
+    "source_name": "milk.png",
+    "asset": "assets/quintal/ui/milk.png",
+    "sha256": "19C79DEBD2ADB979B91C050A7DF751FA05906477E8FA3941A3ACC0761F0E6B84"
+  },
+  {
+    "source_name": "name_edit.png",
+    "asset": "assets/quintal/ui/action_rename.png",
+    "sha256": "93E9EE91B71D6C7B0E4C74E2777193B8F18B71FC8183F6078F754567BC7E820A"
+  },
+  {
+    "source_name": "play.png",
+    "asset": "assets/quintal/ui/action_play.png",
+    "sha256": "B86EE03514F799A4D27E8BF67DDCB2D71EF09F9DB5DB9B8190B9F9AC4F9D8617"
+  },
+  {
+    "source_name": "pumpkin.png",
+    "asset": "assets/quintal/ui/pumpkin.png",
+    "sha256": "724FBE7E98A3C3BE2FD66F230F42E506BD0B71C158A15E709F5A17CE4F5F2F75"
+  },
+  {
+    "source_name": "racao_abobora.png",
+    "asset": "assets/quintal/ui/racao_abobora.png",
+    "sha256": "7170267B8A32E5F0F538859B45D6BD87B950CC121755FAC8EE5CFAAD45217F3C"
+  },
+  {
+    "source_name": "racao_basica.png",
+    "asset": "assets/quintal/ui/racao_basica.png",
+    "sha256": "6A88709D68D7656A78EE5DD3FF3816835ADDE5F961AD3A755E9980C807AE0513"
+  },
+  {
+    "source_name": "racao_carne.png",
+    "asset": "assets/quintal/ui/racao_carne.png",
+    "sha256": "82F7072478966BD07D796FA0C3DEE95E4F60B7048B02E0890D96D7AFFAD5DF26"
+  },
+  {
+    "source_name": "racao_cenoura.png",
+    "asset": "assets/quintal/ui/racao_cenoura.png",
+    "sha256": "B0549EB2F7406407495152C7DB2AFE8F70D981C2D1615C61EFF0E4B8D9E1D023"
+  },
+  {
+    "source_name": "racao_frango.png",
+    "asset": "assets/quintal/ui/racao_frango.png",
+    "sha256": "B7C6BE7C0E43FD8C312CBDFE629F56FBFF3DEB14E0FFB6404AAD16363931508A"
+  },
+  {
+    "source_name": "racao_milho.png",
+    "asset": "assets/quintal/ui/racao_milho.png",
+    "sha256": "78652FA66205886E50F6005C466A9E862F5051972FCAE8BBAE5F4E0EBD0B82B1"
+  },
+  {
+    "source_name": "racao_peixe.png",
+    "asset": "assets/quintal/ui/racao_peixe.png",
+    "sha256": "D1E9F4C730D08CF09E84C1CCFB90B6CE3A1D63BBBC9A3218474B6B52AE2A2C55"
+  },
+  {
+    "source_name": "racao_planta.png",
+    "asset": "assets/quintal/ui/racao_planta.png",
+    "sha256": "28C63D55D0F2B10F16D2502C820156E401A3CF45C523AEE8A4CEC8657130F7EA"
+  },
+  {
+    "source_name": "racao_trigo.png",
+    "asset": "assets/quintal/ui/racao_trigo.png",
+    "sha256": "CB674601DE5CA84DA497817DE2602DA19FF131EF226CA162B20BE20CBB9EC860"
+  },
+  {
+    "source_name": "ready.png",
+    "asset": "assets/quintal/ui/ready.png",
+    "sha256": "BBF0FB4E0B3CD535140808665FC867036ED51629D44F046185921C6662DE1208"
+  },
+  {
+    "source_name": "trade.png",
+    "asset": "assets/quintal/ui/action_trade.png",
+    "sha256": "64D22E0E1390B3F9A6C62D4FA942567B6DA5EC2D160B3E18C7447420ADDA5062"
+  },
+  {
+    "source_name": "upgrade.png",
+    "asset": "assets/quintal/ui/action_upgrade.png",
+    "sha256": "8714BDFB2DF7EE618CAE6192A85B5DAE8AEE9FF28D1E1D625EEA2055A5EFFF34"
+  },
+  {
+    "source_name": "wheat.png",
+    "asset": "assets/quintal/ui/wheat.png",
+    "sha256": "3B554310284CE530275245B4B2C92CED3FD2244324CDAFE8DA8E8733E45FA67A"
+  }
+]

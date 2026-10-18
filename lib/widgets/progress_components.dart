@@ -29,10 +29,12 @@ class GoalCard extends StatelessWidget {
     final current = (goal['progress'] as num? ?? 0).toInt();
     final target = (goal['target'] as num? ?? 1).toInt();
     final done = goal['completed'] == true;
+    final optional = goal['optional'] == true;
+    final alternatives = (goal['alternatives'] as List? ?? []).whereType<Map>();
     final icon = challengeIcon('${goal['id']}');
     return Semantics(
       label:
-          '${goal['title']}. $current de $target. ${done ? 'Concluído' : 'Em andamento'}',
+          '${goal['title']}. ${optional ? 'Opcional. ' : ''}$current de $target. ${done ? 'Concluído' : 'Em andamento'}',
       child: GameNote(
         color: done ? GameStyle.greenPaper : GameStyle.paper,
         child: Column(
@@ -47,6 +49,14 @@ class GoalCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('${goal['title']}', style: GameStyle.title(21)),
+                      if (optional)
+                        const Text(
+                          'Opcional · no seu ritmo',
+                          style: TextStyle(
+                            color: AppColors.greenLink,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       if (done)
                         Text(
                           goal['type'] == 'achievement'
@@ -75,6 +85,24 @@ class GoalCard extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 12),
                 child: Text('${goal['description']}'),
               ),
+            if (alternatives.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                '${goal['visit_hint'] ?? 'Escolha uma atividade'}',
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+              for (final option in alternatives)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text('• ${option['title']}'),
+                ),
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                  'Pode deixar para outra hora. Não há perda por pular esta rotina.',
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             Text(
               '$current de $target ${goal['unit'] ?? 'etapas'}',
@@ -112,7 +140,14 @@ class GoalCard extends StatelessWidget {
                 style: const TextStyle(fontSize: 12),
               ),
             if (!done && onTap != null)
-              TextButton(onPressed: onTap, child: const Text('Continuar')),
+              TextButton(
+                onPressed: onTap,
+                child: Text(
+                  goal['group'] == 'quintal_routine'
+                      ? 'Visitar o Quintal'
+                      : 'Continuar',
+                ),
+              ),
           ],
         ),
       ),

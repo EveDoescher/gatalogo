@@ -3,8 +3,11 @@ import 'dart:async';
 
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../services/habitat_service.dart';
+import '../services/quintal_cat_meal.dart';
 import 'habitat_path_style.dart';
 import 'habitat_world.dart';
 import 'habitat_river_palette.dart';
@@ -12,10 +15,21 @@ import 'habitat_palette.dart';
 import 'habitat_visitor_sprites.dart';
 import 'habitat_sprites.dart';
 import 'habitat_cat_animations.dart';
+import 'habitat_cat_coat.dart';
 import 'habitat_cat_motion.dart';
+import 'quintal_scene_target.dart';
+import 'quintal_resident_motion.dart';
+import 'quintal_action_effect.dart';
+import 'quintal_timed_progress.dart';
+import 'quintal_cooking_motion.dart';
+import 'quintal_garden_motion.dart';
+import 'quintal_play_motion.dart';
+import 'quintal_play_lane.dart';
 import '../services/product_api_service.dart';
+import '../widgets/quintal_clock_badge.dart';
 
 part 'habitat_interactions.dart';
+part 'quintal_production_scene.dart';
 
 class HabitatGame extends FlameGame {
   HabitatGame(this.habitat, this.sprites, {int? ambientCycle})
@@ -31,12 +45,180 @@ class HabitatGame extends FlameGame {
   int? previewY;
   String? previewSku;
   bool previewCat = false;
+  String? previewCatId;
+  Map<String, (int, int)> catSetPreview = {};
   int previewRotation = 0;
   bool previewValid = true;
   bool editing = false;
   bool reducedMotion = false;
   String? selectedItemId;
+  QuintalSceneTarget? selectedProduction;
+  final interactionPositions = ValueNotifier<int>(0);
+  bool activityInProgress = false;
+  String? _activityCatId;
+  QuintalPlayLane? _activityLane;
+  QuintalPlayMotion? _activityPlay;
+  double _activityTarget = .5, _activityTime = 0;
+  int _activityDirection = 0;
+
+  bool get hasWorldPlay => _activityLane != null;
+
+  Offset _playGround(double position) {
+    final point = _activityLane!.position(position);
+    return _productionGround(point.dx, point.dy);
+  }
+
+  double playControlAt(Offset point) {
+    final left = _playGround(0), right = _playGround(1);
+    final pivot = _playGround(.5);
+    if (point.dx <= pivot.dx) {
+      return pivot.dx - left.dx < 1
+          ? 0
+          : ((point.dx - left.dx) / (pivot.dx - left.dx) * .5).clamp(0, .5);
+    }
+    return right.dx - pivot.dx < 1
+        ? 1
+        : (.5 + (point.dx - pivot.dx) / (right.dx - pivot.dx) * .5).clamp(
+            .5,
+            1,
+          );
+  }
+
+  void updatePlayActivity(
+    QuintalPlayMotion motion,
+    double target,
+    double elapsed,
+  ) {
+    if (_removed || !hasWorldPlay) return;
+    _activityPlay = motion;
+    _activityTarget = target;
+    _activityTime = elapsed;
+    if (_activityLane != null) {
+      final delta =
+          _activityLane!.position(target) -
+          _activityLane!.position(motion.position);
+      if (delta.distance > .01) {
+        _activityDirection = delta.dx.abs() >= delta.dy.abs()
+            ? (delta.dx >= 0 ? 3 : 1)
+            : (delta.dy >= 0 ? 0 : 2);
+      }
+    }
+    interactionPositions.value++;
+  }
+
+  void beginActivity(String? catId) {
+    activityInProgress = true;
+    _activityCatId = catId;
+    if (catId == null) {
+      focusProduction('pier');
+    } else {
+      final index = habitat.selectedCatIds.indexOf(catId);
+      final cells = catCells;
+      if (index >= 0 && index < cells.length) {
+        final walk = _catWalks.putIfAbsent(
+          catId,
+          () => HabitatCatMotion(cells[index]),
+        );
+        _activityLane = QuintalPlayLane.build(
+          current: walk.current,
+          next: walk.next,
+          progress: walk.progress,
+          free: habitat.walkableCells(),
+          canTraverse: habitat.canTraverse,
+        );
+        walk.cancelVisit();
+        _activityPlay = QuintalPlayMotion();
+        _activityTarget = .5;
+        _activityTime = 0;
+        unawaited(sprites.preloadReady(['ui:action_play']));
+        scaleCamera(1.9, Offset(size.x / 2, size.y / 2));
+        moveCamera(
+          Offset(size.x / 2, size.y * .52) -
+              _catGroundPosition(index, cells[index]),
+        );
+      }
+    }
+    interactionPositions.value++;
+  }
+
+  void endActivity() {
+    final walk = _catWalks[_activityCatId];
+    if (walk != null && _activityLane != null) {
+      final point = _activityLane!.sample(_activityPlay?.position ?? .5);
+      walk.cancelVisit();
+      walk.current = point.from;
+      walk.next = point.to;
+      walk.progress = point.fraction;
+      walk.pause = 0;
+    }
+    activityInProgress = false;
+    _activityCatId = null;
+    _activityLane = null;
+    _activityPlay = null;
+    if (!_removed) interactionPositions.value++;
+  }
+
+  bool _positionNotificationScheduled = false;
   double _elapsed = 0;
+  String? constructionPreviewKind;
+
+  void previewConstruction(String? kind, {bool notify = true}) {
+    if (constructionPreviewKind == kind) return;
+    constructionPreviewKind = kind;
+    final area = _ambientWorld.productionAreas[kind];
+    if (area != null) {
+      final origin = kind == 'garden'
+          ? (area.$1 + area.$3 / 2, area.$2 + area.$4 / 2)
+          : quintalBuildingOrigin(kind!, area.$1, area.$2);
+      moveCamera(
+        Offset(size.x / 2, size.y * .4) -
+            _productionGround(origin.$1, origin.$2),
+      );
+    }
+    if (notify && !_removed) interactionPositions.value++;
+  }
+
+  final List<QuintalActionEffect> _productionEffects = [];
+  final Map<String, QuintalResidentTimeline> _residentTimelines = {};
+
+  bool productionToolActive(QuintalSceneTarget target) =>
+      _productionEffects.any(
+        (e) =>
+            e.toolKind != null &&
+            !e.expired(_elapsed) &&
+            e.target.kind == target.kind &&
+            e.target.target == target.target &&
+            e.target.role == target.role,
+      );
+
+  bool productionBowlActive(QuintalSceneTarget target) {
+    if (reducedMotion || editing || target.kind != 'cat') return false;
+    final walk = _catWalks[target.target];
+    final role = target.role == 'food_cat'
+        ? 'food_bowl'
+        : target.role == 'water_cat'
+        ? 'water_bowl'
+        : null;
+    return role != null &&
+        walk?.visiting == true &&
+        walk!.isBowlVisit &&
+        walk.targetItemId == habitat.productionCat(target.target)[role];
+  }
+
+  void showProductionAction(QuintalSceneTarget target, String action) {
+    if (_removed || !QuintalActionEffect.supports(action)) return;
+    final effect = QuintalActionEffect(target, action, _elapsed);
+    _productionEffects.add(effect);
+    if (action == 'water_cat') {
+      _waterVisitsAfter[target.target] = _elapsed + effect.lifetime;
+    }
+    if (effect.isMilking) {
+      _residentTimelines
+          .putIfAbsent('pasture:${target.target}', QuintalResidentTimeline.new)
+          .pause(_elapsed, effect.lifetime);
+    }
+  }
+
   Offset? _focusPan;
   String? _visitingGiftId;
   double? _departingAt;
@@ -44,6 +226,22 @@ class HabitatGame extends FlameGame {
   final Map<String, HabitatCatMotion> _catWalks = {};
   bool _removed = false;
   bool _feeding = false;
+  final Map<String, String> _mealSeen = {};
+  final _gardenMotion = QuintalGardenMotion();
+  final Map<String, _QuintalMealVisit> _catMeals = {};
+  final Map<String, double> _waterVisitsAfter = {};
+
+  @visibleForTesting
+  Map<String, Object?> catRoutineState(String id) => {
+    'activity': _catWalks[id]?.activity,
+    'target': _catWalks[id]?.targetItemId,
+    'visiting': _catWalks[id]?.visiting,
+    'clip': _catWalks[id]?.clip,
+    'direction': _catWalks[id]?.direction,
+    'position': _catWalks[id]?.current,
+    'event': _catMeals[id]?.meal.eventId,
+    'food': _mealAmount(id),
+  };
   final _visitorSprites = HabitatVisitorSprites();
   final int _faunaOffset;
   String _courierSpecies = 'bee';
@@ -51,26 +249,32 @@ class HabitatGame extends FlameGame {
   (double, double, double, double)? _courierBounds;
   int _courierSeed = 0;
   final _beeAnimations = HabitatCatAnimations(path: 'assets/habitat/bee');
+  final _residentAnimations = {
+    'cow': HabitatCatAnimations(path: 'assets/quintal/cow'),
+    'hen-white': HabitatCatAnimations(path: 'assets/quintal/hen-white'),
+    'hen-brown': HabitatCatAnimations(path: 'assets/quintal/hen-brown'),
+  };
   HabitatWorld? _worldCache;
   HabitatWorld get _ambientWorld {
-    if (!identical(_worldCache?.editable, habitat.buildableCells)) {
-      _worldCache = HabitatWorld(habitat.buildableCells, seed: _faunaOffset);
+    if (!identical(_worldCache?.editable, habitat.buildableCells) ||
+        _worldCache?.productionEnabled != habitat.production.isNotEmpty) {
+      _worldCache = HabitatWorld(
+        habitat.buildableCells,
+        seed: _faunaOffset,
+        productionEnabled: habitat.production.isNotEmpty,
+      );
     }
     return _worldCache!;
   }
 
-  String _itemKey(HabitatItem item) => sprites.keyFor(
-    _catWalks.values.any(
-          (walk) => walk.targetItemId == item.id && walk.activity == 'feed',
-        )
-        ? 'bowl-cereal'
-        : habitat.spriteFor(item),
-    item.rotation,
-  );
+  String _itemKey(HabitatItem item) =>
+      sprites.keyFor(habitat.spriteFor(item), item.rotation);
 
   @override
   Future<void> onLoad() async {
     await sprites.initialize();
+    await sprites.prepareCatCoats(_visibleCatCoats);
+    await _preloadProduction();
     await _beeAnimations.initialize();
     await _beeAnimations.preload(HabitatCatClip.walk);
     await _visitorSprites.prepare('dog', HabitatCatClip.walk);
@@ -101,6 +305,25 @@ class HabitatGame extends FlameGame {
   }
 
   void _preloadVisible() {
+    unawaited(sprites.prepareCatCoats(_visibleCatCoats));
+    for (final care in habitat.productionRows('cats')) {
+      final id = care['cat_id']?.toString();
+      final meal = QuintalCatMeal.fromCare(care);
+      if (id == null ||
+          meal == null ||
+          _mealSeen[id] == meal.eventId ||
+          !habitat.selectedCatIds.contains(id)) {
+        continue;
+      }
+      _mealSeen[id] = meal.eventId;
+      final anchor = habitat.catAnchors[id];
+      if (anchor != null) {
+        _catWalks.putIfAbsent(id, () => HabitatCatMotion(anchor));
+      }
+      if (meal.recent(habitat.serverNow)) {
+        unawaited(_showProductionMeal(id, care, meal));
+      }
+    }
     final placed = habitat.items.where((item) => item.isPlaced).toList();
     final paths = {
       for (final item in placed.where(
@@ -141,8 +364,12 @@ class HabitatGame extends FlameGame {
   @override
   void onRemove() {
     _removed = true;
+    interactionPositions.dispose();
     _visitorSprites.dispose();
     _beeAnimations.dispose();
+    for (final animation in _residentAnimations.values) {
+      animation.dispose();
+    }
     for (final walk in _catWalks.values) {
       walk.cancelVisit();
     }
@@ -154,6 +381,23 @@ class HabitatGame extends FlameGame {
   void update(double dt) {
     super.update(dt);
     _elapsed += dt;
+    _productionEffects.removeWhere((effect) => effect.expired(_elapsed));
+    if (selectedProduction != null) {
+      // Flame can perform a zero-time update while its LayoutBuilder resizes.
+      // Notify Flutter after that layout, instead of rebuilding a sibling mid-frame.
+      if (SchedulerBinding.instance.schedulerPhase ==
+          SchedulerPhase.persistentCallbacks) {
+        if (!_positionNotificationScheduled) {
+          _positionNotificationScheduled = true;
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            _positionNotificationScheduled = false;
+            if (!_removed) interactionPositions.value++;
+          });
+        }
+      } else {
+        interactionPositions.value++;
+      }
+    }
     if (!editing && !reducedMotion) {
       final poses = _currentVisitors.toList();
       final gift = habitat.pendingGift;
@@ -188,6 +432,16 @@ class HabitatGame extends FlameGame {
           : Offset.lerp(pan, target, 1 - math.exp(-dt * 7))!;
       if ((pan - target).distance < .5) _focusPan = null;
     }
+    if (habitat.production.isNotEmpty) {
+      _gardenMotion.observe(
+        habitat
+            .productionRows('plots')
+            .map((p) => (p['slot'] as num).toInt())
+            .toSet(),
+        _elapsed,
+      );
+    }
+    _updateCatMeals();
     final freeCells = habitat.walkableCells();
     bool free(int x, int y) => freeCells.contains((x, y));
     _catWalks.removeWhere((id, walk) {
@@ -196,6 +450,7 @@ class HabitatGame extends FlameGame {
       return true;
     });
     for (final id in habitat.selectedCatIds) {
+      if (id == _activityCatId) continue;
       final anchor = habitat.catAnchors[id];
       if (anchor == null) continue;
       final walk = _catWalks.putIfAbsent(id, () => HabitatCatMotion(anchor));
@@ -214,17 +469,34 @@ class HabitatGame extends FlameGame {
           !free(walk.next.$1, walk.next.$2)) {
         walk.reset(anchor);
       }
-      if (editing) walk.cancelVisit();
+      if (editing ||
+          (reducedMotion && walk.isBowlVisit) ||
+          (walk.activity == 'drink' &&
+              habitat.productionCat(id)['water_available'] != true)) {
+        walk.cancelVisit();
+      }
       if (!editing && (!reducedMotion || walk.targetItemId != null)) {
         walk.advance(
           dt,
           _random,
           (x, y) => free(x, y) && habitat.canTraverse(walk.current, (x, y)),
         );
-        if (walk.targetItemId == null &&
-            walk.current == walk.next &&
-            _random.nextDouble() < dt * 0.10) {
-          _visitFurniture(id, walk);
+        final waterAt = _waterVisitsAfter.putIfAbsent(
+          id,
+          () => _elapsed + 15 + habitat.selectedCatIds.indexOf(id) * 8,
+        );
+        if (!reducedMotion &&
+            walk.targetItemId == null &&
+            walk.reaction == null &&
+            !_catMeals.containsKey(id)) {
+          if (_elapsed >= waterAt &&
+              habitat.productionCat(id)['water_available'] == true) {
+            _waterVisitsAfter[id] = _elapsed + 90;
+            unawaited(_visitCatWater(id, walk));
+          } else if (walk.current == walk.next &&
+              _random.nextDouble() < dt * .10) {
+            _visitFurniture(id, walk);
+          }
         }
       }
     }
@@ -271,11 +543,8 @@ class HabitatGame extends FlameGame {
       footprintWidth,
       footprintHeight,
     );
-    return sprites.placedBounds(
-      sprites.keyFor(definition.sprite, item.rotation),
-      point,
-      _itemScale(definition),
-    );
+    final key = _itemKey(item);
+    return sprites.placedBounds(key, point, _itemScale(definition, key: key));
   }
 
   HabitatItem? itemAtScreen(Offset position) {
@@ -289,10 +558,7 @@ class HabitatGame extends FlameGame {
             return itemFocus(a).dy.compareTo(itemFocus(b).dy);
           });
     for (final item in visible.reversed) {
-      final key = sprites.keyFor(
-        habitat.definition(item.sku).sprite,
-        item.rotation,
-      );
+      final key = _itemKey(item);
       if (sprites.cached(key) != null && itemBounds(item).contains(position)) {
         return item;
       }
@@ -307,6 +573,9 @@ class HabitatGame extends FlameGame {
 
   Offset _catGroundPosition(int index, (int, int) cell) {
     final catId = habitat.selectedCatIds[index];
+    if (catId == _activityCatId && _activityLane != null) {
+      return _playGround(_activityPlay?.position ?? .5);
+    }
     final walk = _catWalks[catId];
     final point = walk == null
         ? groundAnchor(cell.$1, cell.$2)
@@ -321,7 +590,18 @@ class HabitatGame extends FlameGame {
     if (walk != null &&
         target != null &&
         walk.visiting &&
-        walk.activity != 'feed' &&
+        walk.isBowlVisit &&
+        !reducedMotion) {
+      final approach = math.min(
+        (walk.visitElapsed / .3).clamp(0.0, 1.0),
+        ((walk.visitDuration - walk.visitElapsed) / .3).clamp(0.0, 1.0),
+      );
+      return Offset.lerp(point, itemFocus(target), .35 * approach)!;
+    }
+    if (walk != null &&
+        target != null &&
+        walk.visiting &&
+        !walk.isBowlVisit &&
         walk.activity != 'play') {
       final amount = math.min(
         (walk.visitElapsed / 0.5).clamp(0.0, 1.0),
@@ -340,6 +620,10 @@ class HabitatGame extends FlameGame {
   }
 
   double _catElevation(int index) {
+    if (habitat.selectedCatIds[index] == _activityCatId &&
+        _activityPlay != null) {
+      return reducedMotion ? 0 : _activityPlay!.lift / 16 * tileHeight * .3;
+    }
     final walk = _catWalks[habitat.selectedCatIds[index]];
     if (walk == null) return 0;
     final target = habitat.items
@@ -347,7 +631,7 @@ class HabitatGame extends FlameGame {
         .firstOrNull;
     if (target != null &&
         walk.visiting &&
-        walk.activity != 'feed' &&
+        !walk.isBowlVisit &&
         walk.activity != 'play') {
       final height =
           target.sku.contains('tent') || target.sku.startsWith('canvas_')
@@ -378,24 +662,49 @@ class HabitatGame extends FlameGame {
   double get _animatedCatScale =>
       tileWidth * 0.86 / sprites.catAnimations.restHeight;
 
+  String _catCoat(HabitatCat cat) => HabitatCatCoat.resolve(
+    primaryColor: cat.primaryColor,
+    coatType: cat.coatType,
+    colors: cat.coatColors,
+  );
+  Set<String> get _visibleCatCoats => {
+    for (final cat in habitat.cats.where(
+      (c) => habitat.selectedCatIds.contains(c.id) || c.id == previewCatId,
+    ))
+      _catCoat(cat),
+  };
+
   HabitatCatFrame? _catFrame(int index) {
+    final cat = habitat.cats
+        .where((c) => c.id == habitat.selectedCatIds[index])
+        .firstOrNull;
+    final animations = cat == null
+        ? sprites.catAnimations
+        : sprites.catCoat(_catCoat(cat));
     if (reducedMotion) {
-      return sprites.catAnimations.frame(HabitatCatClip.idle, 0, 0);
+      return animations.frame(HabitatCatClip.idle, 0, 0);
+    }
+    if (cat?.id == _activityCatId && _activityPlay != null) {
+      final clip = switch (_activityPlay!.phase) {
+        QuintalPlayPhase.chasing => HabitatCatClip.walk,
+        QuintalPlayPhase.reaching => HabitatCatClip.happy,
+        _ => HabitatCatClip.idle,
+      };
+      unawaited(animations.preload(clip));
+      return animations.frame(clip, _activityTime, _activityDirection) ??
+          animations.frame(HabitatCatClip.idle, 0, _activityDirection);
     }
     final walk = _catWalks[habitat.selectedCatIds[index]];
     final clip = editing
         ? HabitatCatClip.idle
         : walk?.clip ?? HabitatCatClip.idle;
-    return sprites.catAnimations.frame(
+    unawaited(animations.preload(clip));
+    return animations.frame(
           clip,
           walk?.animationTime ?? _elapsed,
           walk?.direction ?? 0,
         ) ??
-        sprites.catAnimations.frame(
-          HabitatCatClip.idle,
-          _elapsed,
-          walk?.direction ?? 0,
-        );
+        animations.frame(HabitatCatClip.idle, _elapsed, walk?.direction ?? 0);
   }
 
   Future<void> greetCat(String id) async {
@@ -405,7 +714,9 @@ class HabitatGame extends FlameGame {
     final clip = _random.nextBool()
         ? HabitatCatClip.happy
         : HabitatCatClip.dance;
-    await sprites.catAnimations.preload(clip);
+    final cat = habitat.cats.where((c) => c.id == id).firstOrNull;
+    if (cat == null) return;
+    await sprites.catCoat(_catCoat(cat)).preload(clip);
     if (editing || !habitat.selectedCatIds.contains(id)) return;
     _catWalks[id]?.react(clip);
   }
@@ -432,10 +743,48 @@ class HabitatGame extends FlameGame {
     return (x, y);
   }
 
-  Offset _limitPan(Offset value) => Offset(
-    value.dx.clamp(-size.x * .4, size.x * .4),
-    value.dy.clamp(-size.y * .4, size.y * .4),
-  );
+  /// The scenery boundary belongs to the world. Zoom changes its projected
+  /// edges, not how far into that world the player is allowed to explore.
+  Rect get cameraPanBounds {
+    final center = Offset(size.x / 2, size.y / 2);
+    var left = -size.x * .4, top = -size.y * .4;
+    var right = size.x * (habitat.production.isEmpty ? 1.4 : 2.4);
+    var bottom = size.y * (habitat.production.isEmpty ? 1.4 : 1.9);
+    if (habitat.production.isNotEmpty) {
+      // Keep every production space reachable, including its anchored actions
+      // on narrow screens. Bounds live at zoom 1 so zooming preserves the
+      // world edge instead of snapping back toward the original cat yard.
+      for (final area in _ambientWorld.productionAreas.values) {
+        for (final x in [area.$1.toDouble(), (area.$1 + area.$3).toDouble()]) {
+          for (final y in [
+            area.$2.toDouble(),
+            (area.$2 + area.$4).toDouble(),
+          ]) {
+            final point =
+                center + (_productionGround(x, y) - pan - center) / zoom;
+            left = math.min(left, point.dx - size.x * .75);
+            right = math.max(right, point.dx + size.x * .75);
+            top = math.min(top, point.dy - size.y);
+            bottom = math.max(bottom, point.dy + size.y);
+          }
+        }
+      }
+    }
+    return Rect.fromLTRB(
+      size.x - (center.dx + (right - center.dx) * zoom),
+      size.y - (center.dy + (bottom - center.dy) * zoom),
+      -(center.dx + (left - center.dx) * zoom),
+      -(center.dy + (top - center.dy) * zoom),
+    );
+  }
+
+  Offset _limitPan(Offset value) {
+    final bounds = cameraPanBounds;
+    return Offset(
+      value.dx.clamp(bounds.left, bounds.right),
+      value.dy.clamp(bounds.top, bounds.bottom),
+    );
+  }
 
   void moveCamera(Offset delta) {
     _focusPan = null;
@@ -517,6 +866,20 @@ class HabitatGame extends FlameGame {
     _drawPaths(canvas);
 
     final scene = <_SceneSprite>[];
+    _addProductionScene(canvas, scene);
+    if (selectedProduction case final target?) {
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: productionFocus(target),
+          width: tileWidth * .8,
+          height: tileHeight * .8,
+        ),
+        Paint()
+          ..color = const Color(0xffffefb0)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2,
+      );
+    }
     final outside = _ambientWorld;
     final region = sceneryRegion;
     for (final decor in outside.decorationsWithin(
@@ -644,14 +1007,37 @@ class HabitatGame extends FlameGame {
     for (final item in habitat.items.where((item) => item.isPlaced)) {
       final type = habitat.definition(item.sku);
       if (type.isGround) continue;
-      scene.add(
-        _SceneSprite(
-          _itemKey(item),
-          itemFocus(item),
-          _itemScale(type),
-          selected: editing && item.id == selectedItemId,
-        ),
-      );
+      final catId = item.careState['cat_id']?.toString();
+      final amount = catId == null || _catMeals[catId]?.bowlId != item.id
+          ? null
+          : _mealAmount(catId);
+      if (amount != null) {
+        final low = amount.floor(), high = amount.ceil();
+        final key = _mealBowlKey(item, low);
+        final scale = _itemScale(type, key: key);
+        scene.add(_SceneSprite(key, itemFocus(item), scale));
+        if (high > low) {
+          scene.add(
+            _SceneSprite(
+              _mealBowlKey(item, high),
+              itemFocus(item),
+              scale,
+              castsShadow: false,
+              depthOffset: .001,
+              tint: Colors.white.withValues(alpha: amount - low),
+            ),
+          );
+        }
+      } else {
+        scene.add(
+          _SceneSprite(
+            _itemKey(item),
+            itemFocus(item),
+            _itemScale(type, key: _itemKey(item)),
+            selected: editing && item.id == selectedItemId,
+          ),
+        );
+      }
     }
     final cells = catCells;
     for (var index = 0; index < cells.length; index++) {
@@ -665,7 +1051,6 @@ class HabitatGame extends FlameGame {
           _catGroundPosition(index, cells[index]),
           _animatedCatScale,
           destination: _catBounds(index, cells[index]),
-          tint: _coatTint(cat.primaryColor),
           catFrame: _catFrame(index),
           elevation: _catElevation(index),
           depthOffset: _catWalks[cat.id]?.visiting == true ? 0.5 : 0,
@@ -675,6 +1060,7 @@ class HabitatGame extends FlameGame {
     _addFence(scene);
     // Every shadow belongs to the ground layer, never the sprite in front of it.
     for (final entry in scene) {
+      if (!entry.castsShadow) continue;
       final bounds =
           entry.catFrame?.bounds(entry.ground, entry.scale) ??
           sprites.placedBounds(entry.key, entry.ground, entry.scale);
@@ -692,6 +1078,7 @@ class HabitatGame extends FlameGame {
         continue;
       }
       if (sprites.cached(entry.key) == null) continue;
+
       sprites.drawShadow(canvas, entry.key, entry.ground, entry.scale);
     }
     scene.sort((a, b) => a.depth.compareTo(b.depth));
@@ -715,13 +1102,107 @@ class HabitatGame extends FlameGame {
           entry.destination ??
           sprites.placedBounds(entry.key, entry.ground, entry.scale);
       if (!target.overlaps(viewport)) continue;
+      if (entry.clipBottom case final bottom?) {
+        canvas.save();
+        canvas.clipRect(
+          Rect.fromLTRB(viewport.left, viewport.top, viewport.right, bottom),
+        );
+      }
+      if (entry.angle != 0) {
+        canvas.save();
+        canvas.translate(entry.ground.dx, entry.ground.dy);
+        canvas.rotate(entry.angle);
+        canvas.translate(-entry.ground.dx, -entry.ground.dy);
+      }
       if (entry.selected) {
         _drawOutlinedSprite(canvas, entry.key, target);
       } else {
         _drawSprite(canvas, entry.key, target, tint: entry.tint);
       }
+      if (entry.angle != 0) canvas.restore();
+      if (entry.clipBottom != null) canvas.restore();
+      if (entry.key.startsWith('production:crafted-pot-lid-')) {
+        paintQuintalSteam(
+          canvas,
+          entry.ground - Offset(0, tileWidth * .43 * math.sqrt(3 / 8)),
+          tileWidth,
+          _elapsed,
+          still: reducedMotion || editing,
+        );
+      }
     }
     _drawPreview(canvas);
+    for (final entry in catSetPreview.entries) {
+      final point = groundAnchor(entry.value.$1, entry.value.$2);
+      canvas.drawPath(
+        _cellDiamond(entry.value.$1, entry.value.$2),
+        Paint()..color = const Color(0x8852783c),
+      );
+      final scale = entry.key.startsWith('production:crafted-')
+          ? sprites.worldScale(entry.key, tileWidth)
+          : tileWidth * .65 / sprites.bounds(entry.key).height;
+      _drawSprite(
+        canvas,
+        entry.key,
+        sprites.placedBounds(entry.key, point, scale),
+      );
+    }
+    for (final effect in _productionEffects) {
+      final target =
+          productionTargets
+              .where(
+                (t) =>
+                    t.kind == effect.target.kind &&
+                    t.target == effect.target.target &&
+                    t.role == effect.target.role,
+              )
+              .firstOrNull ??
+          effect.target;
+      final anchor =
+          productionFocus(target) -
+          Offset(0, productionObjectHeight(target) * .35);
+      effect.paint(
+        canvas,
+        anchor,
+        tileWidth,
+        _elapsed,
+        reducedMotion: reducedMotion,
+      );
+      if (effect.toolKind case final tool?) {
+        final stage = effect.toolStage(_elapsed, reducedMotion: reducedMotion);
+        final key = sprites.keyFor('production:crafted-tool-$tool-$stage', 0);
+        if (sprites.cached(key) != null) {
+          _drawSprite(
+            canvas,
+            key,
+            sprites.placedBounds(
+              key,
+              effect.toolOutlet(anchor, tileWidth),
+              sprites.worldScale(key, tileWidth) * .8,
+            ),
+            tint: Colors.white.withValues(alpha: effect.toolOpacity(_elapsed)),
+          );
+        }
+      }
+    }
+    _drawProductionLabels(canvas);
+    if (_activityLane != null) {
+      final wand = sprites.cached('ui:action_play');
+      if (wand != null) {
+        final point = _playGround(_activityTarget) - Offset(0, tileWidth * .72);
+        final bounds = Rect.fromCenter(
+          center: point,
+          width: tileWidth * .9,
+          height: tileWidth * .9,
+        );
+        canvas.drawImageRect(
+          wand,
+          Rect.fromLTWH(0, 0, wand.width.toDouble(), wand.height.toDouble()),
+          bounds,
+          Paint()..filterQuality = FilterQuality.high,
+        );
+      }
+    }
     super.render(canvas);
   }
 
@@ -791,6 +1272,168 @@ class HabitatGame extends FlameGame {
   bool giftAt(Offset point) =>
       habitat.pendingGift?['state'] == 'available' &&
       giftBounds.inflate(12).contains(point);
+  String? productionAt(Offset point) =>
+      habitat.production.isEmpty ? null : _productionAt(point);
+  void focusProduction(String kind) {
+    final area = _ambientWorld.productionAreas[kind];
+    if (area == null) return;
+    final center = _productionGround(
+      area.$1 + area.$3 / 2,
+      area.$2 + area.$4 / 2,
+    );
+    pan = _limitPan(pan + Offset(size.x / 2, size.y * .55) - center);
+    _focusPan = null;
+  }
+
+  List<QuintalSceneTarget> get productionTargets => _productionTargets;
+  QuintalSceneTarget? productionDestination(String kind) {
+    final targets = productionTargets.where((t) => t.kind == kind).toList();
+    return targets.where(_targetReady).firstOrNull ??
+        targets.where((t) => t.role == 'collect').firstOrNull ??
+        targets.firstOrNull;
+  }
+
+  Offset productionFocus(QuintalSceneTarget target) {
+    if (target.role == 'resident') {
+      final r = _ambientWorld.productionAreas[target.kind]!;
+      final pose = _residentPose(target.kind, int.parse(target.target));
+      return _productionGround(r.$1 + pose.x, r.$2 + pose.y) -
+          Offset(0, pose.elevation * tileWidth * math.sqrt(3 / 8));
+    }
+    return _productionGround(target.x, target.y);
+  }
+
+  double productionObjectHeight(QuintalSceneTarget t) {
+    if (t.role == 'build') {
+      final level = habitat.facilityLevel(t.kind);
+      if (t.kind == 'garden' && level > 0) return tileWidth * .15 + 10;
+      final stem = switch (t.kind) {
+        'coop' => 'coop-${level.clamp(1, 2)}',
+        'pasture' => 'barn-${level.clamp(1, 2)}',
+        'kitchen' => 'kitchen-${level.clamp(1, 2)}',
+        'market' => 'post',
+        _ => null,
+      };
+      final key = stem == null
+          ? null
+          : sprites.keyFor(
+              'production:crafted-$stem-${level > 0 ? 'ready' : 'building'}',
+              0,
+            );
+      final height = key != null && sprites.productionKeys.contains(key)
+          ? -sprites
+                .placedBounds(
+                  key,
+                  Offset.zero,
+                  sprites.worldScale(key, tileWidth),
+                )
+                .top
+          : tileWidth * 1.4;
+      // Leave a full badge/bar row between works and ongoing production.
+      return height + 30 + (level > 0 ? 80 : 0);
+    }
+    if (t.role == 'kitchen') {
+      final level = habitat.facilityLevel('kitchen').clamp(1, 2);
+      final key = sprites.keyFor('production:crafted-kitchen-$level-ready', 0);
+      if (sprites.productionKeys.contains(key)) {
+        final bounds = sprites.placedBounds(
+          key,
+          Offset.zero,
+          sprites.worldScale(key, tileWidth),
+        );
+        // The progress bar extends below its badge. Keep it above the
+        // chimney and serving shelf at every camera scale.
+        return -bounds.top + 30;
+      }
+      return tileWidth * 1.3 + 30;
+    }
+    if (t.role == 'plot') {
+      final plot = habitat
+          .productionRows('plots')
+          .where((p) => p['slot'].toString() == t.target)
+          .firstOrNull;
+      if (plot?['crop'] != null) {
+        final key = sprites.keyFor('production:${_cropSpriteName(plot!)}', 0);
+        // An overlay can be mounted before the sprite manifest is ready.
+        if (!sprites.productionKeys.contains(key)) return tileWidth * .6;
+        final scale =
+            sprites.worldScale(key, tileWidth) *
+            _quintalCropScale(plot['crop']);
+        return math.max(
+          tileWidth * .4,
+          -sprites.placedBounds(key, Offset.zero, scale).top +
+              .055 * tileWidth * math.sqrt(3 / 8),
+        );
+      }
+    }
+    return tileWidth *
+        switch (t.role) {
+          'resident' => t.kind == 'pasture' ? .86 : .4,
+          'plot' => .6,
+          'food' || 'water' || 'food_cat' || 'water_cat' => .23,
+          'collect' => t.kind == 'orchard' ? 1.5 : 1.25,
+          'kitchen' => .85,
+          'market' => 1.25,
+          _ => .4,
+        };
+  }
+
+  QuintalSceneTarget? productionObjectAt(Offset point) {
+    if (habitat.production.isEmpty) return null;
+    final toolAreas = _productionToolClearances;
+    bool indicatorVisible(QuintalSceneTarget t) =>
+        _productionIndicatorVisible(t, toolAreas);
+    final candidates = productionTargets
+        .where(
+          (t) => t.role == 'build' && habitat.facilityLevel(t.kind) > 0
+              ? indicatorVisible(t) &&
+                    _productionBadgeHitRect(t).inflate(3).contains(point)
+              : (t.role == 'build' &&
+                        t.kind != 'pier' &&
+                        _constructionSiteContains(t.kind, point)) ||
+                    ((_targetReady(t) || _targetWaiting(t)) &&
+                        indicatorVisible(t) &&
+                        _productionBadgeHitRect(t)
+                            .inflate(3)
+                            .contains(point)) ||
+                    Rect.fromCenter(
+                      center:
+                          productionFocus(t) -
+                          Offset(0, productionObjectHeight(t) * .45),
+                      width: math.max(
+                        24,
+                        tileWidth *
+                            (t.role == 'resident' && t.kind == 'pasture'
+                                ? 1.1
+                                : .75),
+                      ),
+                      height: math.max(
+                        26,
+                        productionObjectHeight(t) + tileHeight * .5,
+                      ),
+                    ).contains(point),
+        )
+        .toList();
+    candidates.sort((a, b) {
+      double distance(QuintalSceneTarget t) => math.min(
+        (productionFocus(t) - point).distance,
+        (_targetReady(t) || _targetWaiting(t)) && indicatorVisible(t)
+            ? (_productionBadgeRect(t).center - point).distance
+            : double.infinity,
+      );
+      return distance(a).compareTo(distance(b));
+    });
+    return candidates.firstOrNull;
+  }
+
+  bool _constructionSiteContains(String kind, Offset point) {
+    final r = _ambientWorld.productionAreas[kind]!;
+    final dx = (point.dx - size.x / 2 - pan.dx) / (tileWidth / 2);
+    final dy = (point.dy - boardTop) / (tileHeight / 2);
+    final x = (dx + dy) / 2, y = (dy - dx) / 2;
+    return x >= r.$1 && x < r.$1 + r.$3 && y >= r.$2 && y < r.$2 + r.$4;
+  }
+
   void focusGift() {
     _focusPan = _limitPan(
       pan + Offset(size.x / 2, size.y * .55) - giftPosition,
@@ -1179,14 +1822,26 @@ class HabitatGame extends FlameGame {
 
   void _drawPreview(Canvas canvas) {
     if (previewX == null || previewY == null) return;
+    if (previewCat) {
+      final cat = habitat.cats.where((c) => c.id == previewCatId).firstOrNull;
+      if (cat == null) return;
+      final animations = sprites.catCoat(_catCoat(cat));
+      unawaited(animations.preload(HabitatCatClip.idle));
+      animations
+          .frame(HabitatCatClip.idle, _elapsed, 0)
+          ?.paint(
+            canvas,
+            _itemAnchor(previewX!, previewY!, 1, 1) -
+                Offset(0, tileWidth * 0.12),
+            _animatedCatScale,
+            tint: Colors.white.withValues(alpha: 0.7),
+          );
+      return;
+    }
     final type = previewSku == null ? null : habitat.definition(previewSku!);
-    final key = previewCat
-        ? 'animal-cat'
-        : type == null
-        ? null
-        : sprites.keyFor(type.sprite, previewRotation);
-    if (key == null) return;
-    if (type?.layer == 'terrain') {
+    if (type == null) return;
+    final key = sprites.keyFor(type.displaySprite, previewRotation);
+    if (type.layer == 'terrain') {
       final diamond = _cellDiamond(previewX!, previewY!);
       canvas.save();
       canvas.clipPath(diamond);
@@ -1196,23 +1851,15 @@ class HabitatGame extends FlameGame {
     }
     final image = sprites.cached(key);
     if (image == null) return;
-    final width = type == null
-        ? 1
-        : previewRotation.isOdd
-        ? type.height
-        : type.width;
-    final height = type == null
-        ? 1
-        : previewRotation.isOdd
-        ? type.width
-        : type.height;
+    final width = previewRotation.isOdd ? type.height : type.width;
+    final height = previewRotation.isOdd ? type.width : type.height;
     final ground = _itemAnchor(previewX!, previewY!, width, height);
-    final target = type?.isPath == true
+    final target = type.isPath
         ? sprites.placedBounds(key, ground, tileWidth / 128)
         : sprites.placedBounds(
             key,
             ground - Offset(0, tileWidth * 0.12),
-            previewCat ? _catScale : _itemScale(type!),
+            _itemScale(type, key: key),
           );
     sprites.paintSprite(
       canvas,
@@ -1227,7 +1874,13 @@ class HabitatGame extends FlameGame {
   Offset groundAnchor(int x, int y) =>
       cellTop(x, y) + Offset(0, tileHeight / 2);
 
-  double _itemScale(HabitatShopItem item) {
+  double _itemScale(HabitatShopItem item, {String? key}) {
+    if (item.sku == 'food_bowl' || item.sku == 'water_bowl') {
+      return sprites.worldScale(
+        key ?? sprites.keyFor(item.displaySprite, 0),
+        tileWidth,
+      );
+    }
     final sprite = item.sprite;
     if (sprite.startsWith('building-type-')) {
       final key = sprites.keyFor(sprite, 0);
@@ -1275,23 +1928,6 @@ class HabitatGame extends FlameGame {
     );
   }
 
-  Color? _coatTint(String? color) {
-    final value = color?.toLowerCase() ?? '';
-    if (value.contains('laranja') || value.contains('orange')) {
-      return const Color(0xFFFFBA7A);
-    }
-    if (value.contains('preto') || value.contains('black')) {
-      return const Color(0xFF68605E);
-    }
-    if (value.contains('branco') || value.contains('white')) {
-      return const Color(0xFFFFF7E8);
-    }
-    if (value.contains('cinza') || value.contains('gray')) {
-      return const Color(0xFFB6AFB7);
-    }
-    return null;
-  }
-
   void _drawSprite(
     Canvas canvas,
     String key,
@@ -1334,20 +1970,26 @@ class _SceneSprite {
     this.ground,
     this.scale, {
     this.depthOffset = 0,
+    this.angle = 0,
     this.destination,
     this.tint,
     this.selected = false,
     this.catFrame,
     this.elevation = 0,
+    this.clipBottom,
+    this.castsShadow = true,
   });
   final String key;
   final Offset ground;
   final double scale;
   final double depthOffset;
+  final double angle;
   final Rect? destination;
   final Color? tint;
   final bool selected;
   final HabitatCatFrame? catFrame;
   final double elevation;
+  final double? clipBottom;
+  final bool castsShadow;
   double get depth => ground.dy + depthOffset + elevation * .58;
 }

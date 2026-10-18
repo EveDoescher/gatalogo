@@ -48,13 +48,17 @@ void main() {
           ),
         ),
       );
-      expect(find.text('Afinidade 0/100'), findsOneWidget);
-      expect(find.text('3 porções gratuitas disponíveis hoje'), findsOneWidget);
-      expect(find.text('4 moedas · +3 afinidade'), findsOneWidget);
-      await tester.tap(find.text('Porção diária'));
-      expect(selected, 'feed');
-      await tester.tap(find.text('Petisco'));
-      expect(selected, 'treat');
+      expect(find.text('Vínculo 0 pontos'), findsOneWidget);
+      expect(
+        find.text(
+          'Alimente e abasteça água pelos potes identificados do seu gato.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Porção diária'), findsNothing);
+      expect(find.text('Petisco'), findsNothing);
+      await tester.tap(find.text('Brincar com a varinha'));
+      expect(selected, 'play');
       await tester.pumpWidget(const SizedBox());
       sprites.catAnimations.dispose();
       habitat.dispose();

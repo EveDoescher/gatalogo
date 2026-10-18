@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'habitat_navigation.dart';
 
@@ -14,6 +15,7 @@ part 'habitat_catalog.g.dart';
 part 'habitat_care.dart';
 part 'habitat_encounters.dart';
 part 'habitat_layout.dart';
+part 'quintal_production.dart';
 
 class HabitatItem {
   const HabitatItem({
@@ -84,6 +86,11 @@ class HabitatShopItem {
   final String name;
   final String category;
   final String sprite;
+  String get displaySprite => switch (sku) {
+    'food_bowl' => 'production:crafted-cat-food-0-0',
+    'water_bowl' => 'production:crafted-cat-water-0-0',
+    _ => sprite,
+  };
   final int price;
   final int? basePrice;
   final bool? purchasable;
@@ -130,22 +137,36 @@ class HabitatShopItem {
 }
 
 class HabitatCat {
-  const HabitatCat({required this.id, required this.name, this.primaryColor});
+  const HabitatCat({
+    required this.id,
+    required this.name,
+    this.primaryColor,
+    this.coatType,
+    this.coatColors = const [],
+  });
 
   final String id;
   final String name;
   final String? primaryColor;
+  final String? coatType;
+  final List<String> coatColors;
 
   factory HabitatCat.fromMap(Map<String, dynamic> value) => HabitatCat(
     id: value['id'].toString(),
     name: value['name']?.toString() ?? 'Meu gato',
     primaryColor: value['primary_color']?.toString(),
+    coatType: value['coat_type']?.toString(),
+    coatColors: (value['coat_colors'] as List? ?? const [])
+        .whereType<String>()
+        .toList(),
   );
 
   Map<String, dynamic> toMap() => {
     'id': id,
     'name': name,
     'primary_color': primaryColor,
+    'coat_type': coatType,
+    'coat_colors': coatColors,
   };
 }
 
@@ -260,6 +281,12 @@ class HabitatService extends ChangeNotifier {
   };
   Map<String, String> _pendingPurchases = {};
   Map<String, dynamic> care = {};
+  Map<String, dynamic> production = {};
+  Map<String, String> _pendingProduction = {};
+  bool productionBusy = false;
+  int _productionGeneration = 0;
+  bool productionOffline = false;
+  Map<String, dynamic> lastProductionProgress = {};
   Map<String, String> _pendingInteractions = {};
   Duration _clockOffset = Duration.zero;
   bool _disposed = false;
@@ -292,6 +319,9 @@ class HabitatService extends ChangeNotifier {
       hasDraft = false;
       _clockOffset = Duration.zero;
       _pendingInteractions.clear();
+      production = {};
+      lastProductionProgress = {};
+      _pendingProduction.clear();
     }
     loading = true;
     notifyListeners();
@@ -366,6 +396,7 @@ class HabitatService extends ChangeNotifier {
       }
       await _persistSnapshot();
       offline = false;
+      await refreshProduction();
     } catch (_) {
       offline = true;
       if (items.isEmpty && !session.isSignedIn) _seedGuest();
@@ -401,12 +432,38 @@ class HabitatService extends ChangeNotifier {
         HabitatCat(
           id: cat.id,
           name: cat.displayName,
-          primaryColor: catStore.analysisFor(cat.id)?.primaryColor,
+          primaryColor:
+              catStore.analysisFor(cat.id)?.primaryColor ??
+              catStore
+                  .analysisFor(cat.id)
+                  ?.patternMap?['base_color']
+                  ?.toString(),
+          coatType:
+              catStore.analysisFor(cat.id)?.coatType ??
+              catStore.analysisFor(cat.id)?.patternMap?['pattern']?.toString(),
+          coatColors: [
+            for (final c in catStore.analysisFor(cat.id)?.colors ?? []) c.name,
+            ...((catStore.analysisFor(cat.id)?.patternMap?['accent_colors']
+                        as List?)
+                    ?.whereType<String>() ??
+                const <String>[]),
+          ],
         ),
     ];
   }
 
   void _readSnapshot(Map<String, dynamic> data, {bool cached = false}) {
+    if (cached) {
+      lastProductionProgress = Map<String, dynamic>.from(
+        data['last_production_progress'] as Map? ?? const {},
+      );
+      production = Map<String, dynamic>.from(
+        data['production'] as Map? ?? const {},
+      );
+      _pendingProduction = Map<String, String>.from(
+        data['pending_production'] as Map? ?? const {},
+      );
+    }
     care = Map<String, dynamic>.from(data['care'] as Map? ?? const {});
     if (cached) {
       _clockOffset = Duration(
@@ -483,6 +540,9 @@ class HabitatService extends ChangeNotifier {
       : null;
 
   Map<String, dynamic> _snapshot() => {
+    'production': production,
+    'last_production_progress': lastProductionProgress,
+    'pending_production': _pendingProduction,
     'care': care,
     'care_clock_offset_ms': _clockOffset.inMilliseconds,
     'pending_interactions': _pendingInteractions,
@@ -513,6 +573,7 @@ class HabitatService extends ChangeNotifier {
       _database.saveHabitatSnapshot(_ownerId, _snapshot());
 
   Map<String, dynamic> _draft() => {
+    'production_rules_version': production.isEmpty ? 0 : 1,
     'expected_revision': revision,
     'placements': [
       for (final item in items.where((item) => item.isPlaced))

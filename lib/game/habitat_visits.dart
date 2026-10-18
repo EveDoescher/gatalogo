@@ -76,6 +76,7 @@ extension _VisitPlanning on HabitatWorld {
   bool _clearForVisitor((int, int) cell) {
     if (editable.contains(cell) || isRiverCell(cell.$1, cell.$2)) return false;
     if (isVisitorCorridor(cell.$1, cell.$2)) return true;
+    if (isProductionCell(cell.$1, cell.$2)) return false;
     for (final prop in decorationsWithin(
       cell.$1 - 2,
       cell.$2 - 2,

@@ -3,6 +3,7 @@ import 'dart:ui';
 /// Shared by the world and the shop so the chosen item keeps the same colors.
 abstract final class HabitatPalette {
   static ColorFilter? forSprite(String key) {
+    if (key.startsWith('production:')) key = key.substring(11);
     if (key.startsWith('rock_')) return stone;
     if ([
       'tree_',

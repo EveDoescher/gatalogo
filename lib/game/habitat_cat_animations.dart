@@ -20,7 +20,13 @@ enum HabitatCatClip {
 /// Atlases are shared by every cat; each clip is decoded only when requested.
 class HabitatCatAnimations {
   HabitatCatAnimations({this.path = 'assets/habitat/cat'});
+  HabitatCatAnimations.coat(String id, HabitatCatAnimations geometry)
+    : path = 'assets/habitat/cat',
+      _imagePrefix = 'assets/habitat/cat_coats/${id}__',
+      _geometry = geometry;
   final String path;
+  String? _imagePrefix;
+  HabitatCatAnimations? _geometry;
   final Map<HabitatCatClip, Future<void>> _loading = {};
   final Map<HabitatCatClip, (ui.Image, ui.Image)> _atlases = {};
   late Map<String, dynamic> _data;
@@ -31,7 +37,7 @@ class HabitatCatAnimations {
     _disposed = true;
     for (final atlas in _atlases.values) {
       atlas.$1.dispose();
-      atlas.$2.dispose();
+      if (_geometry == null) atlas.$2.dispose();
     }
     _atlases.clear();
   }
@@ -39,6 +45,11 @@ class HabitatCatAnimations {
   Future<void> initialize() => _initialization ??= _initialize();
 
   Future<void> _initialize() async {
+    if (_geometry case final geometry?) {
+      await geometry.initialize();
+      _data = geometry._data;
+      return;
+    }
     _data = jsonDecode(
       await rootBundle.loadString('$path/animations.json'),
     ) as Map<String, dynamic>;
@@ -47,7 +58,9 @@ class HabitatCatAnimations {
   double get restHeight => (_data['restHeight'] as num).toDouble();
 
   Future<ui.Image> _image(String name) async {
-    final bytes = await rootBundle.load('$path/$name.png');
+    final bytes = await rootBundle.load(
+      _imagePrefix == null ? '$path/$name.png' : '$_imagePrefix$name.png',
+    );
     final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
     try {
       return (await codec.getNextFrame()).image;
@@ -60,6 +73,16 @@ class HabitatCatAnimations {
     if (_disposed) return Future.value();
     return _loading.putIfAbsent(clip, () async {
       await initialize();
+      if (_geometry case final geometry?) {
+        await geometry.preload(clip);
+        final image = await _image(clip.asset);
+        if (_disposed) {
+          image.dispose();
+        } else {
+          _atlases[clip] = (image, geometry._atlases[clip]!.$2);
+        }
+        return;
+      }
       final images = await Future.wait([
         _image(clip.asset),
         _image('${clip.asset}-shadow'),

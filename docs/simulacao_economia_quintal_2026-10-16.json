@@ -1,0 +1,823 @@
+{
+  "schema": 2,
+  "seed": 20261016,
+  "source_sha256": {
+    "scripts/simulate_quintal_balance.py": "be2e6d222b9ce8dd915437d98df75501bcb668db1ee895996f2b3518b70f4b7d",
+    "app/services/quintal_catalog.py": "d9bf17c0e2bf6bbb1eb8c4df3ea2e54c0ad3e8036d4b328732c12f9fef2c3aea",
+    "app/services/quintal_production.py": "95f24de7b2a3384a0cfd7493400d859a97ed813d2f6283fd94faaf6bf574b9f9"
+  },
+  "configuration_observed": {
+    "free_shop": true,
+    "instant_build": true
+  },
+  "preserved_base_prices": {
+    "facilities": {
+      "garden:1": 0,
+      "garden:2": 120,
+      "garden:3": 220,
+      "kitchen:1": 40,
+      "kitchen:2": 140,
+      "pier:1": 80,
+      "market:1": 0,
+      "coop:1": 100,
+      "coop:2": 200,
+      "pasture:1": 180,
+      "pasture:2": 260,
+      "rod:1": 0,
+      "rod:2": 100,
+      "rod:3": 240,
+      "orchard:1": 280
+    },
+    "orders": {
+      "chicken": 12,
+      "beef": 20
+    }
+  },
+  "tap_assumptions": {
+    "plant": 3,
+    "harvest": 2,
+    "cook": 3,
+    "collect_cook": 3,
+    "collect_coop": 2,
+    "collect_cow": 2,
+    "feed_residents": 2,
+    "water_residents": 2,
+    "water_cat": 2,
+    "serve_two": 4,
+    "pet": 2
+  },
+  "assumptions": [
+    "Established garden level 3, kitchen level 2, four hens and two cows in all scenarios.",
+    "Seven-day warmup followed by 28 measured days; visits equally spaced, no waiting inside a visit.",
+    "Two accepted special meals per cat/day; free basic food excluded conservatively. Refusals are audited separately, not hidden in the capacity baseline.",
+    "Initial crop stock covers three days, plus eight eggs, four milk and two rations/cat. Report start/end stocks to expose depletion.",
+    "Farm grows current recipe inputs and animal feed, targeting two days of supplies; no watering boost.",
+    "Daily water and petting; serving replaces/refunds old portions. No optional play/fishing, travel, camera gestures or notification taps counted.",
+    "Taps are an explicit command-flow estimate, not device telemetry; repeated object selection is conservative.",
+    "Resident hours are per animal (all same-species residents share supplies); garden waiting uses bed-hours. Kitchen idle means no pending recipe, not a blocked server.",
+    "This deterministic capacity model does not replace the deferred connected/PostgreSQL validation."
+  ],
+  "scenarios": [
+    {
+      "cats": 3,
+      "visits_per_day": 1,
+      "hens": 4,
+      "cows": 2,
+      "garden_slots": 12,
+      "kitchen_queue": 4,
+      "recipe": "garden",
+      "days_measured": 28,
+      "warmup_days": 7,
+      "actions_per_day": {
+        "collect_cook": 2.0,
+        "collect_coop": 1.0,
+        "collect_cow": 2.0,
+        "cook": 2.0,
+        "feed_residents": 2.0,
+        "harvest": 6.679,
+        "pet": 3.0,
+        "plant": 6.643,
+        "serve_two": 3.0,
+        "water_cat": 3.0,
+        "water_residents": 2.0
+      },
+      "estimated_taps_per_day": 83.29,
+      "estimated_taps_per_visit": 83.29,
+      "recipe_inputs_per_day": {
+        "carrot": 2.0,
+        "wheat": 4.0
+      },
+      "resident_inputs_per_day": {
+        "corn": 6.0,
+        "wheat": 4.0
+      },
+      "stock_at_measurement_start": {
+        "corn": 6,
+        "wheat": 9,
+        "carrot": 3,
+        "egg": 56,
+        "milk": 28,
+        "ration": 0
+      },
+      "stock_at_end": {
+        "corn": 6,
+        "wheat": 10,
+        "carrot": 3,
+        "egg": 280,
+        "milk": 140,
+        "ration": 0
+      },
+      "minimum_available": {
+        "corn": 6,
+        "wheat": 8
+      },
+      "metrics_per_day": {
+        "collected_egg": 8.0,
+        "collected_milk": 4.0,
+        "harvested_carrot": 2.0,
+        "harvested_corn": 6.0,
+        "harvested_wheat": 8.036,
+        "meals": 6.0,
+        "missed_meals": 0.0,
+        "visits": 1.0
+      },
+      "hours_per_day": {
+        "coop_producing": 12.0,
+        "coop_full": 12.0,
+        "coop_unsupplied": 0.0,
+        "pasture_producing": 16.0,
+        "pasture_full": 8.0,
+        "pasture_unsupplied": 0.0,
+        "kitchen_busy": 0.333,
+        "garden_waiting_bed": 154.946,
+        "kitchen_idle": 23.667
+      }
+    },
+    {
+      "cats": 3,
+      "visits_per_day": 2,
+      "hens": 4,
+      "cows": 2,
+      "garden_slots": 12,
+      "kitchen_queue": 4,
+      "recipe": "garden",
+      "days_measured": 28,
+      "warmup_days": 7,
+      "actions_per_day": {
+        "collect_cook": 2.0,
+        "collect_coop": 2.0,
+        "collect_cow": 4.0,
+        "cook": 2.0,
+        "feed_residents": 2.0,
+        "harvest": 6.643,
+        "pet": 3.0,
+        "plant": 6.679,
+        "serve_two": 6.0,
+        "water_cat": 3.0,
+        "water_residents": 2.0
+      },
+      "estimated_taps_per_day": 101.32,
+      "estimated_taps_per_visit": 50.66,
+      "recipe_inputs_per_day": {
+        "carrot": 2.0,
+        "wheat": 4.0
+      },
+      "resident_inputs_per_day": {
+        "corn": 6.0,
+        "wheat": 4.0
+      },
+      "stock_at_measurement_start": {
+        "corn": 12,
+        "wheat": 16,
+        "carrot": 4,
+        "egg": 112,
+        "milk": 42,
+        "ration": 3
+      },
+      "stock_at_end": {
+        "corn": 12,
+        "wheat": 14,
+        "carrot": 4,
+        "egg": 560,
+        "milk": 210,
+        "ration": 3
+      },
+      "minimum_available": {
+        "corn": 6,
+        "wheat": 10
+      },
+      "metrics_per_day": {
+        "collected_egg": 16.0,
+        "collected_milk": 6.0,
+        "harvested_carrot": 2.0,
+        "harvested_corn": 6.0,
+        "harvested_wheat": 7.929,
+        "meals": 6.0,
+        "missed_meals": 0.0,
+        "visits": 2.0
+      },
+      "hours_per_day": {
+        "coop_producing": 24.0,
+        "coop_full": 0.0,
+        "coop_unsupplied": 0.0,
+        "pasture_producing": 24.0,
+        "pasture_full": 0.0,
+        "pasture_unsupplied": 0.0,
+        "kitchen_busy": 0.333,
+        "garden_waiting_bed": 75.634,
+        "kitchen_idle": 23.667
+      }
+    },
+    {
+      "cats": 6,
+      "visits_per_day": 1,
+      "hens": 4,
+      "cows": 2,
+      "garden_slots": 12,
+      "kitchen_queue": 4,
+      "recipe": "garden",
+      "days_measured": 28,
+      "warmup_days": 7,
+      "actions_per_day": {
+        "collect_cook": 4.0,
+        "collect_coop": 1.0,
+        "collect_cow": 2.0,
+        "cook": 4.0,
+        "feed_residents": 2.0,
+        "harvest": 9.0,
+        "pet": 6.0,
+        "plant": 9.0,
+        "serve_two": 6.0,
+        "water_cat": 6.0,
+        "water_residents": 2.0
+      },
+      "estimated_taps_per_day": 131.0,
+      "estimated_taps_per_visit": 131.0,
+      "recipe_inputs_per_day": {
+        "carrot": 4.0,
+        "wheat": 8.0
+      },
+      "resident_inputs_per_day": {
+        "corn": 6.0,
+        "wheat": 4.0
+      },
+      "stock_at_measurement_start": {
+        "corn": 6,
+        "wheat": 13,
+        "carrot": 4,
+        "egg": 56,
+        "milk": 28,
+        "ration": 0
+      },
+      "stock_at_end": {
+        "corn": 6,
+        "wheat": 13,
+        "carrot": 4,
+        "egg": 280,
+        "milk": 140,
+        "ration": 0
+      },
+      "minimum_available": {
+        "corn": 6,
+        "wheat": 13
+      },
+      "metrics_per_day": {
+        "collected_egg": 8.0,
+        "collected_milk": 4.0,
+        "harvested_carrot": 4.0,
+        "harvested_corn": 6.0,
+        "harvested_wheat": 12.0,
+        "meals": 12.0,
+        "missed_meals": 0.0,
+        "visits": 1.0
+      },
+      "hours_per_day": {
+        "coop_producing": 12.0,
+        "coop_full": 12.0,
+        "coop_unsupplied": 0.0,
+        "pasture_producing": 16.0,
+        "pasture_full": 8.0,
+        "pasture_unsupplied": 0.0,
+        "kitchen_busy": 0.667,
+        "garden_waiting_bed": 209.5,
+        "kitchen_idle": 23.333
+      }
+    },
+    {
+      "cats": 6,
+      "visits_per_day": 2,
+      "hens": 4,
+      "cows": 2,
+      "garden_slots": 12,
+      "kitchen_queue": 4,
+      "recipe": "garden",
+      "days_measured": 28,
+      "warmup_days": 7,
+      "actions_per_day": {
+        "collect_cook": 4.0,
+        "collect_coop": 2.0,
+        "collect_cow": 4.0,
+        "cook": 4.0,
+        "feed_residents": 2.0,
+        "harvest": 9.0,
+        "pet": 6.0,
+        "plant": 9.0,
+        "serve_two": 12.0,
+        "water_cat": 6.0,
+        "water_residents": 2.0
+      },
+      "estimated_taps_per_day": 161.0,
+      "estimated_taps_per_visit": 80.5,
+      "recipe_inputs_per_day": {
+        "carrot": 4.0,
+        "wheat": 8.0
+      },
+      "resident_inputs_per_day": {
+        "corn": 6.0,
+        "wheat": 4.0
+      },
+      "stock_at_measurement_start": {
+        "corn": 12,
+        "wheat": 21,
+        "carrot": 6,
+        "egg": 112,
+        "milk": 42,
+        "ration": 6
+      },
+      "stock_at_end": {
+        "corn": 12,
+        "wheat": 21,
+        "carrot": 6,
+        "egg": 560,
+        "milk": 210,
+        "ration": 6
+      },
+      "minimum_available": {
+        "corn": 6,
+        "wheat": 16
+      },
+      "metrics_per_day": {
+        "collected_egg": 16.0,
+        "collected_milk": 6.0,
+        "harvested_carrot": 4.0,
+        "harvested_corn": 6.0,
+        "harvested_wheat": 12.0,
+        "meals": 12.0,
+        "missed_meals": 0.0,
+        "visits": 2.0
+      },
+      "hours_per_day": {
+        "coop_producing": 24.0,
+        "coop_full": 0.0,
+        "coop_unsupplied": 0.0,
+        "pasture_producing": 24.0,
+        "pasture_full": 0.0,
+        "pasture_unsupplied": 0.0,
+        "kitchen_busy": 0.667,
+        "garden_waiting_bed": 101.5,
+        "kitchen_idle": 23.333
+      }
+    },
+    {
+      "cats": 3,
+      "visits_per_day": 1,
+      "hens": 4,
+      "cows": 2,
+      "garden_slots": 12,
+      "kitchen_queue": 4,
+      "recipe": "egg",
+      "days_measured": 28,
+      "warmup_days": 7,
+      "actions_per_day": {
+        "collect_cook": 2.0,
+        "collect_coop": 1.0,
+        "collect_cow": 2.0,
+        "cook": 2.0,
+        "feed_residents": 2.0,
+        "harvest": 6.0,
+        "pet": 3.0,
+        "plant": 6.0,
+        "serve_two": 3.0,
+        "water_cat": 3.0,
+        "water_residents": 2.0
+      },
+      "estimated_taps_per_day": 80.0,
+      "estimated_taps_per_visit": 80.0,
+      "recipe_inputs_per_day": {
+        "corn": 2.0,
+        "egg": 2.0,
+        "wheat": 2.0
+      },
+      "resident_inputs_per_day": {
+        "corn": 6.0,
+        "wheat": 4.0
+      },
+      "stock_at_measurement_start": {
+        "corn": 9,
+        "wheat": 7,
+        "egg": 43,
+        "milk": 28,
+        "ration": 0
+      },
+      "stock_at_end": {
+        "corn": 9,
+        "wheat": 7,
+        "egg": 211,
+        "milk": 140,
+        "ration": 0
+      },
+      "minimum_available": {
+        "corn": 9,
+        "wheat": 7
+      },
+      "metrics_per_day": {
+        "collected_egg": 8.0,
+        "collected_milk": 4.0,
+        "harvested_corn": 8.0,
+        "harvested_wheat": 6.0,
+        "meals": 6.0,
+        "missed_meals": 0.0,
+        "visits": 1.0
+      },
+      "hours_per_day": {
+        "coop_producing": 12.0,
+        "coop_full": 12.0,
+        "coop_unsupplied": 0.0,
+        "pasture_producing": 16.0,
+        "pasture_full": 8.0,
+        "pasture_unsupplied": 0.0,
+        "kitchen_busy": 0.833,
+        "garden_waiting_bed": 140.5,
+        "kitchen_idle": 23.167
+      }
+    },
+    {
+      "cats": 3,
+      "visits_per_day": 2,
+      "hens": 4,
+      "cows": 2,
+      "garden_slots": 12,
+      "kitchen_queue": 4,
+      "recipe": "egg",
+      "days_measured": 28,
+      "warmup_days": 7,
+      "actions_per_day": {
+        "collect_cook": 2.0,
+        "collect_coop": 2.0,
+        "collect_cow": 4.0,
+        "cook": 2.0,
+        "feed_residents": 2.0,
+        "harvest": 6.0,
+        "pet": 3.0,
+        "plant": 6.0,
+        "serve_two": 6.0,
+        "water_cat": 3.0,
+        "water_residents": 2.0
+      },
+      "estimated_taps_per_day": 98.0,
+      "estimated_taps_per_visit": 49.0,
+      "recipe_inputs_per_day": {
+        "corn": 2.0,
+        "egg": 2.0,
+        "wheat": 2.0
+      },
+      "resident_inputs_per_day": {
+        "corn": 6.0,
+        "wheat": 4.0
+      },
+      "stock_at_measurement_start": {
+        "corn": 16,
+        "wheat": 12,
+        "egg": 98,
+        "milk": 42,
+        "ration": 3
+      },
+      "stock_at_end": {
+        "corn": 16,
+        "wheat": 12,
+        "egg": 490,
+        "milk": 210,
+        "ration": 3
+      },
+      "minimum_available": {
+        "corn": 9,
+        "wheat": 7
+      },
+      "metrics_per_day": {
+        "collected_egg": 16.0,
+        "collected_milk": 6.0,
+        "harvested_corn": 8.0,
+        "harvested_wheat": 6.0,
+        "meals": 6.0,
+        "missed_meals": 0.0,
+        "visits": 2.0
+      },
+      "hours_per_day": {
+        "coop_producing": 24.0,
+        "coop_full": 0.0,
+        "coop_unsupplied": 0.0,
+        "pasture_producing": 24.0,
+        "pasture_full": 0.0,
+        "pasture_unsupplied": 0.0,
+        "kitchen_busy": 0.833,
+        "garden_waiting_bed": 68.5,
+        "kitchen_idle": 23.167
+      }
+    },
+    {
+      "cats": 6,
+      "visits_per_day": 1,
+      "hens": 4,
+      "cows": 2,
+      "garden_slots": 12,
+      "kitchen_queue": 4,
+      "recipe": "egg",
+      "days_measured": 28,
+      "warmup_days": 7,
+      "actions_per_day": {
+        "collect_cook": 4.0,
+        "collect_coop": 1.0,
+        "collect_cow": 2.0,
+        "cook": 4.0,
+        "feed_residents": 2.0,
+        "harvest": 7.679,
+        "pet": 6.0,
+        "plant": 7.643,
+        "serve_two": 6.0,
+        "water_cat": 6.0,
+        "water_residents": 2.0
+      },
+      "estimated_taps_per_day": 124.29,
+      "estimated_taps_per_visit": 124.29,
+      "recipe_inputs_per_day": {
+        "corn": 4.0,
+        "egg": 4.0,
+        "wheat": 4.0
+      },
+      "resident_inputs_per_day": {
+        "corn": 6.0,
+        "wheat": 4.0
+      },
+      "stock_at_measurement_start": {
+        "corn": 10,
+        "wheat": 9,
+        "egg": 30,
+        "milk": 28,
+        "ration": 0
+      },
+      "stock_at_end": {
+        "corn": 10,
+        "wheat": 10,
+        "egg": 142,
+        "milk": 140,
+        "ration": 0
+      },
+      "minimum_available": {
+        "corn": 10,
+        "wheat": 8
+      },
+      "metrics_per_day": {
+        "collected_egg": 8.0,
+        "collected_milk": 4.0,
+        "harvested_corn": 10.0,
+        "harvested_wheat": 8.036,
+        "meals": 12.0,
+        "missed_meals": 0.0,
+        "visits": 1.0
+      },
+      "hours_per_day": {
+        "coop_producing": 12.0,
+        "coop_full": 12.0,
+        "coop_unsupplied": 0.0,
+        "pasture_producing": 16.0,
+        "pasture_full": 8.0,
+        "pasture_unsupplied": 0.0,
+        "kitchen_busy": 1.667,
+        "garden_waiting_bed": 178.946,
+        "kitchen_idle": 22.333
+      }
+    },
+    {
+      "cats": 6,
+      "visits_per_day": 2,
+      "hens": 4,
+      "cows": 2,
+      "garden_slots": 12,
+      "kitchen_queue": 4,
+      "recipe": "egg",
+      "days_measured": 28,
+      "warmup_days": 7,
+      "actions_per_day": {
+        "collect_cook": 4.0,
+        "collect_coop": 2.0,
+        "collect_cow": 4.0,
+        "cook": 4.0,
+        "feed_residents": 2.0,
+        "harvest": 7.643,
+        "pet": 6.0,
+        "plant": 7.679,
+        "serve_two": 12.0,
+        "water_cat": 6.0,
+        "water_residents": 2.0
+      },
+      "estimated_taps_per_day": 154.32,
+      "estimated_taps_per_visit": 77.16,
+      "recipe_inputs_per_day": {
+        "corn": 4.0,
+        "egg": 4.0,
+        "wheat": 4.0
+      },
+      "resident_inputs_per_day": {
+        "corn": 6.0,
+        "wheat": 4.0
+      },
+      "stock_at_measurement_start": {
+        "corn": 18,
+        "wheat": 16,
+        "egg": 84,
+        "milk": 42,
+        "ration": 6
+      },
+      "stock_at_end": {
+        "corn": 18,
+        "wheat": 14,
+        "egg": 420,
+        "milk": 210,
+        "ration": 6
+      },
+      "minimum_available": {
+        "corn": 12,
+        "wheat": 10
+      },
+      "metrics_per_day": {
+        "collected_egg": 16.0,
+        "collected_milk": 6.0,
+        "harvested_corn": 10.0,
+        "harvested_wheat": 7.929,
+        "meals": 12.0,
+        "missed_meals": 0.0,
+        "visits": 2.0
+      },
+      "hours_per_day": {
+        "coop_producing": 24.0,
+        "coop_full": 0.0,
+        "coop_unsupplied": 0.0,
+        "pasture_producing": 24.0,
+        "pasture_full": 0.0,
+        "pasture_unsupplied": 0.0,
+        "kitchen_busy": 1.667,
+        "garden_waiting_bed": 87.634,
+        "kitchen_idle": 22.333
+      }
+    }
+  ],
+  "recipe_daily_budget": [
+    {
+      "cats": 3,
+      "recipe": "garden",
+      "batches": 2,
+      "portions": 6,
+      "inputs": {
+        "wheat": 4,
+        "carrot": 2
+      }
+    },
+    {
+      "cats": 3,
+      "recipe": "fish",
+      "batches": 2,
+      "portions": 6,
+      "inputs": {
+        "fish": 2,
+        "wheat": 4
+      }
+    },
+    {
+      "cats": 3,
+      "recipe": "egg",
+      "batches": 2,
+      "portions": 6,
+      "inputs": {
+        "egg": 2,
+        "corn": 2,
+        "wheat": 2
+      }
+    },
+    {
+      "cats": 3,
+      "recipe": "chicken",
+      "batches": 2,
+      "portions": 8,
+      "inputs": {
+        "chicken": 2,
+        "wheat": 4,
+        "carrot": 2
+      }
+    },
+    {
+      "cats": 3,
+      "recipe": "beef",
+      "batches": 2,
+      "portions": 8,
+      "inputs": {
+        "beef": 2,
+        "wheat": 4,
+        "pumpkin": 2
+      }
+    },
+    {
+      "cats": 3,
+      "recipe": "creamy",
+      "batches": 2,
+      "portions": 8,
+      "inputs": {
+        "milk": 2,
+        "egg": 2,
+        "wheat": 4
+      }
+    },
+    {
+      "cats": 3,
+      "recipe": "special",
+      "batches": 1,
+      "portions": 6,
+      "inputs": {
+        "fish": 1,
+        "chicken": 1,
+        "pumpkin": 1
+      }
+    },
+    {
+      "cats": 6,
+      "recipe": "garden",
+      "batches": 4,
+      "portions": 12,
+      "inputs": {
+        "wheat": 8,
+        "carrot": 4
+      }
+    },
+    {
+      "cats": 6,
+      "recipe": "fish",
+      "batches": 4,
+      "portions": 12,
+      "inputs": {
+        "fish": 4,
+        "wheat": 8
+      }
+    },
+    {
+      "cats": 6,
+      "recipe": "egg",
+      "batches": 4,
+      "portions": 12,
+      "inputs": {
+        "egg": 4,
+        "corn": 4,
+        "wheat": 4
+      }
+    },
+    {
+      "cats": 6,
+      "recipe": "chicken",
+      "batches": 3,
+      "portions": 12,
+      "inputs": {
+        "chicken": 3,
+        "wheat": 6,
+        "carrot": 3
+      }
+    },
+    {
+      "cats": 6,
+      "recipe": "beef",
+      "batches": 3,
+      "portions": 12,
+      "inputs": {
+        "beef": 3,
+        "wheat": 6,
+        "pumpkin": 3
+      }
+    },
+    {
+      "cats": 6,
+      "recipe": "creamy",
+      "batches": 3,
+      "portions": 12,
+      "inputs": {
+        "milk": 3,
+        "egg": 3,
+        "wheat": 6
+      }
+    },
+    {
+      "cats": 6,
+      "recipe": "special",
+      "batches": 2,
+      "portions": 12,
+      "inputs": {
+        "fish": 2,
+        "chicken": 2,
+        "pumpkin": 2
+      }
+    }
+  ],
+  "preferences": {
+    "samples": 10000,
+    "seed": 20261016,
+    "horizon_days": 365,
+    "favorites": 6817,
+    "rejected_before_favorite": 3177,
+    "not_terminal": 6,
+    "median_days_among_favorites": 72,
+    "p90_days_among_favorites": 156,
+    "warning": "Conditional on this recipe becoming a favorite; rejection is terminal. Two meals per day still evaluate at most once per 24 hours."
+  },
+  "applied_balance_changes": [],
+  "proposals_not_applied": [
+    "Keep current prices, free-shop flag, capacities and meal cadence pending device playtesting.",
+    "For F04, evaluate fruit recipes yielding 3 portions from 1 wheat + 2 fruit in 20 minutes; target satisfaction 16.",
+    "For F04, evaluate a trade of 3 apples + 3 pears for 2 chicken with a one-hour order, keeping current coin prices."
+  ]
+}

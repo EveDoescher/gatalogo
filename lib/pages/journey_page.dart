@@ -172,10 +172,10 @@ class _JourneyPageState extends State<JourneyPage> {
         };
         final description = switch (_section) {
           'initial' => 'Aprenda no seu ritmo. Cada objetivo é concluído uma vez; atividades já realizadas também contam.',
-          'weekly' => 'Três objetivos maiores, de segunda a domingo. Uma ação também pode avançar suas diárias.',
+          'weekly' => 'Descobertas e histórias da semana vêm primeiro. O Quintal traz uma opção extra, no seu ritmo.',
           'challenge' => 'Jornadas longas e difíceis com reconhecimento especial. As datas pertencem à temporada.',
           'achievement' => 'Marcos permanentes da sua história. Cada medalha tem uma condição e um prêmio próprios.',
-          _ => 'Três objetivos disponíveis ao mesmo tempo. Descobrir e enriquecer fichas vem primeiro.',
+          _ => 'Descobrir e enriquecer fichas vem primeiro. Escolha o que cabe no seu dia; a rotina do Quintal é opcional.',
         };
         return RefreshIndicator(
           onRefresh: widget.store.refreshGamification,

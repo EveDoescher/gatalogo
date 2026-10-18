@@ -211,6 +211,7 @@ class _MainNavigationState extends State<MainNavigation>
   void initState() {
     super.initState();
     HabitatNavigation.focusGift.addListener(_visitGift);
+    HabitatNavigation.focusProduction.addListener(_visitProduction);
     WidgetsBinding.instance.addObserver(this);
 
     catStore = widget.catStore ?? CatStore(widget.sessionStore);
@@ -298,6 +299,7 @@ class _MainNavigationState extends State<MainNavigation>
   void dispose() {
     ExperienceService.instance.routeChanged(null);
     HabitatNavigation.focusGift.removeListener(_visitGift);
+    HabitatNavigation.focusProduction.removeListener(_visitProduction);
     _habitatActive.dispose();
     _openedNotificationSubscription?.cancel();
     _foregroundNotificationSubscription?.cancel();
@@ -327,6 +329,9 @@ class _MainNavigationState extends State<MainNavigation>
 
   void _visitGift() {
     if (mounted && HabitatNavigation.focusGift.value != null) _navigateTo(4);
+  }
+  void _visitProduction() {
+    if (mounted && HabitatNavigation.focusProduction.value != null) _navigateTo(4);
   }
 
   void _openNotification(String notificationId) {

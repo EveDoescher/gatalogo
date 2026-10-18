@@ -56,13 +56,15 @@ class HabitatHelpPage extends StatelessWidget {
           ),
           const _Tip(
             icon: LucideIcons.cat,
-            text: 'Arraste um gato da bandeja até uma célula livre do quintal.',
+            text: 'Arraste um gato da bandeja até uma célula livre e confirme as posições dos seus potes de ração e água. O conjunto é colocado de uma vez.',
           ),
-          _Tip(
+          const _Tip(
             icon: LucideIcons.heart,
-            text:
-                'Toque em um gato para dar carinho, alimentar ou oferecer um petisco. '
-                'O petisco custa ${habitat.treatPrice} moedas. Cada cuidado aumenta a afinidade uma vez por dia, sem perda por ausência.',
+            text: 'Toque no gato para fazer carinho ou brincar. Para alimentar e dar água, toque nos potes identificados dele. Os cuidados desenvolvem o vínculo sem perda por ausência.',
+          ),
+          const _Tip(
+            icon: LucideIcons.sprout,
+            text: 'Toque nos canteiros da horta para plantar, regar e colher. Na panela, prepare receitas e recolha os lotes prontos. Ninhos, comedouros e bebedouros têm suas próprias ações no cenário.',
           ),
           const _Tip(
             icon: LucideIcons.flower,

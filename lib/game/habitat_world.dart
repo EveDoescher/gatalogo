@@ -4,14 +4,18 @@ part 'habitat_visits.dart';
 
 /// Environmental layout is derived from today's boundary, including future plots.
 class HabitatWorld {
-  HabitatWorld(Set<(int, int)> cells, {this.seed = 0})
-    : left = cells.map((cell) => cell.$1).reduce(math.min),
-      right = cells.map((cell) => cell.$1).reduce(math.max),
-      top = cells.map((cell) => cell.$2).reduce(math.min),
-      bottom = cells.map((cell) => cell.$2).reduce(math.max),
-      editable = cells;
+  HabitatWorld(
+    Set<(int, int)> cells, {
+    this.seed = 0,
+    this.productionEnabled = false,
+  }) : left = cells.map((cell) => cell.$1).reduce(math.min),
+       right = cells.map((cell) => cell.$1).reduce(math.max),
+       top = cells.map((cell) => cell.$2).reduce(math.min),
+       bottom = cells.map((cell) => cell.$2).reduce(math.max),
+       editable = cells;
   final int left, right, top, bottom;
   final int seed;
+  final bool productionEnabled;
   final Map<(int, int), HabitatVisit> _visits = {};
   final Set<(int, int)> editable;
   (int, int) get giftCell => (right + 2, bottom - 2);
@@ -39,6 +43,41 @@ class HabitatWorld {
   }
 
   bool isRiverCell(int x, int y) => riverColumns(y).contains(x);
+  Map<String, (int, int, int, int)> get productionAreas => {
+    'garden': (right + 3, top, 6, 5),
+    'coop': (right + 3, top + 6, 6, 6),
+    'pasture': (right + 3, top + 14, 7, 6),
+    'kitchen': (right + 10, top, 4, 4),
+    'market': (right + 11, top + 6, 4, 4),
+    'orchard': (right + 12, top + 12, 5, 6),
+    'pier': (riverX(top + 4), top + 4, 2, 2),
+  };
+
+  /// Connected service paths. Entrances share their coordinates with the gates.
+  late final Set<(int, int)> productionPaths = {
+    for (var y = top; y <= top + 18; y++) (right + 2, y),
+    for (var x = right + 2; x <= right + 11; x++) (x, top + 5),
+    for (var y = top + 3; y <= top + 5; y++) (right + 11, y),
+    for (var x = right + 2; x <= right + 11; x++) (x, top + 12),
+    for (var y = top + 10; y <= top + 12; y++) (right + 11, y),
+    for (var x = right + 2; x <= right + 13; x++) (x, top + 21),
+    for (var y = top + 18; y <= top + 21; y++) (right + 2, y),
+    for (var y = top + 18; y <= top + 21; y++) (right + 13, y),
+    (right + 3, top + 9),
+    (right + 3, top + 17),
+  };
+  bool isProductionCell(int x, int y) =>
+      productionEnabled &&
+      (productionPaths.any(
+            (p) => (p.$1 - x).abs() <= 1 && (p.$2 - y).abs() <= 1,
+          ) ||
+          productionAreas.values.any(
+            (r) =>
+                x >= r.$1 - 1 &&
+                x <= r.$1 + r.$3 &&
+                y >= r.$2 - 1 &&
+                y <= r.$2 + r.$4,
+          ));
 
   static const scenerySprites = [
     'plant_bushSmall_NE',
@@ -91,6 +130,7 @@ class HabitatWorld {
         final key = (cx, cy);
         final chunk = _chunks.putIfAbsent(key, () => _decorateChunk(cx, cy));
         for (final prop in chunk) {
+          if (isProductionCell(prop.$1, prop.$2)) continue;
           if (prop.$1 >= firstX &&
               prop.$1 <= lastX &&
               prop.$2 >= firstY &&

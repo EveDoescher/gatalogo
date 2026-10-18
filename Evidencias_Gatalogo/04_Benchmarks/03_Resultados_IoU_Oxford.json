@@ -1,0 +1,455 @@
+{
+  "benchmark": "Oxford-IIIT Pet cats v1",
+  "split": "evaluation",
+  "generated_at": "2026-08-26T15:04:21.223795+00:00",
+  "configuration": {
+    "detector_confidence": 0.6,
+    "secondary_cat_max_area_ratio": 0.45,
+    "vision_max_side": 1280,
+    "sam2_checkpoint": "C:\\Users\\Evelynn_Doescher\\Documents\\Projetos\\flutter\\gatalogo-ai-api\\.model-cache\\sam2.1_hiera_tiny.pt"
+  },
+  "summary": {
+    "samples": 48,
+    "segmented": 45,
+    "segmentation_rate": 0.9375,
+    "status_counts": {
+      "segmented": 45,
+      "not_detected": 3
+    },
+    "iou_strict": {
+      "mean": 0.8291,
+      "median": 0.8349,
+      "p10": 0.7555
+    },
+    "iou_inclusive": {
+      "mean": 0.8168,
+      "median": 0.8243,
+      "p10": 0.7588
+    }
+  },
+  "records": [
+    {
+      "sample_id": "oxpet-abyssinian_172",
+      "breed": "Abyssinian",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9996,
+      "iou_strict": 0.837,
+      "iou_inclusive": 0.8266
+    },
+    {
+      "sample_id": "oxpet-abyssinian_78",
+      "breed": "Abyssinian",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9961,
+      "iou_strict": 0.711,
+      "iou_inclusive": 0.7358
+    },
+    {
+      "sample_id": "oxpet-abyssinian_144",
+      "breed": "Abyssinian",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9957,
+      "iou_strict": 0.8841,
+      "iou_inclusive": 0.8768
+    },
+    {
+      "sample_id": "oxpet-abyssinian_143",
+      "breed": "Abyssinian",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9996,
+      "iou_strict": 0.8647,
+      "iou_inclusive": 0.8425
+    },
+    {
+      "sample_id": "oxpet-bengal_96",
+      "breed": "Bengal",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9972,
+      "iou_strict": 0.8329,
+      "iou_inclusive": 0.84
+    },
+    {
+      "sample_id": "oxpet-bengal_18",
+      "breed": "Bengal",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9941,
+      "iou_strict": 0.7872,
+      "iou_inclusive": 0.7728
+    },
+    {
+      "sample_id": "oxpet-bengal_127",
+      "breed": "Bengal",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9971,
+      "iou_strict": 0.8187,
+      "iou_inclusive": 0.8231
+    },
+    {
+      "sample_id": "oxpet-bengal_10",
+      "breed": "Bengal",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9965,
+      "iou_strict": 0.6903,
+      "iou_inclusive": 0.7836
+    },
+    {
+      "sample_id": "oxpet-birman_166",
+      "breed": "Birman",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9836,
+      "iou_strict": 0.7896,
+      "iou_inclusive": 0.8325
+    },
+    {
+      "sample_id": "oxpet-birman_35",
+      "breed": "Birman",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9892,
+      "iou_strict": 0.7555,
+      "iou_inclusive": 0.7588
+    },
+    {
+      "sample_id": "oxpet-birman_4",
+      "breed": "Birman",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9838,
+      "iou_strict": 0.8774,
+      "iou_inclusive": 0.8414
+    },
+    {
+      "sample_id": "oxpet-birman_2",
+      "breed": "Birman",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9574,
+      "iou_strict": 0.8432,
+      "iou_inclusive": 0.7755
+    },
+    {
+      "sample_id": "oxpet-bombay_198",
+      "breed": "Bombay",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9984,
+      "iou_strict": 0.8593,
+      "iou_inclusive": 0.8814
+    },
+    {
+      "sample_id": "oxpet-bombay_130",
+      "breed": "Bombay",
+      "split": "evaluation",
+      "status": "not_detected"
+    },
+    {
+      "sample_id": "oxpet-bombay_127",
+      "breed": "Bombay",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9976,
+      "iou_strict": 0.866,
+      "iou_inclusive": 0.8709
+    },
+    {
+      "sample_id": "oxpet-bombay_65",
+      "breed": "Bombay",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9977,
+      "iou_strict": 0.8336,
+      "iou_inclusive": 0.8648
+    },
+    {
+      "sample_id": "oxpet-british_shorthair_60",
+      "breed": "British Shorthair",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9857,
+      "iou_strict": 0.8518,
+      "iou_inclusive": 0.8467
+    },
+    {
+      "sample_id": "oxpet-british_shorthair_18",
+      "breed": "British Shorthair",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9789,
+      "iou_strict": 0.895,
+      "iou_inclusive": 0.8128
+    },
+    {
+      "sample_id": "oxpet-british_shorthair_122",
+      "breed": "British Shorthair",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9847,
+      "iou_strict": 0.8626,
+      "iou_inclusive": 0.8139
+    },
+    {
+      "sample_id": "oxpet-british_shorthair_37",
+      "breed": "British Shorthair",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9986,
+      "iou_strict": 0.7987,
+      "iou_inclusive": 0.7533
+    },
+    {
+      "sample_id": "oxpet-egyptian_mau_121",
+      "breed": "Egyptian Mau",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9971,
+      "iou_strict": 0.7484,
+      "iou_inclusive": 0.8027
+    },
+    {
+      "sample_id": "oxpet-egyptian_mau_6",
+      "breed": "Egyptian Mau",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9242,
+      "iou_strict": 0.8131,
+      "iou_inclusive": 0.771
+    },
+    {
+      "sample_id": "oxpet-egyptian_mau_29",
+      "breed": "Egyptian Mau",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9691,
+      "iou_strict": 0.7721,
+      "iou_inclusive": 0.7762
+    },
+    {
+      "sample_id": "oxpet-egyptian_mau_109",
+      "breed": "Egyptian Mau",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9814,
+      "iou_strict": 0.7829,
+      "iou_inclusive": 0.784
+    },
+    {
+      "sample_id": "oxpet-maine_coon_41",
+      "breed": "Maine Coon",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9996,
+      "iou_strict": 0.8349,
+      "iou_inclusive": 0.859
+    },
+    {
+      "sample_id": "oxpet-maine_coon_3",
+      "breed": "Maine Coon",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9938,
+      "iou_strict": 0.6441,
+      "iou_inclusive": 0.6343
+    },
+    {
+      "sample_id": "oxpet-maine_coon_197",
+      "breed": "Maine Coon",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9928,
+      "iou_strict": 0.8347,
+      "iou_inclusive": 0.8175
+    },
+    {
+      "sample_id": "oxpet-maine_coon_47",
+      "breed": "Maine Coon",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9979,
+      "iou_strict": 0.7689,
+      "iou_inclusive": 0.7233
+    },
+    {
+      "sample_id": "oxpet-persian_26",
+      "breed": "Persian",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9948,
+      "iou_strict": 0.8779,
+      "iou_inclusive": 0.859
+    },
+    {
+      "sample_id": "oxpet-persian_183",
+      "breed": "Persian",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9427,
+      "iou_strict": 0.8361,
+      "iou_inclusive": 0.8407
+    },
+    {
+      "sample_id": "oxpet-persian_45",
+      "breed": "Persian",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9935,
+      "iou_strict": 0.9055,
+      "iou_inclusive": 0.9082
+    },
+    {
+      "sample_id": "oxpet-persian_255",
+      "breed": "Persian",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9977,
+      "iou_strict": 0.9154,
+      "iou_inclusive": 0.9003
+    },
+    {
+      "sample_id": "oxpet-ragdoll_34",
+      "breed": "Ragdoll",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9938,
+      "iou_strict": 0.8732,
+      "iou_inclusive": 0.8182
+    },
+    {
+      "sample_id": "oxpet-ragdoll_186",
+      "breed": "Ragdoll",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9968,
+      "iou_strict": 0.9284,
+      "iou_inclusive": 0.874
+    },
+    {
+      "sample_id": "oxpet-ragdoll_115",
+      "breed": "Ragdoll",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9971,
+      "iou_strict": 0.8153,
+      "iou_inclusive": 0.8492
+    },
+    {
+      "sample_id": "oxpet-ragdoll_205",
+      "breed": "Ragdoll",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9976,
+      "iou_strict": 0.9023,
+      "iou_inclusive": 0.8287
+    },
+    {
+      "sample_id": "oxpet-russian_blue_93",
+      "breed": "Russian Blue",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9744,
+      "iou_strict": 0.8006,
+      "iou_inclusive": 0.7663
+    },
+    {
+      "sample_id": "oxpet-russian_blue_47",
+      "breed": "Russian Blue",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9997,
+      "iou_strict": 0.8914,
+      "iou_inclusive": 0.8304
+    },
+    {
+      "sample_id": "oxpet-russian_blue_87",
+      "breed": "Russian Blue",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9972,
+      "iou_strict": 0.9177,
+      "iou_inclusive": 0.8557
+    },
+    {
+      "sample_id": "oxpet-russian_blue_237",
+      "breed": "Russian Blue",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9986,
+      "iou_strict": 0.791,
+      "iou_inclusive": 0.7596
+    },
+    {
+      "sample_id": "oxpet-siamese_151",
+      "breed": "Siamese",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9913,
+      "iou_strict": 0.8617,
+      "iou_inclusive": 0.8199
+    },
+    {
+      "sample_id": "oxpet-siamese_94",
+      "breed": "Siamese",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9982,
+      "iou_strict": 0.8786,
+      "iou_inclusive": 0.8452
+    },
+    {
+      "sample_id": "oxpet-siamese_87",
+      "breed": "Siamese",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9612,
+      "iou_strict": 0.8397,
+      "iou_inclusive": 0.8442
+    },
+    {
+      "sample_id": "oxpet-siamese_210",
+      "breed": "Siamese",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9961,
+      "iou_strict": 0.8222,
+      "iou_inclusive": 0.8103
+    },
+    {
+      "sample_id": "oxpet-sphynx_155",
+      "breed": "Sphynx",
+      "split": "evaluation",
+      "status": "not_detected"
+    },
+    {
+      "sample_id": "oxpet-sphynx_237",
+      "breed": "Sphynx",
+      "split": "evaluation",
+      "status": "not_detected"
+    },
+    {
+      "sample_id": "oxpet-sphynx_180",
+      "breed": "Sphynx",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.9215,
+      "iou_strict": 0.7739,
+      "iou_inclusive": 0.801
+    },
+    {
+      "sample_id": "oxpet-sphynx_145",
+      "breed": "Sphynx",
+      "split": "evaluation",
+      "status": "segmented",
+      "detector_confidence": 0.691,
+      "iou_strict": 0.822,
+      "iou_inclusive": 0.8243
+    }
+  ]
+}

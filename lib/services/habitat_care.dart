@@ -2,13 +2,18 @@ part of 'habitat_service.dart';
 
 extension HabitatCare on HabitatService {
   DateTime get serverNow => DateTime.now().toUtc().add(_clockOffset);
-  String get careDay => serverNow.toIso8601String().substring(0, 10);
+  String get careDay => serverNow
+      .subtract(const Duration(hours: 3))
+      .toIso8601String()
+      .substring(0, 10);
   int get freePortions => care['day'] == careDay
       ? (care['free_portions'] as num?)?.toInt() ?? catCapacity
       : catCapacity + ((care['bonus_portions'] as num?)?.toInt() ?? 0);
   int get treatPrice => (care['treat_price'] as num?)?.toInt() ?? 4;
   int affinity(String catId) =>
-      ((care['cats'] as Map?)?[catId]?['affinity'] as num?)?.toInt() ?? 0;
+      (productionCat(catId)['affinity'] as num?)?.toInt() ??
+      ((care['cats'] as Map?)?[catId]?['affinity'] as num?)?.toInt() ??
+      0;
   bool caredToday(String catId, String action) =>
       (care['cats'] as Map?)?[catId]?['${action}_day'] == careDay;
   bool isGrowingPlant(HabitatItem item) =>
@@ -26,6 +31,17 @@ extension HabitatCare on HabitatService {
   }
 
   String spriteFor(HabitatItem item) {
+    if (item.sku == 'food_bowl' || item.sku == 'water_bowl') {
+      final state = productionCat(item.careState['cat_id']?.toString() ?? '');
+      final color = ((item.careState['color_index'] as num?)?.toInt() ?? 0) % 6;
+      final food = item.sku == 'food_bowl';
+      final amount = food
+          ? ((state['portions'] as num?)?.toInt() ?? 0).clamp(0, 2)
+          : state['water_available'] == true
+          ? 2
+          : 0;
+      return 'production:crafted-cat-${food ? 'food' : 'water'}-$color-$amount';
+    }
     final sprite = definition(item.sku).sprite;
     return isGrowingPlant(item) && isMature(item)
         ? sprite.replaceAll('StageA', 'StageB')
@@ -42,10 +58,11 @@ extension HabitatCare on HabitatService {
         'Conecte sua conta para registrar os cuidados.',
       );
     }
-    if (caring) {
+    if (caring || productionBusy) {
       throw const ProductApiException('Aguarde o cuidado em andamento.');
     }
     _setCaring(true);
+    ++_productionGeneration;
     final pendingId = '$action:$targetId:${bowlId ?? ''}';
     final owner = _ownerId;
     try {
@@ -66,6 +83,13 @@ extension HabitatCare on HabitatService {
       _verifyCareOwner(owner);
       final draft = hasDraft ? _draft() : null;
       _readSnapshot(result);
+      if (result['production'] case final Map current) {
+        production = Map<String, dynamic>.from(current);
+        lastProductionProgress = Map<String, dynamic>.from(
+          result['production_progress'] as Map? ?? const {},
+        );
+        productionOffline = false;
+      }
       if (draft != null) _applyDraft(draft);
       _pendingInteractions.remove(pendingId);
       await _persistSnapshot();

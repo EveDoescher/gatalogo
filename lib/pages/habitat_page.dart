@@ -1,3 +1,5 @@
+import '../widgets/quintal_return_dialog.dart';
+
 import 'dart:async';
 
 import 'package:flame/game.dart';
@@ -12,6 +14,7 @@ import '../game/habitat_sprites.dart';
 import '../services/habitat_service.dart';
 import '../services/product_api_service.dart';
 import '../widgets/habitat_care_sheet.dart';
+import '../widgets/quintal_reward_celebration.dart';
 import '../widgets/habitat_reward_reveal.dart';
 import '../stores/cat_store.dart';
 import '../stores/session_store.dart';
@@ -19,8 +22,14 @@ import '../theme/app_theme.dart';
 import '../widgets/app_header_actions.dart';
 import '../widgets/habitat_coin_badge.dart';
 import '../widgets/habitat_sprite_preview.dart';
+import '../widgets/habitat_cat_preview.dart';
 import 'habitat_help_page.dart';
 import 'habitat_shop_page.dart';
+import '../widgets/quintal_inventory_tray.dart';
+import 'quintal_game_page.dart';
+import '../widgets/quintal_object_actions.dart';
+import '../widgets/habitat_object_balloon.dart';
+import '../game/quintal_scene_target.dart';
 
 enum _GroundTool { move, paint, collect }
 
@@ -59,6 +68,10 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
   bool _showHelp = false;
   bool _migrationNoticeShown = false;
   String? _selectedItemId;
+  QuintalSceneTarget? _productionSelection;
+  ({String id, (int, int) anchor, (int, int) food, (int, int) water})? _catSet;
+  bool _choosingWater = false;
+  bool _placingSet = false;
   String? _draggingCatId;
   (int, int)? _hovered;
   int _rotation = 0;
@@ -85,6 +98,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
     widget.active.addListener(_updateActivity);
     WidgetsBinding.instance.addObserver(this);
     HabitatNavigation.focusGift.addListener(_focusGift);
+    HabitatNavigation.focusProduction.addListener(_focusProduction);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (widget.active.value) {
@@ -100,6 +114,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
     widget.active.removeListener(_updateActivity);
     WidgetsBinding.instance.removeObserver(this);
     HabitatNavigation.focusGift.removeListener(_focusGift);
+    HabitatNavigation.focusProduction.removeListener(_focusProduction);
     _visitorTimer?.cancel();
     _habitat.removeListener(_onHabitatChanged);
     if (widget.habitatService == null) _habitat.dispose();
@@ -151,6 +166,34 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
     if (!mounted || !widget.active.value || !_foreground) return;
     await _tickVisit();
     _focusGift();
+    _focusProduction();
+    await _showProductionReturn();
+  }
+
+  Future<void> _showProductionReturn() async {
+    final updates = _habitat.productionRows('updates').take(500).toList();
+    if (!mounted ||
+        updates.isEmpty ||
+        _habitat.offline ||
+        _habitat.productionOffline) {
+      return;
+    }
+    final selection = await showDialog<QuintalReturnSelection>(
+      context: context,
+      builder: (_) => QuintalReturnDialog(habitat: _habitat, updates: updates),
+    );
+    if (!mounted || selection == null) return;
+    try {
+      await _habitat.produce('ack_return', 'quintal', {
+        'event_ids': selection.eventIds,
+      });
+    } on ProductApiException {
+      // Unacknowledged events remain available on the next visit.
+    }
+    if (mounted && selection.destination != null) {
+      HabitatNavigation.focusProduction.value = selection.destination;
+      _focusProduction();
+    }
   }
 
   Future<void> _tickVisit() async {
@@ -158,6 +201,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
     if (DateTime.now().isAfter(_nextVisitCheck)) {
       _nextVisitCheck = DateTime.now().add(const Duration(minutes: 1));
       await _habitat.checkVisitors();
+      await _habitat.refreshProduction();
     }
     final gift = _habitat.pendingGift;
     if (gift?['state'] == 'visiting') {
@@ -191,6 +235,22 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
       _message('Este presente já foi recolhido.');
     }
     HabitatNavigation.focusGift.value = null;
+  }
+
+  void _focusProduction() {
+    final space = HabitatNavigation.focusProduction.value;
+    if (!mounted || !widget.active.value || space == null || _habitat.loading) {
+      return;
+    }
+    HabitatNavigation.focusProduction.value = null;
+    _game.focusProduction(space);
+    setState(() {
+      _editing = false;
+      _game.editing = false;
+      _tray = _HabitatTray.none;
+      _clearSelection();
+      _productionSelection = _game.productionDestination(space);
+    });
   }
 
   Future<void> _collectGift() async {
@@ -270,7 +330,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
     unawaited(
       _sprites.preloadReady([
         for (var rotation = 0; rotation < (type.rotatable ? 4 : 1); rotation++)
-          _sprites.keyFor(type.sprite, rotation),
+          _sprites.keyFor(type.displaySprite, rotation),
       ]),
     );
   }
@@ -289,6 +349,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
     _game.previewY = null;
     _game.previewSku = null;
     _game.previewCat = false;
+    _game.previewCatId = null;
   }
 
   void _preview(Offset localPosition) {
@@ -300,6 +361,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
         ? null
         : _selectedItem!.sku;
     _game.previewCat = _draggingCatId != null;
+    _game.previewCatId = _draggingCatId;
     _game.previewRotation = _rotation;
     _game.previewValid =
         cell != null &&
@@ -354,8 +416,190 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
     _clearPreview();
   }
 
+  void _openInventory() {
+    _openTray(_HabitatTray.inventory);
+    unawaited(_habitat.refreshProduction());
+  }
+
+  Future<void> _showBowl(HabitatItem item) async {
+    final state = _habitat
+        .productionRows('cats')
+        .where((c) => c['food_bowl'] == item.id || c['water_bowl'] == item.id)
+        .firstOrNull;
+    final cat = _habitat.cats
+        .where((c) => c.id == state?['cat_id'])
+        .firstOrNull;
+    if (cat == null) {
+      _message(
+        'Este pote decorativo ainda não tem um gato associado. Os potes individuais acompanham cada gato.',
+      );
+      return;
+    }
+    if (state?['assisted'] == true) {
+      await _placeCatSet(cat.id, _habitat.catAnchors[cat.id] ?? (3, 3));
+      return;
+    }
+    setState(
+      () => _productionSelection = QuintalSceneTarget(
+        'cat',
+        cat.id,
+        item.sku == 'water_bowl' ? 'water_cat' : 'food_cat',
+        item.x!.toDouble(),
+        item.y!.toDouble(),
+      ),
+    );
+  }
+
+  Future<void> _placeCatSet(String id, (int, int) cell) async {
+    final choices =
+        _habitat.buildableCells
+            .where(
+              (c) =>
+                  c != cell &&
+                  _habitat.isFreeForCat(c.$1, c.$2) &&
+                  !_habitat.catAnchors.entries.any(
+                    (entry) => entry.key != id && entry.value == c,
+                  ),
+            )
+            .toList()
+          ..sort(
+            (a, b) => ((a.$1 - cell.$1).abs() + (a.$2 - cell.$2).abs())
+                .compareTo((b.$1 - cell.$1).abs() + (b.$2 - cell.$2).abs()),
+          );
+    if (choices.length < 2) {
+      _message('Libere duas células próximas para os potes do gato.');
+      return;
+    }
+    setState(() {
+      _catSet = (id: id, anchor: cell, food: choices[0], water: choices[1]);
+      _choosingWater = false;
+      _tray = _HabitatTray.none;
+      _clearSelection();
+      _productionSelection = null;
+      _syncCatSetPreview();
+    });
+  }
+
+  void _syncCatSetPreview() {
+    final set = _catSet;
+    _game.catSetPreview = set == null
+        ? {}
+        : {
+            'animal-cat': set.anchor,
+            'production:crafted-cat-food-0-0-NE': set.food,
+            'production:crafted-cat-water-0-0-NE': set.water,
+          };
+  }
+
+  void _cancelCatSet() {
+    _catSet = null;
+    _syncCatSetPreview();
+  }
+
+  Future<void> _confirmCatSet() async {
+    final set = _catSet;
+    if (set == null || _placingSet) return;
+    setState(() => _placingSet = true);
+    try {
+      await _habitat.produce('add_cat', set.id, {
+        'anchor': [set.anchor.$1, set.anchor.$2],
+        'food': [set.food.$1, set.food.$2],
+        'water': [set.water.$1, set.water.$2],
+      });
+      if (mounted) {
+        setState(() {
+          _catSet = null;
+          _syncCatSetPreview();
+        });
+      }
+    } on ProductApiException catch (e) {
+      _message(e.message);
+    } finally {
+      if (mounted) setState(() => _placingSet = false);
+    }
+  }
+
+  Widget _catSetControls() {
+    final set = _catSet!;
+    final name =
+        _habitat.cats.where((c) => c.id == set.id).firstOrNull?.name ??
+        'seu gato';
+    return Positioned(
+      left: 12,
+      right: 12,
+      bottom: MediaQuery.paddingOf(context).bottom + 16,
+      child: HabitatBalloonSurface(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Cantinho de $name',
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Toque no chão para posicionar o pote de ${_choosingWater ? 'água' : 'comida'}.',
+                textAlign: TextAlign.center,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ChoiceChip(
+                    label: const Text('Comida'),
+                    selected: !_choosingWater,
+                    onSelected: _placingSet
+                        ? null
+                        : (_) => setState(() => _choosingWater = false),
+                  ),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    label: const Text('Água'),
+                    selected: _choosingWater,
+                    onSelected: _placingSet
+                        ? null
+                        : (_) => setState(() => _choosingWater = true),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    tooltip: 'Cancelar colocação',
+                    onPressed: _placingSet
+                        ? null
+                        : () => setState(() {
+                            _catSet = null;
+                            _syncCatSetPreview();
+                          }),
+                    icon: const Icon(LucideIcons.x),
+                  ),
+                  IconButton(
+                    tooltip: 'Colocar gato e potes',
+                    onPressed: _placingSet ? null : _confirmCatSet,
+                    icon: _placingSet
+                        ? const SizedBox.square(
+                            dimension: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(LucideIcons.check),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _dropCat(String id, (int, int) cell) async {
     try {
+      if (_habitat.production.isNotEmpty &&
+          (!_habitat.selectedCatIds.contains(id) ||
+              _habitat.productionCat(id)['assisted'] == true)) {
+        await _placeCatSet(id, cell);
+        _clearPreview();
+        return;
+      }
       final placed = await _habitat.addCatAt(id, cell.$1, cell.$2);
       if (!placed) {
         _message(
@@ -380,7 +624,39 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
   }
 
   Future<void> _tapCell(Offset position) async {
+    if (_catSet case final set?) {
+      if (_placingSet) return;
+      final cell = _game.cellAt(position);
+      if (cell == null ||
+          cell == set.anchor ||
+          cell == (_choosingWater ? set.food : set.water) ||
+          _habitat.catAnchors.entries.any(
+            (entry) => entry.key != set.id && entry.value == cell,
+          ) ||
+          !_habitat.isFreeForCat(cell.$1, cell.$2)) {
+        _message('Escolha um espaço livre para este pote.');
+        return;
+      }
+      setState(() {
+        _catSet = (
+          id: set.id,
+          anchor: set.anchor,
+          food: _choosingWater ? set.food : cell,
+          water: _choosingWater ? cell : set.water,
+        );
+        _syncCatSetPreview();
+      });
+      return;
+    }
     if (!_editing) {
+      if (_tray != _HabitatTray.none) {
+        setState(() => _tray = _HabitatTray.none);
+      }
+      if (_game.productionObjectAt(position) case final target?) {
+        setState(() => _productionSelection = target);
+        return;
+      }
+      setState(() => _productionSelection = null);
       if (_game.giftAt(position)) {
         await _collectGift();
         return;
@@ -388,10 +664,12 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
       if (_game.catAtScreen(position) case final id?) {
         await _showCatCare(id);
       } else if (_game.itemAtScreen(position) case final item?) {
-        if (_habitat.isGrowingPlant(item)) {
+        if (item.sku == 'food_bowl' || item.sku == 'water_bowl') {
+          await _showBowl(item);
+        } else if (_habitat.isGrowingPlant(item)) {
           await _showPlantCare(item);
-        } else if (_game.inviteToFurniture(item.id)) {
-          _message('Um gatinho está indo explorar esse cantinho.');
+        } else {
+          _game.inviteToFurniture(item.id);
         }
       }
       return;
@@ -426,7 +704,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
       return;
     }
     await _sprites.ready(
-      _sprites.keyFor(_habitat.definition(item.sku).sprite, next),
+      _sprites.keyFor(_habitat.definition(item.sku).displaySprite, next),
     );
     if (!mounted || _selectedItemId != item.id || _rotation != previous) return;
     setState(() {
@@ -468,6 +746,10 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
         cat: cat,
         sprites: _sprites,
         preference: _game.preference(id),
+        onInventory: () {
+          Navigator.pop(sheetContext);
+          _openInventory();
+        },
         onAction: (action) {
           Navigator.pop(sheetContext);
           unawaited(_careForCat(id, action));
@@ -478,15 +760,30 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
 
   Future<void> _careForCat(String id, String action) async {
     try {
+      if (action == 'setup') {
+        await _placeCatSet(id, _habitat.catAnchors[id] ?? (3, 3));
+        return;
+      }
+      if (action == 'play') {
+        final cat = _habitat.cats.where((c) => c.id == id).firstOrNull;
+        final played = await QuintalGamePage.open(
+          context,
+          habitat: _habitat,
+          scene: _game,
+          sceneOrigin: _sceneBox?.localToGlobal(Offset.zero) ?? Offset.zero,
+          catId: id,
+          catName: cat?.name,
+        );
+        if (played) await _game.greetCat(id);
+        return;
+      }
       if (action == 'pet') {
         await _habitat.interact(action, id);
         await widget.catStore.refreshGamification();
         await _game.greetCat(id);
       } else {
-        _message('O gatinho vai até o potinho para comer.');
         await _game.feedCat(id, treat: action == 'treat');
       }
-      if (mounted) _message('Cuidado registrado. A afinidade aumentou!');
     } on HabitatConflictException {
       if (mounted) await _resolveConflict();
     } on ProductApiException catch (error) {
@@ -551,7 +848,6 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
     try {
       await _habitat.interact('water', item.id);
       await widget.catStore.refreshGamification();
-      if (mounted) _message('Canteiro regado.');
     } on HabitatConflictException {
       if (mounted) await _resolveConflict();
     } on ProductApiException catch (error) {
@@ -561,6 +857,10 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
 
   Future<void> _removeCat(String id) async {
     try {
+      if (_habitat.production.isNotEmpty) {
+        await _habitat.produce('remove_cat', id);
+        return;
+      }
       await _habitat.selectCats(
         _habitat.selectedCatIds.where((selected) => selected != id).toList(),
       );
@@ -605,8 +905,11 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
   }
 
   void _toggleEditing() {
+    if (_placingSet) return;
     setState(() {
+      _cancelCatSet();
       _editing = !_editing;
+      _productionSelection = null;
       _game.editing = _editing;
       _menuOpen = false;
       if (!_editing) {
@@ -617,21 +920,31 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
   }
 
   void _openTray(_HabitatTray tray) {
+    if (_placingSet) return;
     setState(() {
+      _cancelCatSet();
       _tray = tray;
       _menuOpen = false;
-      _editing = true;
-      _game.editing = true;
+      if (tray == _HabitatTray.cats) {
+        _editing = true;
+        _game.editing = true;
+      }
+      _productionSelection = null;
+      _game.selectedProduction = null;
       _clearSelection();
     });
   }
 
-  void _openShop() => setState(() {
-    _tray = _HabitatTray.none;
-    _menuOpen = false;
-    _clearSelection();
-    _showShop = true;
-  });
+  void _openShop() {
+    if (_placingSet) return;
+    setState(() {
+      _cancelCatSet();
+      _tray = _HabitatTray.none;
+      _menuOpen = false;
+      _clearSelection();
+      _showShop = true;
+    });
+  }
 
   RenderBox? get _sceneBox =>
       _sceneKey.currentContext?.findRenderObject() as RenderBox?;
@@ -709,7 +1022,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
             if (!_cameraGesture) _preview(details.localFocalPoint);
           } else {
             _game.moveCamera(details.focalPointDelta);
-            if (_editing) setState(() {});
+            if (_editing || _productionSelection != null) setState(() {});
           }
         },
         onScaleEnd: (_) {
@@ -810,7 +1123,11 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
 
   Widget _floatingMenu() => Positioned(
     right: 16,
-    bottom: _tray == _HabitatTray.none ? 18 : 214,
+    bottom: _tray == _HabitatTray.none
+        ? 18
+        : _tray == _HabitatTray.inventory
+        ? 270
+        : 214,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
@@ -826,7 +1143,9 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
             'Inventário',
             LucideIcons.backpack,
             AppColors.amberDark,
-            () => _openTray(_HabitatTray.inventory),
+            () => _habitat.production.isEmpty
+                ? _openTray(_HabitatTray.inventory)
+                : _openInventory(),
           ),
           _menuAction(
             'Loja',
@@ -1044,46 +1363,87 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
     if (!_editing || item == null || !item.isPlaced) {
       return const SizedBox.shrink();
     }
-    final point = _game.itemFocus(item);
-    return Positioned(
-      left: (point.dx - 52)
-          .clamp(8.0, (_game.size.x - 112).clamp(8.0, double.infinity))
-          .toDouble(),
-      top: (point.dy - _game.tileWidth * 1.65)
-          .clamp(
-            78.0,
-            (_game.size.y - MediaQuery.paddingOf(context).bottom - 70).clamp(
-              78.0,
-              double.infinity,
-            ),
-          )
-          .toDouble(),
-      child: Material(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (_habitat.definition(item.sku).rotatable)
-              IconButton(
-                tooltip: 'Girar objeto',
-                onPressed: _rotateSelected,
-                icon: const Icon(LucideIcons.rotateCw),
+    return Positioned.fill(
+      child: HabitatObjectBalloon(
+        anchor: _game.itemFocus(item),
+        objectHeight: _game.tileWidth * .8,
+        maxWidth: 232,
+        child: HabitatBalloonSurface(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_habitat.definition(item.sku).rotatable)
+                HabitatBalloonAction(
+                  icon: LucideIcons.rotateCw,
+                  label: 'Girar',
+                  onPressed: _rotateSelected,
+                ),
+              HabitatBalloonAction(
+                icon: LucideIcons.package,
+                label: 'Guardar',
+                onPressed: _storeSelected,
               ),
-            IconButton(
-              tooltip: 'Guardar no inventário',
-              onPressed: _storeSelected,
-              icon: const Icon(LucideIcons.package),
-            ),
-            IconButton(
-              tooltip: 'Desmarcar objeto',
-              onPressed: () => setState(_clearSelection),
-              icon: const Icon(LucideIcons.x),
-            ),
-          ],
+              HabitatBalloonAction(
+                icon: LucideIcons.x,
+                label: 'Deselecionar',
+                onPressed: () => setState(_clearSelection),
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  Widget _productionControls() {
+    final target = _productionSelection;
+    _game.selectedProduction = target;
+    if (_editing || target == null) return const SizedBox.shrink();
+    return QuintalObjectOverlay(
+      game: _game,
+      target: target,
+      onClose: () => setState(() => _productionSelection = null),
+      onFish: () =>
+          QuintalGamePage.open(context, habitat: _habitat, scene: _game),
+    );
+  }
+
+  void _inventoryDestination(String space, String? targetId) {
+    QuintalSceneTarget? target;
+    if (space == 'cat') {
+      final bowl = _habitat.productionCat(targetId ?? '')['food_bowl'];
+      final item = _habitat.items
+          .where((i) => i.id == bowl && i.isPlaced)
+          .firstOrNull;
+      if (item == null) return;
+      target = QuintalSceneTarget(
+        'cat',
+        targetId!,
+        'food_cat',
+        item.x!.toDouble(),
+        item.y!.toDouble(),
+      );
+    } else {
+      target =
+          _game.productionTargets
+              .where(
+                (t) =>
+                    t.kind == space &&
+                    (space == 'orchard' && targetId != null
+                        ? t.target == targetId
+                        : t.role == space),
+              )
+              .firstOrNull ??
+          _game.productionDestination(space);
+      _game.focusProduction(space);
+    }
+    setState(() {
+      _tray = _HabitatTray.none;
+      _editing = false;
+      _game.editing = false;
+      _clearSelection();
+      _productionSelection = target;
+    });
   }
 
   Widget _trayPanel() {
@@ -1095,6 +1455,66 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
     final itemTypes = _habitat.shop
         .where((type) => available.containsKey(type.sku))
         .toList();
+    if (isInventory) {
+      return Positioned(
+        left: 0,
+        right: 0,
+        bottom: MediaQuery.paddingOf(context).bottom,
+        child: QuintalInventoryTray(
+          habitat: _habitat,
+          decorations: itemTypes.isEmpty
+              ? const Center(child: Text('Seu inventário está vazio.'))
+              : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 84, 16),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: itemTypes.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final type = itemTypes[index];
+                    final item = available[type.sku]!.first;
+                    return LongPressDraggable<String>(
+                      data: 'item:${item.id}',
+                      onDragStarted: () => _selectItem(item),
+                      onDragEnd: (_) => _clearPreview(),
+                      feedback: Material(
+                        color: Colors.transparent,
+                        child: HabitatSpritePreview(
+                          sprites: _sprites,
+                          keyName: _sprites.keyFor(type.displaySprite, 0),
+                          size: 72,
+                        ),
+                      ),
+                      child: InkWell(
+                        onTap: () => _selectItem(item),
+                        child: _trayCard(
+                          image: HabitatSpritePreview(
+                            sprites: _sprites,
+                            keyName: _sprites.keyFor(type.displaySprite, 0),
+                            size: 72,
+                          ),
+                          name: type.name,
+                          detail:
+                              '${available[type.sku]!.length} ${available[type.sku]!.length == 1 ? 'disponível' : 'disponíveis'}',
+                          selected: _selectedItemId == item.id,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+          onClose: () => setState(() => _tray = _HabitatTray.none),
+          onTabChanged: (tab) {
+            if (tab == 0) return;
+            setState(() {
+              _clearSelection();
+              _editing = false;
+              _game.editing = false;
+            });
+          },
+          onKitchen: () => _inventoryDestination('kitchen', null),
+          onDestination: _inventoryDestination,
+        ),
+      );
+    }
     return Positioned(
       left: 0,
       right: 0,
@@ -1146,50 +1566,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
               ),
             ),
             Expanded(
-              child: isInventory
-                  ? itemTypes.isEmpty
-                        ? const Center(
-                            child: Text('Seu inventário está vazio.'),
-                          )
-                        : ListView.separated(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 84, 16),
-                            scrollDirection: Axis.horizontal,
-                            itemCount: itemTypes.length,
-                            separatorBuilder: (_, _) =>
-                                const SizedBox(width: 8),
-                            itemBuilder: (context, index) {
-                              final type = itemTypes[index];
-                              final item = available[type.sku]!.first;
-                              return LongPressDraggable<String>(
-                                data: 'item:${item.id}',
-                                onDragStarted: () => _selectItem(item),
-                                onDragEnd: (_) => _clearPreview(),
-                                feedback: Material(
-                                  color: Colors.transparent,
-                                  child: HabitatSpritePreview(
-                                    sprites: _sprites,
-                                    keyName: _sprites.keyFor(type.sprite, 0),
-                                    size: 72,
-                                  ),
-                                ),
-                                child: InkWell(
-                                  onTap: () => _selectItem(item),
-                                  child: _trayCard(
-                                    image: HabitatSpritePreview(
-                                      sprites: _sprites,
-                                      keyName: _sprites.keyFor(type.sprite, 0),
-                                      size: 72,
-                                    ),
-                                    name: type.name,
-                                    detail:
-                                        '${available[type.sku]!.length} ${available[type.sku]!.length == 1 ? 'disponível' : 'disponíveis'}',
-                                    selected: _selectedItemId == item.id,
-                                  ),
-                                ),
-                              );
-                            },
-                          )
-                  : _habitat.cats.isEmpty
+              child: _habitat.cats.isEmpty
                   ? const Center(
                       child: Text(
                         'Cadastre um gato em Meus Gatos para vê-lo aqui.',
@@ -1219,18 +1596,10 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
                           }),
                           feedback: Material(
                             color: Colors.transparent,
-                            child: HabitatSpritePreview(
-                              sprites: _sprites,
-                              keyName: 'animal-cat',
-                              size: 72,
-                            ),
+                            child: HabitatCatPreview(cat: cat, size: 72),
                           ),
                           child: _trayCard(
-                            image: HabitatSpritePreview(
-                              sprites: _sprites,
-                              keyName: 'animal-cat',
-                              size: 72,
-                            ),
+                            image: HabitatCatPreview(cat: cat, size: 72),
                             name: cat.name,
                             detail: placed
                                 ? 'No quintal'
@@ -1310,8 +1679,10 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
       children: [
         Positioned.fill(child: _scene()),
         if (_habitat.loading) const Center(child: CircularProgressIndicator()),
-        if (_editing) _selectedControls(),
-        if (_editing) _groundTools(),
+        if (_editing && _catSet == null) _selectedControls(),
+        if (_catSet != null) _catSetControls(),
+        if (!_editing) _productionControls(),
+        if (_editing && _catSet == null) _groundTools(),
         if (_habitat.pendingGift?['state'] == 'available')
           Positioned(
             left: 12,
@@ -1355,6 +1726,20 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
               label: label,
               onClose: () => setState(() => _rewardLabel = null),
             ),
+          ),
+        if (widget.active.value &&
+            _foreground &&
+            !_editing &&
+            !_showShop &&
+            !_showHelp &&
+            _tray == _HabitatTray.none &&
+            ModalRoute.of(context)?.isCurrent != false)
+          QuintalRewardCelebrations(
+            habitat: _habitat,
+            sprites: _sprites,
+            onInventory: () {
+              if (mounted) _openInventory();
+            },
           ),
         if (_showShop)
           Positioned.fill(

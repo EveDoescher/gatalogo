@@ -1,0 +1,352 @@
+[
+  {
+    "id": "bicolor_orange_white",
+    "pattern": "bicolor",
+    "palette": [
+      "orange",
+      "white",
+      "orange"
+    ],
+    "label": "Laranja e branco"
+  },
+  {
+    "id": "bicolor_white_brown",
+    "pattern": "patches",
+    "palette": [
+      "white",
+      "brown",
+      "brown"
+    ],
+    "label": "Branco com manchas marrons"
+  },
+  {
+    "id": "solid_orange",
+    "pattern": "solid",
+    "palette": [
+      "orange",
+      "orange",
+      "orange"
+    ],
+    "label": "Todo laranja"
+  },
+  {
+    "id": "tabby_gray",
+    "pattern": "tabby",
+    "palette": [
+      "gray",
+      "gray",
+      "gray"
+    ],
+    "label": "Rajado clássico"
+  },
+  {
+    "id": "bicolor_black_white",
+    "pattern": "bicolor",
+    "palette": [
+      "black",
+      "white",
+      "black"
+    ],
+    "label": "Bicolor · Preto e branco"
+  },
+  {
+    "id": "bicolor_brown_white",
+    "pattern": "bicolor",
+    "palette": [
+      "brown",
+      "white",
+      "brown"
+    ],
+    "label": "Bicolor · Marrom e branco"
+  },
+  {
+    "id": "bicolor_cream_white",
+    "pattern": "bicolor",
+    "palette": [
+      "cream",
+      "white",
+      "cream"
+    ],
+    "label": "Bicolor · Creme e branco"
+  },
+  {
+    "id": "bicolor_gray_white",
+    "pattern": "bicolor",
+    "palette": [
+      "gray",
+      "white",
+      "gray"
+    ],
+    "label": "Bicolor · Cinza e branco"
+  },
+  {
+    "id": "bicolor_white_black",
+    "pattern": "patches",
+    "palette": [
+      "white",
+      "black",
+      "black"
+    ],
+    "label": "Bicolor · Branco e preto"
+  },
+  {
+    "id": "bicolor_white_cream",
+    "pattern": "patches",
+    "palette": [
+      "white",
+      "cream",
+      "cream"
+    ],
+    "label": "Bicolor · Branco e creme"
+  },
+  {
+    "id": "bicolor_white_gray",
+    "pattern": "patches",
+    "palette": [
+      "white",
+      "gray",
+      "gray"
+    ],
+    "label": "Bicolor · Branco e cinza"
+  },
+  {
+    "id": "bicolor_white_orange",
+    "pattern": "patches",
+    "palette": [
+      "white",
+      "orange",
+      "orange"
+    ],
+    "label": "Bicolor · Branco e laranja"
+  },
+  {
+    "id": "calico",
+    "pattern": "calico",
+    "palette": [
+      "white",
+      "black",
+      "orange"
+    ],
+    "label": "Tricolor"
+  },
+  {
+    "id": "calico_dark",
+    "pattern": "calico",
+    "palette": [
+      "black",
+      "orange",
+      "white"
+    ],
+    "label": "Tricolor escuro"
+  },
+  {
+    "id": "calico_dilute",
+    "pattern": "calico",
+    "palette": [
+      "white",
+      "gray",
+      "cream"
+    ],
+    "label": "Tricolor diluído"
+  },
+  {
+    "id": "point_black",
+    "pattern": "point",
+    "palette": [
+      "cream",
+      "black",
+      "black"
+    ],
+    "label": "Colorpoint · Preto"
+  },
+  {
+    "id": "point_brown",
+    "pattern": "point",
+    "palette": [
+      "cream",
+      "brown",
+      "brown"
+    ],
+    "label": "Colorpoint · Marrom"
+  },
+  {
+    "id": "point_gray",
+    "pattern": "point",
+    "palette": [
+      "cream",
+      "gray",
+      "gray"
+    ],
+    "label": "Colorpoint · Cinza"
+  },
+  {
+    "id": "solid_black",
+    "pattern": "solid",
+    "palette": [
+      "black",
+      "black",
+      "black"
+    ],
+    "label": "Sólido · Preto"
+  },
+  {
+    "id": "solid_brown",
+    "pattern": "solid",
+    "palette": [
+      "brown",
+      "brown",
+      "brown"
+    ],
+    "label": "Sólido · Marrom"
+  },
+  {
+    "id": "solid_cream",
+    "pattern": "solid",
+    "palette": [
+      "cream",
+      "cream",
+      "cream"
+    ],
+    "label": "Sólido · Creme"
+  },
+  {
+    "id": "solid_gray",
+    "pattern": "solid",
+    "palette": [
+      "gray",
+      "gray",
+      "gray"
+    ],
+    "label": "Sólido · Cinza"
+  },
+  {
+    "id": "solid_white",
+    "pattern": "solid",
+    "palette": [
+      "white",
+      "white",
+      "white"
+    ],
+    "label": "Sólido · Branco"
+  },
+  {
+    "id": "tabby_black",
+    "pattern": "tabby",
+    "palette": [
+      "black",
+      "black",
+      "black"
+    ],
+    "label": "Rajado · Preto"
+  },
+  {
+    "id": "tabby_brown",
+    "pattern": "tabby",
+    "palette": [
+      "brown",
+      "brown",
+      "brown"
+    ],
+    "label": "Rajado · Marrom"
+  },
+  {
+    "id": "tabby_cream",
+    "pattern": "tabby",
+    "palette": [
+      "cream",
+      "cream",
+      "cream"
+    ],
+    "label": "Rajado · Creme"
+  },
+  {
+    "id": "tabby_orange",
+    "pattern": "tabby",
+    "palette": [
+      "orange",
+      "orange",
+      "orange"
+    ],
+    "label": "Rajado · Laranja"
+  },
+  {
+    "id": "tortie",
+    "pattern": "tortie",
+    "palette": [
+      "black",
+      "orange",
+      "black"
+    ],
+    "label": "Escaminha"
+  },
+  {
+    "id": "tortie_brown",
+    "pattern": "tortie",
+    "palette": [
+      "brown",
+      "orange",
+      "brown"
+    ],
+    "label": "Escaminha marrom"
+  },
+  {
+    "id": "tortie_dilute",
+    "pattern": "tortie",
+    "palette": [
+      "gray",
+      "cream",
+      "gray"
+    ],
+    "label": "Escaminha diluída"
+  },
+  {
+    "id": "tuxedo_black",
+    "pattern": "tuxedo",
+    "palette": [
+      "black",
+      "white",
+      "black"
+    ],
+    "label": "Tuxedo · Preto"
+  },
+  {
+    "id": "tuxedo_brown",
+    "pattern": "tuxedo",
+    "palette": [
+      "brown",
+      "white",
+      "brown"
+    ],
+    "label": "Tuxedo · Marrom"
+  },
+  {
+    "id": "tuxedo_cream",
+    "pattern": "tuxedo",
+    "palette": [
+      "cream",
+      "white",
+      "cream"
+    ],
+    "label": "Tuxedo · Creme"
+  },
+  {
+    "id": "tuxedo_gray",
+    "pattern": "tuxedo",
+    "palette": [
+      "gray",
+      "white",
+      "gray"
+    ],
+    "label": "Tuxedo · Cinza"
+  },
+  {
+    "id": "tuxedo_orange",
+    "pattern": "tuxedo",
+    "palette": [
+      "orange",
+      "white",
+      "orange"
+    ],
+    "label": "Tuxedo · Laranja"
+  }
+]

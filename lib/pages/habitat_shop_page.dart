@@ -11,6 +11,8 @@ import '../theme/app_theme.dart';
 import '../widgets/app_header_actions.dart';
 import '../widgets/habitat_coin_badge.dart';
 import '../widgets/habitat_sprite_preview.dart';
+import '../widgets/quintal_production_widgets.dart';
+import '../services/habitat_navigation.dart';
 
 class HabitatShopPage extends StatefulWidget {
   const HabitatShopPage({
@@ -40,6 +42,7 @@ class _HabitatShopPageState extends State<HabitatShopPage> {
     'caminhos': 'Caminhos',
     'jardim': 'Jardim vivo',
     'terreno': 'Terreno',
+    'producao': 'Produção',
   };
 
   @override
@@ -146,7 +149,7 @@ class _HabitatShopPageState extends State<HabitatShopPage> {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
               child: Text(
-                'Decorações e caminhos',
+                'Escolha para seu Quintal',
                 style: GoogleFonts.fredoka(
                   fontSize: 21,
                   color: AppColors.textTitle,
@@ -161,7 +164,12 @@ class _HabitatShopPageState extends State<HabitatShopPage> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    for (final entry in {null: 'Tudo', ..._categories}.entries)
+                    for (final entry
+                        in {null: 'Tudo', ..._categories}.entries.where(
+                          (entry) =>
+                              entry.key != 'producao' ||
+                              habitat.production.isNotEmpty,
+                        ))
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: ChoiceChip(
@@ -180,24 +188,26 @@ class _HabitatShopPageState extends State<HabitatShopPage> {
               ),
             ),
           ),
-          SliverPadding(
-            padding: EdgeInsets.fromLTRB(
-              16,
-              0,
-              16,
-              28 + MediaQuery.paddingOf(context).bottom,
-            ),
-            sliver: SliverGrid.builder(
-              itemCount: items.length,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: columns,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                mainAxisExtent: 236,
+          if (_category == 'producao') _productionOffers(),
+          if (_category != 'producao')
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                0,
+                16,
+                28 + MediaQuery.paddingOf(context).bottom,
               ),
-              itemBuilder: (context, index) => _itemCard(items[index]),
+              sliver: SliverGrid.builder(
+                itemCount: items.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: columns,
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                  mainAxisExtent: 236,
+                ),
+                itemBuilder: (context, index) => _itemCard(items[index]),
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -215,12 +225,20 @@ class _HabitatShopPageState extends State<HabitatShopPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Expandir terreno',
-            style: GoogleFonts.fredoka(
-              fontSize: 24,
-              color: AppColors.textTitle,
-            ),
+          Row(
+            children: [
+              const QuintalArtwork('action_expand_area', size: 52),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Expandir terreno',
+                  style: GoogleFonts.fredoka(
+                    fontSize: 24,
+                    color: AppColors.textTitle,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(
@@ -273,6 +291,95 @@ class _HabitatShopPageState extends State<HabitatShopPage> {
     );
   }
 
+  Widget _productionOffers() {
+    const spaces = [
+      ('garden', 'Horta', 'action_plant_seedling'),
+      ('kitchen', 'Cozinha', 'action_cook_pot'),
+      ('coop', 'Galinheiro', 'action_collect_eggs'),
+      ('pasture', 'Pasto', 'action_collect_milk'),
+      ('orchard', 'Pomar', 'action_harvest_basket'),
+      ('pier', 'Píer e vara', 'action_fish_rod'),
+      ('market', 'Mercado', 'action_order_market'),
+    ];
+    final h = widget.habitat;
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        child: Column(
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: Text(
+                'Confira melhorias e escolha o que fazer diretamente em cada espaço.',
+              ),
+            ),
+            for (final (id, name, art) in spaces)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Material(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(20),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: () {
+                      widget.onClose();
+                      HabitatNavigation.focusProduction.value = id;
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          QuintalArtwork(art, size: 70),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  name,
+                                  style: GoogleFonts.fredoka(
+                                    fontSize: 20,
+                                    color: AppColors.textTitle,
+                                  ),
+                                ),
+                                Text(
+                                  h.facilityLevel(id) == 0
+                                      ? 'Recuperar este espaço'
+                                      : 'Nível ${h.facilityLevel(id)}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textMedium,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                const Text(
+                                  'Ver no Quintal',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.greenLink,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            LucideIcons.chevronRight,
+                            size: 20,
+                            color: AppColors.greenLink,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _itemCard(HabitatShopItem item) {
     final habitat = widget.habitat;
     final owned = habitat.items.where((entry) => entry.sku == item.sku).length;
@@ -291,7 +398,7 @@ class _HabitatShopPageState extends State<HabitatShopPage> {
             child: Center(
               child: HabitatSpritePreview(
                 sprites: widget.sprites,
-                keyName: widget.sprites.keyFor(item.sprite, 0),
+                keyName: widget.sprites.keyFor(item.displaySprite, 0),
                 size: 91,
               ),
             ),

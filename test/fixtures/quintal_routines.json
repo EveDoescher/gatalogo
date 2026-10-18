@@ -1,0 +1,106 @@
+{
+  "daily": {
+    "id": "daily_quintal_routine",
+    "instance_id": "mission:daily_quintal_routine:2026-10-17",
+    "event_key": "mission:daily_quintal_routine:2026-10-17",
+    "title": "Uma pausa no Quintal",
+    "description": "Se couber na sua visita, escolha uma das atividades abaixo. Uma só basta; produtos precisam estar prontos.",
+    "metric": "quintal_routine",
+    "unit": "atividades à escolha",
+    "target": 1,
+    "progress": 0,
+    "type": "daily",
+    "xp_reward": 10,
+    "coin_reward": 5,
+    "completed": false,
+    "unlocked": false,
+    "unlocked_at": null,
+    "reward_received": false,
+    "xp_received": null,
+    "coin_received": null,
+    "legacy_reward_unknown": false,
+    "period": "2026-10-17",
+    "reset_at": "2026-10-18T00:00:00-03:00",
+    "ranking_points": 0,
+    "destination": "habitat",
+    "status": "available",
+    "optional": true,
+    "group": "quintal_routine",
+    "alternatives": [
+      {
+        "space": "cats",
+        "metric": "care",
+        "title": "Fazer carinho em um gato",
+        "tutorial_anchor": "start_care"
+      },
+      {
+        "space": "garden",
+        "metric": "quintal_harvest",
+        "title": "Colher um canteiro pronto",
+        "tutorial_anchor": "start_harvest"
+      },
+      {
+        "space": "coop",
+        "metric": "quintal_egg",
+        "title": "Recolher ovos prontos",
+        "tutorial_anchor": "quintal_collect_eggs"
+      }
+    ],
+    "tutorial_anchor": "daily_quintal_routine",
+    "visit_hint": "Uma atividade nesta visita",
+    "selection_mode": "any",
+    "server_now": "2026-10-17T12:00:00-03:00"
+  },
+  "weekly": {
+    "id": "weekly_quintal_routine",
+    "instance_id": "mission:weekly_quintal_routine:2026-10-12",
+    "event_key": "mission:weekly_quintal_routine:2026-10-12",
+    "title": "No seu ritmo",
+    "description": "Escolha uma atividade em dois dias desta semana. Não precisam ser seguidos, nem usar espaços diferentes.",
+    "metric": "quintal_routine_days",
+    "unit": "dias de atividade",
+    "target": 2,
+    "progress": 0,
+    "type": "weekly",
+    "xp_reward": 30,
+    "coin_reward": 15,
+    "completed": false,
+    "unlocked": false,
+    "unlocked_at": null,
+    "reward_received": false,
+    "xp_received": null,
+    "coin_received": null,
+    "legacy_reward_unknown": false,
+    "period": "2026-10-12",
+    "reset_at": "2026-10-19T00:00:00-03:00",
+    "ranking_points": 0,
+    "destination": "habitat",
+    "status": "available",
+    "optional": true,
+    "group": "quintal_routine",
+    "alternatives": [
+      {
+        "space": "cats",
+        "metric": "care",
+        "title": "Fazer carinho em um gato",
+        "tutorial_anchor": "start_care"
+      },
+      {
+        "space": "garden",
+        "metric": "quintal_harvest",
+        "title": "Colher um canteiro pronto",
+        "tutorial_anchor": "start_harvest"
+      },
+      {
+        "space": "coop",
+        "metric": "quintal_egg",
+        "title": "Recolher ovos prontos",
+        "tutorial_anchor": "quintal_collect_eggs"
+      }
+    ],
+    "tutorial_anchor": "weekly_quintal_routine",
+    "visit_hint": "Duas visitas em dias diferentes",
+    "selection_mode": "any",
+    "server_now": "2026-10-17T12:00:00-03:00"
+  }
+}

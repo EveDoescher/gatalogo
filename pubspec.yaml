@@ -70,7 +70,13 @@ flutter:
     - assets/habitat/building-type-a.png
     - assets/habitat/building-type-f.png
     - assets/habitat/decor/
+    - assets/quintal/production/
+    - assets/quintal/ui/
+    - assets/quintal/cow/
+    - assets/quintal/hen-white/
+    - assets/quintal/hen-brown/
     - assets/habitat/cat/
+    - assets/habitat/cat_coats/
     - assets/habitat/dog/
     - assets/habitat/bee/
     - assets/habitat/bunny/

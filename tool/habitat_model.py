@@ -139,9 +139,16 @@ def load_model(path: Path, *, animation: str | None = None, time: float = 0,
                 if "baseColorTexture" in material:
                     image_index = document["textures"][material["baseColorTexture"]["index"]]["source"]
                     image = document["images"][image_index]
-                    if "uri" not in image:
-                        raise ValueError(f"Expected an external palette texture: {path}")
-                    texture = path.parent / image["uri"]
+                    if "uri" in image:
+                        texture = path.parent / image["uri"]
+                    else:
+                        import hashlib
+                        view = document['bufferViews'][image['bufferView']]
+                        start = view.get('byteOffset', 0)
+                        data = binary[start:start+view['byteLength']]
+                        texture = Path(__file__).resolve().parents[1] / 'build/model-textures' / (hashlib.sha256(data).hexdigest()+'.png')
+                        texture.parent.mkdir(parents=True, exist_ok=True)
+                        if not texture.exists(): texture.write_bytes(data)
                 meshes.append(Mesh(
                     positions, normals, accessor(attributes["TEXCOORD_0"]),
                     indices.reshape(-1, 3), texture,

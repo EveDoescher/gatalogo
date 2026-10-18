@@ -15,6 +15,47 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('zoom preserves the same world location even at each pan limit', () {
+    final session = SessionStore();
+    final habitat = HabitatService(session, CatStore(session));
+    final game = HabitatGame(habitat, HabitatSprites());
+    for (final size in [Vector2(390, 844), Vector2(320, 568)]) {
+      game.onGameResize(size);
+      final center = Offset(size.x / 2, size.y / 2);
+      for (final production in [false, true]) {
+        habitat.production = production ? {'facilities': []} : {};
+        for (final direction in [
+          const Offset(1, 1),
+          const Offset(-1, 1),
+          const Offset(1, -1),
+          const Offset(-1, -1),
+        ]) {
+          game.zoom = 1;
+          game.pan = Offset.zero;
+          game.moveCamera(direction * 100000);
+          final landmark = game.groundAnchor(0, 0);
+          game.scaleCamera(1.9, center);
+          expect(
+            (game.groundAnchor(0, 0) - (center + (landmark - center) * 1.9))
+                .distance,
+            lessThan(.001),
+            reason: 'Zoom must not clamp back toward the yard before reaching the same world edge.',
+          );
+          final before = game.pan;
+          game.moveCamera(direction * 20);
+          expect(
+            (game.pan - before).distance,
+            greaterThan(20),
+            reason: 'The smaller visible world area leaves room to pan after zooming.',
+          );
+        }
+      }
+    }
+    game.onRemove();
+    habitat.dispose();
+    session.dispose();
+  });
+
   testWidgets(
     'solid models stay centered and fit their cells in every orientation',
     (tester) async {
@@ -37,6 +78,15 @@ void main() {
           ))!,
         ) as Map,
       );
+      final productionProfiles = jsonDecode(
+        (await tester.runAsync(
+          () => rootBundle.loadString('assets/quintal/production/manifest.json'),
+        ))!,
+      ) as Map;
+      profiles.addAll(<String, dynamic>{
+        for (final entry in productionProfiles.entries)
+          'production:${entry.key}': entry.value,
+      });
       await tester.pumpWidget(MaterialApp(home: GameWidget(game: game)));
       await tester.pump(const Duration(milliseconds: 300));
       for (var level = 0; level <= 3; level++) {
@@ -113,7 +163,7 @@ void main() {
             }
           }
           center /= (width * height).toDouble();
-          final key = sprites.keyFor(type.sprite, rotation);
+          final key = sprites.keyFor(habitat.spriteFor(item), rotation);
           final source = sprites.bounds(key);
           final destination = game.itemBounds(item);
           final scale = destination.width / source.width;

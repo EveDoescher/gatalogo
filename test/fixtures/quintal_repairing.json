@@ -1,0 +1,2157 @@
+{
+  "notice": "Dados exclusivos da galeria de testes. Criados em SQLite descartável, sem modificar contas reais.",
+  "production": {
+    "server_now": "2026-10-06T15:00:00+00:00",
+    "calendar_day": "2026-10-06",
+    "revision": 0,
+    "catalog": {
+      "version": 2,
+      "preferences": [
+        "Odeia",
+        "Não é fã",
+        "Aceita",
+        "Normal",
+        "Gosta",
+        "Gosta muito",
+        "Favorita"
+      ],
+      "resources": {
+        "corn": "Milho",
+        "wheat": "Trigo",
+        "carrot": "Cenoura",
+        "turnip": "Nabo",
+        "pumpkin": "Abóbora",
+        "melon": "Melão",
+        "egg": "Ovo",
+        "milk": "Leite",
+        "fish": "Peixe",
+        "chicken": "Frango",
+        "beef": "Carne",
+        "apple": "Maçã",
+        "pear": "Pera"
+      },
+      "crops": [
+        {
+          "id": "corn",
+          "name": "Milho",
+          "level": 1,
+          "seconds": 1800,
+          "yield": 2
+        },
+        {
+          "id": "wheat",
+          "name": "Trigo",
+          "level": 1,
+          "seconds": 2700,
+          "yield": 3
+        },
+        {
+          "id": "carrot",
+          "name": "Cenoura",
+          "level": 1,
+          "seconds": 3600,
+          "yield": 2
+        },
+        {
+          "id": "turnip",
+          "name": "Nabo",
+          "level": 2,
+          "seconds": 5400,
+          "yield": 3
+        },
+        {
+          "id": "pumpkin",
+          "name": "Abóbora",
+          "level": 2,
+          "seconds": 7200,
+          "yield": 2
+        },
+        {
+          "id": "melon",
+          "name": "Melão",
+          "level": 3,
+          "seconds": 14400,
+          "yield": 3
+        }
+      ],
+      "recipes": [
+        {
+          "id": "garden",
+          "name": "Mistura da horta",
+          "ingredients": {
+            "wheat": 2,
+            "carrot": 1
+          },
+          "seconds": 600,
+          "yield": 3,
+          "satisfaction": 12,
+          "facility": "kitchen",
+          "level": 1
+        },
+        {
+          "id": "fish",
+          "name": "Mistura com peixe",
+          "ingredients": {
+            "fish": 1,
+            "wheat": 2
+          },
+          "seconds": 1200,
+          "yield": 3,
+          "satisfaction": 16,
+          "facility": "pier",
+          "level": 1
+        },
+        {
+          "id": "egg",
+          "name": "Mistura com ovo",
+          "ingredients": {
+            "egg": 1,
+            "corn": 1,
+            "wheat": 1
+          },
+          "seconds": 1500,
+          "yield": 3,
+          "satisfaction": 18,
+          "facility": "coop",
+          "level": 1
+        },
+        {
+          "id": "chicken",
+          "name": "Mistura com frango",
+          "ingredients": {
+            "chicken": 1,
+            "wheat": 2,
+            "carrot": 1
+          },
+          "seconds": 2400,
+          "yield": 4,
+          "satisfaction": 20,
+          "facility": "market",
+          "level": 1
+        },
+        {
+          "id": "beef",
+          "name": "Mistura com carne",
+          "ingredients": {
+            "beef": 1,
+            "wheat": 2,
+            "pumpkin": 1
+          },
+          "seconds": 3600,
+          "yield": 4,
+          "satisfaction": 22,
+          "facility": "garden",
+          "level": 2
+        },
+        {
+          "id": "creamy",
+          "name": "Mistura cremosa",
+          "ingredients": {
+            "milk": 1,
+            "egg": 1,
+            "wheat": 2
+          },
+          "seconds": 2700,
+          "yield": 4,
+          "satisfaction": 20,
+          "facility": "pasture",
+          "level": 1
+        },
+        {
+          "id": "apple",
+          "name": "Mistura com maçã",
+          "ingredients": {
+            "wheat": 1,
+            "apple": 2
+          },
+          "seconds": 1200,
+          "yield": 3,
+          "satisfaction": 16,
+          "facility": "orchard",
+          "level": 1
+        },
+        {
+          "id": "pear",
+          "name": "Mistura com pera",
+          "ingredients": {
+            "wheat": 1,
+            "pear": 2
+          },
+          "seconds": 1200,
+          "yield": 3,
+          "satisfaction": 16,
+          "facility": "orchard",
+          "level": 1
+        },
+        {
+          "id": "special",
+          "name": "Mistura especial",
+          "ingredients": {
+            "fish": 1,
+            "chicken": 1,
+            "pumpkin": 1
+          },
+          "seconds": 7200,
+          "yield": 6,
+          "satisfaction": 24,
+          "facility": "kitchen",
+          "level": 2
+        }
+      ],
+      "facilities": [
+        {
+          "id": "garden:1",
+          "name": "Horta · 4 canteiros",
+          "base_price": 0,
+          "price": 0,
+          "seconds": 0,
+          "expansion": 0,
+          "requirements": {
+            "care": 1
+          }
+        },
+        {
+          "id": "garden:2",
+          "name": "Horta · 8 canteiros",
+          "base_price": 120,
+          "price": 0,
+          "seconds": 3600,
+          "expansion": 2,
+          "requirements": {
+            "harvest": 10
+          }
+        },
+        {
+          "id": "garden:3",
+          "name": "Horta · 12 canteiros",
+          "base_price": 220,
+          "price": 0,
+          "seconds": 7200,
+          "expansion": 3,
+          "requirements": {
+            "harvest": 30
+          }
+        },
+        {
+          "id": "kitchen:1",
+          "name": "Cozinha",
+          "base_price": 40,
+          "price": 0,
+          "seconds": 600,
+          "expansion": 0,
+          "requirements": {
+            "harvest": 1
+          }
+        },
+        {
+          "id": "kitchen:2",
+          "name": "Cozinha ampliada",
+          "base_price": 140,
+          "price": 0,
+          "seconds": 3600,
+          "expansion": 2,
+          "requirements": {
+            "cook": 10
+          }
+        },
+        {
+          "id": "pier:1",
+          "name": "Consertar o píer e acesso",
+          "base_price": 80,
+          "price": 0,
+          "seconds": 1800,
+          "expansion": 1,
+          "requirements": {
+            "cook": 1
+          }
+        },
+        {
+          "id": "market:1",
+          "name": "Mercado",
+          "base_price": 0,
+          "price": 0,
+          "seconds": 0,
+          "expansion": 0,
+          "requirements": {
+            "facility:kitchen": 1
+          }
+        },
+        {
+          "id": "coop:1",
+          "name": "Galinheiro · 2 galinhas",
+          "base_price": 100,
+          "price": 0,
+          "seconds": 3600,
+          "expansion": 1,
+          "requirements": {
+            "facility:kitchen": 1,
+            "crop:corn": 1
+          }
+        },
+        {
+          "id": "coop:2",
+          "name": "Galinheiro · 4 galinhas",
+          "base_price": 200,
+          "price": 0,
+          "seconds": 7200,
+          "expansion": 3,
+          "requirements": {
+            "egg": 20
+          }
+        },
+        {
+          "id": "pasture:1",
+          "name": "Pasto · 1 vaquinha",
+          "base_price": 180,
+          "price": 0,
+          "seconds": 7200,
+          "expansion": 2,
+          "requirements": {
+            "facility:coop": 1
+          }
+        },
+        {
+          "id": "pasture:2",
+          "name": "Pasto · 2 vaquinhas",
+          "base_price": 260,
+          "price": 0,
+          "seconds": 14400,
+          "expansion": 3,
+          "requirements": {
+            "milk_collection": 10
+          }
+        },
+        {
+          "id": "rod:1",
+          "name": "Vara básica",
+          "base_price": 0,
+          "price": 0,
+          "seconds": 0,
+          "expansion": 0,
+          "requirements": {
+            "facility:pier": 1
+          }
+        },
+        {
+          "id": "rod:2",
+          "name": "Vara melhorada",
+          "base_price": 100,
+          "price": 0,
+          "seconds": 0,
+          "expansion": 0,
+          "requirements": {
+            "fish": 10
+          }
+        },
+        {
+          "id": "rod:3",
+          "name": "Vara avançada",
+          "base_price": 240,
+          "price": 0,
+          "seconds": 0,
+          "expansion": 3,
+          "requirements": {
+            "fish": 30
+          }
+        },
+        {
+          "id": "orchard:1",
+          "name": "Pomar · 2 fruteiras",
+          "base_price": 280,
+          "price": 0,
+          "seconds": 14400,
+          "expansion": 3,
+          "requirements": {
+            "facility:garden": 3
+          },
+          "description": "Colha maçãs e peras para preparar rações na cozinha ou trocar por frango no Mercadinho."
+        }
+      ],
+      "orders": [
+        {
+          "id": "chicken",
+          "name": "Encomendar frango",
+          "base_price": 12,
+          "price": 0,
+          "products": {
+            "corn": 2,
+            "wheat": 1
+          },
+          "seconds": 3600,
+          "yield": 2,
+          "expansion": 0,
+          "product_options": [
+            {
+              "id": "harvest",
+              "name": "Produtos",
+              "products": {
+                "corn": 2,
+                "wheat": 1
+              }
+            },
+            {
+              "id": "fruit",
+              "name": "Frutas",
+              "products": {
+                "apple": 3,
+                "pear": 3
+              },
+              "facility": "orchard",
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "beef",
+          "name": "Encomendar carne",
+          "base_price": 20,
+          "price": 0,
+          "products": {
+            "milk": 2,
+            "wheat": 2
+          },
+          "seconds": 7200,
+          "yield": 2,
+          "expansion": 2,
+          "product_options": [
+            {
+              "id": "harvest",
+              "name": "Produtos",
+              "products": {
+                "milk": 2,
+                "wheat": 2
+              }
+            }
+          ]
+        }
+      ],
+      "fishing_daily_limit": 12,
+      "food_capacity": 2
+    },
+    "offers": [
+      {
+        "id": "coop:1",
+        "available": false,
+        "reasons": [
+          "Colheitas de milho: 0/1"
+        ]
+      },
+      {
+        "id": "rod:3",
+        "available": false,
+        "reasons": [
+          "Capturas: 0/30"
+        ]
+      }
+    ],
+    "counters": {
+      "bond": 36,
+      "cook": 1,
+      "facility:coop": 0,
+      "facility:garden": 3,
+      "facility:kitchen": 2,
+      "facility:market": 1,
+      "facility:orchard": 1,
+      "facility:pasture": 2,
+      "facility:pier": 1,
+      "facility:rod": 2,
+      "care": 0
+    },
+    "updates": [
+      {
+        "kind": "cook",
+        "target": "garden",
+        "id": "0d8a731d-10ab-4112-a8c2-8b90e624da9c"
+      },
+      {
+        "kind": "harvest",
+        "target": "corn",
+        "slot": 0
+      },
+      {
+        "kind": "harvest",
+        "target": "carrot",
+        "slot": 2
+      },
+      {
+        "kind": "harvest",
+        "target": "pumpkin",
+        "slot": 3
+      },
+      {
+        "kind": "harvest",
+        "target": "corn",
+        "slot": 4
+      },
+      {
+        "kind": "resident",
+        "target": "orchard",
+        "quantity": 6
+      },
+      {
+        "kind": "resident",
+        "target": "pasture",
+        "quantity": 2
+      }
+    ],
+    "stock": {
+      "carrot": 8,
+      "corn": 12,
+      "egg": 4,
+      "fish": 3,
+      "milk": 2,
+      "ration:fish": 3,
+      "ration:garden": 6,
+      "wheat": 18
+    },
+    "facilities": [
+      {
+        "kind": "coop",
+        "level": 0,
+        "target_level": 1,
+        "ready_at": "2026-10-06T15:30:00+00:00"
+      },
+      {
+        "kind": "garden",
+        "level": 3,
+        "target_level": 0,
+        "ready_at": null
+      },
+      {
+        "kind": "kitchen",
+        "level": 2,
+        "target_level": 0,
+        "ready_at": null
+      },
+      {
+        "kind": "market",
+        "level": 1,
+        "target_level": 0,
+        "ready_at": null
+      },
+      {
+        "kind": "orchard",
+        "level": 1,
+        "target_level": 0,
+        "ready_at": null
+      },
+      {
+        "kind": "pasture",
+        "level": 2,
+        "target_level": 0,
+        "ready_at": null
+      },
+      {
+        "kind": "pier",
+        "level": 1,
+        "target_level": 0,
+        "ready_at": null
+      },
+      {
+        "kind": "rod",
+        "level": 2,
+        "target_level": 0,
+        "ready_at": null
+      }
+    ],
+    "plots": [
+      {
+        "slot": 0,
+        "crop": "corn",
+        "started_at": "2026-10-06T14:00:00+00:00",
+        "ready_at": "2026-10-06T14:59:00+00:00",
+        "watered": true
+      },
+      {
+        "slot": 1,
+        "crop": "wheat",
+        "started_at": "2026-10-06T14:00:00+00:00",
+        "ready_at": "2026-10-06T15:15:00+00:00",
+        "watered": true
+      },
+      {
+        "slot": 2,
+        "crop": "carrot",
+        "started_at": "2026-10-06T14:00:00+00:00",
+        "ready_at": "2026-10-06T14:59:00+00:00",
+        "watered": true
+      },
+      {
+        "slot": 3,
+        "crop": "pumpkin",
+        "started_at": "2026-10-06T14:00:00+00:00",
+        "ready_at": "2026-10-06T14:59:00+00:00",
+        "watered": true
+      },
+      {
+        "slot": 4,
+        "crop": "corn",
+        "started_at": "2026-10-06T14:00:00+00:00",
+        "ready_at": "2026-10-06T14:59:00+00:00",
+        "watered": true
+      },
+      {
+        "slot": 5,
+        "crop": null,
+        "started_at": null,
+        "ready_at": null,
+        "watered": false
+      },
+      {
+        "slot": 6,
+        "crop": null,
+        "started_at": null,
+        "ready_at": null,
+        "watered": false
+      },
+      {
+        "slot": 7,
+        "crop": null,
+        "started_at": null,
+        "ready_at": null,
+        "watered": false
+      },
+      {
+        "slot": 8,
+        "crop": null,
+        "started_at": null,
+        "ready_at": null,
+        "watered": false
+      },
+      {
+        "slot": 9,
+        "crop": null,
+        "started_at": null,
+        "ready_at": null,
+        "watered": false
+      },
+      {
+        "slot": 10,
+        "crop": null,
+        "started_at": null,
+        "ready_at": null,
+        "watered": false
+      },
+      {
+        "slot": 11,
+        "crop": null,
+        "started_at": null,
+        "ready_at": null,
+        "watered": false
+      }
+    ],
+    "tasks": [
+      {
+        "id": "0d8a731d-10ab-4112-a8c2-8b90e624da9c",
+        "kind": "cook",
+        "target": "garden",
+        "status": "ready",
+        "started_at": "2026-10-06T14:40:00+00:00",
+        "ready_at": "2026-10-06T14:50:00+00:00",
+        "inputs": {
+          "wheat": 2,
+          "carrot": 1
+        },
+        "outputs": {
+          "ration:garden": 3
+        }
+      }
+    ],
+    "residents": [
+      {
+        "kind": "orchard",
+        "count": 2,
+        "cursor": "2026-10-06T15:00:00+00:00",
+        "food_start": "2026-10-06T05:00:00+00:00",
+        "food_until": "2026-10-07T05:00:00+00:00",
+        "water_start": "2026-10-06T05:00:00+00:00",
+        "water_until": "2026-10-07T05:00:00+00:00",
+        "names": {
+          "0": "Mimosa",
+          "1": "Flor"
+        },
+        "ready": 6,
+        "animals": [
+          {
+            "id": "ecc5e138-0f12-4a70-968f-08ee1b1fe413",
+            "slot": 0,
+            "cursor": "2026-10-06T15:00:00+00:00",
+            "progress": 0,
+            "ready": 3,
+            "food_start": "2026-10-06T05:00:00+00:00",
+            "food_until": "2026-10-07T05:00:00+00:00"
+          },
+          {
+            "id": "ee7b32d3-3652-4052-a038-6b53d2fd6f11",
+            "slot": 1,
+            "cursor": "2026-10-06T15:00:00+00:00",
+            "progress": 0,
+            "ready": 3,
+            "food_start": "2026-10-06T05:00:00+00:00",
+            "food_until": "2026-10-07T05:00:00+00:00"
+          }
+        ],
+        "ready_since": "2026-10-06T15:00:00+00:00",
+        "fed_count": 2,
+        "capacity": 6,
+        "production_status": "full",
+        "next_ready_at": null
+      },
+      {
+        "kind": "pasture",
+        "count": 2,
+        "cursor": "2026-10-06T15:00:00+00:00",
+        "food_start": "2026-10-06T05:00:00+00:00",
+        "food_until": "2026-10-07T05:00:00+00:00",
+        "water_start": "2026-10-06T05:00:00+00:00",
+        "water_until": "2026-10-07T05:00:00+00:00",
+        "names": {
+          "0": "Mimosa",
+          "1": "Flor"
+        },
+        "ready": 2,
+        "animals": [
+          {
+            "id": "19e37ad5-42fc-48a2-add2-ec1e20edf82f",
+            "slot": 0,
+            "cursor": "2026-10-06T15:00:00+00:00",
+            "progress": 7200.0,
+            "ready": 1,
+            "food_start": "2026-10-06T05:00:00+00:00",
+            "food_until": "2026-10-07T05:00:00+00:00"
+          },
+          {
+            "id": "7136ceb3-79f7-409d-8b27-a1dd880342fc",
+            "slot": 1,
+            "cursor": "2026-10-06T15:00:00+00:00",
+            "progress": 7200.0,
+            "ready": 1,
+            "food_start": "2026-10-06T05:00:00+00:00",
+            "food_until": "2026-10-07T05:00:00+00:00"
+          }
+        ],
+        "ready_since": "2026-10-06T15:00:00+00:00",
+        "fed_count": 2,
+        "capacity": 4,
+        "production_status": "producing",
+        "next_ready_at": "2026-10-06T21:00:00+00:00"
+      }
+    ],
+    "cats": [
+      {
+        "cat_id": "99999999-1111-4111-8111-999999999999",
+        "affinity": 36,
+        "bonuses": {},
+        "color_index": 0,
+        "food_bowl": "9b22c38a-22d8-4420-90b7-4876e81e081b",
+        "assisted": false,
+        "water_bowl": "454d2044-a788-47ee-b3d9-716e6fc2b8aa",
+        "last_meal_at": "2026-10-06T05:00:00+00:00",
+        "served_at": "2026-10-06T05:00:00+00:00",
+        "recipe": "garden",
+        "portions": 1,
+        "water_until": "2026-10-06T23:00:00+00:00",
+        "hunger": 0.8333333333333334,
+        "water_available": true
+      }
+    ],
+    "preferences": [
+      {
+        "cat_id": "99999999-1111-4111-8111-999999999999",
+        "recipe": "garden",
+        "level": 5,
+        "known": true
+      }
+    ]
+  },
+  "habitat": {
+    "care": {
+      "server_now": "2026-10-06T15:00:00+00:00",
+      "day": "2026-10-06",
+      "cats": {
+        "99999999-1111-4111-8111-999999999999": {
+          "affinity": 36
+        }
+      }
+    },
+    "balance": 250,
+    "revision": 0,
+    "expansion_level": 3,
+    "free_shop": true,
+    "layout_rules_version": 3,
+    "selected_cat_ids": [
+      "99999999-1111-4111-8111-999999999999"
+    ],
+    "cat_anchors": {
+      "99999999-1111-4111-8111-999999999999": [
+        2,
+        4
+      ]
+    },
+    "buildable_cells": [
+      [
+        -4,
+        2
+      ],
+      [
+        -4,
+        3
+      ],
+      [
+        -4,
+        4
+      ],
+      [
+        -4,
+        5
+      ],
+      [
+        -3,
+        0
+      ],
+      [
+        -3,
+        1
+      ],
+      [
+        -3,
+        2
+      ],
+      [
+        -3,
+        3
+      ],
+      [
+        -3,
+        4
+      ],
+      [
+        -3,
+        5
+      ],
+      [
+        -3,
+        6
+      ],
+      [
+        -3,
+        7
+      ],
+      [
+        -2,
+        -1
+      ],
+      [
+        -2,
+        0
+      ],
+      [
+        -2,
+        1
+      ],
+      [
+        -2,
+        2
+      ],
+      [
+        -2,
+        3
+      ],
+      [
+        -2,
+        4
+      ],
+      [
+        -2,
+        5
+      ],
+      [
+        -2,
+        6
+      ],
+      [
+        -2,
+        7
+      ],
+      [
+        -2,
+        8
+      ],
+      [
+        -1,
+        -2
+      ],
+      [
+        -1,
+        -1
+      ],
+      [
+        -1,
+        0
+      ],
+      [
+        -1,
+        1
+      ],
+      [
+        -1,
+        2
+      ],
+      [
+        -1,
+        3
+      ],
+      [
+        -1,
+        4
+      ],
+      [
+        -1,
+        5
+      ],
+      [
+        -1,
+        6
+      ],
+      [
+        -1,
+        7
+      ],
+      [
+        -1,
+        8
+      ],
+      [
+        -1,
+        9
+      ],
+      [
+        0,
+        -3
+      ],
+      [
+        0,
+        -2
+      ],
+      [
+        0,
+        -1
+      ],
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        0,
+        3
+      ],
+      [
+        0,
+        4
+      ],
+      [
+        0,
+        5
+      ],
+      [
+        0,
+        6
+      ],
+      [
+        0,
+        7
+      ],
+      [
+        0,
+        8
+      ],
+      [
+        0,
+        9
+      ],
+      [
+        0,
+        10
+      ],
+      [
+        1,
+        -3
+      ],
+      [
+        1,
+        -2
+      ],
+      [
+        1,
+        -1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        1,
+        3
+      ],
+      [
+        1,
+        4
+      ],
+      [
+        1,
+        5
+      ],
+      [
+        1,
+        6
+      ],
+      [
+        1,
+        7
+      ],
+      [
+        1,
+        8
+      ],
+      [
+        1,
+        9
+      ],
+      [
+        1,
+        10
+      ],
+      [
+        2,
+        -4
+      ],
+      [
+        2,
+        -3
+      ],
+      [
+        2,
+        -2
+      ],
+      [
+        2,
+        -1
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        2,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        2,
+        4
+      ],
+      [
+        2,
+        5
+      ],
+      [
+        2,
+        6
+      ],
+      [
+        2,
+        7
+      ],
+      [
+        2,
+        8
+      ],
+      [
+        2,
+        9
+      ],
+      [
+        2,
+        10
+      ],
+      [
+        2,
+        11
+      ],
+      [
+        3,
+        -4
+      ],
+      [
+        3,
+        -3
+      ],
+      [
+        3,
+        -2
+      ],
+      [
+        3,
+        -1
+      ],
+      [
+        3,
+        0
+      ],
+      [
+        3,
+        1
+      ],
+      [
+        3,
+        2
+      ],
+      [
+        3,
+        3
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        3,
+        5
+      ],
+      [
+        3,
+        6
+      ],
+      [
+        3,
+        7
+      ],
+      [
+        3,
+        8
+      ],
+      [
+        3,
+        9
+      ],
+      [
+        3,
+        10
+      ],
+      [
+        3,
+        11
+      ],
+      [
+        4,
+        -4
+      ],
+      [
+        4,
+        -3
+      ],
+      [
+        4,
+        -2
+      ],
+      [
+        4,
+        -1
+      ],
+      [
+        4,
+        0
+      ],
+      [
+        4,
+        1
+      ],
+      [
+        4,
+        2
+      ],
+      [
+        4,
+        3
+      ],
+      [
+        4,
+        4
+      ],
+      [
+        4,
+        5
+      ],
+      [
+        4,
+        6
+      ],
+      [
+        4,
+        7
+      ],
+      [
+        4,
+        8
+      ],
+      [
+        4,
+        9
+      ],
+      [
+        4,
+        10
+      ],
+      [
+        4,
+        11
+      ],
+      [
+        5,
+        -4
+      ],
+      [
+        5,
+        -3
+      ],
+      [
+        5,
+        -2
+      ],
+      [
+        5,
+        -1
+      ],
+      [
+        5,
+        0
+      ],
+      [
+        5,
+        1
+      ],
+      [
+        5,
+        2
+      ],
+      [
+        5,
+        3
+      ],
+      [
+        5,
+        4
+      ],
+      [
+        5,
+        5
+      ],
+      [
+        5,
+        6
+      ],
+      [
+        5,
+        7
+      ],
+      [
+        5,
+        8
+      ],
+      [
+        5,
+        9
+      ],
+      [
+        5,
+        10
+      ],
+      [
+        5,
+        11
+      ],
+      [
+        6,
+        -3
+      ],
+      [
+        6,
+        -2
+      ],
+      [
+        6,
+        -1
+      ],
+      [
+        6,
+        0
+      ],
+      [
+        6,
+        1
+      ],
+      [
+        6,
+        2
+      ],
+      [
+        6,
+        3
+      ],
+      [
+        6,
+        4
+      ],
+      [
+        6,
+        5
+      ],
+      [
+        6,
+        6
+      ],
+      [
+        6,
+        7
+      ],
+      [
+        6,
+        8
+      ],
+      [
+        6,
+        9
+      ],
+      [
+        6,
+        10
+      ],
+      [
+        6,
+        11
+      ],
+      [
+        7,
+        -3
+      ],
+      [
+        7,
+        -2
+      ],
+      [
+        7,
+        -1
+      ],
+      [
+        7,
+        0
+      ],
+      [
+        7,
+        1
+      ],
+      [
+        7,
+        2
+      ],
+      [
+        7,
+        3
+      ],
+      [
+        7,
+        4
+      ],
+      [
+        7,
+        5
+      ],
+      [
+        7,
+        6
+      ],
+      [
+        7,
+        7
+      ],
+      [
+        7,
+        8
+      ],
+      [
+        7,
+        9
+      ],
+      [
+        7,
+        10
+      ],
+      [
+        8,
+        -2
+      ],
+      [
+        8,
+        -1
+      ],
+      [
+        8,
+        0
+      ],
+      [
+        8,
+        1
+      ],
+      [
+        8,
+        2
+      ],
+      [
+        8,
+        3
+      ],
+      [
+        8,
+        4
+      ],
+      [
+        8,
+        5
+      ],
+      [
+        8,
+        6
+      ],
+      [
+        8,
+        7
+      ],
+      [
+        8,
+        8
+      ],
+      [
+        8,
+        9
+      ],
+      [
+        9,
+        -1
+      ],
+      [
+        9,
+        0
+      ],
+      [
+        9,
+        1
+      ],
+      [
+        9,
+        2
+      ],
+      [
+        9,
+        3
+      ],
+      [
+        9,
+        4
+      ],
+      [
+        9,
+        5
+      ],
+      [
+        9,
+        6
+      ],
+      [
+        9,
+        7
+      ],
+      [
+        9,
+        8
+      ],
+      [
+        10,
+        0
+      ],
+      [
+        10,
+        1
+      ],
+      [
+        10,
+        2
+      ],
+      [
+        10,
+        3
+      ],
+      [
+        10,
+        4
+      ],
+      [
+        10,
+        5
+      ],
+      [
+        10,
+        6
+      ],
+      [
+        10,
+        7
+      ],
+      [
+        11,
+        1
+      ],
+      [
+        11,
+        2
+      ],
+      [
+        11,
+        3
+      ],
+      [
+        11,
+        4
+      ],
+      [
+        11,
+        5
+      ],
+      [
+        11,
+        6
+      ]
+    ],
+    "cats": [
+      {
+        "id": "99999999-1111-4111-8111-999999999999",
+        "name": "Mimi"
+      }
+    ],
+    "items": [
+      {
+        "id": "9b22c38a-22d8-4420-90b7-4876e81e081b",
+        "sku": "food_bowl",
+        "x": 4,
+        "y": 4,
+        "rotation": 0,
+        "care_state": {
+          "cat_id": "99999999-1111-4111-8111-999999999999",
+          "role": "food_bowl",
+          "color_index": 0
+        }
+      },
+      {
+        "id": "454d2044-a788-47ee-b3d9-716e6fc2b8aa",
+        "sku": "water_bowl",
+        "x": 4,
+        "y": 5,
+        "rotation": 0,
+        "care_state": {
+          "cat_id": "99999999-1111-4111-8111-999999999999",
+          "role": "water_bowl",
+          "color_index": 0
+        }
+      },
+      {
+        "id": "70eb9a5c-e5e9-492a-a7c6-577a8a994436",
+        "sku": "friendship_garden",
+        "x": null,
+        "y": null,
+        "rotation": 0,
+        "care_state": {}
+      }
+    ],
+    "satisfaction": {
+      "value": 60
+    }
+  },
+  "shop": {
+    "items": [
+      {
+        "sku": "cat_bed",
+        "name": "Caminha",
+        "category": "descanso",
+        "price": 0,
+        "sprite": "bed",
+        "width": 1,
+        "height": 2,
+        "max_owned": 1,
+        "base_price": 0,
+        "purchasable": false
+      },
+      {
+        "sku": "small_tree",
+        "name": "Árvore pequena",
+        "category": "natureza",
+        "price": 0,
+        "sprite": "tree_default",
+        "width": 1,
+        "height": 1,
+        "max_owned": 1,
+        "base_price": 0,
+        "purchasable": false
+      },
+      {
+        "sku": "small_bush",
+        "name": "Arbusto",
+        "category": "natureza",
+        "price": 0,
+        "sprite": "plant_bushSmall",
+        "width": 1,
+        "height": 1,
+        "max_owned": 1,
+        "base_price": 0,
+        "purchasable": false
+      },
+      {
+        "sku": "red_flowers",
+        "name": "Flores vermelhas",
+        "category": "natureza",
+        "price": 0,
+        "sprite": "flower_redA",
+        "width": 1,
+        "height": 1,
+        "max_owned": 1,
+        "base_price": 0,
+        "purchasable": false
+      },
+      {
+        "sku": "yellow_flowers",
+        "name": "Flores amarelas",
+        "category": "natureza",
+        "price": 0,
+        "sprite": "flower_yellowA",
+        "width": 1,
+        "height": 1,
+        "max_owned": 4,
+        "base_price": 20,
+        "purchasable": true
+      },
+      {
+        "sku": "soft_grass",
+        "name": "Grama macia",
+        "category": "descanso",
+        "price": 0,
+        "sprite": "grass",
+        "width": 1,
+        "height": 1,
+        "max_owned": 4,
+        "base_price": 20,
+        "purchasable": true
+      },
+      {
+        "sku": "small_rock",
+        "name": "Pedra",
+        "category": "natureza",
+        "price": 0,
+        "sprite": "rock_smallA",
+        "width": 1,
+        "height": 1,
+        "max_owned": 4,
+        "base_price": 25,
+        "purchasable": true
+      },
+      {
+        "sku": "stone_path",
+        "name": "Laje de pedra",
+        "category": "caminhos",
+        "price": 0,
+        "sprite": "ground_pathTile",
+        "width": 1,
+        "height": 1,
+        "max_owned": 6,
+        "layer": "path",
+        "base_price": 25,
+        "purchasable": true
+      },
+      {
+        "sku": "low_fence",
+        "name": "Cerca de madeira",
+        "category": "natureza",
+        "price": 0,
+        "sprite": "fence_simple",
+        "width": 1,
+        "height": 1,
+        "max_owned": 6,
+        "base_price": 30,
+        "purchasable": true
+      },
+      {
+        "sku": "leafy_plant",
+        "name": "Folhagem",
+        "category": "natureza",
+        "price": 0,
+        "sprite": "plant_flatShort",
+        "width": 1,
+        "height": 1,
+        "max_owned": 4,
+        "base_price": 35,
+        "purchasable": true
+      },
+      {
+        "sku": "floor_bed",
+        "name": "Cantinho de descanso",
+        "category": "descanso",
+        "price": 0,
+        "sprite": "bed_floor",
+        "width": 2,
+        "height": 2,
+        "max_owned": 2,
+        "base_price": 35,
+        "purchasable": true
+      },
+      {
+        "sku": "oak_tree",
+        "name": "Carvalho",
+        "category": "natureza",
+        "price": 0,
+        "sprite": "tree_oak",
+        "width": 2,
+        "height": 2,
+        "max_owned": 2,
+        "base_price": 45,
+        "purchasable": true
+      },
+      {
+        "sku": "large_log",
+        "name": "Tronco para brincar",
+        "category": "brincadeira",
+        "price": 0,
+        "sprite": "log_large",
+        "width": 2,
+        "height": 1,
+        "max_owned": 3,
+        "base_price": 40,
+        "purchasable": true
+      },
+      {
+        "sku": "large_rock",
+        "name": "Pedra de jardim",
+        "category": "natureza",
+        "price": 0,
+        "sprite": "rock_largeA",
+        "width": 2,
+        "height": 2,
+        "max_owned": 2,
+        "base_price": 45,
+        "purchasable": true
+      },
+      {
+        "sku": "detailed_tree",
+        "name": "Árvore frondosa",
+        "category": "natureza",
+        "price": 0,
+        "sprite": "tree_detailed",
+        "width": 2,
+        "height": 2,
+        "max_owned": 2,
+        "base_price": 60,
+        "purchasable": true
+      },
+      {
+        "sku": "tall_pine",
+        "name": "Pinheiro alto",
+        "category": "natureza",
+        "price": 0,
+        "sprite": "tree_pineTallA",
+        "width": 2,
+        "height": 2,
+        "max_owned": 2,
+        "base_price": 70,
+        "purchasable": true
+      },
+      {
+        "sku": "canvas_shelter",
+        "name": "Abrigo de lona",
+        "category": "descanso",
+        "price": 0,
+        "sprite": "tent_smallOpen",
+        "width": 2,
+        "height": 2,
+        "max_owned": 2,
+        "base_price": 55,
+        "purchasable": true
+      },
+      {
+        "sku": "canvas_retreat",
+        "name": "Refúgio de lona",
+        "category": "descanso",
+        "price": 0,
+        "sprite": "tent_detailedOpen",
+        "width": 3,
+        "height": 2,
+        "max_owned": 2,
+        "base_price": 85,
+        "purchasable": true
+      },
+      {
+        "sku": "green_cottage",
+        "name": "Casinha verde",
+        "category": "casinhas",
+        "price": 0,
+        "sprite": "building-type-a",
+        "width": 3,
+        "height": 3,
+        "max_owned": 1,
+        "rotatable": false,
+        "base_price": 120,
+        "purchasable": true
+      },
+      {
+        "sku": "large_cottage",
+        "name": "Casinha ampla",
+        "category": "casinhas",
+        "price": 0,
+        "sprite": "building-type-f",
+        "width": 3,
+        "height": 3,
+        "max_owned": 1,
+        "rotatable": false,
+        "base_price": 150,
+        "purchasable": true
+      },
+      {
+        "sku": "pebble_path",
+        "name": "Caminho de pedrinhas",
+        "category": "caminhos",
+        "price": 0,
+        "sprite": "path_stone",
+        "width": 1,
+        "height": 1,
+        "max_owned": 256,
+        "layer": "path",
+        "base_price": 6,
+        "purchasable": true
+      },
+      {
+        "sku": "wood_path",
+        "name": "Caminho de madeira",
+        "category": "caminhos",
+        "price": 0,
+        "sprite": "path_wood",
+        "width": 1,
+        "height": 1,
+        "max_owned": 256,
+        "layer": "path",
+        "base_price": 8,
+        "purchasable": true
+      },
+      {
+        "sku": "food_bowl",
+        "name": "Pote de ração",
+        "category": "descanso",
+        "price": 0,
+        "sprite": "bowl",
+        "width": 1,
+        "height": 1,
+        "max_owned": 12,
+        "base_price": 15,
+        "purchasable": true
+      },
+      {
+        "sku": "water_bowl",
+        "name": "Pote de água",
+        "category": "descanso",
+        "price": 0,
+        "sprite": "bowl",
+        "width": 1,
+        "height": 1,
+        "max_owned": 12,
+        "base_price": 15,
+        "purchasable": true
+      },
+      {
+        "sku": "play_crate",
+        "name": "Caixa de brincar",
+        "category": "brincadeira",
+        "price": 0,
+        "sprite": "crate",
+        "width": 1,
+        "height": 1,
+        "max_owned": 4,
+        "base_price": 25,
+        "purchasable": true
+      },
+      {
+        "sku": "wood_platform",
+        "name": "Deck de madeira",
+        "category": "descanso",
+        "price": 0,
+        "sprite": "platform-planks",
+        "width": 2,
+        "height": 2,
+        "max_owned": 2,
+        "base_price": 45,
+        "purchasable": true
+      },
+      {
+        "sku": "garden_planter",
+        "name": "Jardineira",
+        "category": "natureza",
+        "price": 0,
+        "sprite": "planter",
+        "width": 1,
+        "height": 1,
+        "max_owned": 4,
+        "base_price": 30,
+        "purchasable": true
+      },
+      {
+        "sku": "round_stump",
+        "name": "Toco de árvore",
+        "category": "brincadeira",
+        "price": 0,
+        "sprite": "stump_roundDetailed",
+        "width": 1,
+        "height": 1,
+        "max_owned": 4,
+        "base_price": 25,
+        "purchasable": true
+      },
+      {
+        "sku": "closed_tent",
+        "name": "Barraca aconchegante",
+        "category": "descanso",
+        "price": 0,
+        "sprite": "tent_smallClosed",
+        "width": 2,
+        "height": 2,
+        "max_owned": 2,
+        "base_price": 55,
+        "purchasable": true
+      },
+      {
+        "sku": "purple_flowers",
+        "name": "Flores roxas",
+        "category": "natureza",
+        "price": 0,
+        "sprite": "flower_purpleA",
+        "width": 1,
+        "height": 1,
+        "max_owned": 4,
+        "base_price": 20,
+        "purchasable": true
+      },
+      {
+        "sku": "garden_bush",
+        "name": "Arbusto frondoso",
+        "category": "natureza",
+        "price": 0,
+        "sprite": "plant_bushDetailed",
+        "width": 1,
+        "height": 1,
+        "max_owned": 4,
+        "base_price": 25,
+        "purchasable": true
+      },
+      {
+        "sku": "red_mushrooms",
+        "name": "Cogumelos vermelhos",
+        "category": "natureza",
+        "price": 0,
+        "sprite": "mushroom_redGroup",
+        "width": 1,
+        "height": 1,
+        "max_owned": 4,
+        "base_price": 20,
+        "purchasable": true
+      },
+      {
+        "sku": "garden_pot",
+        "name": "Vaso de jardim",
+        "category": "natureza",
+        "price": 0,
+        "sprite": "pot_small",
+        "width": 1,
+        "height": 1,
+        "max_owned": 4,
+        "base_price": 15,
+        "purchasable": true
+      },
+      {
+        "sku": "palm_tree",
+        "name": "Palmeira",
+        "category": "natureza",
+        "price": 0,
+        "sprite": "tree_palmBend",
+        "width": 2,
+        "height": 2,
+        "max_owned": 2,
+        "base_price": 60,
+        "purchasable": true
+      },
+      {
+        "sku": "autumn_tree",
+        "name": "Árvore de outono",
+        "category": "natureza",
+        "price": 0,
+        "sprite": "tree_small_fall",
+        "width": 1,
+        "height": 1,
+        "max_owned": 4,
+        "base_price": 40,
+        "purchasable": true
+      },
+      {
+        "sku": "solar_cottage",
+        "name": "Casinha solar",
+        "category": "casinhas",
+        "price": 0,
+        "sprite": "building-type-b",
+        "width": 3,
+        "height": 3,
+        "max_owned": 2,
+        "base_price": 120,
+        "purchasable": true
+      },
+      {
+        "sku": "cozy_cottage",
+        "name": "Casinha acolhedora",
+        "category": "casinhas",
+        "price": 0,
+        "sprite": "building-type-c",
+        "width": 3,
+        "height": 3,
+        "max_owned": 2,
+        "base_price": 130,
+        "purchasable": true
+      },
+      {
+        "sku": "friendship_garden",
+        "name": "Flores da amizade",
+        "category": "natureza",
+        "price": 0,
+        "sprite": "flower_purpleA",
+        "width": 1,
+        "height": 1,
+        "max_owned": 1,
+        "base_price": 0,
+        "purchasable": false
+      },
+      {
+        "sku": "leaf_garden",
+        "name": "Canteiro de folhas",
+        "category": "jardim",
+        "price": 0,
+        "sprite": "crops_leafsStageA",
+        "width": 1,
+        "height": 1,
+        "max_owned": 4,
+        "base_price": 20,
+        "purchasable": true
+      },
+      {
+        "sku": "bamboo_garden",
+        "name": "Canteiro de bambu",
+        "category": "jardim",
+        "price": 0,
+        "sprite": "crops_bambooStageA",
+        "width": 1,
+        "height": 1,
+        "max_owned": 4,
+        "base_price": 30,
+        "purchasable": true
+      },
+      {
+        "sku": "water_tile",
+        "name": "Lago",
+        "category": "terreno",
+        "price": 0,
+        "sprite": "water",
+        "width": 1,
+        "height": 1,
+        "max_owned": 256,
+        "layer": "terrain",
+        "rotatable": false,
+        "base_price": 5,
+        "purchasable": true
+      },
+      {
+        "sku": "earth_tile",
+        "name": "Terra",
+        "category": "terreno",
+        "price": 0,
+        "sprite": "dirt",
+        "width": 1,
+        "height": 1,
+        "max_owned": 256,
+        "layer": "terrain",
+        "rotatable": false,
+        "base_price": 3,
+        "purchasable": true
+      },
+      {
+        "sku": "wood_bridge",
+        "name": "Ponte de madeira",
+        "category": "terreno",
+        "price": 0,
+        "sprite": "bridge_wood",
+        "width": 2,
+        "height": 2,
+        "max_owned": 4,
+        "layer": "bridge",
+        "base_price": 35,
+        "purchasable": true
+      },
+      {
+        "sku": "stone_bridge",
+        "name": "Ponte de pedra",
+        "category": "terreno",
+        "price": 0,
+        "sprite": "bridge_stoneRound",
+        "width": 2,
+        "height": 2,
+        "max_owned": 4,
+        "layer": "bridge",
+        "base_price": 45,
+        "purchasable": true
+      },
+      {
+        "sku": "water_lily",
+        "name": "Nenúfar",
+        "category": "terreno",
+        "price": 0,
+        "sprite": "lily_large",
+        "width": 1,
+        "height": 1,
+        "max_owned": 8,
+        "layer": "water_decor",
+        "base_price": 15,
+        "purchasable": true
+      }
+    ]
+  }
+}

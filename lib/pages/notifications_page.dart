@@ -87,6 +87,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   String _title(Map<String, dynamic> item) => switch (item['type']) {
     'habitat_gift' => 'Um visitante deixou um presente!',
+    'quintal_ready' => (item['payload'] as Map?)?['title']?.toString() ?? 'Produção pronta no Quintal',
     'progress_result' => 'Seu resultado está pronto',
     'possible_match' => 'Possível avistamento do seu gato',
     'match_confirmed' => 'Seu avistamento ajudou uma busca!',
@@ -104,6 +105,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     'message' => 'ui/ui_speech_ellipsis',
     'achievement' => 'rewards/reward_medal_star_gold_ribbon_01',
     'habitat_gift' => 'icons/icon_reward_chest_star',
+    'quintal_ready' => 'ui/ui_notebook_cat',
     'progress_result' => 'ui/ui_notebook_cat',
     _ => 'icons/icon_bell_gold_coral',
   };
@@ -132,6 +134,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
         HabitatNavigation.focusGift.value = payload['gift_id']?.toString();
         return;
       }
+      if (item['type'] == 'quintal_ready') {
+        if (!mounted) return;
+        Navigator.pop(context);
+        HabitatNavigation.focusProduction.value = payload['space']?.toString();
+        return;
+      }
       Widget? page;
       if (item['type'] == 'message' && payload['conversation_id'] != null) {
         page = ConversationPage(
@@ -145,6 +153,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
             'post',
             'comment',
             'repost',
+            'quintal',
           ].contains(payload['record_type'])) {
         page = JourneyPage(store: widget.store);
       } else if (item['type'] == 'progress_result' &&

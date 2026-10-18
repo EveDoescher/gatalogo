@@ -20,6 +20,7 @@ import '../stores/session_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_widgets.dart';
 import '../widgets/post_composer.dart';
+import '../widgets/social_publish_button.dart';
 import '../widgets/gatalogo_components.dart';
 import 'auth_page.dart';
 import 'friends_page.dart';
@@ -831,14 +832,14 @@ class _SocialPageState extends State<SocialPage> {
     }
     return BotanicalScaffold(
       mood: BotanicalMood.community,
-      floatingActionButton: widget.sessionStore.isSignedIn
-          ? FloatingActionButton.small(
-              tooltip: 'Criar publicação',
-              elevation: 0,
-              onPressed: _showShareCatModal,
-              backgroundColor: AppColors.greenButton,
-              foregroundColor: HomeArt.paper,
-              child: const Icon(LucideIcons.plus),
+      floatingActionButton:
+          widget.sessionStore.isSignedIn &&
+              MediaQuery.viewInsetsOf(context).bottom == 0
+          ? Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.paddingOf(context).bottom,
+              ),
+              child: SocialPublishButton(onPressed: _showShareCatModal),
             )
           : null,
       body: SafeArea(
@@ -1019,7 +1020,11 @@ class _SocialPageState extends State<SocialPage> {
                         ),
                       ),
                   ],
-                  const SliverToBoxAdapter(child: SizedBox(height: 70)),
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: 96 + MediaQuery.paddingOf(context).bottom,
+                    ),
+                  ),
                 ],
               ),
             ),

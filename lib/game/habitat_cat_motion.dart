@@ -13,7 +13,7 @@ class HabitatCatMotion {
   double progress = 0, pause = 0.8, animationTime = 0;
   int direction = 0;
   bool running = false;
-  HabitatCatClip? reaction, queuedReaction;
+  HabitatCatClip? reaction, queuedReaction, _afterVisit;
   double reactionTime = 0;
   String? targetItemId, activity;
   (int, int, int)? targetPlacement;
@@ -22,9 +22,20 @@ class HabitatCatMotion {
   double visitElapsed = 0, visitDuration = 8;
   Completer<bool>? _arrival;
 
+  // Atlas rows: front-left, back-left, back-right, front-right.
+  static int facing(num dx, num dy) =>
+      dx.abs() >= dy.abs() ? (dx >= 0 ? 3 : 1) : (dy >= 0 ? 0 : 2);
+
+  bool get isBowlVisit => const ['feed', 'drink', 'refuse'].contains(activity);
+
   HabitatCatClip get clip {
     if (visiting) {
-      if (activity == 'feed' && !awaitingConsumption) return HabitatCatClip.eat;
+      if (!awaitingConsumption) {
+        if (activity == 'feed' || activity == 'drink') {
+          return HabitatCatClip.eat;
+        }
+        if (activity == 'refuse') return HabitatCatClip.upset;
+      }
       if (activity == 'play') return HabitatCatClip.play;
       return HabitatCatClip.idle;
     }
@@ -48,7 +59,7 @@ class HabitatCatMotion {
     activity = action;
     route = List.of(path);
     pause = 0;
-    reaction = null;
+    reaction = queuedReaction = null;
     reactionTime = 0;
     _arrival = Completer<bool>();
     return _arrival!.future;
@@ -58,16 +69,18 @@ class HabitatCatMotion {
     if (_arrival != null && !_arrival!.isCompleted) _arrival!.complete(false);
     _arrival = null;
     targetItemId = activity = null;
+    _afterVisit = null;
     targetPlacement = null;
     route.clear();
     visiting = awaitingConsumption = false;
     visitElapsed = 0;
   }
 
-  void finishFeeding() {
+  void finishFeeding({HabitatCatClip? reaction}) {
+    _afterVisit = reaction;
     awaitingConsumption = false;
     visitElapsed = animationTime = 0;
-    visitDuration = 3;
+    visitDuration = activity == 'refuse' ? 2 : 3;
   }
 
   void react(HabitatCatClip value) {
@@ -93,7 +106,9 @@ class HabitatCatMotion {
     if (visiting) {
       visitElapsed += dt;
       if (!awaitingConsumption && visitElapsed >= visitDuration) {
+        final after = _afterVisit;
         cancelVisit();
+        if (after != null) react(after);
         pause = 1;
       }
       return;
@@ -110,14 +125,12 @@ class HabitatCatMotion {
     if (current == next) {
       if (targetItemId != null && route.isEmpty) {
         visiting = true;
-        awaitingConsumption = activity == 'feed';
+        awaitingConsumption = isBowlVisit;
         visitDuration = activity == 'play' ? 7.2 : 8;
-        if (activity == 'play' && targetPlacement != null) {
+        if ((activity == 'play' || isBowlVisit) && targetPlacement != null) {
           final dx = targetPlacement!.$1 - current.$1;
           final dy = targetPlacement!.$2 - current.$2;
-          direction = dx.abs() >= dy.abs()
-              ? (dx >= 0 ? 3 : 1)
-              : (dy >= 0 ? 0 : 2);
+          direction = facing(dx, dy);
         }
         visitElapsed = animationTime = 0;
         if (_arrival != null && !_arrival!.isCompleted) {
@@ -148,13 +161,7 @@ class HabitatCatMotion {
         next = neighbors[random.nextInt(neighbors.length)];
         running = random.nextDouble() < 0.18;
       }
-      direction = next.$1 > current.$1
-          ? 3
-          : next.$1 < current.$1
-          ? 1
-          : next.$2 > current.$2
-          ? 0
-          : 2;
+      direction = facing(next.$1 - current.$1, next.$2 - current.$2);
       animationTime = 0;
     }
     progress += dt / (running ? 0.5 : 1.0);

@@ -3,8 +3,11 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../game/habitat_sprites.dart';
 import '../services/habitat_service.dart';
+import '../services/quintal_cat_meal.dart';
 import '../theme/app_theme.dart';
-import 'habitat_sprite_preview.dart';
+import 'habitat_cat_preview.dart';
+import 'quintal_production_widgets.dart';
+import 'quintal_bond_progress.dart';
 
 class HabitatCareSheet extends StatelessWidget {
   const HabitatCareSheet({
@@ -14,6 +17,7 @@ class HabitatCareSheet extends StatelessWidget {
     required this.sprites,
     required this.preference,
     required this.onAction,
+    this.onInventory,
   });
 
   final HabitatService habitat;
@@ -21,6 +25,7 @@ class HabitatCareSheet extends StatelessWidget {
   final HabitatSprites sprites;
   final String preference;
   final ValueChanged<String> onAction;
+  final VoidCallback? onInventory;
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
@@ -39,11 +44,7 @@ class HabitatCareSheet extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    HabitatSpritePreview(
-                      sprites: sprites,
-                      keyName: 'animal-cat',
-                      size: 82,
-                    ),
+                    HabitatCatPreview(cat: cat, size: 82),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
@@ -60,7 +61,7 @@ class HabitatCareSheet extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Afinidade $affinity/100',
+                            'Vínculo $affinity pontos',
                             style: const TextStyle(
                               fontWeight: FontWeight.w700,
                               color: AppColors.textTitle,
@@ -68,7 +69,7 @@ class HabitatCareSheet extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           LinearProgressIndicator(
-                            value: affinity / 100,
+                            value: (affinity / 200).clamp(0, 1),
                             color: AppColors.primary,
                             backgroundColor: AppColors.primaryLight,
                             minHeight: 6,
@@ -79,10 +80,25 @@ class HabitatCareSheet extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  affinity < 20
-                      ? 'Aos 20 pontos, você ganha Flores da amizade para decorar.'
-                      : 'A amizade de vocês desbloqueou Flores da amizade.',
+                if (habitat.production.isNotEmpty) ...[
+                  Text(
+                    quintalAppetiteText(
+                      habitat.productionCat(cat.id),
+                      habitat.serverNow,
+                    ),
+                  ),
+                  Text(
+                    habitat.productionCat(cat.id)['water_available'] == true
+                        ? 'Água disponível no pote'
+                        : 'O pote precisa de água',
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                QuintalBondProgress(
+                  habitat: habitat,
+                  catId: cat.id,
+                  sprites: sprites,
+                  onInventory: onInventory,
                 ),
                 const SizedBox(height: 16),
                 FilledButton.tonalIcon(
@@ -97,31 +113,21 @@ class HabitatCareSheet extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Text('Comida', style: Theme.of(context).textTheme.titleLarge),
-                Text(
-                  '${habitat.freePortions} porções gratuitas disponíveis hoje',
+                FilledButton.icon(
+                  onPressed: enabled ? () => onAction('play') : null,
+                  icon: const QuintalArtwork('action_play', size: 36),
+                  label: const Text('Brincar com a varinha'),
                 ),
-                const SizedBox(height: 8),
-                _foodButton(
-                  'Porção diária',
-                  'Grátis · +5 afinidade',
-                  'bag_NE',
-                  enabled &&
-                          habitat.freePortions > 0 &&
-                          !habitat.caredToday(cat.id, 'feed')
-                      ? () => onAction('feed')
-                      : null,
+                const SizedBox(height: 12),
+                const Text(
+                  'Alimente e abasteça água pelos potes identificados do seu gato.',
                 ),
-                _foodButton(
-                  'Petisco',
-                  '${habitat.treatPrice} moedas · +3 afinidade',
-                  'can-open_NE',
-                  enabled &&
-                          habitat.balance >= habitat.treatPrice &&
-                          !habitat.caredToday(cat.id, 'treat')
-                      ? () => onAction('treat')
-                      : null,
-                ),
+                if (habitat.productionCat(cat.id)['assisted'] == true)
+                  OutlinedButton.icon(
+                    onPressed: enabled ? () => onAction('setup') : null,
+                    icon: const Icon(LucideIcons.droplets),
+                    label: const Text('Posicionar os dois potes'),
+                  ),
                 const SizedBox(height: 12),
                 Text(
                   enabled
@@ -135,28 +141,5 @@ class HabitatCareSheet extends StatelessWidget {
         ),
       );
     },
-  );
-
-  Widget _foodButton(
-    String name,
-    String subtitle,
-    String sprite,
-    VoidCallback? action,
-  ) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
-    child: ListTile(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      tileColor: AppColors.inputBg,
-      leading: HabitatSpritePreview(
-        sprites: sprites,
-        keyName: sprite,
-        size: 45,
-      ),
-      title: Text(name),
-      subtitle: Text(subtitle),
-      trailing: const Icon(LucideIcons.chevronRight, size: 20),
-      enabled: action != null,
-      onTap: action,
-    ),
   );
 }

@@ -21,7 +21,31 @@ class HabitatSprites {
   Map<String, dynamic> _lightingData = {};
   Future<void>? _initialization;
   final catAnimations = HabitatCatAnimations();
+  final Map<String, HabitatCatAnimations> _catCoats = {};
+  HabitatCatAnimations catCoat(String id) => _catCoats.putIfAbsent(
+    id,
+    () => HabitatCatAnimations.coat(id, catAnimations),
+  );
+
+  /// Keep decoded skins only for cats currently in the scene. Shadows and
+  /// framing remain shared with the original model.
+  Future<void> prepareCatCoats(Set<String> ids) async {
+    for (final id in _catCoats.keys.toList()) {
+      if (!ids.contains(id)) _catCoats.remove(id)!.dispose();
+    }
+    await Future.wait([
+      for (final id in ids)
+        for (final clip in [
+          HabitatCatClip.idle,
+          HabitatCatClip.walk,
+          HabitatCatClip.run,
+        ])
+          catCoat(id).preload(clip),
+    ]);
+  }
+
   final Set<String> _decorKeys = {};
+  final Set<String> _productionKeys = {};
 
   Future<void> initialize() => _initialization ??= _initialize();
 
@@ -57,6 +81,34 @@ class HabitatSprites {
       _lightingData[key] = entry.value;
     }
     await catAnimations.initialize();
+    final production = jsonDecode(
+      await rootBundle.loadString('assets/quintal/production/manifest.json'),
+    ) as Map;
+    for (final entry in production.entries) {
+      final key = 'production:${entry.key}';
+      _productionKeys.add(key);
+      final box = entry.value['bounds'] as List? ?? [0, 0, 320, 320];
+      _bounds![key] = ui.Rect.fromLTWH(
+        (box[0] as num).toDouble(),
+        (box[1] as num).toDouble(),
+        (box[2] as num).toDouble(),
+        (box[3] as num).toDouble(),
+      );
+      _lightingData[key] = {
+        ...Map<String, dynamic>.from(entry.value as Map),
+        'groundCenter': [0, 0],
+        if (entry.value['shadow'] != null) ...{
+          'shadow': [
+            (entry.value['shadow'] as List).expand((p) => p as List).toList(),
+          ],
+          'contact': [
+            (entry.value['footprint'] as List)
+                .expand((p) => p as List)
+                .toList(),
+          ],
+        },
+      };
+    }
     for (final key in ['water', 'dirt']) {
       _bounds![key] = const ui.Rect.fromLTWH(0, 0, 100, 50);
       _lightingData[key] = {
@@ -67,6 +119,10 @@ class HabitatSprites {
   }
 
   String keyFor(String sprite, int rotation) {
+    if (sprite.startsWith('production:crafted-')) {
+      return '$sprite-${['NE', 'SE', 'SW', 'NW'][rotation % 4]}';
+    }
+    if (sprite.startsWith('production:')) return sprite;
     if (sprite == 'water' || sprite == 'dirt') return sprite;
     if (sprite == 'building-type-a' ||
         sprite == 'building-type-f' ||
@@ -79,6 +135,11 @@ class HabitatSprites {
   }
 
   ui.Rect bounds(String key) => _bounds![key]!;
+
+  Iterable<String> get productionKeys => _productionKeys;
+  double worldScale(String key, double tileWidth) =>
+      tileWidth /
+      (math.sqrt(2) * ((_lightingData[key] as Map)['scale'] as num));
 
   ui.Offset groundOrigin(String key) {
     if (key == 'chest' || key == 'coin') {
@@ -113,6 +174,22 @@ class HabitatSprites {
       (center[0] as num).toDouble(),
       (center[1] as num).toDouble(),
     );
+  }
+
+  /// Ground projection exported with the model, anchored like its visible sprite.
+  ui.Path? groundFootprint(String key, ui.Offset ground, double scale) {
+    final points = (_lightingData[key] as Map?)?['footprint'] as List?;
+    if (points == null || points.isEmpty) return null;
+    final origin = ground - groundCenter(key) * scale;
+    return ui.Path()..addPolygon([
+      for (final point in points)
+        origin +
+            ui.Offset(
+                  (point[0] as num).toDouble(),
+                  (point[1] as num).toDouble(),
+                ) *
+                scale,
+    ], true);
   }
 
   /// Mesh ground center can differ from the shared tile anchor (fence segments).
@@ -202,8 +279,12 @@ class HabitatSprites {
 
   Future<ui.Image> load(String key) => _images.putIfAbsent(key, () async {
     await initialize();
-    final path = key == 'water' || key == 'dirt'
+    final path = key == 'ui:ready' || key == 'ui:action_play'
+        ? 'assets/quintal/ui/${key.substring(3)}.png'
+        : key == 'water' || key == 'dirt'
         ? '$_roads/$key.png'
+        : _productionKeys.contains(key)
+        ? 'assets/quintal/production/${key.substring(11)}.png'
         : _decorKeys.contains(key)
         ? '$_rendered/decor/$key.png'
         : key == 'animal-cat' || key.startsWith('building-type-')
@@ -212,7 +293,10 @@ class HabitatSprites {
         ? '$_icons/$key.png'
         : '$_nature/$key.png';
     final data = await rootBundle.load(path);
-    final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+    final codec = await ui.instantiateImageCodec(
+      data.buffer.asUint8List(),
+      targetWidth: key == 'ui:ready' ? 128 : null,
+    );
     try {
       return (await codec.getNextFrame()).image;
     } finally {

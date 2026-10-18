@@ -1,0 +1,1795 @@
+[
+  {
+    "id": "crafted-barn-1-abandoned",
+    "label": "Celeiro · nível 1 · abandoned",
+    "group": "Celeiro",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-barn-1-building",
+    "label": "Celeiro · nível 1 · building",
+    "group": "Celeiro",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-barn-1-ready",
+    "label": "Celeiro · nível 1 · ready",
+    "group": "Celeiro",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-barn-1-ready-back",
+    "label": "Celeiro · ready · back",
+    "group": "Celeiro",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-barn-1-ready-front",
+    "label": "Celeiro · ready · front",
+    "group": "Celeiro",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-barn-2-ready",
+    "label": "Celeiro · nível 2 · ready",
+    "group": "Celeiro",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-barn-2-ready-back",
+    "label": "Celeiro · ready · back",
+    "group": "Celeiro",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-barn-2-ready-front",
+    "label": "Celeiro · ready · front",
+    "group": "Celeiro",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-barn-upgrading-back",
+    "label": "Celeiro · upgrading · back",
+    "group": "Celeiro",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-barn-upgrading-front",
+    "label": "Celeiro · upgrading · front",
+    "group": "Celeiro",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-gate-leaf-0",
+    "label": "Portão · abertura 0/4",
+    "group": "Cercas",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-gate-leaf-1",
+    "label": "Portão · abertura 1/4",
+    "group": "Cercas",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-gate-leaf-2",
+    "label": "Portão · abertura 2/4",
+    "group": "Cercas",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-gate-leaf-3",
+    "label": "Portão · abertura 3/4",
+    "group": "Cercas",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-gate-leaf-4",
+    "label": "Portão · abertura 4/4",
+    "group": "Cercas",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-gate-post-left",
+    "label": "Portão · poste left",
+    "group": "Cercas",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-gate-post-right",
+    "label": "Portão · poste right",
+    "group": "Cercas",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-kitchen-1-abandoned",
+    "label": "Cozinha · nível 1 · abandoned",
+    "group": "Cozinha",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-kitchen-1-building",
+    "label": "Cozinha · nível 1 · building",
+    "group": "Cozinha",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-kitchen-1-ready",
+    "label": "Cozinha · nível 1 · ready",
+    "group": "Cozinha",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-kitchen-2-ready",
+    "label": "Cozinha · nível 2 · ready",
+    "group": "Cozinha",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-portions-0",
+    "label": "Porções · 0",
+    "group": "Cozinha",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-portions-1",
+    "label": "Porções · 1",
+    "group": "Cozinha",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-portions-3",
+    "label": "Porções · 3",
+    "group": "Cozinha",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-pot-0",
+    "label": "Panela · em repouso",
+    "group": "Cozinha",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-pot-1",
+    "label": "Panela · preparando",
+    "group": "Cozinha",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-pot-base",
+    "label": "Panela · base com brasas",
+    "group": "Cozinha",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-pot-lid",
+    "label": "Panela · tampa independente",
+    "group": "Cozinha",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-queue-0",
+    "label": "Ingredientes reservados · bandeja vazia",
+    "group": "Cozinha",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-queue-1",
+    "label": "Ingredientes reservados · próximo preparo",
+    "group": "Cozinha",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-carrot-0",
+    "label": "Cenoura · pequeno",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-carrot-1",
+    "label": "Cenoura · médio",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-carrot-2",
+    "label": "Cenoura · grande",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-carrot-3",
+    "label": "Cenoura · pronto",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-carrot-harvest",
+    "label": "Cenoura · raiz colhida",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-corn-0",
+    "label": "Milho · pequeno",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-corn-1",
+    "label": "Milho · médio",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-corn-2",
+    "label": "Milho · grande",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-corn-3",
+    "label": "Milho · pronto",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-melon-0",
+    "label": "Melão · pequeno",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-melon-1",
+    "label": "Melão · médio",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-melon-2",
+    "label": "Melão · grande",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-melon-3",
+    "label": "Melão · pronto",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-pumpkin-0",
+    "label": "Abóbora · pequeno",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-pumpkin-1",
+    "label": "Abóbora · médio",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-pumpkin-2",
+    "label": "Abóbora · grande",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-pumpkin-3",
+    "label": "Abóbora · pronto",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-turnip-0",
+    "label": "Nabo · pequeno",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-turnip-1",
+    "label": "Nabo · médio",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-turnip-2",
+    "label": "Nabo · grande",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-turnip-3",
+    "label": "Nabo · pronto",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-turnip-harvest",
+    "label": "Nabo · raiz colhida",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-wheat-0",
+    "label": "Trigo · pequeno",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-wheat-1",
+    "label": "Trigo · médio",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-wheat-2",
+    "label": "Trigo · grande",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-crop-wheat-3",
+    "label": "Trigo · pronto",
+    "group": "Cultivos",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-tool-feed-scoop-0",
+    "label": "Pá de ração · inclinação 0/4",
+    "group": "Ferramentas",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-tool-feed-scoop-1",
+    "label": "Pá de ração · inclinação 1/4",
+    "group": "Ferramentas",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-tool-feed-scoop-2",
+    "label": "Pá de ração · inclinação 2/4",
+    "group": "Ferramentas",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-tool-feed-scoop-3",
+    "label": "Pá de ração · inclinação 3/4",
+    "group": "Ferramentas",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-tool-feed-scoop-4",
+    "label": "Pá de ração · inclinação 4/4",
+    "group": "Ferramentas",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-tool-hay-fork-0",
+    "label": "Forcado de feno · inclinação 0/4",
+    "group": "Ferramentas",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-tool-hay-fork-1",
+    "label": "Forcado de feno · inclinação 1/4",
+    "group": "Ferramentas",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-tool-hay-fork-2",
+    "label": "Forcado de feno · inclinação 2/4",
+    "group": "Ferramentas",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-tool-hay-fork-3",
+    "label": "Forcado de feno · inclinação 3/4",
+    "group": "Ferramentas",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-tool-hay-fork-4",
+    "label": "Forcado de feno · inclinação 4/4",
+    "group": "Ferramentas",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-tool-watering-can-0",
+    "label": "Regador · inclinação 0/4",
+    "group": "Ferramentas",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-tool-watering-can-1",
+    "label": "Regador · inclinação 1/4",
+    "group": "Ferramentas",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-tool-watering-can-2",
+    "label": "Regador · inclinação 2/4",
+    "group": "Ferramentas",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-tool-watering-can-3",
+    "label": "Regador · inclinação 3/4",
+    "group": "Ferramentas",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-tool-watering-can-4",
+    "label": "Regador · inclinação 4/4",
+    "group": "Ferramentas",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-coop-1-abandoned",
+    "label": "Galinheiro · nível 1 · abandoned",
+    "group": "Galinheiro",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-coop-1-building",
+    "label": "Galinheiro · nível 1 · building",
+    "group": "Galinheiro",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-coop-1-ready",
+    "label": "Galinheiro · nível 1 · ready",
+    "group": "Galinheiro",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-coop-1-ready-back",
+    "label": "Galinheiro · ready · back",
+    "group": "Galinheiro",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-coop-1-ready-front",
+    "label": "Galinheiro · ready · front",
+    "group": "Galinheiro",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-coop-2-ready",
+    "label": "Galinheiro · nível 2 · ready",
+    "group": "Galinheiro",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-coop-2-ready-back",
+    "label": "Galinheiro · ready · back",
+    "group": "Galinheiro",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-coop-2-ready-front",
+    "label": "Galinheiro · ready · front",
+    "group": "Galinheiro",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-coop-upgrading-back",
+    "label": "Galinheiro · upgrading · back",
+    "group": "Galinheiro",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-coop-upgrading-front",
+    "label": "Galinheiro · upgrading · front",
+    "group": "Galinheiro",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-nest-0",
+    "label": "Ninho · 0 ovos",
+    "group": "Galinheiro",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-nest-1",
+    "label": "Ninho · 1 ovos",
+    "group": "Galinheiro",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-nest-2",
+    "label": "Ninho · 2 ovos",
+    "group": "Galinheiro",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-garden-bed-dry-empty",
+    "label": "Canteiro · seco · vazio",
+    "group": "Horta",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-garden-bed-dry-planted",
+    "label": "Canteiro · seco · plantado",
+    "group": "Horta",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-garden-bed-wet-empty",
+    "label": "Canteiro · úmido · vazio",
+    "group": "Horta",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-garden-bed-wet-planted",
+    "label": "Canteiro · úmido · plantado",
+    "group": "Horta",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-parcel",
+    "label": "Caixote · pedido pronto para retirar",
+    "group": "Mercadinho",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-post-abandoned",
+    "label": "Mercadinho rural · abandoned",
+    "group": "Mercadinho",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-post-building",
+    "label": "Mercadinho rural · building",
+    "group": "Mercadinho",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-post-ready",
+    "label": "Mercadinho rural · ready",
+    "group": "Mercadinho",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-barn-upgrading",
+    "label": "Celeiro · ampliando",
+    "group": "Obras",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-coop-upgrading",
+    "label": "Galinheiro · ampliando",
+    "group": "Obras",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-kitchen-upgrading",
+    "label": "Cozinha · ampliando",
+    "group": "Obras",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-bucket-0",
+    "label": "Ordenha · 0/2",
+    "group": "Pasto",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-bucket-1",
+    "label": "Ordenha · 1/2",
+    "group": "Pasto",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-bucket-2",
+    "label": "Ordenha · 2/2",
+    "group": "Pasto",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-apple-fruits-bud",
+    "label": "apple · frutos independentes · bud",
+    "group": "Pomar",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-apple-fruits-full",
+    "label": "apple · frutos independentes · full",
+    "group": "Pomar",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-apple-fruits-growing",
+    "label": "apple · frutos independentes · growing",
+    "group": "Pomar",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-apple-fruits-ready",
+    "label": "apple · frutos independentes · ready",
+    "group": "Pomar",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-apple-tree-empty",
+    "label": "Macieira · empty",
+    "group": "Pomar",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-apple-tree-growing",
+    "label": "Macieira · growing",
+    "group": "Pomar",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-apple-tree-ready",
+    "label": "Macieira · ready",
+    "group": "Pomar",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-orchard-abandoned",
+    "label": "Pomar · abandoned",
+    "group": "Pomar",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-orchard-clearing",
+    "label": "Pomar · clearing",
+    "group": "Pomar",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-orchard-ready",
+    "label": "Pomar · ready",
+    "group": "Pomar",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-pear-fruits-bud",
+    "label": "pear · frutos independentes · bud",
+    "group": "Pomar",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-pear-fruits-full",
+    "label": "pear · frutos independentes · full",
+    "group": "Pomar",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-pear-fruits-growing",
+    "label": "pear · frutos independentes · growing",
+    "group": "Pomar",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-pear-fruits-ready",
+    "label": "pear · frutos independentes · ready",
+    "group": "Pomar",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-pear-tree-empty",
+    "label": "Pereira · empty",
+    "group": "Pomar",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-pear-tree-growing",
+    "label": "Pereira · growing",
+    "group": "Pomar",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-pear-tree-ready",
+    "label": "Pereira · ready",
+    "group": "Pomar",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-food-0-0",
+    "label": "Gatos · food · cor 1 · 0/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-food-0-1",
+    "label": "Gatos · food · cor 1 · 1/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-food-0-2",
+    "label": "Gatos · food · cor 1 · 2/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-food-1-0",
+    "label": "Gatos · food · cor 2 · 0/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-food-1-1",
+    "label": "Gatos · food · cor 2 · 1/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-food-1-2",
+    "label": "Gatos · food · cor 2 · 2/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-food-2-0",
+    "label": "Gatos · food · cor 3 · 0/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-food-2-1",
+    "label": "Gatos · food · cor 3 · 1/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-food-2-2",
+    "label": "Gatos · food · cor 3 · 2/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-food-3-0",
+    "label": "Gatos · food · cor 4 · 0/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-food-3-1",
+    "label": "Gatos · food · cor 4 · 1/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-food-3-2",
+    "label": "Gatos · food · cor 4 · 2/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-food-4-0",
+    "label": "Gatos · food · cor 5 · 0/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-food-4-1",
+    "label": "Gatos · food · cor 5 · 1/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-food-4-2",
+    "label": "Gatos · food · cor 5 · 2/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-food-5-0",
+    "label": "Gatos · food · cor 6 · 0/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-food-5-1",
+    "label": "Gatos · food · cor 6 · 1/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-food-5-2",
+    "label": "Gatos · food · cor 6 · 2/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-water-0-0",
+    "label": "Gatos · water · cor 1 · 0/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-water-0-1",
+    "label": "Gatos · water · cor 1 · 1/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-water-0-2",
+    "label": "Gatos · water · cor 1 · 2/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-water-1-0",
+    "label": "Gatos · water · cor 2 · 0/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-water-1-1",
+    "label": "Gatos · water · cor 2 · 1/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-water-1-2",
+    "label": "Gatos · water · cor 2 · 2/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-water-2-0",
+    "label": "Gatos · water · cor 3 · 0/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-water-2-1",
+    "label": "Gatos · water · cor 3 · 1/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-water-2-2",
+    "label": "Gatos · water · cor 3 · 2/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-water-3-0",
+    "label": "Gatos · water · cor 4 · 0/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-water-3-1",
+    "label": "Gatos · water · cor 4 · 1/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-water-3-2",
+    "label": "Gatos · water · cor 4 · 2/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-water-4-0",
+    "label": "Gatos · water · cor 5 · 0/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-water-4-1",
+    "label": "Gatos · water · cor 5 · 1/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-water-4-2",
+    "label": "Gatos · water · cor 5 · 2/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-water-5-0",
+    "label": "Gatos · water · cor 6 · 0/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-water-5-1",
+    "label": "Gatos · water · cor 6 · 1/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cat-water-5-2",
+    "label": "Gatos · water · cor 6 · 2/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-coop-food-0",
+    "label": "coop-food · 0/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-coop-food-1",
+    "label": "coop-food · 1/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-coop-food-2",
+    "label": "coop-food · 2/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-coop-water-0",
+    "label": "coop-water · 0/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-coop-water-1",
+    "label": "coop-water · 1/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-coop-water-2",
+    "label": "coop-water · 2/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cow-food-0",
+    "label": "cow-food · 0/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cow-food-1",
+    "label": "cow-food · 1/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cow-food-2",
+    "label": "cow-food · 2/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cow-water-0",
+    "label": "cow-water · 0/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cow-water-1",
+    "label": "cow-water · 1/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  },
+  {
+    "id": "crafted-cow-water-2",
+    "label": "cow-water · 2/2",
+    "group": "Recipientes",
+    "directions": [
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ]
+  }
+]
