@@ -270,7 +270,9 @@ class _HabitatBalloonActionState extends State<HabitatBalloonAction> {
   bool _pressed = false;
   @override
   Widget build(BuildContext context) => SizedBox(
-    width: 72,
+    width: widget.label == 'Deselecionar'
+        ? 112 * MediaQuery.textScalerOf(context).scale(14) / 14
+        : 72 * MediaQuery.textScalerOf(context).scale(14) / 14,
     child: Semantics(
       button: true,
       enabled: widget.onPressed != null,

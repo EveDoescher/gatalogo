@@ -101,6 +101,7 @@ class SocialApiService {
   Future<List<Map<String, dynamic>>> feed({
     int limit = 20,
     String? cursor,
+    String? cursorId,
     String mode = 'all',
   }) {
     final params = <String>[

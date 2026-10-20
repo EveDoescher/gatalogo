@@ -19,6 +19,8 @@ class QuintalArtwork extends StatelessWidget {
       'crops_wheatStageB' => 'wheat',
       'crop_carrot' => 'carrot',
       'crop_pumpkin' => 'pumpkin',
+      'crop_turnip' => 'turnip',
+      'crop_melon' => 'melon',
       'carton' => 'milk',
       'turkey' => 'chicken',
       'meat-raw' || 'beef' => 'meat',
@@ -33,6 +35,13 @@ class QuintalArtwork extends StatelessWidget {
       'meat' ||
       'fish' ||
       'egg' ||
+      'apple' ||
+      'pear' ||
+      'melon' ||
+      'turnip' ||
+      'mice' ||
+      'cat_satisfaction' ||
+      'icon_app' ||
       'ready' => asset,
       _ =>
         asset.startsWith('action_') || asset.startsWith('racao_')

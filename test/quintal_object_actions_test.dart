@@ -1,6 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' as ui;
+
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:catlogue/widgets/quintal_bottom_tray.dart';
+import 'package:catlogue/widgets/quintal_inventory_tray.dart';
+import 'package:catlogue/widgets/illustrated_home_components.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -95,6 +102,126 @@ void main() {
     );
     await tester.pump();
   }
+
+  testWidgets(
+    'inventory trays fit navigation with large text and low screens',
+    (tester) async {
+      await tester.runAsync(() async {
+        final icons = FontLoader('MaterialIcons')
+          ..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'));
+        final lucide = FontLoader('packages/lucide_icons_flutter/Lucide')
+          ..addFont(
+            rootBundle.load('packages/lucide_icons_flutter/assets/lucide.ttf'),
+          );
+        await Future.wait([icons.load(), lucide.load()]);
+      });
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      for (final size in [const Size(320, 568), const Size(640, 360)]) {
+        tester.view.physicalSize = size;
+        var extent = 0.0;
+        final capture = GlobalKey();
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.lightTheme,
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: TextScaler.linear(1.6)),
+              child: child!,
+            ),
+            home: RepaintBoundary(
+              key: capture,
+              child: IllustratedNavigationScaffold(
+                index: 4,
+                onSelect: (_) {},
+                body: StatefulBuilder(
+                  builder: (context, update) => Scaffold(
+                    backgroundColor: const Color(0xffa4c77a),
+                    body: Stack(
+                      children: [
+                        QuintalBottomTray(
+                          onExtentChanged: (height) =>
+                              update(() => extent = height),
+                          child: QuintalInventoryTray(
+                            habitat: service,
+                            decorations: const Center(
+                              child: Text('Decorações disponíveis'),
+                            ),
+                            onClose: () {},
+                            onKitchen: () {},
+                          ),
+                        ),
+                        QuintalFloatingMenu(
+                          trayExtent: extent,
+                          actions: const [],
+                          button: const SizedBox(
+                            key: Key('inventory-plus'),
+                            width: 52,
+                            height: 52,
+                            child: Material(
+                              color: Colors.green,
+                              shape: CircleBorder(),
+                              child: Icon(Icons.add, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final measured = find.byType(QuintalMeasuredHeight);
+        final plus = find.byKey(const Key('inventory-plus'));
+        expect(tester.getRect(measured).top - tester.getRect(plus).bottom, 8);
+        expect(
+          tester.getRect(measured).bottom,
+          tester.getRect(find.byType(IllustratedNavigationBar)).top,
+        );
+        for (final label in ['Rações', 'Ingredientes', 'Decorações']) {
+          await tester.ensureVisible(find.text(label));
+          await tester.tap(find.text(label));
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull, reason: '$label at $size');
+        }
+        // Capture the actual inventory and navigation at a narrow width.
+        if (size.width == 320) {
+          await tester.ensureVisible(find.text('Ingredientes'));
+          await tester.tap(find.text('Ingredientes'));
+          await tester.pumpAndSettle();
+          final context = tester.element(find.byType(MaterialApp));
+          final images = tester
+              .widgetList<Image>(find.byType(Image))
+              .map((w) => w.image)
+              .toList();
+          await tester.runAsync(() async {
+            await GoogleFonts.pendingFonts();
+            await Future.wait(
+              images.map((image) => precacheImage(image, context)),
+            );
+          });
+          await tester.pumpAndSettle();
+          await tester.runAsync(() async {
+            final boundary =
+                capture.currentContext!.findRenderObject()!
+                    as RenderRepaintBoundary;
+            final image = await boundary.toImage();
+            final bytes = await image.toByteData(
+              format: ui.ImageByteFormat.png,
+            );
+            await File('build/quintal-trays-large-text.png')
+                .writeAsBytes(bytes!.buffer.asUint8List());
+            image.dispose();
+          });
+        }
+        await tester.pumpWidget(const SizedBox());
+      }
+    },
+  );
 
   for (final fruit in ['apple', 'pear']) {
     testWidgets(
@@ -815,7 +942,7 @@ void main() {
         );
         final badge =
             game.productionFocus(works) -
-            Offset(0, game.productionObjectHeight(works) + 18);
+            Offset(0, game.productionObjectHeight(works) + 54);
         expect(game.productionObjectAt(badge)?.role, 'build', reason: kind);
         final normal = game.productionTargets.firstWhere(
           (t) => t.kind == kind && t.role != 'build',
@@ -905,23 +1032,23 @@ void main() {
       );
       await tester.tap(find.text('Fazer pedido'));
       await tester.pump();
-      await Scrollable.ensureVisible(
-        tester.element(
-          find.ancestor(
-            of: find.text('Frutas'),
-            matching: find.byType(QuintalGameAction),
-          ),
-        ),
-        alignment: .5,
-      );
+      await tester.tap(find.text('Frango'));
       await tester.pump();
-      expect(find.text('Frutas').hitTestable(), findsOneWidget);
       await tester.tap(find.text('Frutas'));
+      await tester.pump();
+      expect(
+        api.calls,
+        isEmpty,
+        reason: 'Payment selection does not place the order',
+      );
+      await tester.ensureVisible(find.text('Confirmar encomenda'));
+      await tester.tap(find.text('Confirmar encomenda'));
       await tester.pump();
       expect(api.calls, ['order:chicken']);
       expect(api.bodies.single['data'], {
         'payment': 'products',
         'product_option': 'fruit',
+        'quantity': 2,
       });
     },
   );

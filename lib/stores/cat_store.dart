@@ -55,6 +55,11 @@ class CatStore extends ChangeNotifier {
     progress = ProgressService(_sessionStore)..addListener(notifyListeners);
     final productApi = ProductApiService(_sessionStore);
     notifications = NotificationStore(
+      loadPage: (time, id) async => _sessionStore.isSignedIn
+          ? productApi.list(
+              '/vision/notifications?limit=20${time == null ? '' : '&cursor=${Uri.encodeComponent(time)}&cursor_id=${Uri.encodeComponent(id!)}'}',
+            )
+          : [],
       loadItems: () async => _sessionStore.isSignedIn
           ? productApi.list('/vision/notifications')
           : [],
@@ -157,7 +162,12 @@ class CatStore extends ChangeNotifier {
     return photos;
   }
 
-  Future<void> loadCats() async {
+  Future<void>? _loadingCats;
+  Future<void> get ready => _loadingCats ?? Future.value();
+  Future<void> loadCats() =>
+      _loadingCats ??= _loadCats().whenComplete(() => _loadingCats = null);
+
+  Future<void> _loadCats() async {
     _isLoading = true;
     notifyListeners();
 
@@ -191,10 +201,12 @@ class CatStore extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
 
-    unawaited(progress.refresh());
+    await Future.wait([
+      progress.refresh(),
+      refreshNotifications(),
+      syncCatalog(),
+    ]);
     _startPendingAnalysisSync();
-    unawaited(refreshNotifications());
-    unawaited(syncCatalog());
     unawaited(syncPendingAnalyses());
     unawaited(resolvePendingLocations());
   }

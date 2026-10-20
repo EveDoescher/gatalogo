@@ -1,3 +1,5 @@
+import 'package:catlogue/widgets/quintal_hold_control.dart';
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -174,7 +176,8 @@ void main() {
         await tester.tap(find.text('Tentar novamente'));
         await tester.pump();
         expect(api.calls, ['start_fish', 'finish_fish', 'start_fish']);
-        expect(find.byType(Slider), findsOneWidget);
+        expect(find.byType(QuintalHoldControl), findsOneWidget);
+        expect(find.byType(Slider), findsNothing);
         expect(clock.elapsedMilliseconds, 0);
         await tester.pumpWidget(const SizedBox());
       },
@@ -206,17 +209,18 @@ void main() {
   }
 
   testWidgets(
-    'slider is direct control; backgrounding never finishes or rewards a session',
+    'hold and release controls fishing; backgrounding never finishes or rewards a session',
     (tester) async {
       await open(tester);
       expect(tester.takeException(), isNull);
-      final slider = find.byType(Slider);
-      await tester.drag(slider, const Offset(45, 0));
+      expect(find.byType(Slider), findsNothing);
+      final hold = find.byType(QuintalHoldControl);
+      final gesture = await tester.startGesture(tester.getCenter(hold));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(tester.widget<QuintalHoldControl>(hold).held, isTrue);
+      await gesture.up();
       await tester.pump();
-      final position = tester.widget<Slider>(slider).value;
-      await tester.pump(const Duration(seconds: 2));
-      expect(tester.widget<Slider>(slider).value, position);
-      expect(position, greaterThan(.6));
+      expect(tester.widget<QuintalHoldControl>(hold).held, isFalse);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
       await tester.pump();
       await tester.pump(const Duration(seconds: 30));
@@ -247,7 +251,8 @@ void main() {
       api.fail = false;
       await tester.tap(find.text('Tentar novamente'));
       await tester.pump();
-      expect(find.byType(Slider), findsOneWidget);
+      expect(find.byType(QuintalHoldControl), findsOneWidget);
+      expect(find.byType(Slider), findsNothing);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     },
@@ -276,7 +281,8 @@ void main() {
       await tester.tap(find.text('Tentar novamente'));
       await tester.pump();
       expect(api.calls, ['start_fish', 'start_fish']);
-      expect(find.byType(Slider), findsOneWidget);
+      expect(find.byType(QuintalHoldControl), findsOneWidget);
+      expect(find.byType(Slider), findsNothing);
       await tester.pumpWidget(const SizedBox());
     },
   );

@@ -1,3 +1,4 @@
+import 'widgets/app_loading_screen.dart';
 import 'widgets/milestone_widgets.dart';
 import 'services/experience_service.dart';
 
@@ -90,9 +91,7 @@ class _CatlogueAppState extends State<CatlogueApp> {
           animation: _sessionStore,
           builder: (context, _) {
             if (!_sessionStore.isReady) {
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
+              return const AppLoadingScreen();
             }
             if (_sessionStore.isSignedIn || _offlineMode) {
               return MainNavigation(
@@ -123,6 +122,10 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation>
     with WidgetsBindingObserver {
   int currentIndex = 0;
+  bool _dataReady = false;
+  bool _habitatReady = false;
+  VoidCallback? _retryScene;
+  String? _bootError;
   final ValueNotifier<bool> _habitatActive = ValueNotifier(false);
   int _unreadMessages = 0;
   String? _medalOwner;
@@ -216,7 +219,7 @@ class _MainNavigationState extends State<MainNavigation>
 
     catStore = widget.catStore ?? CatStore(widget.sessionStore);
     catStore.progress.addListener(_milestonesChanged);
-    catStore.loadCats();
+    unawaited(_prepareData());
     unawaited(ExperienceService.instance.initialize());
     ExperienceService.instance.selectTab(0);
 
@@ -279,8 +282,37 @@ class _MainNavigationState extends State<MainNavigation>
         sessionStore: widget.sessionStore,
         catStore: catStore,
         active: _habitatActive,
+        onReady: () {
+          if (mounted) {
+            setState(() {
+              _habitatReady = true;
+              _retryScene = null;
+            });
+          }
+        },
+        onLoadError: (retry) {
+          if (mounted) {
+            setState(() {
+              _retryScene = retry;
+              _bootError = 'Não foi possível preparar o Quintal.';
+            });
+          }
+        },
       ),
     ];
+  }
+
+  Future<void> _prepareData() async {
+    try {
+      if (mounted) setState(() => _bootError = null);
+      _retryScene?.call();
+      await catStore.loadCats();
+      if (mounted) setState(() => _dataReady = true);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _bootError = 'Não foi possível carregar seus dados.');
+      }
+    }
   }
 
   Future<void> _fetchUnread() async {
@@ -330,8 +362,11 @@ class _MainNavigationState extends State<MainNavigation>
   void _visitGift() {
     if (mounted && HabitatNavigation.focusGift.value != null) _navigateTo(4);
   }
+
   void _visitProduction() {
-    if (mounted && HabitatNavigation.focusProduction.value != null) _navigateTo(4);
+    if (mounted && HabitatNavigation.focusProduction.value != null) {
+      _navigateTo(4);
+    }
   }
 
   void _openNotification(String notificationId) {
@@ -358,10 +393,25 @@ class _MainNavigationState extends State<MainNavigation>
   }
 
   @override
-  Widget build(BuildContext context) => IllustratedNavigationScaffold(
-    body: IndexedStack(index: currentIndex, children: pages),
-    index: currentIndex,
-    unread: _unreadMessages,
-    onSelect: _navigateTo,
+  Widget build(BuildContext context) => Stack(
+    children: [
+      IllustratedNavigationScaffold(
+        body: IndexedStack(index: currentIndex, children: pages),
+        index: currentIndex,
+        unread: _unreadMessages,
+        onSelect: _navigateTo,
+      ),
+      if (!_dataReady || !_habitatReady)
+        Positioned.fill(
+          child: AppLoadingScreen(
+            message:
+                _bootError ??
+                (_dataReady
+                    ? 'Montando seu Quintal…'
+                    : 'Sincronizando seus gatos e seu progresso…'),
+            onRetry: _bootError == null ? null : _prepareData,
+          ),
+        ),
+    ],
   );
 }

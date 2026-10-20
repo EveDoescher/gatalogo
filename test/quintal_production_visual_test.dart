@@ -1,3 +1,5 @@
+import 'package:catlogue/widgets/quintal_play_arena.dart';
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -16,7 +18,6 @@ import 'package:catlogue/pages/quintal_game_page.dart';
 import 'package:catlogue/services/habitat_navigation.dart';
 import 'package:catlogue/widgets/illustrated_home_components.dart';
 import 'package:catlogue/widgets/quintal_object_actions.dart';
-import 'package:catlogue/widgets/quintal_game_action.dart';
 import 'package:catlogue/services/habitat_service.dart';
 import 'package:catlogue/services/product_api_service.dart';
 import 'package:catlogue/widgets/quintal_inventory_tray.dart';
@@ -222,7 +223,15 @@ void main() {
         if (entry.key == 'quintal_cat_play') {
           for (
             var attempt = 0;
-            attempt < 100 && find.byType(Slider).evaluate().isEmpty;
+            attempt < 100 &&
+                find
+                    .byWidgetPredicate(
+                      (w) =>
+                          w is QuintalPlayArena ||
+                          w.key == const ValueKey('world-play-control'),
+                    )
+                    .evaluate()
+                    .isEmpty;
             attempt++
           ) {
             await tester.runAsync(
@@ -231,7 +240,11 @@ void main() {
             await tester.pump();
           }
           expect(
-            find.byType(Slider),
+            find.byWidgetPredicate(
+              (w) =>
+                  w is QuintalPlayArena ||
+                  w.key == const ValueKey('world-play-control'),
+            ),
             findsOneWidget,
             reason:
                 'Capture play only after the cat assets and session are ready',
@@ -858,7 +871,7 @@ void main() {
         );
         final badge =
             game.productionFocus(works) -
-            Offset(0, game.productionObjectHeight(works) + 18);
+            Offset(0, game.productionObjectHeight(works) + 54);
         expect(game.productionObjectAt(badge)?.role, 'build');
 
         expect(find.textContaining('Ampliando ·'), findsOneWidget);
@@ -874,7 +887,7 @@ void main() {
       if (caseName == 'kitchen_simultaneous') {
         final badge =
             game.productionFocus(target) -
-            Offset(0, game.productionObjectHeight(target) + 18);
+            Offset(0, game.productionObjectHeight(target) + 54);
         for (final dx in [-24.0, 24.0]) {
           final hit = game.productionObjectAt(badge + Offset(dx, 0));
           expect(hit?.kind, 'kitchen');
@@ -903,7 +916,15 @@ void main() {
         await tester.pump(const Duration(milliseconds: 200));
         for (
           var attempt = 0;
-          attempt < 100 && find.byType(Slider).evaluate().isEmpty;
+          attempt < 100 &&
+              find
+                  .byWidgetPredicate(
+                    (w) =>
+                        w is QuintalPlayArena ||
+                        w.key == const ValueKey('world-play-control'),
+                  )
+                  .evaluate()
+                  .isEmpty;
           attempt++
         ) {
           await tester.runAsync(
@@ -911,7 +932,14 @@ void main() {
           );
           await tester.pump();
         }
-        expect(find.byType(Slider), findsOneWidget);
+        expect(
+          find.byWidgetPredicate(
+            (w) =>
+                w is QuintalPlayArena ||
+                w.key == const ValueKey('world-play-control'),
+          ),
+          findsOneWidget,
+        );
         expect(game.activityInProgress, isTrue);
         expect(
           tester.widget<QuintalGamePage>(find.byType(QuintalGamePage)).scene,
@@ -940,11 +968,11 @@ void main() {
           caseName.startsWith('market') ? 'Frutas' : 'Mistura com maçã',
         );
         if (caseName.startsWith('market')) {
-          final button = find.ancestor(
-            of: choice,
-            matching: find.byType(QuintalGameAction),
-          );
-          await Scrollable.ensureVisible(tester.element(button), alignment: 1);
+          await tester.tap(find.text('Frango'));
+          await tester.pump();
+          await tester.tap(find.text('Frutas'));
+          await tester.pump();
+          await tester.ensureVisible(find.text('Confirmar encomenda'));
         } else {
           // Reveal the recipe horizontally without scrolling its name under the header.
           await Scrollable.of(tester.element(choice)).position
@@ -1063,7 +1091,14 @@ void main() {
           game.update(.1);
           await tester.pump(const Duration(milliseconds: 100));
           expect(tester.takeException(), isNull);
-          expect(find.byType(Slider), findsOneWidget);
+          expect(
+            find.byWidgetPredicate(
+              (w) =>
+                  w is QuintalPlayArena ||
+                  w.key == const ValueKey('world-play-control'),
+            ),
+            findsOneWidget,
+          );
           await tester.runAsync(() async {
             final image =
                 await (key.currentContext!.findRenderObject()
@@ -1338,6 +1373,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     // Use the actual page and its gesture handler, including the app menu.
     final pageKey = GlobalKey();
+    var pageReady = false;
     final active = ValueNotifier(false);
     await h.load();
     await tester.pumpWidget(
@@ -1353,6 +1389,7 @@ void main() {
               active: active,
               habitatService: h,
               sprites: sprites,
+              onReady: () => pageReady = true,
             ),
           ),
           store,
@@ -1365,13 +1402,18 @@ void main() {
         (tester.widget(gameFinder) as GameWidget).game as HabitatGame;
     var loaded = false;
     Future<void>.value(pageGame.toBeLoaded()).then((_) => loaded = true);
-    for (var attempt = 0; attempt < 40 && !loaded; attempt++) {
+    for (var attempt = 0; attempt < 100 && (!loaded || !pageReady); attempt++) {
       await tester.runAsync(
         () => Future<void>.delayed(const Duration(milliseconds: 50)),
       );
       await tester.pump(const Duration(milliseconds: 50));
     }
     expect(loaded, true);
+    expect(
+      pageReady,
+      true,
+      reason: "Wait for synchronized scene before tapping",
+    );
     pageGame.scaleCamera(
       1.35,
       Offset(pageGame.size.x / 2, pageGame.size.y / 2),
@@ -1432,7 +1474,7 @@ void main() {
       await tester.pump();
       expect(tester.takeException(), isNull, reason: '$tab on narrow phone');
       final tray = tester.getRect(find.byType(QuintalInventoryTray));
-      expect(tray.height, lessThanOrEqualTo(258));
+      expect(tray.height, lessThanOrEqualTo(320));
       expect(tray.top, greaterThan(180));
       tester.view.physicalSize = const Size(390, 844);
       await tester.pump();

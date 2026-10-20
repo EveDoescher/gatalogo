@@ -1,3 +1,4 @@
+import 'package:catlogue/widgets/app_loading_screen.dart';
 import 'package:catlogue/widgets/milestone_widgets.dart';
 import 'package:catlogue/game/habitat_game.dart';
 import 'package:flame/game.dart';
@@ -454,7 +455,7 @@ void main() {
       () async {
         for (final entry in screens.entries) {
           final only = Platform.environment['GATALOGO_CAPTURE_ONLY'];
-          if (only != null && entry.key != only) continue;
+          if (only != null && !only.split(',').contains(entry.key)) continue;
           filled = entry.key.endsWith('_filled');
           store.progress.summary =
               entry.key.endsWith('_progress') ||
@@ -569,6 +570,22 @@ void main() {
             for (var frame = 0; frame < 45; frame++) {
               await tester.pump(const Duration(milliseconds: 16));
             }
+            for (
+              var attempt = 0;
+              attempt < 100 &&
+                  find.byType(AppLoadingScreen).evaluate().isNotEmpty;
+              attempt++
+            ) {
+              await tester.runAsync(
+                () => Future<void>.delayed(const Duration(milliseconds: 50)),
+              );
+              await tester.pump(const Duration(milliseconds: 50));
+            }
+            expect(
+              find.byType(AppLoadingScreen),
+              findsNothing,
+              reason: '${entry.key}: synchronized scene ready',
+            );
             if (entry.key == 'habitat_edit_ground') {
               await tester.tap(find.byTooltip('Abrir ações do Quintal'));
               await tester.pump();
@@ -708,6 +725,8 @@ void main() {
             'challenges_progress',
             'achievements_progress',
           ]) {
+            final only = Platform.environment['GATALOGO_CAPTURE_ONLY'];
+            if (only != null && !only.split(',').contains(name)) continue;
             filled = name.endsWith('_filled');
             store.progress.summary = name.endsWith('_progress')
                 ? populatedProgress

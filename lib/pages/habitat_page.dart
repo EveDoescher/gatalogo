@@ -1,3 +1,5 @@
+import '../widgets/app_loading_screen.dart';
+import '../widgets/quintal_production_widgets.dart';
 import '../widgets/quintal_return_dialog.dart';
 
 import 'dart:async';
@@ -26,6 +28,7 @@ import '../widgets/habitat_cat_preview.dart';
 import 'habitat_help_page.dart';
 import 'habitat_shop_page.dart';
 import '../widgets/quintal_inventory_tray.dart';
+import '../widgets/quintal_bottom_tray.dart';
 import 'quintal_game_page.dart';
 import '../widgets/quintal_object_actions.dart';
 import '../widgets/habitat_object_balloon.dart';
@@ -43,6 +46,8 @@ class HabitatPage extends StatefulWidget {
     required this.active,
     this.habitatService,
     this.sprites,
+    this.onReady,
+    this.onLoadError,
   });
 
   final SessionStore sessionStore;
@@ -50,6 +55,8 @@ class HabitatPage extends StatefulWidget {
   final ValueListenable<bool> active;
   final HabitatService? habitatService;
   final HabitatSprites? sprites;
+  final VoidCallback? onReady;
+  final ValueChanged<VoidCallback>? onLoadError;
 
   @override
   State<HabitatPage> createState() => _HabitatPageState();
@@ -63,6 +70,8 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
   final Set<(int, int)> _pathStroke = {};
   _HabitatTray _tray = _HabitatTray.none;
   bool _menuOpen = false;
+  bool _productionTrayOpen = false;
+  double _trayExtent = 0, _catSetExtent = 0, _productionTrayExtent = 0;
   bool _editing = false;
   bool _showShop = false;
   bool _showHelp = false;
@@ -72,6 +81,9 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
   ({String id, (int, int) anchor, (int, int) food, (int, int) water})? _catSet;
   bool _choosingWater = false;
   bool _placingSet = false;
+  bool _sceneReady = false;
+  Future<void>? _preparingScene;
+  String? _sceneError;
   String? _draggingCatId;
   (int, int)? _hovered;
   int _rotation = 0;
@@ -104,7 +116,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
       if (widget.active.value) {
         _updateActivity();
       } else {
-        unawaited(_habitat.load());
+        unawaited(_prepareScene());
       }
     });
   }
@@ -161,8 +173,34 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _prepareScene() => _preparingScene ??= _loadScene().whenComplete(
+    () => _preparingScene = null,
+  );
+
+  Future<void> _loadScene() async {
+    try {
+      if (mounted) setState(() => _sceneError = null);
+      await widget.catStore.ready;
+      await _habitat.load();
+      await _game.loaded;
+      await _game.prepareVisibleAssets();
+      if (!mounted) return;
+      setState(() => _sceneReady = true);
+      widget.onReady?.call();
+    } catch (_) {
+      if (mounted) {
+        setState(() => _sceneError = 'Não foi possível preparar o Quintal.');
+        widget.onLoadError?.call(() => unawaited(_prepareScene()));
+      }
+    }
+  }
+
   Future<void> _loadVisit() async {
-    await _habitat.load();
+    if (!_sceneReady) {
+      await _prepareScene();
+    } else {
+      await _habitat.refreshProduction();
+    }
     if (!mounted || !widget.active.value || !_foreground) return;
     await _tickVisit();
     _focusGift();
@@ -482,12 +520,15 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
 
   void _syncCatSetPreview() {
     final set = _catSet;
+    final color = set == null
+        ? 0
+        : (_habitat.productionCat(set.id)['color_index'] as num? ?? 0).toInt();
+    _game.catSetPreviewCatId = set?.id;
     _game.catSetPreview = set == null
         ? {}
         : {
-            'animal-cat': set.anchor,
-            'production:crafted-cat-food-0-0-NE': set.food,
-            'production:crafted-cat-water-0-0-NE': set.water,
+            'production:crafted-cat-food-$color-0-NE': set.food,
+            'production:crafted-cat-water-$color-0-NE': set.water,
           };
   }
 
@@ -524,10 +565,13 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
     final name =
         _habitat.cats.where((c) => c.id == set.id).firstOrNull?.name ??
         'seu gato';
-    return Positioned(
-      left: 12,
-      right: 12,
-      bottom: MediaQuery.paddingOf(context).bottom + 16,
+    return QuintalBottomTray(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      onExtentChanged: (height) {
+        if (mounted && height != _catSetExtent) {
+          setState(() => _catSetExtent = height);
+        }
+      },
       child: HabitatBalloonSurface(
         child: Padding(
           padding: const EdgeInsets.all(12),
@@ -535,7 +579,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Cantinho de $name',
+                'Posicionar os potes de $name',
                 style: const TextStyle(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 4),
@@ -543,8 +587,10 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
                 'Toque no chão para posicionar o pote de ${_choosingWater ? 'água' : 'comida'}.',
                 textAlign: TextAlign.center,
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
                 children: [
                   ChoiceChip(
                     label: const Text('Comida'),
@@ -561,9 +607,9 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
                         ? null
                         : (_) => setState(() => _choosingWater = true),
                   ),
-                  const Spacer(),
+
                   IconButton(
-                    tooltip: 'Cancelar colocação',
+                    tooltip: 'Cancelar posicionamento',
                     onPressed: _placingSet
                         ? null
                         : () => setState(() {
@@ -573,7 +619,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
                     icon: const Icon(LucideIcons.x),
                   ),
                   IconButton(
-                    tooltip: 'Colocar gato e potes',
+                    tooltip: 'Confirmar posição dos potes',
                     onPressed: _placingSet ? null : _confirmCatSet,
                     icon: _placingSet
                         ? const SizedBox.square(
@@ -736,6 +782,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
   Future<void> _showCatCare(String id) async {
     final cat = _habitat.cats.where((cat) => cat.id == id).firstOrNull;
     if (cat == null) return;
+    _game.selectedCatId = id;
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -756,6 +803,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
         },
       ),
     );
+    _game.selectedCatId = null;
   }
 
   Future<void> _careForCat(String id, String action) async {
@@ -1121,53 +1169,50 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
     ),
   );
 
-  Widget _floatingMenu() => Positioned(
-    right: 16,
-    bottom: _tray == _HabitatTray.none
-        ? 18
-        : _tray == _HabitatTray.inventory
-        ? 270
-        : 214,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (_menuOpen) ...[
-          _menuAction(
-            _editing ? 'Concluir edição' : 'Editar',
-            LucideIcons.pencil,
-            AppColors.greenLink,
-            _toggleEditing,
-          ),
-          _menuAction(
-            'Inventário',
-            LucideIcons.backpack,
-            AppColors.amberDark,
-            () => _habitat.production.isEmpty
-                ? _openTray(_HabitatTray.inventory)
-                : _openInventory(),
-          ),
-          _menuAction(
-            'Loja',
-            LucideIcons.shoppingCart,
-            AppColors.primaryDark,
-            _openShop,
-          ),
-          _menuAction(
-            'Gatos',
-            LucideIcons.cat,
-            AppColors.socialPurpleText,
-            () => _openTray(_HabitatTray.cats),
-          ),
-        ],
-        _circleAction(
-          icon: _menuOpen ? LucideIcons.x : LucideIcons.plus,
-          color: AppColors.greenButton,
-          onTap: () => setState(() => _menuOpen = !_menuOpen),
-          size: 52,
-          tooltip: _menuOpen ? 'Fechar ações' : 'Abrir ações do Quintal',
+  Widget _floatingMenu() => QuintalFloatingMenu(
+    trayExtent: _tray != _HabitatTray.none
+        ? _trayExtent
+        : _catSet != null
+        ? _catSetExtent
+        : _productionSelection != null && _productionTrayOpen
+        ? _productionTrayExtent
+        : 0,
+    actions: [
+      if (_menuOpen) ...[
+        _menuAction(
+          _editing ? 'Concluir edição' : 'Editar',
+          LucideIcons.pencil,
+          AppColors.greenLink,
+          _toggleEditing,
+        ),
+        _menuAction(
+          'Inventário',
+          LucideIcons.backpack,
+          AppColors.amberDark,
+          () => _habitat.production.isEmpty
+              ? _openTray(_HabitatTray.inventory)
+              : _openInventory(),
+        ),
+        _menuAction(
+          'Loja',
+          LucideIcons.shoppingCart,
+          AppColors.primaryDark,
+          _openShop,
+        ),
+        _menuAction(
+          'Gatos',
+          LucideIcons.cat,
+          AppColors.socialPurpleText,
+          () => _openTray(_HabitatTray.cats),
         ),
       ],
+    ],
+    button: _circleAction(
+      icon: _menuOpen ? LucideIcons.x : LucideIcons.plus,
+      color: AppColors.greenButton,
+      onTap: () => setState(() => _menuOpen = !_menuOpen),
+      size: 52,
+      tooltip: _menuOpen ? 'Fechar ações' : 'Abrir ações do Quintal',
     ),
   );
 
@@ -1237,7 +1282,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Modo edição',
+                        'Sair do modo edição',
                         style: GoogleFonts.nunito(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
@@ -1256,7 +1301,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
           Tooltip(
             message: 'Conforto acessível, carinho e alimentação de hoje aumentam a satisfação e a chance de presentes.',
             child: Chip(
-              avatar: const Icon(LucideIcons.heart, size: 18),
+              avatar: const QuintalArtwork('cat_satisfaction', size: 32),
               label: Text('Satisfação ${_habitat.satisfaction}%'),
             ),
           ),
@@ -1367,10 +1412,10 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
       child: HabitatObjectBalloon(
         anchor: _game.itemFocus(item),
         objectHeight: _game.tileWidth * .8,
-        maxWidth: 232,
+        maxWidth: 300,
         child: HabitatBalloonSurface(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+          child: Wrap(
+            alignment: WrapAlignment.center,
             children: [
               if (_habitat.definition(item.sku).rotatable)
                 HabitatBalloonAction(
@@ -1402,7 +1447,18 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
     return QuintalObjectOverlay(
       game: _game,
       target: target,
-      onClose: () => setState(() => _productionSelection = null),
+      onTrayExtentChanged: (height) {
+        if (mounted && height != _productionTrayExtent) {
+          setState(() => _productionTrayExtent = height);
+        }
+      },
+      onTrayChanged: (open) {
+        if (mounted) setState(() => _productionTrayOpen = open);
+      },
+      onClose: () => setState(() {
+        _productionSelection = null;
+        _productionTrayOpen = false;
+      }),
       onFish: () =>
           QuintalGamePage.open(context, habitat: _habitat, scene: _game),
     );
@@ -1449,17 +1505,21 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
   Widget _trayPanel() {
     final isInventory = _tray == _HabitatTray.inventory;
     final available = <String, List<HabitatItem>>{};
-    for (final item in _habitat.items.where((item) => !item.isPlaced)) {
+    for (final item in _habitat.items.where(
+      (item) => !item.isPlaced && item.careState['cat_id'] == null,
+    )) {
       available.putIfAbsent(item.sku, () => []).add(item);
     }
     final itemTypes = _habitat.shop
         .where((type) => available.containsKey(type.sku))
         .toList();
     if (isInventory) {
-      return Positioned(
-        left: 0,
-        right: 0,
-        bottom: MediaQuery.paddingOf(context).bottom,
+      return QuintalBottomTray(
+        onExtentChanged: (height) {
+          if (mounted && height != _trayExtent) {
+            setState(() => _trayExtent = height);
+          }
+        },
         child: QuintalInventoryTray(
           habitat: _habitat,
           decorations: itemTypes.isEmpty
@@ -1515,12 +1575,16 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
         ),
       );
     }
-    return Positioned(
-      left: 0,
-      right: 0,
-      bottom: MediaQuery.paddingOf(context).bottom,
+    return QuintalBottomTray(
+      onExtentChanged: (height) {
+        if (mounted && height != _trayExtent) {
+          setState(() => _trayExtent = height);
+        }
+      },
       child: Container(
-        height: 202,
+        height:
+            244 +
+            90 * (MediaQuery.textScalerOf(context).scale(1) - 1).clamp(0, 2),
         decoration: const BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -1553,9 +1617,12 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
                     ),
                   ),
                   if (!isInventory)
-                    Text(
-                      '${_habitat.selectedCatIds.length}/${_habitat.catCapacity} no quintal',
-                      style: GoogleFonts.nunito(color: AppColors.textMedium),
+                    Flexible(
+                      child: Text(
+                        '${_habitat.selectedCatIds.length}/${_habitat.catCapacity} no quintal',
+                        textAlign: TextAlign.end,
+                        style: GoogleFonts.nunito(color: AppColors.textMedium),
+                      ),
                     ),
                   IconButton(
                     tooltip: 'Fechar bandeja',
@@ -1638,7 +1705,11 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
       children: [
         Column(
           children: [
-            Expanded(child: Center(child: image)),
+            Expanded(
+              child: Center(
+                child: FittedBox(fit: BoxFit.scaleDown, child: image),
+              ),
+            ),
             Text(
               name,
               maxLines: 1,
@@ -1673,12 +1744,25 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
   );
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => Stack(
+    children: [
+      _buildPage(context),
+      if (!_sceneReady)
+        Positioned.fill(
+          child: AppLoadingScreen(
+            message: _sceneError ?? 'Montando seu Quintal…',
+            onRetry: _sceneError == null ? null : _prepareScene,
+          ),
+        ),
+    ],
+  );
+
+  Widget _buildPage(BuildContext context) => Scaffold(
     backgroundColor: const Color(0xFFA4C77A),
     body: Stack(
       children: [
         Positioned.fill(child: _scene()),
-        if (_habitat.loading) const Center(child: CircularProgressIndicator()),
+
         if (_editing && _catSet == null) _selectedControls(),
         if (_catSet != null) _catSetControls(),
         if (!_editing) _productionControls(),
@@ -1716,7 +1800,8 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
             ),
           ),
         if (_tray != _HabitatTray.none) _trayPanel(),
-        SafeArea(child: Stack(children: [_hud(), _floatingMenu()])),
+        SafeArea(child: _hud()),
+        _floatingMenu(),
         if (_rewardLabel case final label?)
           Positioned(
             left: 16,

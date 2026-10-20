@@ -642,6 +642,15 @@ extension _QuintalProductionScene on HabitatGame {
           depthOffset: depth + lift,
           angle: angle,
           tint: Colors.white.withValues(alpha: opacity),
+          selected:
+              selectedProduction != null &&
+              opacity == 1 &&
+              !name.contains('fence') &&
+              !name.contains('path') &&
+              !name.contains('ground') &&
+              (_productionGround(x, y) - productionFocus(selectedProduction!))
+                      .distance <
+                  tileWidth * .3,
           castsShadow: opacity == 1,
         ),
       );
@@ -941,6 +950,10 @@ extension _QuintalProductionScene on HabitatGame {
                 'animal-cat',
                 _productionGround(r.$1 + pose.x, r.$2 + pose.y),
                 tileWidth * (cow ? .86 : .40) / animation.restHeight,
+                selected:
+                    selectedProduction?.kind == kind &&
+                    selectedProduction?.role == 'resident' &&
+                    selectedProduction?.target == i.toString(),
                 catFrame: frame,
                 elevation: pose.elevation * tileWidth * math.sqrt(3 / 8),
                 depthOffset:
@@ -1288,7 +1301,7 @@ extension _QuintalProductionScene on HabitatGame {
   }
 
   Rect _productionBadgeRect(QuintalSceneTarget t) => Rect.fromCenter(
-    center: productionFocus(t) - Offset(0, productionObjectHeight(t) + 18),
+    center: productionFocus(t) - Offset(0, productionObjectHeight(t) + 54),
     width: 42,
     height: 42,
   );

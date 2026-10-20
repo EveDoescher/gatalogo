@@ -1,3 +1,5 @@
+import '../widgets/feed_loading_placeholder.dart';
+import '../stores/notification_store.dart';
 import '../widgets/botanical_scene.dart';
 import 'discovery_result_page.dart';
 import '../services/habitat_navigation.dart';
@@ -34,6 +36,7 @@ class NotificationsPage extends StatefulWidget {
 class _NotificationsPageState extends State<NotificationsPage> {
   List<Map<String, dynamic>> _items = [];
   bool _loading = true;
+  final _scroll = ScrollController();
   String? _error;
   late final ProductApiService _api;
   bool _openedInitialNotification = false;
@@ -42,7 +45,44 @@ class _NotificationsPageState extends State<NotificationsPage> {
   void initState() {
     super.initState();
     _api = ProductApiService(widget.store.sessionStore);
+    _scroll.addListener(() {
+      if (_scroll.hasClients &&
+          _scroll.position.extentAfter < 300 &&
+          !_loading) {
+        _loadMore();
+      }
+    });
     _load();
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadMore() async {
+    final store = widget.store.notifications;
+    if (store.loadingMore || !store.hasMore) return;
+    final future = store.loadMore();
+    setState(() {});
+    try {
+      await future;
+      if (mounted) {
+        setState(() {
+          _items = store.items.toList()..sort(NotificationStore.newestFirst);
+          _error = null;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _error = 'Não foi possível carregar os avisos anteriores. Tente novamente.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() {});
+    }
   }
 
   Future<void> _load() async {
@@ -51,18 +91,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       final items = widget.store.notifications.items;
       if (mounted) {
         setState(() {
-          final grouped = <String, Map<String, dynamic>>{};
-          for (final item in items) {
-            final payload = item['payload'] as Map? ?? {};
-            final target =
-                payload['match_id'] ??
-                payload['conversation_id'] ??
-                payload['event_id'] ??
-                item['id'];
-            grouped.putIfAbsent('${item['type']}:$target', () => item);
-          }
-          _items = grouped.values.toList()
-            ..sort((a, b) => _section(a).compareTo(_section(b)));
+          _items = items.toList()..sort(NotificationStore.newestFirst);
           _error = null;
         });
       }
@@ -79,15 +108,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
     }
   }
 
-  int _section(Map<String, dynamic> item) => switch (item['type']) {
-    'possible_match' || 'match_confirmed' => 0,
-    'message' || 'friend_invite' || 'friend_accepted' => 1,
-    _ => 2,
-  };
-
   String _title(Map<String, dynamic> item) => switch (item['type']) {
     'habitat_gift' => 'Um visitante deixou um presente!',
-    'quintal_ready' => (item['payload'] as Map?)?['title']?.toString() ?? 'Produção pronta no Quintal',
+    'quintal_ready' =>
+      (item['payload'] as Map?)?['title']?.toString() ??
+          'Produção pronta no Quintal',
     'progress_result' => 'Seu resultado está pronto',
     'possible_match' => 'Possível avistamento do seu gato',
     'match_confirmed' => 'Seu avistamento ajudou uma busca!',
@@ -227,6 +252,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               onRefresh: _load,
               color: AppColors.primary,
               child: CustomScrollView(
+                controller: _scroll,
                 physics: const AlwaysScrollableScrollPhysics(
                   parent: BouncingScrollPhysics(),
                 ),
@@ -267,16 +293,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     ),
                   ),
                   if (_loading)
-                    const SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppSpacing.xl,
-                        ),
-                        child: LinearProgressIndicator(
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ),
+                    const SliverToBoxAdapter(child: FeedLoadingPlaceholder()),
 
                   if (_error != null)
                     SliverToBoxAdapter(
@@ -409,7 +426,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                           children: [
                                             Expanded(
                                               child: Text(
-                                                '${_items.indexOf(item) == 0 || _section(_items[_items.indexOf(item) - 1]) != _section(item) ? '${const ['Buscas e pistas', 'Conversas', 'Novidades do jogo'][_section(item)]}\n' : ''}${_title(item)}',
+                                                _title(item),
                                                 style: GoogleFonts.fredoka(
                                                   fontSize: 15,
                                                   fontWeight: isUnread
@@ -454,6 +471,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         }, childCount: _items.length),
                       ),
                     ),
+                  if (widget.store.notifications.loadingMore)
+                    const SliverToBoxAdapter(child: FeedLoadingPlaceholder()),
                 ],
               ),
             ),

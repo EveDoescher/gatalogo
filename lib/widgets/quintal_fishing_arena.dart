@@ -1,3 +1,5 @@
+import 'quintal_outlined_text.dart';
+
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -26,7 +28,7 @@ class QuintalFishingArena extends StatelessWidget {
           color: tracking ? AppColors.greenLink : const Color(0xff785236),
           borderRadius: BorderRadius.circular(14),
         ),
-        child: Text(
+        child: QuintalOutlinedText(
           tracking ? 'Na faixa!' : 'Aproxime a faixa do peixe',
           textAlign: TextAlign.center,
           style: const TextStyle(

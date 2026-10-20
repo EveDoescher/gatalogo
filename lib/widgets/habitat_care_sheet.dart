@@ -105,7 +105,7 @@ class HabitatCareSheet extends StatelessWidget {
                   onPressed: enabled && !habitat.caredToday(cat.id, 'pet')
                       ? () => onAction('pet')
                       : null,
-                  icon: const Icon(LucideIcons.heart),
+                  icon: const QuintalArtwork('action_pet', size: 36),
                   label: Text(
                     habitat.caredToday(cat.id, 'pet')
                         ? 'Carinho recebido hoje'

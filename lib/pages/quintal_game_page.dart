@@ -1,3 +1,5 @@
+import '../widgets/quintal_outlined_text.dart';
+
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -90,10 +92,9 @@ class _QuintalGamePageState extends State<QuintalGamePage>
   Map<String, dynamic>? _session;
   late final _clock = widget.clock ?? Stopwatch();
   final _trace = <Map<String, dynamic>>[];
-  double _position = .5, _score = 0;
+  double _position = .5, _positionY = .5, _score = 0;
   double _lastFrameTime = 0;
   bool _held = false, _finishing = false;
-  bool _usingSlider = false;
   String? _error;
   bool _restartRequired = false;
   bool _interruptedDuringStart = false;
@@ -185,15 +186,19 @@ class _QuintalGamePageState extends State<QuintalGamePage>
     final t = _time.clamp(0.0, 20.0);
     final elapsed = (t - _lastFrameTime).clamp(0.0, 20.0);
     _lastFrameTime = t;
-    if (_fishing && !_usingSlider) {
+    if (_fishing) {
       _position = QuintalGameMotion.fishing(_position, _held, elapsed);
     }
     if (!_fishing) {
-      _playMotion.advance(_position, elapsed);
+      _playMotion.advance(_position, elapsed, targetY: _positionY);
       widget.scene?.updatePlayActivity(_playMotion, _position, t);
     }
     if (_trace.isEmpty || t - (_trace.last['t'] as double) >= 1) {
-      _trace.add({'t': t, 'position': _position});
+      _trace.add({
+        't': t,
+        'position': _position,
+        if (!_fishing) 'y': _positionY,
+      });
     }
     if (!_fishing || (_position - _fish).abs() <= _zone / 2) _score += elapsed;
     setState(() {});
@@ -207,7 +212,11 @@ class _QuintalGamePageState extends State<QuintalGamePage>
     if (_clock.isRunning) {
       _clock.stop();
       if (_trace.isEmpty || _time > (_trace.last['t'] as num)) {
-        _trace.add({'t': _time, 'position': _position});
+        _trace.add({
+          't': _time,
+          'position': _position,
+          if (!_fishing) 'y': _positionY,
+        });
       }
     }
     setState(() => _finishing = true);
@@ -274,17 +283,18 @@ class _QuintalGamePageState extends State<QuintalGamePage>
   Widget _worldPlayArena() {
     void point(Offset global) {
       if (_finishing) return;
-      setState(
-        () => _position = widget.scene!.playControlAt(
-          global - widget.sceneOrigin,
-        ),
-      );
+      final point = global - widget.sceneOrigin;
+      widget.scene!.setPlayTarget(point);
+      setState(() {
+        _position = (point.dx / widget.scene!.size.x).clamp(0, 1);
+        _positionY = (point.dy / widget.scene!.size.y).clamp(0, 1);
+      });
     }
 
     return Column(
       children: [
         _paper(
-          Text(
+          QuintalOutlinedText(
             _playCaption,
             textAlign: TextAlign.center,
             style: const TextStyle(
@@ -335,8 +345,9 @@ class _QuintalGamePageState extends State<QuintalGamePage>
         onPressed: () => Navigator.pop(context, _result?['success'] == true),
         icon: const Icon(Icons.close),
       ),
+      centerTitle: true,
       title: _paper(
-        Text(
+        QuintalOutlinedText(
           _fishing
               ? 'Pescar no píer'
               : 'Brincar com ${widget.catName ?? 'seu gato'}',
@@ -347,230 +358,237 @@ class _QuintalGamePageState extends State<QuintalGamePage>
       ),
     ),
     body: SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (_session != null && _result == null && _error == null) ...[
-              _paper(
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      _fishing
-                          ? (_waiting
-                                ? 'A linha está na água'
-                                : _time < 1.5
-                                ? 'Fisgou! Acompanhe o peixe'
-                                : 'Mantenha a faixa junto do peixe')
-                          : 'Mova a varinha para seu gato acompanhar',
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _fishing
-                          ? (_waiting
-                                ? 'Espere o peixe morder.'
-                                : 'Segure para subir, solte para descer. Ou use o controle abaixo.')
-                          : 'Arraste a varinha ou use o controle abaixo.',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    if (_session?['practice'] == true && _fishing)
-                      const Text(
-                        'Prática · sem adicionar peixes ao inventário.',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-            if (_error != null)
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _paper(
-                        Text(
-                          _error!,
-                          style: const TextStyle(color: AppColors.textTitle),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520, maxHeight: 720),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (_session != null && _result == null && _error == null) ...[
+                  _paper(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        QuintalOutlinedText(
+                          _fishing
+                              ? (_waiting
+                                    ? 'A linha está na água'
+                                    : _time < 1.5
+                                    ? 'Fisgou! Acompanhe o peixe'
+                                    : 'Mantenha a faixa junto do peixe')
+                              : 'Mova a varinha para seu gato acompanhar',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.titleSmall,
                         ),
-                      ),
-                      TextButton(
-                        onPressed: _finishing
-                            ? null
-                            : () {
-                                setState(() => _error = null);
-                                if (_session == null || _restartRequired) {
-                                  _clock.reset();
-                                  _trace.clear();
-                                  _position = .5;
-                                  _usingSlider = false;
-                                  _held = false;
-                                  _playMotion.reset();
-                                  _score = 0;
-                                  _session = null;
-                                  _restartRequired = false;
-                                  unawaited(_start());
-                                } else {
-                                  unawaited(_finish());
-                                }
-                              },
-                        child: const Text('Tentar novamente'),
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        QuintalOutlinedText(
+                          _fishing
+                              ? (_waiting
+                                    ? 'Espere o peixe morder.'
+                                    : 'Segure para subir, solte para descer.')
+                              : 'Segure e arraste a varinha em qualquer direção.',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        if (_session?['practice'] == true && _fishing)
+                          const QuintalOutlinedText(
+                            'Prática · sem adicionar peixes ao inventário.',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
-              )
-            else if (_result != null)
-              Expanded(
-                child: QuintalActivityResult(
-                  success: _result!['success'] == true,
-                  title: _result!['success'] != true
-                      ? (_fishing
-                            ? 'O peixe escapou'
-                            : 'Vamos brincar de novo?')
-                      : _fishing
-                      ? (_result!['practice'] == true
-                            ? 'Boa captura de treino!'
-                            : 'Boa pescaria!')
-                      : 'Uma boa brincadeira juntos!',
-                  description: _result!['success'] != true
-                      ? (_fishing
-                            ? 'Na próxima, acompanhe o peixe com a faixa. Nenhum peixe foi adicionado ao inventário.'
-                            : 'Mova a varinha para seu gato acompanhar durante a brincadeira.')
-                      : _fishing
-                      ? ((_result!['quantity'] as num? ?? 0) > 0
-                            ? '${_result!['quantity']} peixe(s) no inventário!'
-                            : _result!['practice'] == true
-                            ? 'Treino concluído, sem adicionar peixes ao inventário.'
-                            : 'O limite de capturas premiadas foi atingido. Nenhum peixe foi adicionado.')
-                      : quintalPlayResultDescription(_result!),
-                  artwork: _fishing
-                      ? QuintalArtwork(
-                          _result!['success'] == true
-                              ? 'fish'
-                              : 'action_fish_rod',
-                          size: 160,
-                        )
-                      : CustomPaint(
+                  const SizedBox(height: 8),
+                ],
+                if (_error != null)
+                  Expanded(
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _paper(
+                            QuintalOutlinedText(
+                              _error!,
+                              style: const TextStyle(
+                                color: AppColors.textTitle,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _finishing
+                                ? null
+                                : () {
+                                    setState(() => _error = null);
+                                    if (_session == null || _restartRequired) {
+                                      _clock.reset();
+                                      _trace.clear();
+                                      _position = _positionY = .5;
+                                      _held = false;
+                                      _playMotion.reset();
+                                      _score = 0;
+                                      _session = null;
+                                      _restartRequired = false;
+                                      unawaited(_start());
+                                    } else {
+                                      unawaited(_finish());
+                                    }
+                                  },
+                            child: const QuintalOutlinedText(
+                              'Tentar novamente',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else if (_result != null)
+                  Expanded(
+                    child: QuintalActivityResult(
+                      success: _result!['success'] == true,
+                      title: _result!['success'] != true
+                          ? (_fishing
+                                ? 'O peixe escapou'
+                                : 'Vamos brincar de novo?')
+                          : _fishing
+                          ? (_result!['practice'] == true
+                                ? 'Boa captura de treino!'
+                                : 'Boa pescaria!')
+                          : 'Uma boa brincadeira juntos!',
+                      description: _result!['success'] != true
+                          ? (_fishing
+                                ? 'Na próxima, acompanhe o peixe com a faixa. Nenhum peixe foi adicionado ao inventário.'
+                                : 'Mova a varinha para seu gato acompanhar durante a brincadeira.')
+                          : _fishing
+                          ? ((_result!['quantity'] as num? ?? 0) > 0
+                                ? '${_result!['quantity']} peixe(s) no inventário!'
+                                : _result!['practice'] == true
+                                ? 'Treino concluído, sem adicionar peixes ao inventário.'
+                                : 'O limite de capturas premiadas foi atingido. Nenhum peixe foi adicionado.')
+                          : quintalPlayResultDescription(_result!),
+                      artwork: _fishing
+                          ? QuintalArtwork(
+                              _result!['success'] == true
+                                  ? 'fish'
+                                  : 'action_fish_rod',
+                              size: 160,
+                            )
+                          : CustomPaint(
+                              painter: _PlayingCatPainter(
+                                _cat.frame(
+                                  _result!['success'] == true
+                                      ? HabitatCatClip.happy
+                                      : HabitatCatClip.idle,
+                                  0,
+                                  0,
+                                ),
+                              ),
+                            ),
+                      onClose: () =>
+                          Navigator.pop(context, _result?['success'] == true),
+                    ),
+                  )
+                else if (_session == null)
+                  const Expanded(
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else ...[
+                  if (_waiting)
+                    const Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: QuintalArtwork('action_fish_rod', size: 180),
+                          ),
+                          SizedBox(height: 16),
+                          QuintalClockBadge(size: 42),
+                          SizedBox(height: 12),
+                          QuintalOutlinedText('Aguardando uma mordida…'),
+                        ],
+                      ),
+                    )
+                  else if (_fishing)
+                    Expanded(
+                      child: QuintalFishingArena(
+                        fish: _fish,
+                        position: _position,
+                        zone: _zone,
+                      ),
+                    )
+                  else if (widget.scene?.hasWorldPlay == true)
+                    Expanded(child: _worldPlayArena())
+                  else
+                    Expanded(
+                      child: QuintalPlayArena(
+                        showGround: !widget.inWorld,
+                        position: _playMotion.position,
+                        target: _position,
+                        targetY: _positionY,
+                        positionY: _playMotion.positionY,
+                        lift: MediaQuery.disableAnimationsOf(context)
+                            ? 0
+                            : _playMotion.lift,
+                        caption: _playCaption,
+                        onTargetPoint: _finishing
+                            ? null
+                            : (value) => setState(() {
+                                _position = value.dx;
+                                _positionY = value.dy;
+                              }),
+                        cat: CustomPaint(
                           painter: _PlayingCatPainter(
                             _cat.frame(
-                              _result!['success'] == true
-                                  ? HabitatCatClip.happy
-                                  : HabitatCatClip.idle,
-                              0,
-                              0,
+                              switch (_playMotion.phase) {
+                                QuintalPlayPhase.chasing => HabitatCatClip.walk,
+                                QuintalPlayPhase.reaching =>
+                                  HabitatCatClip.happy,
+                                _ => HabitatCatClip.idle,
+                              },
+                              MediaQuery.disableAnimationsOf(context)
+                                  ? 0
+                                  : _time,
+                              _playMotion.direction,
                             ),
                           ),
                         ),
-                  onClose: () =>
-                      Navigator.pop(context, _result?['success'] == true),
-                ),
-              )
-            else if (_session == null)
-              const Expanded(child: Center(child: CircularProgressIndicator()))
-            else ...[
-              if (_waiting)
-                const Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Flexible(
-                        child: QuintalArtwork('action_fish_rod', size: 180),
-                      ),
-                      SizedBox(height: 16),
-                      QuintalClockBadge(size: 42),
-                      SizedBox(height: 12),
-                      Text('Aguardando uma mordida…'),
-                    ],
-                  ),
-                )
-              else if (_fishing)
-                Expanded(
-                  child: QuintalFishingArena(
-                    fish: _fish,
-                    position: _position,
-                    zone: _zone,
-                  ),
-                )
-              else if (widget.scene?.hasWorldPlay == true)
-                Expanded(child: _worldPlayArena())
-              else
-                Expanded(
-                  child: QuintalPlayArena(
-                    showGround: !widget.inWorld,
-                    position: _playMotion.position,
-                    target: _position,
-                    lift: MediaQuery.disableAnimationsOf(context)
-                        ? 0
-                        : _playMotion.lift,
-                    caption: _playCaption,
-                    onTarget: _finishing
-                        ? null
-                        : (value) => setState(() => _position = value),
-                    cat: CustomPaint(
-                      painter: _PlayingCatPainter(
-                        _cat.frame(
-                          switch (_playMotion.phase) {
-                            QuintalPlayPhase.chasing => HabitatCatClip.walk,
-                            QuintalPlayPhase.reaching => HabitatCatClip.happy,
-                            _ => HabitatCatClip.idle,
-                          },
-                          MediaQuery.disableAnimationsOf(context) ? 0 : _time,
-                          _playMotion.direction,
-                        ),
                       ),
                     ),
-                  ),
-                ),
-              const SizedBox(height: 12),
-              if (!_waiting)
-                _paper(
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Slider(
-                        activeColor: AppColors.greenLink,
-                        inactiveColor: const Color(0xFFE4D9BB),
-                        value: _position,
-                        onChanged: _finishing || _error != null
-                            ? null
-                            : (value) => setState(() {
-                                _position = value;
-                                _usingSlider = true;
-                              }),
-                        semanticFormatterCallback: (v) =>
-                            'Posição ${(v * 100).round()}',
+                  const SizedBox(height: 12),
+                  if (!_waiting)
+                    _paper(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (_fishing)
+                            QuintalHoldControl(
+                              held: _held,
+                              onChanged: _finishing
+                                  ? null
+                                  : (held) => setState(() {
+                                      _held = held;
+                                    }),
+                            ),
+                          const SizedBox(height: 8),
+                          LinearProgressIndicator(
+                            value: (_time / 20).clamp(0, 1),
+                            minHeight: 8,
+                          ),
+                          QuintalOutlinedText(
+                            textAlign: TextAlign.center,
+                            _finishing
+                                ? 'Conferindo a atividade…'
+                                : '${(20 - _time).ceil().clamp(0, 20)} s · ${_fishing ? '${(_score / math.max(1, _time) * 100).clamp(0, 100).round()}% acompanhando' : 'Acompanhe com a varinha'}',
+                          ),
+                        ],
                       ),
-                      if (_fishing)
-                        QuintalHoldControl(
-                          held: _held,
-                          onChanged: _finishing
-                              ? null
-                              : (held) => setState(() {
-                                  _held = held;
-                                  _usingSlider = false;
-                                }),
-                        ),
-                      const SizedBox(height: 8),
-                      LinearProgressIndicator(
-                        value: (_time / 20).clamp(0, 1),
-                        minHeight: 8,
-                      ),
-                      Text(
-                        _finishing
-                            ? 'Conferindo a atividade…'
-                            : '${(20 - _time).ceil().clamp(0, 20)} s · ${_fishing ? '${(_score / math.max(1, _time) * 100).clamp(0, 100).round()}% acompanhando' : 'Acompanhe com a varinha'}',
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ],
+                    ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     ),

@@ -4,6 +4,26 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:catlogue/stores/notification_store.dart';
 
 void main() {
+  test('pages merge in chronological order and do not duplicate IDs', () async {
+    var requests = 0;
+    final store = NotificationStore(loadItems: () async => [], saveRead: (_) async {},
+      loadPage: (time,id) async {
+        requests++;
+        if (requests == 1) return [for(var i=20;i>0;i--) {'id':'$i','created_at':DateTime.utc(2026,10,18,0,i).toIso8601String()}];
+        expect(id, '1');
+        return [{'id':'1','created_at':DateTime.utc(2026,10,18,0,1).toIso8601String()},
+          {'id':'old','created_at':DateTime.utc(2026,10,17).toIso8601String()}];
+      });
+    addTearDown(store.dispose);
+    await store.refresh();
+    expect(store.hasMore,isTrue);
+    await store.loadMore();
+    expect(store.items.length,21);
+    expect(store.items.first['id'],'20');
+    expect(store.items.last['id'],'old');
+    expect(store.hasMore,isFalse);
+  });
+
   test(
     'all listeners see the same unread count immediately after reading',
     () async {

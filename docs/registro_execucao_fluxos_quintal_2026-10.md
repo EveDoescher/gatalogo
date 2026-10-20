@@ -282,3 +282,41 @@ Análise final dos novos testes de cliente/câmera e galeria sem problemas (`bui
 ## 18/10 — Tentativa de validação Android no computador
 
 ADB encontrou o emulador existente `emulator-5554` offline. Reconexão não o disponibilizou. A tentativa de segunda instância somente leitura foi recusada pelo bloqueio do AVD existente. Criado então AVD independente `QuintalValidation_20261018`, somente em `build/quintal-avds`, usando a imagem API 35 já instalada. Boot acelerado e depois por software permaneceram offline, sem resposta do console; nenhuma instalação/interação Android foi comprovada. Somente os processos temporários desta tentativa foram encerrados; o emulador existente, API e banco foram preservados. Logs `build/quintal-emulator-{isolated,software}*.log`. A compilação do APK de teste continua em execução e seu resultado deve ser registrado separadamente.
+
+
+## Revisão solicitada em 18/10/2026
+
+- Priorizada a lista de correções R01–R13 no mapa. Validação manual, APK, emuladores e celulares ficam com a usuária; não iniciar novas compilações Android.
+- API: 60 testes aprovados (`build-quintal-revision-api.log`); paginação por data/ID com isolamento de conta: 1 aprovado (`build-quintal-revision-pagination.log`).
+- Flutter: primeira rodada 33 aprovados e 2 falhas de expectativas antigas (posição de badge e novo fluxo de pedido). Corrigidas; rodada direcionada final com 25 aprovados (`build/quintal-revision-tests-final.log`).
+- Sessão: não aplicado aumento para 365 dias. Após questionamento da usuária, preparado `gatalogo-ai-api/docs/session_rotation_review.patch`, mantendo identidade da sessão e rotação de credencial com retry de 60 s. Dois testes em cópia isolada/SQLite aprovados (`build-session-rotation-isolated.log`). Revisão automática bloqueou aplicação da migração no banco em execução; confirmação explícita solicitada. Arquivos ativos de autenticação da API ainda não alterados.
+- Todos os 46 assets de Downloads/Quintal catalogados em `assets_quintal_2026-10-18.json`; contato visual em `build/quintal-assets-revision.jpg`. Importação não cria novas receitas ou regras econômicas.
+- Galeria Flutter da revisão ainda em execução; não afirmar inspeção concluída antes de conferir as capturas.
+
+
+## 19/10/2026 — retomada da revisão solicitada
+
+- Usuária manterá API/containers ativos e fará execução em aparelho/emulador; não iniciar esses ambientes nem gerar APK.
+- Migração `20261018_14` ficará preparada para a usuária. Patch da API e seus dois testes isolados preservados em `gatalogo-ai-api/docs/session_rotation_review.patch`; instruções em `session_rotation_activation.md`. Nenhuma migração aplicada.
+- Cliente: persistência conjunta de credenciais, renovação compartilhada, ausência de rebuild da conta na rotação, recuperação de perfil local e proteção contra resposta atrasada após logout. Quatro testes de sessão aprovados no log `build/quintal-revision-verification.log`.
+- Feed: consulta continua após posts privados para não truncar paginação; teste SQLite com 22 privados e cinco públicos com horário igual passou (`build-quintal-revision-feed-pagination.log`).
+- Inspecionadas capturas de pesca, varinha no mundo, seleção da vaca/Mercadinho e encomenda por frutas. Mantidos lotes e proporções atuais.
+- Asset de carregamento entrou no bundle atualizado. Captura `habitat` aprovada. Última falha visual era toque antes da nova prontidão; teste ajustado ao callback de cena pronta e verificação em andamento.
+
+
+### Fechamento local de 19/10
+
+- Captura de produção e quatro testes de sessão passaram na rodada `build/quintal-review-2026-10-19-tests.log`. A única falha daquela rodada era o teste antigo de edição tocando antes do fim do carregamento.
+- Corrigida a espera na galeria; nova rodada `build/quintal-review-2026-10-19-gallery.log`: **1 teste aprovado**, com edição, notificações e Social. Capturas inspecionadas. A captura de produção inclui interação real da página, bandeja do inventário, minijogos e Mercadinho com confirmação.
+- `git diff --check` do Flutter passou. A análise estática final está registrada separadamente em `build/quintal-review-2026-10-19-analyze.log`.
+- R01–R09 e R11–R13 feitos localmente; R10 preparado, com aplicação/migração pendentes da usuária. Mantidas as validações físicas de F06/V09/V11/U05 sob responsabilidade da usuária.
+
+
+### 20/10/2026 — posição do “+” e conteúdo das bandejas (R08)
+
+- Removida a aplicação duplicada do recuo da navegação: o menu agora fica a 8 px da barra inferior quando fechado e acompanha a altura medida das bandejas de inventário, gatos, potes e produção.
+- Bandejas limitadas ao espaço disponível com rolagem; opções do menu também rolam em telas baixas. Inventário reserva altura própria aos cartões, independentemente do cabeçalho/abas; rótulos das abas permanecem inteiros e rolam horizontalmente com fontes maiores. Prévia dos cartões respeita o espaço disponível. Bandeja de gatos ampliada e capacidade permite quebra de linha.
+- Escolhas de produção usam altura disponível até 420 px, e mensagens de erro/offline acompanham o conteúdo rolável.
+- `build/quintal-trays-tests.log`: 20 testes de geometria/menu e ações aprovados. `build/quintal-trays-inventory-tests.log`: regressão com navegação real, fonte 1,6×, 320×568 e 640×360 aprovada após reproduzir e corrigir corte em cartões de rações.
+- Captura local `build/quintal-trays-large-text.png` inspecionada com imagens/fontes carregadas. Sem execução do app, APK, celular ou emulador; validação manual permanece com a usuária.
+- Análise estática final dos seis arquivos alterados: nenhum problema (`build/quintal-trays-analyze.log` e `build/quintal-trays-analyze-direct.log`). `git diff --check` aprovado.

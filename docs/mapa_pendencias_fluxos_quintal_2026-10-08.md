@@ -1,13 +1,37 @@
 # Mapa de pendências dos novos fluxos do Quintal
 
-Atualizado em **18/10/2026**. Este arquivo é a fonte do **estado atual**; o [registro de execução](registro_execucao_fluxos_quintal_2026-10.md) guarda o histórico e as evidências detalhadas. Afirmações antigas do registro não substituem o estado abaixo.
+Atualizado em **19/10/2026**. Este arquivo é a fonte do **estado atual**; o [registro de execução](registro_execucao_fluxos_quintal_2026-10.md) guarda o histórico e as evidências detalhadas. Afirmações antigas do registro não substituem o estado abaixo.
 
-## Resumo e próxima etapa
+## Revisão de 18–19/10 — prioridade atual
+
+O resumo histórico abaixo registra o aceite anterior. Esta revisão reabre os fluxos relacionados; correções só serão concluídas após testes pertinentes.
+
+| Item | Estado | Falta / entrega |
+|---|---|---|
+| R01 · Pesca | Feito localmente | Sem slider; segurar/soltar; HUD com largura limitada e centralizada; contorno real das letras. Testes de pausa, retry e resultado passaram. |
+| R02 · Potes | Feito localmente | API recupera referências e reutiliza potes existentes sem criar novos pares; regressão passou. Prévia usa as cores do par, oculta a posição anterior e não altera o chão nem cria gato genérico. Potes vinculados aos gatos saem das decorações avulsas. Nenhum item histórico foi apagado arbitrariamente. |
+| R03 · Varinha | Feito localmente | Sem slider; HUD centralizada, arraste X/Y e perseguição por rotas livres. Validação dos dois eixos na API; testes de movimento vertical e obstáculos passaram. Capturas do cenário e de 320 px inspecionadas. |
+| R04 · Mercadinho | Feito localmente | Produto → pagamento → quantidade → confirmação. Mantidas proporções: lotes de 2 unidades; custo/ingredientes/prazo multiplicados. Insuficiência não cria pedido. Testes API e UI passaram. |
+| R05 · Melhorias | Feito localmente | Asset de melhoria junto às ações principais; testes de ações e enquadramento passaram. |
+| R06 · Seleção | Feito localmente | Círculo removido; contorno branco nos sprites e nos frames de animais. Capturas de planta, vaca, pote e Mercadinho inspecionadas. |
+| R07 · Edição | Feito localmente | Cabeçalho “Sair do modo edição”; Deselecionar recebe largura adequada e botões quebram entre ações. Captura de edição aprovada e inspecionada em 19/10. |
+| R08 · Bandejas | Feito localmente | Corrigido em 20/10: removido o recuo inferior duplicado do “+”; botão a 8 px da navegação ou da altura real da bandeja. Inventário/gatos/potes com limite de tela e rolagem; conteúdo do inventário tem altura própria e abas não quebram palavras. Escolhas de produção adaptam altura à tela. 20 regressões de menu/ações + 1 de inventário com navegação real, fonte 1,6× e telas 320×568/640×360 aprovadas; captura local inspecionada. |
+| R09 · Temporizadores | Feito localmente | Indicadores elevados com folga de 10 px entre o fim da barra e o topo calculado do objeto; área de toque acompanha a posição. Capturas de horta e residentes inspecionadas. |
+| R10 · Sessão | Parcial — ativação pela usuária | Cliente restaura perfil local, renova com chamada compartilhada, grava tokens juntos e impede renovação atrasada após logout; quatro testes passaram. Migração `20261018_14` e patch da API preparados, sem execução conforme pedido. [Ordem de ativação](../../gatalogo-ai-api/docs/session_rotation_activation.md). Prazo de 365 dias NÃO aplicado. |
+| R11 · Abertura | Feito localmente | Tela espera dados/sincronização e prontidão da cena/assets, com retry em falha. Teste só libera o toque após callback de prontidão; cena, inventário e edição aprovados. Ícone novo confirmado no bundle. |
+| R12 · Notificações / Social | Feito localmente | Ordem por data/ID, cursor estável, páginas incrementais e placeholders. Feed passa por posts privados sem encerrar cedo. Regressões de paginação/isolamento da API e store passaram; capturas de notificações e Social aprovadas e inspecionadas em 19/10. |
+| R13 · Assets fornecidos | Feito localmente | 46 PNGs conferidos e importados; ações, recursos, rações existentes, carinho, satisfação e carregamento usam as artes. Capturas atualizadas inspecionadas. Artes sem receita/mecânica correspondente ficam disponíveis, sem inventar novas regras. |
+
+**Estado desta revisão:** 12 itens feitos localmente; R10 depende da ativação preparada para a usuária. Testes/capturas locais não equivalem a validação manual em aparelho.
+
+**Validação acordada:** testes automatizados, inspeção de imagens e API existente. Execução manual, APK e celular ficam com a usuária. Não iniciar builds Android ou emuladores.
+
+## Resumo histórico dos 30 itens originais
 
 | Estado | Quantidade | Itens |
 |---|---:|---|
 | Feito localmente | 26 | F01, F02, F03, F04, F05, F07, F08, F09, V01, V02, V03, V04, V05, V06, V07, V08, V10, U01, U02, U03, U04, U06, U07, U08, U09, U10 |
-| Parcial | 4 | F06, V09, V11, U05 |
+| Validação manual pela usuária | 4 | F06, V09, V11, U05 |
 | Pendente | 0 | — |
 
 **Prioridade atual, conforme solicitação da usuária:** dos 17 parciais originais, **14 estão feitos localmente** (F05, F09, V01–V06, U01–U04, U09 e U10). Restam **V09, V11 e U05**, com validações em aparelho/integração discriminadas abaixo; não foram marcados como completos usando fixtures. U03/U04 foram encerrados localmente em 16/10. Com os gates de aparelho ainda abertos, **V10 e F07 foram encerrados localmente em 16/10**; **F04 foi encerrado localmente em 17/10**, com receitas e troca de frutas. **F08 encerrado localmente em 17/10**, com rotinas opcionais por desbloqueio. Com banco/API disponibilizados em 17/10, **F06** já tem nove testes HTTP, quatro PostgreSQL e cliente Flutter com perda de resposta/reinício aprovados; V07/V08 encerrados localmente em 18/10. Cliente conectado com perda de resposta/reinício e matriz local completa de câmera aprovados. Os quatro parciais conservam apenas as verificações físicas/app instalado explicitadas abaixo.
@@ -285,7 +309,7 @@ P1 = corrigir ou fechar antes de considerar os fluxos prontos. P2 = completar a 
 **Critério de aceite integral:** Hoje o servidor gera três frutas de uma vez por árvore: três frutos maduros são coerentes, não um bug por si só. Se houver quantidade variável no futuro, parametrizar a geometria. Uma árvore não recolhe a produção da outra.
 
 
-## Parcial — implementação ou validação restante
+## Validação manual restante — atribuída à usuária
 
 
 ### F06 · Validação integrada com API e banco reais
@@ -304,7 +328,7 @@ P1 = corrigir ou fechar antes de considerar os fluxos prontos. P2 = completar a 
 
 **Feito:** Em 18/10, quatro cenários contra a API ligada passaram: pesca com acerto, erro e prática, além de brincadeira. Espera real do servidor, rejeição de conclusão precoce/conta diferente e replay por outra sessão sem duplicar peixe/vínculo. Controles sobre a cena, enquadramento, estados distintos, própria pelagem/posição do gato, perseguição/alcance/descanso e resultado da API. Testes locais de controles e tempo em diferentes taxas de quadros.
 
-**Falta:** Validação conectada, toque/slider, baixa taxa de quadros, pausa/retomada e repetição em aparelho. Complementado por U01/U02.
+**Falta:** Validação conectada, segurar/soltar na pesca e arrastar a varinha em dois eixos, baixa taxa de quadros, pausa/retomada e repetição em aparelho. A usuária fará essa etapa; não executar APK/emulador. Complementado por U01/U02.
 
 **Critério de aceite integral:** Espera, jogo ativo, sucesso, falha, prática, repetição e pausa ficam claros. Testar segurar/soltar e slider em aparelho real, inclusive baixa taxa de quadros. Tratar o resultado da API como definitivo.
 
@@ -393,10 +417,10 @@ Na investigação original, uma chamada isolada ao serviço legado reproduziu `1
 
 - Origem fornecida: `C:/Users/Evelynn_Doescher/Downloads/game_refs`. As oito imagens foram copiadas para [referências locais de Kingshot](referencias/kingshot/), com correspondência de nomes em `manifest.json`.
 - Pontos observados: barras compactas sobre construções com tempo central de alto contraste; identificação clara do objeto; painéis de detalhe com título/nível, informação agrupada e ação principal evidente. Adaptar esses princípios à arte do Gatálogo, sem importar seus menus militares, publicidade ou excesso de indicadores.
-- Origem dos assets: `C:/Users/Evelynn_Doescher/Downloads/Quintal`. Conferidos 38 PNGs: 34 já existentes idênticos e quatro novos importados, sem alterar o conteúdo das imagens.
-- Novos arquivos: `action_rename.png` (lápis), `action_play.png` (varinha), `action_trade.png` (troca) e `action_upgrade.png` (melhoria). Pasta: `assets/quintal/ui/`; rastreabilidade em `import_manifest.json`.
-- Integração inicial realizada: botão Nome dos residentes, botão de brincar na ficha do gato, pagamento por Produtos e ações Ampliar/Melhorar usam essas artes pelo componente `QuintalArtwork`. Os 38 hashes da importação foram verificados; a busca no código `lib/` não encontrou dependências de Downloads nem URLs de arquivo externo.
-- A importação não encerra U10: conferir o uso efetivo nas telas reformadas e a ausência de dependência de arquivos externos.
+- Origem dos assets: `C:/Users/Evelynn_Doescher/Downloads/Quintal`. A revisão de 18/10 conferiu **46 PNGs**, substituindo o inventário anterior de 38. [Hashes e dimensões](assets_quintal_2026-10-18.json).
+- Importados para `assets/quintal/ui/`, com uso nas ações, recursos, carinho, satisfação, rações existentes e tela de carregamento. Varinha, troca e melhoria já existiam; a revisão inclui também os demais arquivos fornecidos.
+- Artes de rações sem receita correspondente permanecem disponíveis no projeto. A presença de um asset não cria uma receita nem altera o balanceamento.
+- Capturas locais usam os assets empacotados no app, sem depender da pasta Downloads.
 
 ## Evidências e limites da revisão
 

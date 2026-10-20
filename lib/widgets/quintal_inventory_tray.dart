@@ -120,7 +120,10 @@ class _QuintalInventoryTrayState extends State<QuintalInventoryTray> {
                             child: Stack(
                               alignment: Alignment.center,
                               children: [
-                                QuintalArtwork(art(e.id), size: 78),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: QuintalArtwork(art(e.id), size: 78),
+                                ),
                                 Positioned(
                                   right: 0,
                                   bottom: 0,
@@ -331,89 +334,105 @@ class _QuintalInventoryTrayState extends State<QuintalInventoryTray> {
       color: AppColors.surface,
       borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
       clipBehavior: Clip.antiAlias,
-      child: SizedBox(
-        height: 258,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 18, right: 6),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 18, right: 6),
+            child: Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Inventário',
+                    style: TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.textTitle,
+                    ),
+                  ),
+                ),
+                if (h.offline || h.productionOffline)
+                  const Tooltip(
+                    message: 'Último estoque salvo',
+                    child: Icon(Icons.cloud_off_outlined, size: 18),
+                  ),
+                IconButton(
+                  tooltip: 'Fechar bandeja',
+                  onPressed: widget.onClose,
+                  icon: const Icon(Icons.close, size: 19),
+                ),
+              ],
+            ),
+          ),
+          LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  const Expanded(
-                    child: Text(
-                      'Inventário',
-                      style: TextStyle(
-                        fontSize: 19,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.textTitle,
+                  for (final (index, label) in [
+                    'Decorações',
+                    'Rações',
+                    'Ingredientes',
+                  ].indexed)
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minWidth: constraints.maxWidth / 3,
                       ),
-                    ),
-                  ),
-                  if (h.offline || h.productionOffline)
-                    const Tooltip(
-                      message: 'Último estoque salvo',
-                      child: Icon(Icons.cloud_off_outlined, size: 18),
-                    ),
-                  IconButton(
-                    tooltip: 'Fechar bandeja',
-                    onPressed: widget.onClose,
-                    icon: const Icon(Icons.close, size: 19),
-                  ),
-                ],
-              ),
-            ),
-            Row(
-              children: [
-                for (final (index, label) in [
-                  'Decorações',
-                  'Rações',
-                  'Ingredientes',
-                ].indexed)
-                  Expanded(
-                    flex: const [10, 6, 12][index],
-                    child: InkWell(
-                      onTap: () {
-                        setState(() {
-                          tab = index;
-                          selected = null;
-                        });
-                        widget.onTabChanged?.call(index);
-                      },
-                      child: Container(
-                        alignment: Alignment.center,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(
+                      child: InkWell(
+                        onTap: () {
+                          setState(() {
+                            tab = index;
+                            selected = null;
+                          });
+                          widget.onTabChanged?.call(index);
+                        },
+                        child: Container(
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 10,
+                            horizontal: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(
+                                color: tab == index
+                                    ? AppColors.greenLink
+                                    : AppColors.borderLight,
+                                width: tab == index ? 3 : 1,
+                              ),
+                            ),
+                          ),
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            softWrap: false,
+                            style: TextStyle(
+                              fontSize: 13,
                               color: tab == index
                                   ? AppColors.greenLink
-                                  : AppColors.borderLight,
-                              width: tab == index ? 3 : 1,
+                                  : AppColors.textMedium,
+                              fontWeight: tab == index
+                                  ? FontWeight.w900
+                                  : FontWeight.w600,
                             ),
                           ),
                         ),
-                        child: Text(
-                          label,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: tab == index
-                                ? AppColors.greenLink
-                                : AppColors.textMedium,
-                            fontWeight: tab == index
-                                ? FontWeight.w900
-                                : FontWeight.w600,
-                          ),
-                        ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
-            const SizedBox(height: 6),
-            Expanded(child: tab == 0 ? widget.decorations : stock()),
-            const SizedBox(height: 8),
-          ],
-        ),
+          ),
+          const SizedBox(height: 6),
+          SizedBox(
+            height:
+                156 +
+                100 *
+                    (MediaQuery.textScalerOf(context).scale(1) - 1).clamp(0, 2),
+            child: tab == 0 ? widget.decorations : stock(),
+          ),
+          const SizedBox(height: 8),
+        ],
       ),
     ),
   );

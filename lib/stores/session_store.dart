@@ -20,6 +20,7 @@ class SessionStore extends ChangeNotifier {
     pushNotifications = PushNotificationService(this);
   }
 
+  static const _bundleKey = 'auth_session_v2';
   static const _accessKey = 'auth_access_token';
   static const _refreshKey = 'auth_refresh_token';
   static const _profileKey = 'auth_local_profile';
@@ -35,6 +36,8 @@ class SessionStore extends ChangeNotifier {
   }
 
   Future<String?>? _refreshing;
+  int _sessionEpoch = 0;
+  Future<void> _storageOperations = Future<void>.value();
 
   final AuthApiService _api;
   final FlutterSecureStorage _secureStorage;
@@ -59,12 +62,27 @@ class SessionStore extends ChangeNotifier {
     try {
       _autoSyncEnabled =
           await _secureStorage.read(key: _autoSyncKey) != 'false';
-      await pushNotifications.initialize();
+      unawaited(pushNotifications.initialize());
       _avatarUrl = await _secureStorage.read(key: _avatarKey);
-      final access = await _secureStorage.read(key: _accessKey);
-      final refresh = await _secureStorage.read(key: _refreshKey);
+      Map<String, dynamic>? bundle;
+      final stored = await _secureStorage.read(key: _bundleKey);
+      if (stored != null) {
+        try {
+          bundle = Map<String, dynamic>.from(jsonDecode(stored) as Map);
+        } catch (_) {
+          /* Fall back to the legacy credentials if present. */
+        }
+      }
+      final access =
+          bundle?['access_token'] as String? ??
+          await _secureStorage.read(key: _accessKey);
+      final refresh =
+          bundle?['refresh_token'] as String? ??
+          await _secureStorage.read(key: _refreshKey);
       if (access != null && refresh != null) {
-        final cached = await _secureStorage.read(key: _profileKey);
+        final cached = bundle == null
+            ? await _secureStorage.read(key: _profileKey)
+            : jsonEncode(bundle);
         if (cached != null) {
           try {
             final data = jsonDecode(cached) as Map;
@@ -79,6 +97,12 @@ class SessionStore extends ChangeNotifier {
           }
         }
         try {
+          if (_session != null) {
+            if (await accessToken() != null && _session != null) {
+              await _persist(_session!);
+            }
+            return;
+          }
           final account = await _api.me(access);
           _session = AuthSession(
             userId: account.userId,
@@ -205,10 +229,24 @@ class SessionStore extends ChangeNotifier {
 
   Future<String?> accessToken({bool refresh = false}) async {
     if (_session == null) return null;
-    if (!refresh) return _session!.accessToken;
+    if (!refresh && !_expiresSoon(_session!.accessToken)) {
+      return _session!.accessToken;
+    }
     return _refreshing ??= _refreshAccessToken().whenComplete(
       () => _refreshing = null,
     );
+  }
+
+  bool _expiresSoon(String token) {
+    try {
+      final payload = jsonDecode(
+        utf8.decode(base64Url.decode(base64Url.normalize(token.split('.')[1]))),
+      ) as Map;
+      return (payload['exp'] as num) * 1000 <=
+          DateTime.now().millisecondsSinceEpoch + 60000;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<String?> _refreshAccessToken() async {
@@ -221,7 +259,7 @@ class SessionStore extends ChangeNotifier {
       );
       if (_session != previous) return null;
       await _save(refreshed);
-      return refreshed.accessToken;
+      return identical(_session, refreshed) ? refreshed.accessToken : null;
     } on AuthApiException catch (error) {
       if (_session == previous &&
           (error.statusCode == 401 || error.statusCode == 403)) {
@@ -284,10 +322,7 @@ class SessionStore extends ChangeNotifier {
       accessToken: _session!.accessToken,
       refreshToken: _session!.refreshToken,
     );
-    await _secureStorage.write(
-      key: _profileKey,
-      value: jsonEncode({'user_id': _session!.userId, 'email': newEmail}),
-    );
+    await _persist(_session!);
     notifyListeners();
   }
 
@@ -306,24 +341,56 @@ class SessionStore extends ChangeNotifier {
   }
 
   Future<void> clearLocalSession() async {
+    _sessionEpoch++;
     _session = null;
     _avatarUrl = null;
-    await _secureStorage.delete(key: _accessKey);
-    await _secureStorage.delete(key: _refreshKey);
-    await _secureStorage.delete(key: _profileKey);
-    await _secureStorage.delete(key: _avatarKey);
+    await _withStorage(() async {
+      for (final key in [
+        _bundleKey,
+        _accessKey,
+        _refreshKey,
+        _profileKey,
+        _avatarKey,
+      ]) {
+        await _secureStorage.delete(key: key);
+      }
+    });
     notifyListeners();
   }
 
   Future<void> _save(AuthSession session) async {
+    final epoch = _sessionEpoch;
+    final accountChanged = _session?.userId != session.userId;
+    await _persist(session);
+    if (epoch != _sessionEpoch) return;
     _session = session;
-    await _secureStorage.write(key: _accessKey, value: session.accessToken);
-    await _secureStorage.write(key: _refreshKey, value: session.refreshToken);
-    await _secureStorage.write(
-      key: _profileKey,
-      value: jsonEncode({'user_id': session.userId, 'email': session.email}),
-    );
-    notifyListeners();
+    if (accountChanged) notifyListeners();
+  }
+
+  Future<void> _withStorage(Future<void> Function() operation) {
+    final next = _storageOperations.then((_) => operation());
+    _storageOperations = next.catchError((Object _) {});
+    return next;
+  }
+
+  Future<void> _persist(AuthSession session) {
+    final epoch = _sessionEpoch;
+    return _withStorage(() async {
+      if (epoch != _sessionEpoch) return;
+      // Persist the rotated pair together; serialize with logout deletion.
+      await _secureStorage.write(
+        key: _bundleKey,
+        value: jsonEncode({
+          'user_id': session.userId,
+          'email': session.email,
+          'access_token': session.accessToken,
+          'refresh_token': session.refreshToken,
+        }),
+      );
+      await _secureStorage.delete(key: _accessKey);
+      await _secureStorage.delete(key: _refreshKey);
+      await _secureStorage.delete(key: _profileKey);
+    });
   }
 
   Future<void> _run(Future<void> Function() action) async {

@@ -71,6 +71,7 @@ flutter:
     - assets/habitat/building-type-f.png
     - assets/habitat/decor/
     - assets/quintal/production/
+    # Includes the complete Quintal artwork import from 2026-10-18.
     - assets/quintal/ui/
     - assets/quintal/cow/
     - assets/quintal/hen-white/

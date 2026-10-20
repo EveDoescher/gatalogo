@@ -1,0 +1,370 @@
+[
+  {
+    "source": "action_collect_eggs.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "491a1d33418f765752acc40f380535c317487a64a6dc6bd4fd8ab8f7007a42fd"
+  },
+  {
+    "source": "action_collect_milk.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "8b1cc3fea9b104d539ea8f929864265fbbd0313ee338f1b87e2c88bff893864d"
+  },
+  {
+    "source": "action_cook_pot.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "90bfbd2e13c135852d5bd5865dd6776cc0736d6798fee559c1920d4336484a75"
+  },
+  {
+    "source": "action_expand_area.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "d1e723e061303ef4939d20206054485f113beff66ced96e8ff6743df6aab1501"
+  },
+  {
+    "source": "action_fish_rod.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "86207c4db09bc62fcde6e0dc42895d0553c9d0ce267045dd5e2b444045203f74"
+  },
+  {
+    "source": "action_harvest_basket.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "f895f94017404ab93bf5a7fb61557cdc29ea876735ddcd014e86489f64800fb6"
+  },
+  {
+    "source": "action_order_market.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "d14387c8ba3ef2ee442965f0e259c487595b59d188e68e961a9a2a26af4cf8ed"
+  },
+  {
+    "source": "action_pickup_delivery.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "fb8991b1a7b8c484bf72b9a2394132d00e52d7c86a88f7a06a876a0b2336f539"
+  },
+  {
+    "source": "action_plant_seedling.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "26b1686482e3aa35a482a801c43b3d5807cd544f8a8e9ac4c6a453d9a9c03feb"
+  },
+  {
+    "source": "action_production_queue.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "64247fc05907da04b0ddb8dfe901b35adabeaf1a41e06c4f869b1367de39e56b"
+  },
+  {
+    "source": "action_recipe_book.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "e6f7d64e53a5c0bde2590305ca7b1fd7f09c4bd6019205cced650ee7cc2c40eb"
+  },
+  {
+    "source": "action_refill_water.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "da0d021752d52630758e260b3e56ec15467829fc8687211afd79549a6165af42"
+  },
+  {
+    "source": "action_repair_tools.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "22741009d8e4bb1b396b34dc971e955348b761ce9f86e86770be3fcc2781d540"
+  },
+  {
+    "source": "action_serve_food.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "b5ca91c5b61d5bcb009cfb9817702b52ce66fab769172d6eff7c2285672cdd40"
+  },
+  {
+    "source": "action_water_can.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "9b683a809d597aa588a9017d484585504f810bbcad7952088ea2f6ed0869374a"
+  },
+  {
+    "source": "apple.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "44b7a08e7c96efa9ddf0af456b392e41c2a9a3a3618026ab8a0fc5e7956f885f"
+  },
+  {
+    "source": "carrot.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "957b5ab2a584f33e601c52fb0ba5b3e3f2306e8a310ea3b27656b7eb9a22a66a"
+  },
+  {
+    "source": "cat_carinho.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "44006000b64f309fe62bf1a20855b5f63e95b84a90e076540967f018fed0012c"
+  },
+  {
+    "source": "Cat_satisfaction.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "99f9f16cf709c9ca403109592ae746cd52b96d53bf58f8625f0b55390292eb04"
+  },
+  {
+    "source": "chicken.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "08376a94f3ebc347df8e0f92aacb4ada16e5cae60a5789e3edb8c8b159b4741f"
+  },
+  {
+    "source": "corn.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "54c0ef103b751d0bb810db1ee7a8c602214aa40e920dd9a69b4d9208d6cd5750"
+  },
+  {
+    "source": "egg.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "ac2dff09c17c602c8e69bc55a45c9f249bc3c845c74ffd30215742169a3fabd5"
+  },
+  {
+    "source": "fish.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "43072cfeb240a42b70929f2d6960dc3e33ff4cc2c26ba5a46ed147b244399ccb"
+  },
+  {
+    "source": "icon_app.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "9e0a011016e5b3295fceb2a22f3abd891ee55f2f5033f7beb9cee532957c329d"
+  },
+  {
+    "source": "meat.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "b10b9cc0998bc7b0ed0f4f1689d975476fb67f084b8b842ed93456a5c4124fdf"
+  },
+  {
+    "source": "melon.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "11ab6181c21710d2511e40ee2e8ee2c7053ef02ec020a6cfb2a4dcb7e6d21255"
+  },
+  {
+    "source": "mice.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "0f280574712c767840b8bd37ca3fa3c1cd3b5bd7177207c8be79f01084b712cf"
+  },
+  {
+    "source": "milk.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "19c79debd2adb979b91c050a7df751fa05906477e8fa3941a3acc0761f0e6b84"
+  },
+  {
+    "source": "name_edit.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "93e9ee91b71d6c7b0e4c74e2777193b8f18b71fc8183f6078f754567bc7e820a"
+  },
+  {
+    "source": "pear.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "11013238e8cb616f0a9fbdb71270fb96c7f5f411d2804202ee34f1384d18aeb7"
+  },
+  {
+    "source": "play.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "b86ee03514f799a4d27e8bf67ddcb2d71ef09f9db5db9b8190b9f9ac4f9d8617"
+  },
+  {
+    "source": "pumpkin.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "724fbe7e98a3c3be2fd66f230f42e506bd0b71c158a15e709f5a17ce4f5f2f75"
+  },
+  {
+    "source": "rabanete.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "41821f520c29019b5d5e5aff2c875819211f655d8299cbb1204221e0419ca6bb"
+  },
+  {
+    "source": "racao_abobora.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "7170267b8a32e5f0f538859b45d6bd87b950cc121755fac8ee5cfaad45217f3c"
+  },
+  {
+    "source": "racao_basica.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "6a88709d68d7656a78ee5dd3ff3816835adde5f961ad3a755e9980c807ae0513"
+  },
+  {
+    "source": "racao_carne.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "82f7072478966bd07d796fa0c3dee95e4f60b7048b02e0890d96d7affad5df26"
+  },
+  {
+    "source": "racao_cenoura.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "b0549eb2f7406407495152c7db2afe8f70d981c2d1615c61eff0e4b8d9e1d023"
+  },
+  {
+    "source": "racao_frango.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "b7c6be7c0e43fd8c312cbdfe629f56fbff3deb14e0ffb6404aad16363931508a"
+  },
+  {
+    "source": "racao_milho.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "78652fa66205886e50f6005c466a9e862f5051972fcae8bbae5f4e0ebd0b82b1"
+  },
+  {
+    "source": "racao_peixe.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "d1e9f4c730d08cf09e84c1ccfb90b6ce3a1d63bbbc9a3218474b6b52ae2a2c55"
+  },
+  {
+    "source": "racao_planta.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "28c63d55d0f2b10f16d2502c820156e401a3cf45c523aee8a4cec8657130f7ea"
+  },
+  {
+    "source": "racao_trigo.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "cb674601de5ca84da497817de2602da19ff131ef226ca162b20be20cbb9ec860"
+  },
+  {
+    "source": "ready.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "bbf0fb4e0b3cd535140808665fc867036ed51629d44f046185921c6662de1208"
+  },
+  {
+    "source": "trade.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "64d22e0e1390b3f9a6c62d4fa942567b6da5ec2d160b3e18c7447420adda5062"
+  },
+  {
+    "source": "upgrade.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "8714bdfb2df7ee618cae6192a85b5dae8aee9ff28d1e1d625eea2055a5efff34"
+  },
+  {
+    "source": "wheat.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "sha256": "3b554310284ce530275245b4b2c92ced3fd2244324cdafe8da8e8733e45fa67a"
+  }
+]

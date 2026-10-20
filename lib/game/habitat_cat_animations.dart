@@ -163,6 +163,7 @@ class HabitatCatFrame {
     double scale, {
     bool groundShadow = false,
     ui.Color? tint,
+    bool silhouette = false,
   }) {
     final destination = ui.Rect.fromLTWH(
       ground.dx - origin.dx * scale,
@@ -172,7 +173,10 @@ class HabitatCatFrame {
     );
     final paint = ui.Paint()..filterQuality = ui.FilterQuality.medium;
     if (!groundShadow && tint != null) {
-      paint.colorFilter = ui.ColorFilter.mode(tint, ui.BlendMode.modulate);
+      paint.colorFilter = ui.ColorFilter.mode(
+        tint,
+        silhouette ? ui.BlendMode.srcIn : ui.BlendMode.modulate,
+      );
     }
     canvas.drawImageRect(
       groundShadow ? shadow : image,

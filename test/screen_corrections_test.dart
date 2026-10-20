@@ -28,6 +28,7 @@ class FeedFixture extends SocialApiService {
   Future<List<Map<String, dynamic>>> feed({
     int limit = 20,
     String? cursor,
+    String? cursorId,
     String mode = 'all',
   }) async => [
     {

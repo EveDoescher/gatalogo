@@ -12,6 +12,7 @@ import '../services/quintal_cat_meal.dart';
 import '../services/product_api_service.dart';
 import '../theme/app_theme.dart';
 import 'habitat_object_balloon.dart';
+import 'quintal_bottom_tray.dart';
 import 'quintal_production_widgets.dart';
 import 'quintal_game_action.dart';
 import 'quintal_recipe_tile.dart';
@@ -24,10 +25,14 @@ class QuintalObjectOverlay extends StatefulWidget {
     required this.target,
     required this.onClose,
     required this.onFish,
+    this.onTrayChanged,
+    this.onTrayExtentChanged,
   });
   final HabitatGame game;
   final QuintalSceneTarget target;
   final VoidCallback onClose, onFish;
+  final ValueChanged<bool>? onTrayChanged;
+  final ValueChanged<double>? onTrayExtentChanged;
   @override
   State<QuintalObjectOverlay> createState() => _QuintalObjectOverlayState();
 }
@@ -45,6 +50,9 @@ class _QuintalObjectOverlayState extends State<QuintalObjectOverlay> {
         oldWidget.target.target != target.target) {
       game.previewConstruction(null, notify: false);
       docked = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) widget.onTrayChanged?.call(false);
+      });
       _needsFraming = true;
     }
   }
@@ -73,10 +81,13 @@ class _QuintalObjectOverlayState extends State<QuintalObjectOverlay> {
             onFish: widget.onFish,
             onConfirmed: game.showProductionAction,
             onConstructionPreview: game.previewConstruction,
-            onPanelChanged: (value) => setState(() {
-              if (docked && !value) _needsFraming = true;
-              docked = value;
-            }),
+            onPanelChanged: (value) {
+              setState(() {
+                if (docked && !value) _needsFraming = true;
+                docked = value;
+              });
+              widget.onTrayChanged?.call(value);
+            },
           ),
         ),
       ),
@@ -114,7 +125,12 @@ class _QuintalObjectOverlayState extends State<QuintalObjectOverlay> {
                 8,
                 MediaQuery.paddingOf(context).bottom + 12,
               ),
-              child: child!,
+              child: QuintalMeasuredHeight(
+                onChanged: (height) {
+                  if (mounted) widget.onTrayExtentChanged?.call(height + 12);
+                },
+                child: child!,
+              ),
             ),
           ),
         );
@@ -149,6 +165,9 @@ class _QuintalObjectActionsState extends State<QuintalObjectActions> {
   String? _panel, _message;
   bool _busy = false;
   int _quantity = 1;
+  Map<String, dynamic>? _order;
+  String? _orderPayment, _orderOption;
+  int _orderQuantity = 2;
   Timer? _timer;
   HabitatService get h => widget.habitat;
   QuintalSceneTarget get t => widget.target;
@@ -339,7 +358,11 @@ class _QuintalObjectActionsState extends State<QuintalObjectActions> {
       'Fazer pedido' => 'action_order_market',
       'Retirar' => 'action_pickup_delivery',
       'Ver projeto' || 'Consertar' || 'Construir' => 'action_repair_tools',
-      'Ampliar' || 'Melhorar' => 'action_upgrade',
+      'Ampliar' ||
+      'Melhorar' ||
+      'Melhorar espaço' ||
+      'Concluir ampliação' ||
+      'Ampliação' => 'action_upgrade',
       'Nome' => 'action_rename',
       'Produtos' || 'Frutas' => 'action_trade',
       'Concluir' => 'ready',
@@ -386,6 +409,12 @@ class _QuintalObjectActionsState extends State<QuintalObjectActions> {
       ),
     ),
   );
+  Map<String, dynamic>? get work => h
+      .productionRows('facilities')
+      .where((f) => f['kind'] == t.kind && (f['target_level'] as num? ?? 0) > 0)
+      .firstOrNull;
+  bool get workReady => work != null && ready(work!['ready_at']);
+
   Widget bar(List<Widget> children) => Padding(
     padding: const EdgeInsets.only(top: 6, bottom: 10),
     child: Wrap(
@@ -393,6 +422,21 @@ class _QuintalObjectActionsState extends State<QuintalObjectActions> {
       spacing: 4,
       runSpacing: 6,
       children: [
+        if (_panel == null &&
+            t.kind != 'cat' &&
+            t.role != 'build' &&
+            (offer != null || work != null))
+          button(
+            LucideIcons.hammer,
+            workReady
+                ? 'Concluir ampliação'
+                : work != null
+                ? 'Ampliação'
+                : 'Melhorar espaço',
+            () =>
+                workReady ? act('finish_build', upgradeKind) : open('upgrade'),
+          ),
+
         for (final (i, child) in children.indexed)
           Padding(
             padding: EdgeInsets.only(
@@ -406,6 +450,7 @@ class _QuintalObjectActionsState extends State<QuintalObjectActions> {
   void open(String panel) {
     setState(() {
       _panel = panel;
+      if (panel == 'orders') _order = null;
       _message = null;
     });
     widget.onConstructionPreview?.call(
@@ -882,82 +927,151 @@ class _QuintalObjectActionsState extends State<QuintalObjectActions> {
           ),
       ];
     }
-    if (_panel == 'orders') {
+    if (_panel == 'orders') return orderChoices();
+    return root();
+  }
+
+  List<Widget> orderChoices() {
+    final orders = h
+        .productionRows('orders', catalog: true)
+        .where((o) => h.expansionLevel >= (o['expansion'] as num? ?? 0))
+        .toList();
+    if (_order == null) {
       return [
-        for (final o
-            in h
-                .productionRows('orders', catalog: true)
-                .where((o) => h.expansionLevel >= (o['expansion'] as num))) ...[
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                QuintalArtwork(
-                  o['id'] == 'chicken' ? 'turkey' : 'meat-raw',
-                  size: 48,
-                ),
-                Expanded(
-                  child: Text(
-                    '${o['name']} · ${o['yield']} unidades',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              ],
+        status('O que deseja encomendar?'),
+        bar([
+          for (final raw in orders)
+            QuintalGameAction(
+              artwork: QuintalArtwork(raw['id'], size: 76),
+              label: raw['id'] == 'beef' ? 'Carne' : 'Frango',
+              onPressed: enabled
+                  ? () => setState(() {
+                      _order = Map<String, dynamic>.from(raw);
+                      _orderQuantity = (raw['yield'] as num).toInt();
+                      _orderPayment = _orderOption = null;
+                    })
+                  : null,
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: QuintalPrice(o),
-          ),
-          status('Pague com moedas ou escolha uma troca'),
-          status('Produtos: ${ingredients(o['products'])}'),
-          for (final option in o['product_options'] as List? ?? const [])
-            if (option['id'] != 'harvest') ...[
-              status('${option['name']}: ${ingredients(option['products'])}'),
-              if (option['facility'] != null &&
-                  h.facilityLevel(option['facility']) <
-                      (option['level'] as num))
-                status('Recupere o pomar para trocar frutas'),
-            ],
-          bar([
-            command(
-              LucideIcons.coins,
-              'Moedas',
-              'order',
-              o['id'],
-              data: {'payment': 'coins'},
-              available: h.balance >= (o['price'] as num),
-            ),
-            command(
-              LucideIcons.arrowLeftRight,
-              'Produtos',
-              'order',
-              o['id'],
-              data: {'payment': 'products'},
-              available: hasIngredients(o['products']),
-            ),
-            for (final option in o['product_options'] as List? ?? const [])
-              if (option['id'] != 'harvest')
-                command(
-                  LucideIcons.arrowLeftRight,
-                  option['name'],
-                  'order',
-                  o['id'],
-                  data: {'payment': 'products', 'product_option': option['id']},
-                  available:
-                      hasIngredients(option['products']) &&
-                      (option['facility'] == null ||
-                          h.facilityLevel(option['facility']) >=
-                              (option['level'] as num)),
-                ),
-          ]),
-        ],
+        ]),
       ];
     }
-    return root();
+    final o = _order!;
+    final unit = (o['yield'] as num).toInt();
+    final batches = _orderQuantity ~/ unit;
+    final options = (o['product_options'] as List? ?? const []);
+    final option = options.where((v) => v['id'] == _orderOption).firstOrNull;
+    final rawNeeds = (option?['products'] ?? o['products']) as Map;
+    final needs = {
+      for (final e in rawNeeds.entries)
+        e.key: (e.value as num).toInt() * batches,
+    };
+    final price = (o['price'] as num).toInt() * batches;
+    final seconds =
+        ((o['seconds'] ?? o['duration_seconds'] ?? 0) as num).toInt() * batches;
+    final enough = _orderPayment == 'coins'
+        ? h.balance >= price
+        : hasIngredients(needs);
+    return [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          QuintalArtwork(o['id'], size: 70),
+          Text(
+            o['id'] == 'beef' ? 'Carne' : 'Frango',
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          TextButton(
+            onPressed: enabled ? () => setState(() => _order = null) : null,
+            child: const Text('Trocar'),
+          ),
+        ],
+      ),
+      status('Como deseja pagar?'),
+      Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 8,
+        children: [
+          ChoiceChip(
+            label: const Text('Moedas'),
+            selected: _orderPayment == 'coins',
+            onSelected: enabled
+                ? (_) => setState(() {
+                    _orderPayment = 'coins';
+                    _orderOption = null;
+                  })
+                : null,
+          ),
+          for (final raw
+              in options.isEmpty
+                  ? [
+                      {'id': 'harvest', 'name': 'Produtos'},
+                    ]
+                  : options)
+            ChoiceChip(
+              label: Text(raw['name']),
+              selected:
+                  _orderPayment == 'products' && _orderOption == raw['id'],
+              onSelected:
+                  enabled &&
+                      (raw['facility'] == null ||
+                          h.facilityLevel(raw['facility']) >=
+                              (raw['level'] as num))
+                  ? (_) => setState(() {
+                      _orderPayment = 'products';
+                      _orderOption = raw['id'];
+                    })
+                  : null,
+            ),
+        ],
+      ),
+      if (_orderPayment != null) ...[
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconButton(
+              tooltip: 'Aumentar quantidade',
+              onPressed: enabled && _orderQuantity + unit <= 100
+                  ? () => setState(() => _orderQuantity += unit)
+                  : null,
+              icon: const Icon(LucideIcons.plus),
+            ),
+            Text(
+              '$_orderQuantity unidades',
+              key: const ValueKey('order-quantity'),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+            IconButton(
+              tooltip: 'Diminuir quantidade',
+              onPressed: enabled && _orderQuantity > unit
+                  ? () => setState(() => _orderQuantity -= unit)
+                  : null,
+              icon: const Icon(LucideIcons.minus),
+            ),
+          ],
+        ),
+        status(_orderPayment == 'coins' ? '$price moedas' : ingredients(needs)),
+        status(
+          'Entrega em ${seconds ~/ 3600}h ${(seconds % 3600) ~/ 60}min · lotes de $unit unidades',
+        ),
+        if (!enough)
+          status(
+            _orderPayment == 'coins'
+                ? 'Moedas insuficientes para esta quantidade.'
+                : 'Produtos insuficientes para esta quantidade.',
+          ),
+        FilledButton(
+          onPressed: enabled && enough
+              ? () => act('order', o['id'], {
+                  'payment': _orderPayment,
+                  'quantity': _orderQuantity,
+                  if (_orderPayment == 'products')
+                    'product_option': _orderOption ?? 'harvest',
+                })
+              : null,
+          child: const Text('Confirmar encomenda'),
+        ),
+      ],
+    ];
   }
 
   Widget preparation(Map<String, dynamic> task) {
@@ -1046,13 +1160,6 @@ class _QuintalObjectActionsState extends State<QuintalObjectActions> {
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: h,
     builder: (context, _) {
-      final work = h
-          .productionRows('facilities')
-          .where(
-            (f) => f['kind'] == t.kind && (f['target_level'] as num? ?? 0) > 0,
-          )
-          .firstOrNull;
-      final workReady = work != null && ready(work['ready_at']);
       final content = Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1116,29 +1223,20 @@ class _QuintalObjectActionsState extends State<QuintalObjectActions> {
                 mainAxisSize: MainAxisSize.min,
                 children: _panel == null
                     ? [
-                        ...root(),
-                        if (t.kind != 'cat' &&
-                            t.role != 'build' &&
-                            (offer != null || work != null))
-                          TextButton.icon(
-                            onPressed: () => open('upgrade'),
-                            icon: Icon(
-                              workReady
-                                  ? LucideIcons.check
-                                  : LucideIcons.hammer,
-                              size: 14,
-                            ),
-                            label: Text(
-                              work == null
-                                  ? 'Melhorar espaço'
-                                  : workReady
-                                  ? 'Concluir ampliação'
-                                  : 'Ampliando · ${remaining(work['ready_at'])}',
-                              style: const TextStyle(fontSize: 14),
-                            ),
+                        if (work != null && t.role != 'build')
+                          status(
+                            workReady
+                                ? 'Ampliação pronta!'
+                                : 'Ampliando · ${remaining(work!['ready_at'])}',
                           ),
+                        ...root(),
                       ]
-                    : choiceLayout(),
+                    : [
+                        ...choiceLayout(),
+                        if (h.offline || h.productionOffline)
+                          status('Sem conexão · progresso salvo'),
+                        if (_message != null) status(_message!),
+                      ],
               ),
             ),
           ),
@@ -1151,9 +1249,9 @@ class _QuintalObjectActionsState extends State<QuintalObjectActions> {
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
             ),
-          if (h.offline || h.productionOffline)
+          if (_panel == null && (h.offline || h.productionOffline))
             status('Sem conexão · progresso salvo'),
-          if (_message != null) status(_message!),
+          if (_panel == null && _message != null) status(_message!),
         ],
       );
       if (_panel == null) {
@@ -1174,7 +1272,13 @@ class _QuintalObjectActionsState extends State<QuintalObjectActions> {
         borderRadius: BorderRadius.circular(24),
         clipBehavior: Clip.antiAlias,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 300),
+          constraints: BoxConstraints(
+            maxHeight:
+                (MediaQuery.sizeOf(context).height -
+                        MediaQuery.paddingOf(context).vertical -
+                        100)
+                    .clamp(0, 420),
+          ),
           child: Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: content,

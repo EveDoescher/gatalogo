@@ -1,3 +1,5 @@
+import 'quintal_play_field.dart';
+
 import 'dart:math' as math;
 import 'dart:async';
 
@@ -47,16 +49,19 @@ class HabitatGame extends FlameGame {
   bool previewCat = false;
   String? previewCatId;
   Map<String, (int, int)> catSetPreview = {};
+  String? catSetPreviewCatId;
   int previewRotation = 0;
   bool previewValid = true;
   bool editing = false;
   bool reducedMotion = false;
-  String? selectedItemId;
+  String? selectedItemId, selectedCatId;
   QuintalSceneTarget? selectedProduction;
   final interactionPositions = ValueNotifier<int>(0);
   bool activityInProgress = false;
   String? _activityCatId;
   QuintalPlayLane? _activityLane;
+  QuintalPlayField? _activityField;
+  Offset? _wandPoint;
   QuintalPlayMotion? _activityPlay;
   double _activityTarget = .5, _activityTime = 0;
   int _activityDirection = 0;
@@ -84,12 +89,18 @@ class HabitatGame extends FlameGame {
           );
   }
 
+  void setPlayTarget(Offset point) {
+    _wandPoint = point;
+    _activityField?.aim(point, groundAnchor);
+  }
+
   void updatePlayActivity(
     QuintalPlayMotion motion,
     double target,
     double elapsed,
   ) {
     if (_removed || !hasWorldPlay) return;
+    _activityField?.advance(elapsed - _activityTime);
     _activityPlay = motion;
     _activityTarget = target;
     _activityTime = elapsed;
@@ -103,6 +114,7 @@ class HabitatGame extends FlameGame {
             : (delta.dy >= 0 ? 0 : 2);
       }
     }
+    if (_activityField != null) _activityDirection = _activityField!.direction;
     interactionPositions.value++;
   }
 
@@ -126,6 +138,14 @@ class HabitatGame extends FlameGame {
           free: habitat.walkableCells(),
           canTraverse: habitat.canTraverse,
         );
+        _activityField = QuintalPlayField(
+          walk.current,
+          walk.next,
+          walk.progress,
+          habitat.walkableCells(),
+          habitat.canTraverse,
+        );
+        _wandPoint = null;
         walk.cancelVisit();
         _activityPlay = QuintalPlayMotion();
         _activityTarget = .5;
@@ -144,7 +164,13 @@ class HabitatGame extends FlameGame {
   void endActivity() {
     final walk = _catWalks[_activityCatId];
     if (walk != null && _activityLane != null) {
-      final point = _activityLane!.sample(_activityPlay?.position ?? .5);
+      final point = _activityField == null
+          ? _activityLane!.sample(_activityPlay?.position ?? .5)
+          : (
+              from: _activityField!.current,
+              to: _activityField!.next,
+              fraction: _activityField!.progress,
+            );
       walk.cancelVisit();
       walk.current = point.from;
       walk.next = point.to;
@@ -154,6 +180,8 @@ class HabitatGame extends FlameGame {
     activityInProgress = false;
     _activityCatId = null;
     _activityLane = null;
+    _activityField = null;
+    _wandPoint = null;
     _activityPlay = null;
     if (!_removed) interactionPositions.value++;
   }
@@ -302,6 +330,23 @@ class HabitatGame extends FlameGame {
         'fence_simple_$direction',
     ]);
     _preloadVisible();
+  }
+
+  Future<void> prepareVisibleAssets() async {
+    await sprites.prepareCatCoats(_visibleCatCoats);
+    await _preloadProduction();
+    final placed = habitat.items.where((item) => item.isPlaced).toList();
+    final paths = {
+      for (final item in placed.where((i) => habitat.definition(i.sku).isPath))
+        (item.x!, item.y!): item.sku,
+    };
+    await sprites.preloadReady(
+      placed.map(
+        (item) => habitat.definition(item.sku).isPath
+            ? _pathKey(item, paths)
+            : _itemKey(item),
+      ),
+    );
   }
 
   void _preloadVisible() {
@@ -574,7 +619,10 @@ class HabitatGame extends FlameGame {
   Offset _catGroundPosition(int index, (int, int) cell) {
     final catId = habitat.selectedCatIds[index];
     if (catId == _activityCatId && _activityLane != null) {
-      return _playGround(_activityPlay?.position ?? .5);
+      final point = _activityField?.position;
+      return point == null
+          ? _playGround(_activityPlay?.position ?? .5)
+          : _productionGround(point.dx, point.dy);
     }
     final walk = _catWalks[catId];
     final point = walk == null
@@ -867,19 +915,6 @@ class HabitatGame extends FlameGame {
 
     final scene = <_SceneSprite>[];
     _addProductionScene(canvas, scene);
-    if (selectedProduction case final target?) {
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: productionFocus(target),
-          width: tileWidth * .8,
-          height: tileHeight * .8,
-        ),
-        Paint()
-          ..color = const Color(0xffffefb0)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2,
-      );
-    }
     final outside = _ambientWorld;
     final region = sceneryRegion;
     for (final decor in outside.decorationsWithin(
@@ -1008,6 +1043,11 @@ class HabitatGame extends FlameGame {
       final type = habitat.definition(item.sku);
       if (type.isGround) continue;
       final catId = item.careState['cat_id']?.toString();
+      if (catSetPreviewCatId != null &&
+          catId == catSetPreviewCatId &&
+          (item.sku == 'food_bowl' || item.sku == 'water_bowl')) {
+        continue;
+      }
       final amount = catId == null || _catMeals[catId]?.bowlId != item.id
           ? null
           : _mealAmount(catId);
@@ -1034,7 +1074,12 @@ class HabitatGame extends FlameGame {
             _itemKey(item),
             itemFocus(item),
             _itemScale(type, key: _itemKey(item)),
-            selected: editing && item.id == selectedItemId,
+            selected:
+                (editing && item.id == selectedItemId) ||
+                (selectedProduction?.kind == 'cat' &&
+                    selectedProduction?.target == catId &&
+                    selectedProduction?.role ==
+                        (item.sku == 'water_bowl' ? 'water_cat' : 'food_cat')),
           ),
         );
       }
@@ -1051,6 +1096,7 @@ class HabitatGame extends FlameGame {
           _catGroundPosition(index, cells[index]),
           _animatedCatScale,
           destination: _catBounds(index, cells[index]),
+          selected: selectedCatId == cat.id,
           catFrame: _catFrame(index),
           elevation: _catElevation(index),
           depthOffset: _catWalks[cat.id]?.visiting == true ? 0.5 : 0,
@@ -1088,6 +1134,20 @@ class HabitatGame extends FlameGame {
             .bounds(entry.ground - Offset(0, entry.elevation), entry.scale)
             .overlaps(viewport)) {
           continue;
+        }
+        if (entry.selected) {
+          for (var i = 0; i < 12; i++) {
+            final angle = i * math.pi / 6;
+            frame.paint(
+              canvas,
+              entry.ground -
+                  Offset(0, entry.elevation) +
+                  Offset(math.cos(angle), math.sin(angle)) * 2.5,
+              entry.scale,
+              tint: Colors.white,
+              silhouette: true,
+            );
+          }
         }
         frame.paint(
           canvas,
@@ -1134,10 +1194,6 @@ class HabitatGame extends FlameGame {
     _drawPreview(canvas);
     for (final entry in catSetPreview.entries) {
       final point = groundAnchor(entry.value.$1, entry.value.$2);
-      canvas.drawPath(
-        _cellDiamond(entry.value.$1, entry.value.$2),
-        Paint()..color = const Color(0x8852783c),
-      );
       final scale = entry.key.startsWith('production:crafted-')
           ? sprites.worldScale(entry.key, tileWidth)
           : tileWidth * .65 / sprites.bounds(entry.key).height;
@@ -1189,7 +1245,9 @@ class HabitatGame extends FlameGame {
     if (_activityLane != null) {
       final wand = sprites.cached('ui:action_play');
       if (wand != null) {
-        final point = _playGround(_activityTarget) - Offset(0, tileWidth * .72);
+        final point =
+            _wandPoint ??
+            _playGround(_activityTarget) - Offset(0, tileWidth * .72);
         final bounds = Rect.fromCenter(
           center: point,
           width: tileWidth * .9,

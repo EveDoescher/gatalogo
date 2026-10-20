@@ -1,3 +1,5 @@
+import '../widgets/feed_loading_placeholder.dart';
+import '../stores/notification_store.dart';
 import '../widgets/botanical_scene.dart';
 import '../widgets/community_post_card.dart';
 import '../widgets/illustrated_home_components.dart';
@@ -183,7 +185,7 @@ class _SocialPageState extends State<SocialPage> {
       final items = await _api.feed(limit: 15, mode: mode);
       if (mounted && generation == _feedGeneration) {
         setState(() {
-          _feed = items;
+          _feed = items..sort(NotificationStore.newestFirst);
           _hasMore = items.length >= 15;
           _error = null;
         });
@@ -200,7 +202,7 @@ class _SocialPageState extends State<SocialPage> {
   }
 
   Future<void> _loadMore() async {
-    if (_isLoadingMore || !_hasMore || _feed.isEmpty) return;
+    if (_loading || _isLoadingMore || !_hasMore || _feed.isEmpty) return;
     final generation = _feedGeneration;
     final mode = _queryMode;
     final lastItem = _feed.last;
@@ -209,7 +211,12 @@ class _SocialPageState extends State<SocialPage> {
 
     setState(() => _isLoadingMore = true);
     try {
-      final moreItems = await _api.feed(limit: 15, cursor: cursor, mode: mode);
+      final moreItems = await _api.feed(
+        limit: 15,
+        cursor: cursor,
+        cursorId: lastItem['id']?.toString(),
+        mode: mode,
+      );
       if (mounted && generation == _feedGeneration) {
         setState(() {
           final existingIds = _feed.map((it) => it['id']?.toString()).toSet();
@@ -217,13 +224,16 @@ class _SocialPageState extends State<SocialPage> {
               .where((it) => !existingIds.contains(it['id']?.toString()))
               .toList();
           _feed.addAll(newUnique);
+          _feed.sort(NotificationStore.newestFirst);
           _hasMore = moreItems.length >= 15;
         });
       }
     } catch (_) {
       // Ignora falha de paginação silenciosamente
     } finally {
-      if (mounted) setState(() => _isLoadingMore = false);
+      if (mounted && generation == _feedGeneration) {
+        setState(() => _isLoadingMore = false);
+      }
     }
   }
 
@@ -986,7 +996,7 @@ class _SocialPageState extends State<SocialPage> {
                     if (_loading && _feed.isEmpty)
                       const SliverFillRemaining(
                         hasScrollBody: false,
-                        child: Center(child: CircularProgressIndicator()),
+                        child: FeedLoadingPlaceholder(),
                       )
                     else if (_feed.isEmpty && _error == null)
                       const SliverFillRemaining(
@@ -1016,7 +1026,7 @@ class _SocialPageState extends State<SocialPage> {
                       const SliverToBoxAdapter(
                         child: Padding(
                           padding: EdgeInsets.all(16),
-                          child: Center(child: CircularProgressIndicator()),
+                          child: FeedLoadingPlaceholder(),
                         ),
                       ),
                   ],

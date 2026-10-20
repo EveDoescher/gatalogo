@@ -6,7 +6,8 @@ enum QuintalPlayPhase { watching, chasing, reaching, resting }
 
 /// A short response to the player's movement, never a source of rewards.
 class QuintalPlayMotion {
-  double position = .5;
+  double position = .5, positionY = .5;
+  double _lastTargetY = .5;
   int direction = 3;
   QuintalPlayPhase phase = QuintalPlayPhase.watching;
   double _phaseTime = 0, _movement = 0, _lastTarget = .5;
@@ -21,15 +22,19 @@ class QuintalPlayMotion {
   }
 
   void reset() {
-    position = _lastTarget = .5;
+    position = _lastTarget = positionY = _lastTargetY = .5;
     direction = 3;
     phase = QuintalPlayPhase.watching;
     _phaseTime = _movement = 0;
   }
 
-  void advance(double target, double seconds) {
+  void advance(double target, double seconds, {double targetY = .5}) {
+    targetY = targetY.clamp(0, 1);
     target = target.clamp(0, 1);
-    _movement += (target - _lastTarget).abs();
+    _movement += math.sqrt(
+      math.pow(target - _lastTarget, 2) + math.pow(targetY - _lastTargetY, 2),
+    );
+    _lastTargetY = targetY;
     _lastTarget = target;
     var remaining = seconds;
     while (remaining > 0) {
@@ -51,10 +56,14 @@ class QuintalPlayMotion {
         continue;
       }
       final gap = target - position;
-      if (gap.abs() > .035) {
+      final gapY = targetY - positionY;
+      if (math.sqrt(gap * gap + gapY * gapY) > .035) {
         phase = QuintalPlayPhase.chasing;
-        direction = gap > 0 ? 3 : 1;
+        direction = gap.abs() >= gapY.abs()
+            ? (gap > 0 ? 3 : 1)
+            : (gapY > 0 ? 0 : 2);
         position = QuintalGameMotion.follow(position, target, step);
+        positionY = QuintalGameMotion.follow(positionY, targetY, step);
       } else if (_movement >= .12) {
         phase = QuintalPlayPhase.reaching;
         _phaseTime = _movement = 0;

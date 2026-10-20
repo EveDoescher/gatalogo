@@ -14,13 +14,18 @@ class QuintalPlayArena extends StatelessWidget {
     required this.lift,
     required this.caption,
     this.onTarget,
-    this.showGround = true,
+    this.onTargetPoint,
+    this.positionY = .5,
+    this.targetY = .5,
+    this.showGround = false,
   });
   final Widget cat;
   final double position, target, lift;
   final String caption;
   final ValueChanged<double>? onTarget;
   final bool showGround;
+  final double positionY, targetY;
+  final ValueChanged<Offset>? onTargetPoint;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -54,18 +59,28 @@ class QuintalPlayArena extends StatelessWidget {
             final catWidth = catHeight * 120 / 140;
             final wandSize = math.min(64.0, catWidth * .6);
             final travel = math.max(1.0, box.maxWidth - catWidth);
-            void point(Offset local) => onTarget?.call(
-              ((local.dx - catWidth / 2) / travel).clamp(0, 1),
+            final verticalTravel = math.max(
+              1.0,
+              box.maxHeight - catHeight - 20,
             );
+            void point(Offset local) {
+              final value = Offset(
+                ((local.dx - catWidth / 2) / travel).clamp(0, 1),
+                ((local.dy - catHeight / 2) / verticalTravel).clamp(0, 1),
+              );
+              onTargetPoint?.call(value);
+              onTarget?.call(value.dx);
+            }
+
             return GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onPanStart: onTarget == null
+              onPanStart: onTarget == null && onTargetPoint == null
                   ? null
                   : (details) => point(details.localPosition),
-              onPanUpdate: onTarget == null
+              onPanUpdate: onTarget == null && onTargetPoint == null
                   ? null
                   : (details) => point(details.localPosition),
-              onTapDown: onTarget == null
+              onTapDown: onTarget == null && onTargetPoint == null
                   ? null
                   : (details) => point(details.localPosition),
               child: Stack(
@@ -84,7 +99,7 @@ class QuintalPlayArena extends StatelessWidget {
                       ),
                     ),
                   Positioned(
-                    bottom: base + lift,
+                    top: positionY * verticalTravel - lift,
                     left: position * travel,
                     child: SizedBox(
                       width: catWidth,
@@ -93,10 +108,7 @@ class QuintalPlayArena extends StatelessWidget {
                     ),
                   ),
                   Positioned(
-                    bottom: math.min(
-                      base + catHeight * .85,
-                      math.max(0, box.maxHeight - wandSize),
-                    ),
+                    top: targetY * verticalTravel + (catHeight - wandSize) / 2,
                     left: target * travel + (catWidth - wandSize) / 2,
                     child: IgnorePointer(
                       child: QuintalArtwork('action_play', size: wandSize),
