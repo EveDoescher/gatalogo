@@ -20,6 +20,7 @@ class AuthenticatedApiClient {
     required String signInMessage,
     required String connectionMessage,
     bool retried = false,
+    Exception Function(http.Response)? responseError,
   }) async {
     final token = await session.accessToken();
     if (token == null) throw error(signInMessage);
@@ -54,10 +55,11 @@ class AuthenticatedApiClient {
         signInMessage: signInMessage,
         connectionMessage: connectionMessage,
         retried: true,
+        responseError: responseError,
       );
     }
     if (!accepted.contains(response.statusCode)) {
-      throw error(_errorMessage(response));
+      throw responseError?.call(response) ?? error(_errorMessage(response));
     }
     return response;
   }

@@ -30,6 +30,14 @@ class QuintalInventoryTray extends StatefulWidget {
 class _QuintalInventoryTrayState extends State<QuintalInventoryTray> {
   late int tab = widget.initialTab;
   String? selected;
+  final _detailsController = ScrollController();
+
+  @override
+  void dispose() {
+    _detailsController.dispose();
+    super.dispose();
+  }
+
   HabitatService get h => widget.habitat;
 
   String name(String id) => id.startsWith('ration:')
@@ -211,8 +219,10 @@ class _QuintalInventoryTrayState extends State<QuintalInventoryTray> {
       child: Text(label),
     );
     return Scrollbar(
+      controller: _detailsController,
       thumbVisibility: true,
       child: ListView(
+        controller: _detailsController,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
           Row(

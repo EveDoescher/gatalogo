@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../config/api_config.dart';
+import 'remote_avatar_image.dart';
 import 'botanical_scene.dart';
 
 class HomeArt {
@@ -75,11 +75,6 @@ class FramedUserAvatar extends StatelessWidget {
     if (preset != null) {
       return HomeArt.image('${preset}_moldura', width: size, height: size);
     }
-    final fullUrl = url == null
-        ? null
-        : url!.startsWith('http')
-        ? url!
-        : '${ApiConfig.baseUrl}$url';
     final placeholder = Icon(
       LucideIcons.userRound,
       color: HomeArt.green,
@@ -103,13 +98,11 @@ class FramedUserAvatar extends StatelessWidget {
                       fit: BoxFit.cover,
                       errorBuilder: (_, _, _) => placeholder,
                     )
-                  : fullUrl != null && url!.isNotEmpty
-                  ? Image.network(
-                      fullUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => placeholder,
-                    )
-                  : Center(child: placeholder),
+                  : RemoteAvatarImage(
+                      url: url,
+                      fallback: placeholder,
+                      centerFallback: true,
+                    ),
             ),
           ),
         ],

@@ -10,7 +10,7 @@ import 'illustrated_home_components.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../config/api_config.dart';
+import 'remote_avatar_image.dart';
 import '../models/cat.dart';
 import '../pages/profile_page.dart';
 import '../stores/cat_store.dart';
@@ -324,12 +324,6 @@ class UserAvatarButton extends StatelessWidget {
       animation: sessionStore,
       builder: (context, _) {
         final avatarUrl = sessionStore.avatarUrl;
-        final hasAvatar = avatarUrl != null && avatarUrl.isNotEmpty;
-        final fullUrl = hasAvatar
-            ? (avatarUrl.startsWith('http')
-                  ? avatarUrl
-                  : '${ApiConfig.baseUrl}$avatarUrl')
-            : null;
 
         return InkWell(
           onTap: () => Navigator.push(
@@ -354,27 +348,18 @@ class UserAvatarButton extends StatelessWidget {
                     ),
                   ),
                   child: ClipOval(
-                    child: hasAvatar
-                        ? Image.network(
-                            fullUrl!,
-                            width: size,
-                            height: size,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Center(
-                              child: Icon(
-                                LucideIcons.user,
-                                size: size * 0.48,
-                                color: AppColors.textLight,
-                              ),
-                            ),
-                          )
-                        : Center(
-                            child: Icon(
-                              LucideIcons.user,
-                              size: size * 0.48,
-                              color: AppColors.textLight,
-                            ),
-                          ),
+                    child: RemoteAvatarImage(
+                      url: avatarUrl,
+                      width: size,
+                      height: size,
+                      fallback: Center(
+                        child: Icon(
+                          LucideIcons.user,
+                          size: size * 0.48,
+                          color: AppColors.textLight,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
         );

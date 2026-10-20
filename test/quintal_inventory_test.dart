@@ -204,8 +204,12 @@ void main() {
             findsOneWidget,
           );
           final tray = tester.getRect(find.byType(QuintalInventoryTray));
-          expect(tray.height, 258);
-          expect(tray.top, greaterThan(300));
+          // Large accessibility text expands the tray while preserving scene space.
+          expect(tray.height, lessThanOrEqualTo(568 * .6));
+          expect(tray.top, greaterThanOrEqualTo(568 * .4));
+          final scrollbar = tester.widget<Scrollbar>(find.byType(Scrollbar));
+          expect(scrollbar.controller, isNotNull);
+          expect(scrollbar.controller!.positions, hasLength(1));
           final name = 'quintal_inventory_detail_${tab}_${width.toInt()}';
           await tester.runAsync(() async {
             await GoogleFonts.pendingFonts();
