@@ -99,3 +99,7 @@ O endereço local padrão continua disponível apenas em desenvolvimento.
 
 O mapa dos fluxos, medições de consultas e oportunidades de melhoria interna está
 em [docs/performance_flows.md](docs/performance_flows.md).
+
+## Plano de testes de eficiência
+
+Cenários para revisão antes da execução: [latência, carga, dados, segurança, celular e mutação de código](docs/test_plan_efficiency.md). O plano distingue cobertura existente de medições futuras.
