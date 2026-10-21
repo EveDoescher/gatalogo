@@ -1436,6 +1436,10 @@ class HabitatGame extends FlameGame {
         };
   }
 
+  /// Canvas bounds shared by the production painter and scene interactions.
+  Rect productionBadgeBounds(QuintalSceneTarget target) =>
+      _productionBadgeRect(target);
+
   QuintalSceneTarget? productionObjectAt(Offset point) {
     if (habitat.production.isEmpty) return null;
     final toolAreas = _productionToolClearances;

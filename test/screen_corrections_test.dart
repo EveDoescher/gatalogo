@@ -1,3 +1,5 @@
+import 'support/habitat_ready.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:catlogue/app.dart';
@@ -224,9 +226,11 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 400));
       expect(tester.takeException(), isNull);
-      await tester.tap(find.text('Quintal').last);
+      await waitForHabitatReady(tester);
+      await tester.tap(find.byTooltip('Quintal'));
       await tester.pump(const Duration(milliseconds: 400));
       expect(find.text('Um cantinho para descansar'), findsNothing);
+      await waitForHabitatReady(tester);
       expect(find.byTooltip('Abrir ações do Quintal'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.tap(find.byTooltip('Ajuda do Quintal'));

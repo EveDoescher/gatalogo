@@ -206,9 +206,7 @@ void main() {
             scene.productionFocus(focus),
             sprites.worldScale(building, scene.tileWidth),
           );
-          final badge =
-              scene.productionFocus(focus) -
-              Offset(0, scene.productionObjectHeight(focus) + 18);
+          final badge = scene.productionBadgeBounds(focus).center;
           expect(badge.dy + 44, lessThan(bounds.top));
           for (final dx in [-24.0, 24.0]) {
             expect(

@@ -166,9 +166,7 @@ void main() {
         final works = scene.productionTargets.singleWhere(
           (t) => t.kind == 'garden' && t.role == 'build',
         );
-        final badge =
-            scene.productionFocus(works) -
-            Offset(0, scene.productionObjectHeight(works) + 18);
+        final badge = scene.productionBadgeBounds(works).center;
         expect(scene.productionObjectAt(badge)?.role, 'build');
         final name = 'quintal_garden_expanding_$end';
         captures.add(name);

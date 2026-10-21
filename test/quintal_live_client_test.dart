@@ -96,8 +96,14 @@ void main() {
         await showMarket();
         await tester.tap(find.text('Fazer pedido'));
         await tester.pump();
+        await tester.ensureVisible(find.text('Frango').first);
+        await tester.tap(find.text('Frango').first);
+        await tester.pump();
         await tester.ensureVisible(find.text('Frutas').first);
         await tester.tap(find.text('Frutas').first);
+        await tester.pump();
+        await tester.ensureVisible(find.text('Confirmar encomenda'));
+        await tester.tap(find.text('Confirmar encomenda'));
         await tester.pump();
         for (var i = 0; i < 200 && h.productionBusy; i++) {
           await tester.runAsync(
@@ -128,6 +134,7 @@ void main() {
         await tester.runAsync(
           () => h.produce('order', 'chicken', {
             'payment': 'products',
+            'quantity': 2,
             'product_option': 'fruit',
           }),
         );

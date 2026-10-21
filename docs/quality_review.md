@@ -58,7 +58,7 @@ O inventário completo está em `quality_inventory.md`. Os itens arquiteturais a
 - Comparação dos nomes das falhas: **nenhuma falha nova em relação à execução inicial**.
 - Passaram após a correção: detalhes do inventário e cenário visual amplo de ações/estoque no Quintal.
 
-Permanecem falhando, também na base anterior:
+Falhas presentes na etapa de 20/10, corrigidas na atualização de 21/10 abaixo:
 
 | Teste | Sintoma observado |
 |---|---|
@@ -69,4 +69,40 @@ Permanecem falhando, também na base anterior:
 | `test/quintal_rewards_visual_test.dart` | Recibo de recompensa permanece pendente |
 | `test/screen_corrections_test.dart` | Busca por texto de navegação sem candidato; exceções de construção no cenário |
 
-Essas falhas e as extrações arquiteturais maiores permanecem como dívida explícita. A suíte completa não está verde. Não foram executados builds nativos nem validação em aparelho real.
+Na etapa de 20/10, essas falhas ainda estavam pendentes. A atualização de 21/10 abaixo registra as correções; as extrações arquiteturais maiores continuam mapeadas. Não foram executados builds nativos nem validação em aparelho real.
+
+## Complemento de validação — 21/10/2026
+
+As seis falhas da etapa anterior passaram na rodada focada, com **18 testes aprovados**:
+
+- Centralizada em `test/support/habitat_ready.dart` a espera pela cena sincronizada,
+  inclusive quando pré-carregada fora da aba ativa. Isso evita toques bloqueados
+  pelas telas de carregamento e é compartilhado pelos testes de página, navegação e recompensa.
+- Os testes de navegação usam o tooltip acessível de Quintal, que permanece
+  disponível quando o layout compacto oculta o rótulo visual.
+- O teste de edição usa as ações atuais Editar/Concluir edição e verifica o estado
+  da cena; abrir o inventário sozinho não implica entrar em edição.
+- `HabitatGame.productionBadgeBounds` expõe a geometria já utilizada pelo pintor e
+  pela seleção. Os testes de horta/cozinha usam o centro real do indicador em vez
+  de repetir a posição antiga com deslocamento fixo.
+- O teste live percorre a escolha atual de produto, pagamento e confirmação e
+  reproduz a quantidade original no replay após reinício.
+
+A execução isolada da API teve **286 testes aprovados e nenhum ignorado**, incluindo
+este teste live com dois processos Flutter: resposta perdida após commit, retomada
+pelo cache SQLite, reutilização da chave e isolamento entre contas.
+
+### Resultado atual
+
+- Suíte completa: **261 aprovados, 6 condicionais ignorados e zero falhas**.
+- As seis falhas observadas em 20/10 foram resolvidas e passaram também na execução completa.
+- `flutter analyze --no-pub`: **nenhum problema encontrado**.
+- Os seis condicionais padrão são quatro capturas opcionais, um preview que exige
+  fonte específica e o cliente live que depende de contas descartáveis fornecidas
+  pelo executor Python. Este cliente live foi executado e aprovado na integração
+  de 286 testes da API; não permanece sem validação por causa do skip padrão.
+- Integrações da API: **286 aprovados, nenhum ignorado, nenhuma falha**, em PostgreSQL/API
+  descartáveis. O executor e a documentação estão no repositório da API.
+
+As refatorações maiores listadas no mapa de arquitetura continuam pendentes;
+a passagem dos testes não significa que toda a dívida arquitetural foi eliminada.

@@ -1,11 +1,11 @@
+import 'support/habitat_ready.dart';
+
 import 'package:catlogue/data/cat_database.dart';
 import 'package:catlogue/pages/habitat_page.dart';
 import 'package:catlogue/services/habitat_service.dart';
 import 'package:catlogue/stores/cat_store.dart';
 import 'package:catlogue/stores/session_store.dart';
 import 'package:flutter/material.dart';
-import 'package:flame/game.dart';
-import 'package:catlogue/game/habitat_game.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -59,7 +59,7 @@ void main() {
         ),
       ),
     );
-    await tester.pump(const Duration(milliseconds: 300));
+    final game = await waitForHabitatReady(tester);
     expect(find.text('Um cantinho para descansar'), findsNothing);
     expect(find.text('Inventário'), findsNothing);
     expect(find.byTooltip('Aproximar'), findsNothing);
@@ -71,9 +71,14 @@ void main() {
     expect(find.text('Loja'), findsOneWidget);
     expect(find.text('Gatos'), findsOneWidget);
 
+    await tester.tap(find.text('Editar'));
+    await tester.pump();
+    expect(game.editing, isTrue);
+    await tester.tap(find.byTooltip('Abrir ações do Quintal'));
+    await tester.pump();
     await tester.tap(find.text('Inventário'));
     await tester.pump();
-    expect(find.text('Modo edição'), findsOneWidget);
+    expect(game.editing, isTrue);
     expect(find.text('Inventário'), findsOneWidget);
 
     habitat.items = [
@@ -108,11 +113,6 @@ void main() {
     await tester.pump();
     await tester.tap(find.text('Recolher chão'));
     await tester.pump();
-    final game =
-        (tester.widget(
-              find.byWidgetPredicate((w) => w is GameWidget),
-            ) as GameWidget).game
-            as HabitatGame;
     final scene = find.byWidgetPredicate(
       (w) => w is GestureDetector && w.onScaleStart != null,
     );
@@ -144,7 +144,9 @@ void main() {
       reason: 'an intentional tap must collect ground after the camera gesture',
     );
     await habitat.place('path-0', 4, 4, 0);
-    await tester.tap(find.text('Modo edição'));
+    await tester.tap(find.byTooltip('Abrir ações do Quintal'));
+    await tester.pump();
+    await tester.tap(find.text('Concluir edição'));
     await tester.pump();
     await tester.dragFrom(
       tester.getTopLeft(scene) + game.groundAnchor(4, 4),

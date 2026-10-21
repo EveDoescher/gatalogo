@@ -1,3 +1,5 @@
+import 'support/habitat_ready.dart';
+
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
@@ -6,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flame/game.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:catlogue/game/habitat_game.dart';
 import 'package:catlogue/game/habitat_sprites.dart';
@@ -153,20 +154,7 @@ void main() {
             ),
           );
           await tester.pump();
-          final game =
-              (tester.widget(
-                    find.byWidgetPredicate((w) => w is GameWidget),
-                  ) as GameWidget).game
-                  as HabitatGame;
-          var loaded = false;
-          Future<void>.value(game.toBeLoaded()).then((_) => loaded = true);
-          for (var attempt = 0; attempt < 100 && !loaded; attempt++) {
-            await tester.runAsync(
-              () => Future<void>.delayed(const Duration(milliseconds: 50)),
-            );
-            await tester.pump(const Duration(milliseconds: 50));
-          }
-          expect(loaded, true);
+          final game = await waitForHabitatReady(tester);
           game.focusProduction(kind == 'progress' ? 'garden' : 'coop');
           game.reducedMotion = true;
           await tester.pump(const Duration(seconds: 2));

@@ -165,7 +165,7 @@ void main() {
             image.dispose();
           });
         }
-        await tester.tap(find.text('Quintal').last);
+        await tester.tap(find.byTooltip('Quintal'));
         expect(selected, 4);
         await tester.pumpWidget(const SizedBox());
         store.dispose();

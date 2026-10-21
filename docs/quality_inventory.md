@@ -2,7 +2,7 @@
 
 Gerado por `scripts/audit_quality.py` na API. Candidatos exigem revisão; ausência de referência não prova inutilidade.
 
-Arquivos versionados ou novos (respeitando .gitignore): 3034. Fontes Python/Dart: 296.
+Arquivos versionados ou novos (respeitando .gitignore): 3035. Fontes Python/Dart: 297.
 
 ## Distribuição das fontes
 
@@ -22,15 +22,15 @@ Arquivos versionados ou novos (respeitando .gitignore): 3034. Fontes Python/Dart
 | lib | 2 | 425 |
 | lib/config | 1 | 12 |
 | lib/data | 1 | 756 |
-| lib/game | 25 | 6502 |
+| lib/game | 25 | 6506 |
 | lib/models | 8 | 1186 |
 | lib/pages | 29 | 26791 |
 | lib/services | 27 | 5646 |
 | lib/stores | 3 | 1504 |
 | lib/theme | 1 | 747 |
 | lib/widgets | 44 | 10248 |
-| test | 74 | 14529 |
-| test/support | 2 | 491 |
+| test | 74 | 14526 |
+| test/support | 3 | 527 |
 | tool | 40 | 4143 |
 
 ## Fontes com mais de 500 linhas
@@ -39,7 +39,7 @@ Arquivos versionados ou novos (respeitando .gitignore): 3034. Fontes Python/Dart
 |---|---:|
 | `lib/pages/conversation_page.dart` | 3034 |
 | `lib/pages/missing_cats_page.dart` | 2616 |
-| `lib/game/habitat_game.dart` | 2053 |
+| `lib/game/habitat_game.dart` | 2057 |
 | `lib/pages/cat_details_page.dart` | 2043 |
 | `lib/pages/habitat_page.dart` | 1847 |
 | `.agents/skills/ui-ux-pro-max/scripts/design_system.py` | 1643 |
@@ -138,7 +138,7 @@ Inclui componentes acessíveis somente por testes ou ferramentas. Confirmar ante
 | `lib/game/habitat_cat_animations.dart` | 188 |
 | `lib/game/habitat_cat_coat.dart` | 68 |
 | `lib/game/habitat_cat_motion.dart` | 178 |
-| `lib/game/habitat_game.dart` | 2053 |
+| `lib/game/habitat_game.dart` | 2057 |
 | `lib/game/habitat_interactions.dart` | 143 |
 | `lib/game/habitat_palette.dart` | 65 |
 | `lib/game/habitat_path_style.dart` | 16 |
@@ -290,7 +290,7 @@ Inclui componentes acessíveis somente por testes ou ferramentas. Confirmar ante
 | `test/habitat_game_test.dart` | 334 |
 | `test/habitat_interactions_test.dart` | 153 |
 | `test/habitat_object_balloon_test.dart` | 68 |
-| `test/habitat_page_test.dart` | 204 |
+| `test/habitat_page_test.dart` | 206 |
 | `test/habitat_service_test.dart` | 474 |
 | `test/habitat_visit_capture_test.dart` | 73 |
 | `test/habitat_world_test.dart` | 239 |
@@ -316,11 +316,11 @@ Inclui componentes acessíveis somente por testes ou ferramentas. Confirmar ante
 | `test/quintal_game_motion_test.dart` | 39 |
 | `test/quintal_game_page_test.dart` | 341 |
 | `test/quintal_garden_motion_test.dart` | 46 |
-| `test/quintal_garden_visual_test.dart` | 242 |
+| `test/quintal_garden_visual_test.dart` | 240 |
 | `test/quintal_hold_control_test.dart` | 56 |
 | `test/quintal_inventory_test.dart` | 272 |
-| `test/quintal_kitchen_visual_test.dart` | 296 |
-| `test/quintal_live_client_test.dart` | 157 |
+| `test/quintal_kitchen_visual_test.dart` | 294 |
+| `test/quintal_live_client_test.dart` | 164 |
 | `test/quintal_market_visual_test.dart` | 258 |
 | `test/quintal_meals_visual_test.dart` | 398 |
 | `test/quintal_notifications_visual_test.dart` | 188 |
@@ -332,7 +332,7 @@ Inclui componentes acessíveis somente por testes ou ferramentas. Confirmar ante
 | `test/quintal_play_result_test.dart` | 40 |
 | `test/quintal_production_service_test.dart` | 312 |
 | `test/quintal_production_visual_test.dart` | 1584 |
-| `test/quintal_rewards_visual_test.dart` | 224 |
+| `test/quintal_rewards_visual_test.dart` | 212 |
 | `test/quintal_rewards_widgets_test.dart` | 242 |
 | `test/quintal_routines_test.dart` | 134 |
 | `test/quintal_timed_progress_test.dart` | 61 |
@@ -340,11 +340,12 @@ Inclui componentes acessíveis somente por testes ou ferramentas. Confirmar ante
 | `test/quintal_world_rules_test.dart` | 313 |
 | `test/remote_avatar_image_test.dart` | 29 |
 | `test/restructure_test.dart` | 322 |
-| `test/screen_corrections_test.dart` | 428 |
+| `test/screen_corrections_test.dart` | 432 |
 | `test/session_store_test.dart` | 152 |
 | `test/social_publish_visual_test.dart` | 115 |
 | `test/social_reference_test.dart` | 192 |
 | `test/support/fixture_image_client.dart` | 59 |
+| `test/support/habitat_ready.dart` | 36 |
 | `test/support/visual_gallery.dart` | 432 |
 | `test/theme_and_settings_test.dart` | 154 |
 | `test/visual_validation_capture_test.dart` | 954 |
