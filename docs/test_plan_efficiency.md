@@ -1,5 +1,7 @@
 # Plano de eficiência — roteiro Flutter
 
+Execução posterior ao planejamento aprovado: [relatório da primeira campanha-piloto compartilhada](https://github.com/EveDoescher/gatalogo-api/blob/code-quality-cleanup/docs/campaigns/2026-10-21-pilot/README.md). Inclui comparação SQLite A/B, troca de conta em B, limitações e matriz atual. Os cenários abaixo continuam preservados como plano; a campanha não os declara integralmente concluídos.
+
 Data: 21/10/2026. Branch `code-quality-cleanup`. **Somente documentação para revisão; nenhum teste desta campanha executado nesta etapa.** Sem alteração funcional/visual, instrumentação ou build Android/emulador.
 
 O [plano completo compartilhado na API](https://github.com/EveDoescher/gatalogo-api/blob/code-quality-cleanup/docs/test_plan_efficiency.md) define ambientes, fixtures, métricas, oráculos, cenários por categoria, 28 famílias de mutação e ordem sugerida. O [modelo de resultados](https://github.com/EveDoescher/gatalogo-api/blob/code-quality-cleanup/docs/test_results_template.md) registra cada execução. Na cópia local, os arquivos ficam em `../gatalogo-ai-api/docs/` a partir da raiz deste repositório.
