@@ -6,6 +6,14 @@ O [plano completo compartilhado na API](https://github.com/EveDoescher/gatalogo-
 
 Este roteiro relaciona IDs compartilhados ao código Flutter. Referências a testes são bases para ampliar, não declaração de cobertura integral ou aprovação atual.
 
+Revisão: os cenários e as famílias de mutação anteriores permanecem; ACC-01 a ACC-08 abaixo constituem a definição única de acessibilidade. Comparação BR, reidentificação REID e amostragem ficam no plano compartilhado, sem matrizes duplicadas aqui.
+
+## Comparação oficial/refatorada e dimensionamento
+
+Seguir seções 2.1/2.2 do plano compartilhado: A = API/Flutter `main`, B = API/Flutter `code-quality-cleanup`, quatro SHAs completos e cópias isoladas. Nenhuma alteração em `main`. Mesmo aparelho/hardware/configuração/dados/rede, snapshots restaurados e blocos A/B alternados. Comparação principal do pacote completo; braços com API ou cliente fixo apenas se compatíveis. Contagens otimizadas do cliente B não são requisitos impostos ao cliente A.
+
+Depois da comparação revisada, congelar o par B aceito como baseline das otimizações futuras. Registrar SHA do código separadamente do documento/executor. Números iniciais de repetições abaixo são orçamentos de partida, subordinados ao piloto, variância e precisão definidos em 2.2; não garantem IC ou P99 confiável. Frames consecutivos não são sessões independentes.
+
 ## Fluxos a acompanhar
 
 | Fluxo | Pontos a observar | IDs compartilhados |
@@ -74,6 +82,41 @@ Bases: `test/habitat_service_test.dart`, `quintal_production_service_test.dart`,
 
 Casos: UX-01 a UX-07, RSC-04/05 e LAT ponta a ponta. Teste desktop não substitui estes resultados.
 
+## ACC — acessibilidade Flutter
+
+**Estado de todos os casos: PLANEJADO.** Categoria própria com IDs globais ACC-01 a ACC-08, referenciada pelo plano da API. Escopo: autenticação, câmera/galeria, coleção/detalhes, resgate/pistas, feed, chat/inbox, configurações e Quintal, inclusive overlays, folhas/modais e erros. Conteúdo desenhado em canvas/Flame também precisa de inspeção de acesso às ações; não presumir que componentes visuais geram semântica utilizável.
+
+### Ferramentas e critérios comuns
+
+- E1: testes Flutter com árvore Semantics e Accessibility Guideline API (contraste textual, rótulo e alvos Android/iOS), variantes de MediaQuery/TextScaler/viewport, capturas e inspeção manual. Verificar APIs compatíveis com SDK fixado antes de implementar o executor. Ferramentas automáticas cobrem apenas parte do comportamento.
+- E4: TalkBack em Android e VoiceOver quando houver aparelho iOS disponível; Android Accessibility Scanner e Accessibility Inspector em ambiente Apple disponível. Sem aparelho/plataforma, marcar bloqueado e delimitar cobertura, sem criar emulador nesta etapa nem considerar widget como validação assistiva real.
+- Contraste de referência: WCAG 2.2, 1.4.3/1.4.11; texto comum ≥4,5:1, texto grande ≥3:1 segundo definição do critério, controles/estados visuais essenciais ≥3:1, documentando exceções aplicáveis. Medir composição efetiva sobre fundos/overlays; não classificar tamanho de texto Flutter como “grande” por conversão arbitrária de pixels.
+- Alvos móveis: verificar guias Flutter Android ≥48×48 unidades lógicas e iOS ≥44×44, incluindo área interativa real, não só ícone. Registrar plataforma/unidade/espaçamento/exceções; não equiparar unidades lógicas a pixels físicos ou limiares CSS WCAG.
+- Tarefas precisam ser concluíveis sem visão/gestos precisos, com foco e anúncio compreensíveis. Reportar conformidade por caso/controle, bloqueios e limitações; scanner verde não certifica o app inteiro. Nenhuma adequação será implementada nesta etapa.
+
+| ID / prioridade / ambiente | Preparação e ação | Ferramentas e critérios de avaliação | Registro específico |
+|---|---|---|---|
+| ACC-01 P1 E1/E4 | Telas/estados suportados, tema(s) existentes, texto sobre imagens e overlays, foco/seleção/erro. | Guideline de contraste + amostragem da cor composta; razões conforme critérios acima, sem informação essencial comunicada só por cor. Exceções justificadas por elemento. | Tela/controle/estado, cores e razão medida, screenshot anotado, critério e resultado; fonte do cálculo/ferramenta versionada. |
+| ACC-02 P0 E1/E4 | Escala de fonte 1,0/1,3/2,0 e máximo suportado pelo OS, viewport pequeno, texto longo/teclado. | TextScaler/MediaQuery e configuração real do OS; nenhum texto/ação essencial cortado, sobreposto ou inacessível. Fluxos continuam completos com rolagem quando necessária; registrar escala não linear efetiva. | Escala/OS/viewport, capturas e vídeo do fluxo, overflow/assertions, controles ocultos e tarefa afetada. |
+| ACC-03 P1 E1/E4 | Botões de ícone, fechar modal, itens de coleção/chat, ações/seleção do Quintal, proximidade de controles. | Guideline de target Android/iOS e hit testing; área real conforme plataforma, sem sobreposição que acione vizinho; checar alternativa a gesto de precisão. | Bounds/unidade/área clicável, espaçamento, alvo esperado/acionado, exceção e evidência anotada. |
+| ACC-04 P0 E4 | TalkBack/VoiceOver: entrar, escolher foto, localizar gato, ouvir análise, enviar mensagem, ler notificação e operar uma ação do Quintal. | Navegação sequencial/exploração, ativação e retorno; ordem lógica, foco no modal/retorno ao invocador, sem armadilha ou botão silencioso, anúncio de erro/progresso sem repetição excessiva. | Plataforma/versão/leitor/configuração, roteiro, gravação com áudio sanitizado, sequência de foco e passos concluídos/bloqueados. |
+| ACC-05 P0 E1/E4 | Inspecionar ícones, imagens informativas/decorativas, tabs, contadores, mensagens e ações desenhadas na cena. | Semantics/inspector e leitor: nome acessível compreensível, papel/estado/valor/ação corretos; decorativo sem ruído/duplicação e privado sem anúncio indevido. Ações visuais essenciais disponíveis ao leitor. | Dump sanitizado da árvore com caminho/controle, esperado/observado e trecho de áudio; widget/símbolo no SHA. |
+| ACC-06 P1 E1/E4 | Preferência de redução de movimento ativa/inativa, entrada/saída de telas, celebração e cena Quintal. | Observar sinal do OS e MediaQuery (disableAnimations/accessibleNavigation quando aplicável), vídeo/timeline; identificar movimento não essencial que não respeita preferência e caminho equivalente para tarefa, sem perda de feedback. Registrar comportamento atual como achado, sem remover animação. | Flags efetivas/OS, vídeo pareado, duração/tipo de efeito, possibilidade de concluir tarefa e lacuna. Não afirmar que todo OS expõe a mesma preferência. |
+| ACC-07 P1 E1/E4 | Viewports lógicos 320×568, 360×800, 412×915 e tablet 800×1280 como amostra de classes; orientação suportada, safe areas e teclado. | Variantes de layout + aparelho: ações alcançáveis, ordem/foco/semântica preservados, sem clipping essencial. Cruzar menor viewport com maior fonte; rotações não suportadas documentadas, não exigidas como nova funcionalidade. | Dimensão física/lógica/DPR/orientação/insets, capturas, fonte, controle inacessível e task result. Classes são cobertura, não amostra estatística de usuários. |
+| ACC-08 P0 E1/E4 | Offline, imagem rejeitada, sessão expirada, saldo insuficiente e carregamento durante tarefa assistiva. | Semantics + leitor real; erro/progresso percebidos, ação de recuperação acessível, foco/rascunho preservados e conteúdo compreensível sem depender só de cor/movimento. | Estado/rede, anúncio/foco esperado/observado, tempo/tentativas de conclusão e evidência. Não trocar mensagens para fazer o teste passar. |
+
+### Execução e rastreabilidade ACC
+
+Cobrir todas as telas/classes de controles essenciais e estados listados, com roteiro determinístico; amostragem por cobertura, não por milhares de cliques. Repetir percursos quando houver falha intermitente e registrar agenda/condição. Baseline A/B diferencia defeito preexistente, regressão e resultado bloqueado; mudanças posteriores precisam de aprovação funcional se implicarem adaptação visível/semântica.
+
+Usar modelo compartilhado: cenário/variante → arquivo/widget/símbolo/linha no SHA → teste/node ID ou roteiro assistivo versionado → RUN → captura/árvore/áudio/relatório do scanner com hash → problema → commit de correção futuro → REV. Redigir conteúdo privado de mensagens/contas; evidências de voz e imagem podem permanecer fora do Git com referência controlada. Resultado inclui critério, medição/esperado/observado, ferramenta/versão, plataforma, severidade/impacto e justificativa de exceção. Caso não inspecionado fica não executado, nunca aprovado.
+
+Referências: [Flutter — testes de acessibilidade](https://docs.flutter.dev/ui/accessibility/accessibility-testing) e [W3C — WCAG 2.2](https://www.w3.org/TR/WCAG22/). Critérios são referência técnica; este plano não declara certificação ou conformidade legal do aplicativo nativo.
+
+## Reidentificação: fronteira do cliente
+
+O plano compartilhado define REID-01 a REID-08, dataset, splits e métricas; não duplicar calibração no Flutter. No cliente, verificar apresentação de sugestão/restrição e ação humana explícita, ligados a REID-08/SEC-04/DATA-09. Detecção, máscara e atributos não confirmam indivíduo; não exibir similaridade cosseno como probabilidade calibrada nem promover sugestão a identificação confirmada. Esta etapa apenas registra critérios, sem mudar UI/textos.
+
 ## Mutação específica do Flutter
 
 Aplicar um defeito por cópia isolada, após baseline limpo, com diff e evidência da linha exercitada:
@@ -95,4 +138,6 @@ Falha de sintaxe/import/infraestrutura não é morte comportamental útil. Sobre
 
 Revisar IDs/prioridade/fixtures, aparelho e orçamento. Na execução, registrar amostras brutas, n, frio/quente, erros/timeouts, SHAs, parâmetros, diffs de estado e limitações. Sem P99 confiável em piloto pequeno, sem ganho de latência inferido só por menos SQL, sem aprovação implícita de caso ignorado.
 
-A primeira rodada caracteriza baseline. Mudança posterior deve preservar o contrato e repetir os mesmos casos; segurança/integridade reprovam a otimização mesmo que fique mais rápida.
+A primeira campanha compara main e code-quality-cleanup conforme BR; o par refatorado aceito vira baseline futura. Mudança posterior deve preservar o contrato e repetir os mesmos casos; segurança/integridade reprovam a otimização mesmo que fique mais rápida.
+
+Registro obrigatório no modelo compartilhado: HIP → cenário/variante → código nos SHAs → teste/script/roteiro versionado → RUN/evidências → PROB → FIX/commit futuro → REV e comparação antes/depois. Todos os campos de execução e correção continuam sem resultado nesta revisão documental.
