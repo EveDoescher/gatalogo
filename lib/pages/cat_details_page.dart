@@ -1,3 +1,6 @@
+import '../widgets/cat_coat_color_item.dart';
+import '../widgets/cat_name_dialog.dart';
+import '../formatters/app_dates.dart';
 import '../widgets/botanical_scene.dart';
 import '../widgets/game_components.dart';
 
@@ -68,30 +71,10 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
     }
   }
 
-  String _formatFullDate(DateTime date) {
-    const months = [
-      'jan.',
-      'fev.',
-      'mar.',
-      'abr.',
-      'mai.',
-      'jun.',
-      'jul.',
-      'ago.',
-      'set.',
-      'out.',
-      'nov.',
-      'dez.',
-    ];
-    final hour = date.hour.toString().padLeft(2, '0');
-    final minute = date.minute.toString().padLeft(2, '0');
-    return '${date.day} ${months[date.month - 1]} ${date.year} às $hour:$minute';
-  }
-
   Future<void> _rename(Cat cat) async {
     final result = await showDialog<String>(
       context: context,
-      builder: (_) => _NameDialog(name: cat.name),
+      builder: (_) => CatNameDialog(name: cat.name),
     );
     if (result == null) return;
     setState(() => _busy = true);
@@ -815,7 +798,7 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                                   ),
                                                   const SizedBox(height: 2),
                                                   Text(
-                                                    _formatFullDate(
+                                                    AppDates.captureDateTime(
                                                       cat.capturedAt,
                                                     ),
                                                     style: GoogleFonts.nunito(
@@ -1271,7 +1254,7 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                             ),
                                             const SizedBox(height: 2),
                                             Text(
-                                              '${_formatFullDate(cat.capturedAt)} • ${hasLocation ? sanitizedLocation : "Localizacao salva"}',
+                                              '${AppDates.captureDateTime(cat.capturedAt)} • ${hasLocation ? sanitizedLocation : "Localizacao salva"}',
                                               style: GoogleFonts.nunito(
                                                 fontSize: 11,
                                                 color: AppColors.textMedium,
@@ -1319,7 +1302,7 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                                                   ),
                                                 ),
                                                 Text(
-                                                  'Atualizado em ${_formatFullDate(photo.updatedAt)}',
+                                                  'Atualizado em ${AppDates.captureDateTime(photo.updatedAt)}',
                                                   style: GoogleFonts.nunito(
                                                     fontSize: 11,
                                                     color: AppColors.textMedium,
@@ -1780,7 +1763,7 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
                       ...analysis!.colors
                           .take(3)
                           .map(
-                            (c) => _ColorItem(
+                            (c) => CatCoatColorItem(
                               label: c.name,
                               percentage: _formatPercentage(c.percentage),
                             ),
@@ -1847,197 +1830,6 @@ class _CatDetailsPageState extends State<CatDetailsPage> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ColorItem extends StatelessWidget {
-  const _ColorItem({required this.label, required this.percentage});
-
-  final String label;
-  final String percentage;
-
-  Color _resolveColor(String name) {
-    final normalized = name.trim().toLowerCase();
-    if (normalized.contains('pret') || normalized.contains('black')) {
-      return const Color(0xFF242424);
-    }
-    if (normalized.contains('branc') || normalized.contains('white')) {
-      return const Color(0xFFFAF9F6);
-    }
-    if (normalized.contains('laranj') ||
-        normalized.contains('orange') ||
-        normalized.contains('ruiv') ||
-        normalized.contains('red') ||
-        normalized.contains('vermelh')) {
-      return const Color(0xFFE27238);
-    }
-    if (normalized.contains('cinz') ||
-        normalized.contains('gray') ||
-        normalized.contains('grey') ||
-        normalized.contains('azul') ||
-        normalized.contains('blue')) {
-      return const Color(0xFF8A939E);
-    }
-    if (normalized.contains('crem') ||
-        normalized.contains('cream') ||
-        normalized.contains('beg') ||
-        normalized.contains('beige')) {
-      return const Color(0xFFF3E7D3);
-    }
-    if (normalized.contains('marr') ||
-        normalized.contains('brown') ||
-        normalized.contains('chocolat')) {
-      return const Color(0xFF6E4A35);
-    }
-    if (normalized.contains('canel') || normalized.contains('cinnamon')) {
-      return const Color(0xFF9E5B32);
-    }
-    if (normalized.contains('fawn') || normalized.contains('fulv')) {
-      return const Color(0xFFCCA98A);
-    }
-    if (normalized.contains('lil') ||
-        normalized.contains('lilac') ||
-        normalized.contains('lavend')) {
-      return const Color(0xFFB5A8B2);
-    }
-    if (normalized.contains('dourad') ||
-        normalized.contains('gold') ||
-        normalized.contains('amarel') ||
-        normalized.contains('yellow')) {
-      return const Color(0xFFE5B548);
-    }
-    return const Color(0xFFB0A89F);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final circleColor = _resolveColor(label);
-    final isVeryLight = circleColor.computeLuminance() > 0.72;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        children: [
-          Container(
-            width: 14,
-            height: 14,
-            decoration: BoxDecoration(
-              color: circleColor,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isVeryLight
-                    ? const Color(0xFFD5CDC3)
-                    : Colors.black.withAlpha(20),
-                width: 1.0,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.nunito(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textMedium,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            percentage,
-            style: GoogleFonts.nunito(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textDark,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _NameDialog extends StatefulWidget {
-  const _NameDialog({this.name});
-  final String? name;
-
-  @override
-  State<_NameDialog> createState() => _NameDialogState();
-}
-
-class _NameDialogState extends State<_NameDialog> {
-  late final TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.name);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: const Color(0xFFFCFAF7),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-      title: Text(
-        'Nome do gato',
-        style: GoogleFonts.nunito(
-          fontWeight: FontWeight.w800,
-          color: AppColors.textDark,
-        ),
-      ),
-      content: TextField(
-        controller: _controller,
-        autofocus: true,
-        maxLength: 30,
-        textCapitalization: TextCapitalization.words,
-        style: GoogleFonts.nunito(
-          fontWeight: FontWeight.w600,
-          color: AppColors.textDark,
-        ),
-        decoration: InputDecoration(
-          labelText: 'Nome',
-          labelStyle: GoogleFonts.nunito(color: AppColors.textMedium),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(
-            'Cancelar',
-            style: GoogleFonts.nunito(
-              fontWeight: FontWeight.w700,
-              color: AppColors.textMedium,
-            ),
-          ),
-        ),
-        ElevatedButton(
-          onPressed: () => Navigator.pop(context, _controller.text),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-          ),
-          child: Text(
-            'Salvar',
-            style: GoogleFonts.nunito(
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

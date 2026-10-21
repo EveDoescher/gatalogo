@@ -2,7 +2,7 @@
 
 Gerado por `scripts/audit_quality.py` na API. Candidatos exigem revisão; ausência de referência não prova inutilidade.
 
-Arquivos versionados ou novos (respeitando .gitignore): 3035. Fontes Python/Dart: 297.
+Arquivos versionados ou novos (respeitando .gitignore): 3047. Fontes Python/Dart: 309.
 
 ## Distribuição das fontes
 
@@ -22,14 +22,15 @@ Arquivos versionados ou novos (respeitando .gitignore): 3035. Fontes Python/Dart
 | lib | 2 | 425 |
 | lib/config | 1 | 12 |
 | lib/data | 1 | 756 |
-| lib/game | 25 | 6506 |
-| lib/models | 8 | 1186 |
-| lib/pages | 29 | 26791 |
-| lib/services | 27 | 5646 |
+| lib/formatters | 1 | 66 |
+| lib/game | 26 | 6589 |
+| lib/models | 9 | 1339 |
+| lib/pages | 33 | 25951 |
+| lib/services | 27 | 5495 |
 | lib/stores | 3 | 1504 |
 | lib/theme | 1 | 747 |
-| lib/widgets | 44 | 10248 |
-| test | 74 | 14526 |
+| lib/widgets | 48 | 11122 |
+| test | 75 | 14556 |
 | test/support | 3 | 527 |
 | tool | 40 | 4143 |
 
@@ -37,16 +38,15 @@ Arquivos versionados ou novos (respeitando .gitignore): 3035. Fontes Python/Dart
 
 | Arquivo | Linhas |
 |---|---:|
-| `lib/pages/conversation_page.dart` | 3034 |
-| `lib/pages/missing_cats_page.dart` | 2616 |
-| `lib/game/habitat_game.dart` | 2057 |
-| `lib/pages/cat_details_page.dart` | 2043 |
+| `lib/pages/conversation_page.dart` | 2400 |
+| `lib/game/habitat_game.dart` | 2006 |
 | `lib/pages/habitat_page.dart` | 1847 |
+| `lib/pages/cat_details_page.dart` | 1835 |
 | `.agents/skills/ui-ux-pro-max/scripts/design_system.py` | 1643 |
 | `lib/pages/settings_page.dart` | 1638 |
 | `test/quintal_production_visual_test.dart` | 1584 |
 | `lib/game/quintal_production_scene.dart` | 1503 |
-| `lib/pages/library_page.dart` | 1417 |
+| `lib/pages/library_page.dart` | 1400 |
 | `lib/pages/friends_page.dart` | 1360 |
 | `lib/widgets/quintal_object_actions.dart` | 1290 |
 | `lib/pages/auth_page.dart` | 1209 |
@@ -57,11 +57,11 @@ Arquivos versionados ou novos (respeitando .gitignore): 3035. Fontes Python/Dart
 | `lib/pages/my_cats_page.dart` | 988 |
 | `lib/pages/home_page.dart` | 973 |
 | `test/visual_validation_capture_test.dart` | 954 |
-| `lib/services/habitat_service.dart` | 951 |
 | `lib/stores/cat_store.dart` | 939 |
 | `lib/pages/profile_page.dart` | 868 |
 | `lib/pages/location_page.dart` | 807 |
 | `lib/pages/capture_page.dart` | 806 |
+| `lib/services/habitat_service.dart` | 800 |
 | `.agents/skills/design-system/scripts/generate-slide.py` | 770 |
 | `.agents/skills/design/scripts/logo/generate.py` | 769 |
 | `lib/data/cat_database.dart` | 756 |
@@ -69,9 +69,14 @@ Arquivos versionados ou novos (respeitando .gitignore): 3035. Fontes Python/Dart
 | `lib/theme/app_theme.dart` | 747 |
 | `lib/pages/cat_gallery_page.dart` | 702 |
 | `lib/pages/discovery_result_page.dart` | 666 |
+| `lib/pages/clues_page.dart` | 656 |
 | `lib/widgets/post_composer.dart` | 644 |
 | `lib/pages/quintal_game_page.dart` | 614 |
+| `lib/widgets/chat_message_bubble.dart` | 602 |
+| `lib/pages/clue_detail_page.dart` | 598 |
+| `lib/pages/create_missing_report_page.dart` | 586 |
 | `lib/widgets/game_components.dart` | 566 |
+| `lib/pages/missing_report_detail_page.dart` | 564 |
 | `lib/widgets/botanical_scene.dart` | 551 |
 | `lib/pages/habitat_shop_page.dart` | 550 |
 
@@ -135,10 +140,12 @@ Inclui componentes acessíveis somente por testes ou ferramentas. Confirmar ante
 | `lib/app.dart` | 417 |
 | `lib/config/api_config.dart` | 12 |
 | `lib/data/cat_database.dart` | 756 |
+| `lib/formatters/app_dates.dart` | 66 |
+| `lib/game/habitat_camera.dart` | 134 |
 | `lib/game/habitat_cat_animations.dart` | 188 |
 | `lib/game/habitat_cat_coat.dart` | 68 |
 | `lib/game/habitat_cat_motion.dart` | 178 |
-| `lib/game/habitat_game.dart` | 2057 |
+| `lib/game/habitat_game.dart` | 2006 |
 | `lib/game/habitat_interactions.dart` | 143 |
 | `lib/game/habitat_palette.dart` | 65 |
 | `lib/game/habitat_path_style.dart` | 16 |
@@ -168,14 +175,18 @@ Inclui componentes acessíveis somente por testes ou ferramentas. Confirmar ante
 | `lib/models/chat_message.dart` | 186 |
 | `lib/models/conversation_summary.dart` | 109 |
 | `lib/models/gamification.dart` | 210 |
+| `lib/models/habitat.dart` | 153 |
 | `lib/models/missing_poster.dart` | 113 |
 | `lib/pages/auth_page.dart` | 1209 |
 | `lib/pages/capture_page.dart` | 806 |
-| `lib/pages/cat_details_page.dart` | 2043 |
+| `lib/pages/cat_details_page.dart` | 1835 |
 | `lib/pages/cat_gallery_page.dart` | 702 |
 | `lib/pages/challenges_page.dart` | 88 |
+| `lib/pages/clue_detail_page.dart` | 598 |
+| `lib/pages/clues_page.dart` | 656 |
 | `lib/pages/community_posters_page.dart` | 318 |
-| `lib/pages/conversation_page.dart` | 3034 |
+| `lib/pages/conversation_page.dart` | 2400 |
+| `lib/pages/create_missing_report_page.dart` | 586 |
 | `lib/pages/discovery_result_page.dart` | 666 |
 | `lib/pages/experience_settings_page.dart` | 197 |
 | `lib/pages/friends_page.dart` | 1360 |
@@ -185,11 +196,12 @@ Inclui componentes acessíveis somente por testes ou ferramentas. Confirmar ante
 | `lib/pages/home_page.dart` | 973 |
 | `lib/pages/inbox_page.dart` | 447 |
 | `lib/pages/journey_page.dart` | 333 |
-| `lib/pages/library_page.dart` | 1417 |
+| `lib/pages/library_page.dart` | 1400 |
 | `lib/pages/location_page.dart` | 807 |
 | `lib/pages/missing_cat_poster_page.dart` | 245 |
-| `lib/pages/missing_cats_page.dart` | 2616 |
+| `lib/pages/missing_cats_page.dart` | 231 |
 | `lib/pages/missing_map_consolidated_page.dart` | 430 |
+| `lib/pages/missing_report_detail_page.dart` | 564 |
 | `lib/pages/my_cats_page.dart` | 988 |
 | `lib/pages/notifications_page.dart` | 484 |
 | `lib/pages/profile_page.dart` | 868 |
@@ -212,7 +224,7 @@ Inclui componentes acessíveis somente por testes ou ferramentas. Confirmar ante
 | `lib/services/habitat_encounters.dart` | 55 |
 | `lib/services/habitat_layout.dart` | 135 |
 | `lib/services/habitat_navigation.dart` | 8 |
-| `lib/services/habitat_service.dart` | 951 |
+| `lib/services/habitat_service.dart` | 800 |
 | `lib/services/image_compression_service.dart` | 46 |
 | `lib/services/location_service.dart` | 191 |
 | `lib/services/missing_poster_export.dart` | 305 |
@@ -235,6 +247,9 @@ Inclui componentes acessíveis somente por testes ou ferramentas. Confirmar ante
 | `lib/widgets/app_widgets.dart` | 369 |
 | `lib/widgets/avatar_choice_sheet.dart` | 78 |
 | `lib/widgets/botanical_scene.dart` | 551 |
+| `lib/widgets/cat_coat_color_item.dart` | 118 |
+| `lib/widgets/cat_name_dialog.dart` | 85 |
+| `lib/widgets/chat_message_bubble.dart` | 602 |
 | `lib/widgets/community_post_card.dart` | 178 |
 | `lib/widgets/feed_loading_placeholder.dart` | 56 |
 | `lib/widgets/game_components.dart` | 566 |
@@ -253,6 +268,7 @@ Inclui componentes acessíveis somente por testes ou ferramentas. Confirmar ante
 | `lib/widgets/post_composer.dart` | 644 |
 | `lib/widgets/poster_export_actions.dart` | 134 |
 | `lib/widgets/poster_settings_editor.dart` | 387 |
+| `lib/widgets/private_clue_photo.dart` | 69 |
 | `lib/widgets/profile_qr_dialog.dart` | 194 |
 | `lib/widgets/progress_components.dart` | 209 |
 | `lib/widgets/quintal_activity_result.dart` | 67 |
@@ -273,6 +289,7 @@ Inclui componentes acessíveis somente por testes ou ferramentas. Confirmar ante
 | `lib/widgets/quintal_reward_celebration.dart` | 311 |
 | `lib/widgets/remote_avatar_image.dart` | 35 |
 | `lib/widgets/social_publish_button.dart` | 28 |
+| `test/app_dates_test.dart` | 30 |
 | `test/auth_page_test.dart` | 79 |
 | `test/authenticated_api_client_test.dart` | 93 |
 | `test/auto_sync_test.dart` | 69 |

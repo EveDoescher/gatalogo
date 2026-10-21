@@ -1,3 +1,4 @@
+import 'habitat_camera.dart';
 import 'quintal_play_field.dart';
 
 import 'dart:math' as math;
@@ -41,8 +42,18 @@ class HabitatGame extends FlameGame {
 
   final HabitatService habitat;
   final HabitatSprites sprites;
-  double zoom = 1;
-  Offset pan = Offset.zero;
+  final _sceneCamera = HabitatCamera();
+  double get zoom => _sceneCamera.zoom;
+  set zoom(double value) => _sceneCamera.zoom = value;
+  Offset get pan => _sceneCamera.pan;
+  set pan(Offset value) => _sceneCamera.pan = value;
+
+  @override
+  void onGameResize(Vector2 size) {
+    super.onGameResize(size);
+    _sceneCamera.viewport = Size(size.x, size.y);
+  }
+
   int? previewX;
   int? previewY;
   String? previewSku;
@@ -547,15 +558,10 @@ class HabitatGame extends FlameGame {
     }
   }
 
-  double get tileWidth => math.min(size.x / 8.7, size.y / 5.7) * zoom;
-  // The source artwork uses a 30-degree orthographic camera (2:1 ground tiles).
-  double get tileHeight => tileWidth * 0.5;
-  double get boardTop => (size.y - 8 * tileHeight) / 2 + pan.dy;
-
-  Offset cellTop(int x, int y) => Offset(
-    size.x / 2 + (x - y) * tileWidth / 2 + pan.dx,
-    boardTop + (x + y) * tileHeight / 2,
-  );
+  double get tileWidth => _sceneCamera.tileWidth;
+  double get tileHeight => _sceneCamera.tileHeight;
+  double get boardTop => _sceneCamera.boardTop;
+  Offset cellTop(int x, int y) => _sceneCamera.cellTop(x, y);
 
   Offset _itemAnchor(int x, int y, int width, int height) =>
       cellTop(x, y) +
@@ -783,48 +789,14 @@ class HabitatGame extends FlameGame {
   }
 
   (int, int)? cellAt(Offset point) {
-    final dx = (point.dx - size.x / 2 - pan.dx) / (tileWidth / 2);
-    final dy = (point.dy - boardTop) / (tileHeight / 2);
-    final x = ((dx + dy) / 2).floor();
-    final y = ((dy - dx) / 2).floor();
-    if (!habitat.buildableCells.contains((x, y))) return null;
-    return (x, y);
+    final cell = _sceneCamera.cellAt(point);
+    return habitat.buildableCells.contains(cell) ? cell : null;
   }
 
-  /// The scenery boundary belongs to the world. Zoom changes its projected
-  /// edges, not how far into that world the player is allowed to explore.
-  Rect get cameraPanBounds {
-    final center = Offset(size.x / 2, size.y / 2);
-    var left = -size.x * .4, top = -size.y * .4;
-    var right = size.x * (habitat.production.isEmpty ? 1.4 : 2.4);
-    var bottom = size.y * (habitat.production.isEmpty ? 1.4 : 1.9);
-    if (habitat.production.isNotEmpty) {
-      // Keep every production space reachable, including its anchored actions
-      // on narrow screens. Bounds live at zoom 1 so zooming preserves the
-      // world edge instead of snapping back toward the original cat yard.
-      for (final area in _ambientWorld.productionAreas.values) {
-        for (final x in [area.$1.toDouble(), (area.$1 + area.$3).toDouble()]) {
-          for (final y in [
-            area.$2.toDouble(),
-            (area.$2 + area.$4).toDouble(),
-          ]) {
-            final point =
-                center + (_productionGround(x, y) - pan - center) / zoom;
-            left = math.min(left, point.dx - size.x * .75);
-            right = math.max(right, point.dx + size.x * .75);
-            top = math.min(top, point.dy - size.y);
-            bottom = math.max(bottom, point.dy + size.y);
-          }
-        }
-      }
-    }
-    return Rect.fromLTRB(
-      size.x - (center.dx + (right - center.dx) * zoom),
-      size.y - (center.dy + (bottom - center.dy) * zoom),
-      -(center.dx + (left - center.dx) * zoom),
-      -(center.dy + (top - center.dy) * zoom),
-    );
-  }
+  Rect get cameraPanBounds => _sceneCamera.panBounds(
+    productionEnabled: habitat.production.isNotEmpty,
+    productionAreas: _ambientWorld.productionAreas.values,
+  );
 
   Offset _limitPan(Offset value) {
     final bounds = cameraPanBounds;
@@ -836,43 +808,20 @@ class HabitatGame extends FlameGame {
 
   void moveCamera(Offset delta) {
     _focusPan = null;
-    pan += delta;
-    pan = _limitPan(pan);
+    _sceneCamera.move(delta, cameraPanBounds);
   }
 
   void scaleCamera(double value, Offset focus) {
     _focusPan = null;
-    final ratio = value.clamp(0.8, 1.9) / zoom;
-    zoom *= ratio;
-    pan = Offset(
-      focus.dx - size.x / 2 - (focus.dx - size.x / 2 - pan.dx) * ratio,
-      focus.dy - size.y / 2 - (focus.dy - size.y / 2 - pan.dy) * ratio,
+    _sceneCamera.scale(
+      value,
+      focus,
+      productionEnabled: habitat.production.isNotEmpty,
+      productionAreas: _ambientWorld.productionAreas.values,
     );
-    pan = _limitPan(pan);
   }
 
-  /// Inverse projection includes trees rooted just beyond the viewport edge.
-  Rect get sceneryRegion {
-    final cells = [
-      for (final point in [
-        Offset.zero,
-        Offset(size.x, 0),
-        Offset(0, size.y),
-        Offset(size.x, size.y),
-      ])
-        (() {
-          final dx = (point.dx - size.x / 2 - pan.dx) / (tileWidth / 2);
-          final dy = (point.dy - boardTop) / (tileHeight / 2);
-          return Offset((dx + dy) / 2, (dy - dx) / 2);
-        })(),
-    ];
-    return Rect.fromLTRB(
-      cells.map((c) => c.dx).reduce(math.min).floorToDouble() - 4,
-      cells.map((c) => c.dy).reduce(math.min).floorToDouble() - 4,
-      cells.map((c) => c.dx).reduce(math.max).ceilToDouble() + 4,
-      cells.map((c) => c.dy).reduce(math.max).ceilToDouble() + 4,
-    );
-  }
+  Rect get sceneryRegion => _sceneCamera.sceneryRegion;
 
   (double, double, double, double) get _visitBounds {
     final region = sceneryRegion;

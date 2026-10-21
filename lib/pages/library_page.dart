@@ -1,3 +1,4 @@
+import '../formatters/app_dates.dart';
 import '../widgets/botanical_scene.dart';
 
 import 'package:flutter/material.dart';
@@ -42,24 +43,6 @@ class _CatAlbumPageState extends State<CatAlbumPage> {
   @override
   void dispose() {
     super.dispose();
-  }
-
-  String _formatDate(DateTime date) {
-    const months = [
-      'jan.',
-      'fev.',
-      'mar.',
-      'abr.',
-      'mai.',
-      'jun.',
-      'jul.',
-      'ago.',
-      'set.',
-      'out.',
-      'nov.',
-      'dez.',
-    ];
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
   @override
@@ -468,7 +451,7 @@ class _CatAlbumPageState extends State<CatAlbumPage> {
                                         cat.id,
                                       ),
                                       isFavorite: isFav,
-                                      formattedDate: _formatDate(
+                                      formattedDate: AppDates.albumDate(
                                         cat.capturedAt,
                                       ),
                                       onToggleFavorite: () => widget.catStore

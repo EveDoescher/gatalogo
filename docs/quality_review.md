@@ -106,3 +106,26 @@ pelo cache SQLite, reutilização da chave e isolamento entre contas.
 
 As refatorações maiores listadas no mapa de arquitetura continuam pendentes;
 a passagem dos testes não significa que toda a dívida arquitetural foi eliminada.
+
+
+## Refatoração arquitetural — 21/10/2026
+
+O mapa inicial acima é histórico. O estado atual das extrações e as fronteiras
+maiores que continuam pendentes estão em
+[architecture_refactoring.md](architecture_refactoring.md).
+
+Foram extraídos datas, páginas de resgate/pistas, componentes de detalhes e chat,
+valores do habitat e projeção/câmera da cena. Contratos, estilos e navegação foram
+preservados. Resultado final sobre as extrações de componentes, modelos e câmera:
+
+- `flutter analyze --no-pub`: **nenhum apontamento**.
+- `flutter test --no-pub --reporter expanded`: **264 aprovados, 6 condicionais ignorados e zero falhas**.
+- Os 6 condicionais são os mesmos da base; o cenário live também passou pela execução integrada da API.
+- Testes focados de componentes/resgate: **34 aprovados**; câmera/interação: **13 aprovados**.
+- Catálogo gerado: `python tool/export_habitat_catalog.py --check` passou.
+- Suíte integrada da API: **295 aprovados** e complemento final de **26 aprovados**, sem skips ou falhas, em serviços descartáveis.
+
+Logs locais: `architecture-final-tests.log`, `architecture-components-tests.log`,
+`architecture-camera-tests.log` e `architecture-analysis.log`.
+Os controladores maiores, estado de edição e repositórios ainda não extraídos
+continuam registrados como pendências no documento de arquitetura.
