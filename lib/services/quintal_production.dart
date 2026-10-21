@@ -17,39 +17,20 @@ extension QuintalProduction on HabitatService {
   List<Map<String, dynamic>> productionRows(
     String name, {
     bool catalog = false,
-  }) {
-    final source = catalog ? production['catalog'] as Map? : production;
-    return [
-      for (final value in source?[name] as List? ?? const [])
-        Map<String, dynamic>.from(value as Map),
-    ];
-  }
-
-  Map<String, int> get productionStock => _intMap(production['stock']) ?? {};
-  int facilityLevel(String kind) =>
-      (productionRows('facilities')
-                  .where((f) => f['kind'] == kind)
-                  .firstOrNull?['level']
-              as num?)
-          ?.toInt() ??
-      0;
-  Map<String, dynamic> productionCat(String catId) =>
-      productionRows('cats').where((c) => c['cat_id'] == catId).firstOrNull ??
-      {};
-  int? foodPreference(String catId, String recipe) =>
-      (productionRows('preferences')
-                  .where((p) => p['cat_id'] == catId && p['recipe'] == recipe)
-                  .firstOrNull?['level']
-              as num?)
-          ?.toInt();
-  String get productionDay => production['calendar_day']?.toString() ?? '';
+  }) => productionState.rows(name, catalog: catalog);
+  Map<String, int> get productionStock => productionState.stock;
+  int facilityLevel(String kind) => productionState.facilityLevel(kind);
+  Map<String, dynamic> productionCat(String id) => productionState.cat(id);
+  int? foodPreference(String id, String recipe) =>
+      productionState.preference(id, recipe);
+  String get productionDay => productionState.calendarDay;
 
   Future<void> refreshProduction() async {
     if (!session.isSignedIn || _disposed || productionBusy || caring) return;
     final owner = _ownerId;
     final generation = ++_productionGeneration;
     try {
-      final response = await _api.get('/app/quintal');
+      final response = await _repository.production();
       _verifyCareOwner(owner);
       if (generation != _productionGeneration || productionBusy || caring) {
         return;
@@ -69,8 +50,7 @@ extension QuintalProduction on HabitatService {
           _readSnapshot(Map<String, dynamic>.from(snapshot));
         }
       }
-      if (DateTime.tryParse(production['server_now']?.toString() ?? '')
-          case final clock?) {
+      if (productionState.serverNow case final clock?) {
         _clockOffset = clock.difference(DateTime.now().toUtc());
       }
       productionOffline = false;
@@ -108,7 +88,7 @@ extension QuintalProduction on HabitatService {
       );
       await _persistSnapshot();
       _verifyCareOwner(owner);
-      final response = await _api.post('/app/quintal/operations', {
+      final response = await _repository.produce({
         'action': action,
         'target': target,
         'data': data,
@@ -119,8 +99,7 @@ extension QuintalProduction on HabitatService {
       lastProductionProgress = Map<String, dynamic>.from(
         response['progress'] as Map? ?? const {},
       );
-      if (DateTime.tryParse(production['server_now']?.toString() ?? '')
-          case final clock?) {
+      if (productionState.serverNow case final clock?) {
         _clockOffset = clock.difference(DateTime.now().toUtc());
       }
       if (response['habitat'] case final Map snapshot) {

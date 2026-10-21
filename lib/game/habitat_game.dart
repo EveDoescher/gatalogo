@@ -1,3 +1,4 @@
+import 'habitat_scene_selection.dart';
 import 'habitat_camera.dart';
 import 'quintal_play_field.dart';
 
@@ -65,8 +66,14 @@ class HabitatGame extends FlameGame {
   bool previewValid = true;
   bool editing = false;
   bool reducedMotion = false;
-  String? selectedItemId, selectedCatId;
-  QuintalSceneTarget? selectedProduction;
+  final selection = HabitatSceneSelection();
+  String? get selectedItemId => selection.itemId;
+  set selectedItemId(String? value) => selection.itemId = value;
+  String? get selectedCatId => selection.catId;
+  set selectedCatId(String? value) => selection.catId = value;
+  QuintalSceneTarget? get selectedProduction => selection.production;
+  set selectedProduction(QuintalSceneTarget? value) =>
+      selection.production = value;
   final interactionPositions = ValueNotifier<int>(0);
   bool activityInProgress = false;
   String? _activityCatId;

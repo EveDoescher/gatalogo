@@ -3,12 +3,14 @@ import 'dart:convert';
 
 import 'habitat_navigation.dart';
 import '../models/habitat.dart';
+import '../models/quintal_snapshot.dart';
 export '../models/habitat.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../data/cat_database.dart';
+import '../data/habitat_repository.dart';
 import '../stores/cat_store.dart';
 import '../stores/session_store.dart';
 import 'product_api_service.dart';
@@ -31,13 +33,17 @@ class HabitatService extends ChangeNotifier {
     this.catStore, {
     CatDatabase? database,
     ProductApiService? api,
-  }) : _database = database ?? CatDatabase.instance,
-       _api = api ?? ProductApiService(session);
+    HabitatRepository? repository,
+  }) : _repository =
+           repository ??
+           HabitatRepository(
+             database ?? CatDatabase.instance,
+             api ?? ProductApiService(session),
+           );
 
   final SessionStore session;
   final CatStore catStore;
-  final CatDatabase _database;
-  final ProductApiService _api;
+  final HabitatRepository _repository;
 
   static const gridSize = 8;
   static const maxPlaced = 24;
@@ -130,7 +136,11 @@ class HabitatService extends ChangeNotifier {
   };
   Map<String, String> _pendingPurchases = {};
   Map<String, dynamic> care = {};
-  Map<String, dynamic> production = {};
+  QuintalSnapshot _production = QuintalSnapshot({});
+  QuintalSnapshot get productionState => _production;
+  Map<String, dynamic> get production => _production.wire;
+  set production(Map<String, dynamic> value) =>
+      _production = QuintalSnapshot(value);
   Map<String, String> _pendingProduction = {};
   bool productionBusy = false;
   int _productionGeneration = 0;
@@ -176,7 +186,7 @@ class HabitatService extends ChangeNotifier {
     notifyListeners();
     Map<String, dynamic>? cached;
     try {
-      cached = await _database.readHabitatCache(owner);
+      cached = await _repository.readCache(owner);
     } catch (_) {
       // The scene can still open if local storage is temporarily unavailable.
     }
@@ -209,7 +219,7 @@ class HabitatService extends ChangeNotifier {
       ];
       if (_normalizeDraftLayout()) {
         hasDraft = true;
-        await _database.saveHabitatDraft(owner, _draft());
+        await _repository.saveDraft(owner, _draft());
       }
       await _persistSnapshot();
     }
@@ -222,8 +232,8 @@ class HabitatService extends ChangeNotifier {
     }
     try {
       final results = await Future.wait([
-        _api.get('/app/habitat'),
-        _api.get('/app/habitat/shop'),
+        _repository.snapshot(),
+        _repository.catalog(),
       ]);
       if (owner != _ownerId) return;
       _readSnapshot(results.first);
@@ -240,7 +250,7 @@ class HabitatService extends ChangeNotifier {
       if (draft is Map) {
         _applyDraft(Map<String, dynamic>.from(draft));
         if (_normalizeDraftLayout()) {
-          await _database.saveHabitatDraft(_ownerId, _draft());
+          await _repository.saveDraft(_ownerId, _draft());
         }
       }
       await _persistSnapshot();
@@ -419,7 +429,7 @@ class HabitatService extends ChangeNotifier {
   };
 
   Future<void> _persistSnapshot() =>
-      _database.saveHabitatSnapshot(_ownerId, _snapshot());
+      _repository.saveSnapshot(_ownerId, _snapshot());
 
   Map<String, dynamic> _draft() => {
     'production_rules_version': production.isEmpty ? 0 : 1,
@@ -666,7 +676,7 @@ class HabitatService extends ChangeNotifier {
   Future<void> _saveDraft() async {
     _editVersion++;
     hasDraft = true;
-    await _database.saveHabitatDraft(_ownerId, _draft());
+    await _repository.saveDraft(_ownerId, _draft());
     if (session.isSignedIn) {
       try {
         await syncLayout();
@@ -700,23 +710,23 @@ class HabitatService extends ChangeNotifier {
   Future<void> _syncOnce({required bool overwrite}) async {
     try {
       if (overwrite) {
-        final remote = await _api.get('/app/habitat');
+        final remote = await _repository.snapshot();
         revision = (remote['revision'] as num).toInt();
       }
       final version = _editVersion;
-      final result = await _api.put('/app/habitat/layout', _draft());
+      final result = await _repository.layout(_draft());
       final newerDraft = version == _editVersion ? null : _draft();
       _readSnapshot(result);
       final appliedVersion = _editVersion;
       if (newerDraft != null) {
         _applyDraft(newerDraft);
-        await _database.saveHabitatDraft(_ownerId, _draft());
+        await _repository.saveDraft(_ownerId, _draft());
       } else {
-        await _database.saveHabitatDraft(_ownerId, null);
+        await _repository.saveDraft(_ownerId, null);
       }
       hasDraft = newerDraft != null || _editVersion != appliedVersion;
       if (_editVersion != appliedVersion) {
-        await _database.saveHabitatDraft(_ownerId, _draft());
+        await _repository.saveDraft(_ownerId, _draft());
       }
       offline = false;
       await _persistSnapshot();
@@ -728,7 +738,7 @@ class HabitatService extends ChangeNotifier {
   }
 
   Future<void> discardDraft() async {
-    await _database.saveHabitatDraft(_ownerId, null);
+    await _repository.saveDraft(_ownerId, null);
     hasDraft = false;
     await load();
   }
@@ -754,8 +764,8 @@ class HabitatService extends ChangeNotifier {
     }
     final key = _pendingPurchases[pendingId] ?? const Uuid().v4();
     _pendingPurchases[pendingId] = key;
-    await _database.saveHabitatPendingPurchases(_ownerId, _pendingPurchases);
-    final result = await _api.post('/app/habitat/purchases', {
+    await _repository.savePurchases(_ownerId, _pendingPurchases);
+    final result = await _repository.purchase({
       'sku': sku,
       'quantity': quantity,
       'idempotency_key': key,
@@ -772,7 +782,7 @@ class HabitatService extends ChangeNotifier {
     offline = false;
     await _persistSnapshot();
     _pendingPurchases.remove(pendingId);
-    await _database.saveHabitatPendingPurchases(_ownerId, _pendingPurchases);
+    await _repository.savePurchases(_ownerId, _pendingPurchases);
     notifyListeners();
   }
 
@@ -786,14 +796,14 @@ class HabitatService extends ChangeNotifier {
     final pendingId = 'expansion:$expansionLevel';
     final key = _pendingPurchases[pendingId] ?? const Uuid().v4();
     _pendingPurchases[pendingId] = key;
-    await _database.saveHabitatPendingPurchases(_ownerId, _pendingPurchases);
-    final result = await _api.post('/app/habitat/expansions', {
+    await _repository.savePurchases(_ownerId, _pendingPurchases);
+    final result = await _repository.expand({
       'expected_level': expansionLevel,
       'idempotency_key': key,
     });
     _readSnapshot(result);
     _pendingPurchases.remove(pendingId);
-    await _database.saveHabitatPendingPurchases(_ownerId, _pendingPurchases);
+    await _repository.savePurchases(_ownerId, _pendingPurchases);
     await _persistSnapshot();
     notifyListeners();
   }

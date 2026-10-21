@@ -1,3 +1,5 @@
+import '../widgets/conversation_composer.dart';
+import '../controllers/conversation_controller.dart';
 import '../widgets/chat_message_bubble.dart';
 import '../formatters/app_dates.dart';
 import '../widgets/botanical_scene.dart';
@@ -20,7 +22,6 @@ import '../data/cat_database.dart';
 import '../models/cat.dart';
 import '../models/chat_message.dart';
 import '../services/location_service.dart';
-import '../services/social_api_service.dart';
 import '../stores/cat_store.dart';
 import '../stores/session_store.dart';
 import '../theme/app_theme.dart';
@@ -53,292 +54,56 @@ class ConversationPage extends StatefulWidget {
 }
 
 class _ConversationPageState extends State<ConversationPage> {
-  late final SocialApiService _api;
+  late final ConversationController _conversation;
   final _controller = TextEditingController();
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
-
-  List<ChatMessage> _messages = [];
-  final Set<String> _optimisticIds = {};
-
-  bool _loading = true;
-  bool _sending = false;
-  bool _fetching = false;
-  String? _error;
-
-  String? _username;
-  String? _otherUserId;
-  String? _avatarUrl;
-  bool _isOnline = false;
-  DateTime? _lastSeenAt;
-  bool _sightingContext = false;
-  bool _otherUserTyping = false;
-  Timer? _otherTypingDebounceTimer;
-
+  bool _preparingAttachment = false;
+  bool get _sending => _preparingAttachment || _conversation.sending;
   bool _isSearching = false;
   String _searchQuery = '';
   bool _isMuted = false;
-
-  ChatMessage? _replyingTo;
-  ChatMessage? _editingMessage;
-
-  Timer? _fallbackPollTimer;
-  Timer? _myTypingTimer;
-  bool _amTyping = false;
-
-  StreamSubscription? _msgSub;
-  StreamSubscription? _typingSub;
-  StreamSubscription? _readSub;
-  StreamSubscription? _presenceSub;
-  StreamSubscription? _reactionSub;
-  StreamSubscription? _editSub;
-  StreamSubscription? _deleteSub;
 
   String? get _myUserId => widget.sessionStore.session?.userId;
 
   @override
   void initState() {
     super.initState();
-    _api = SocialApiService(widget.sessionStore);
-    _username = widget.initialUsername;
-    _otherUserId = widget.otherUserId;
-    _avatarUrl = widget.initialAvatarUrl;
-    _isOnline = widget.initialIsOnline ?? false;
-    _sightingContext = widget.initialSightingContext ?? false;
+    _conversation = ConversationController(
+      widget.sessionStore,
+      widget.conversationId,
+      username: widget.initialUsername,
+      otherUserId: widget.otherUserId,
+      avatarUrl: widget.initialAvatarUrl,
+      isOnline: widget.initialIsOnline ?? false,
+      sightingContext: widget.initialSightingContext ?? false,
+      onScroll: (animate) => _scrollToBottom(animate: animate),
+      onClearComposer: _controller.clear,
+      onRestoreComposer: (text) {
+        if (_controller.text.isEmpty) _controller.text = text;
+      },
+      onError: (text) {
+        if (mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(text)));
+        }
+      },
+    )..addListener(_onConversationChanged);
+    _conversation.start();
+  }
 
-    _setupRealtime();
-    _load();
+  void _onConversationChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
-    _fallbackPollTimer?.cancel();
-    _otherTypingDebounceTimer?.cancel();
-    _myTypingTimer?.cancel();
-    _msgSub?.cancel();
-    _typingSub?.cancel();
-    _readSub?.cancel();
-    _presenceSub?.cancel();
-    _reactionSub?.cancel();
-    _editSub?.cancel();
-    _deleteSub?.cancel();
-
+    _conversation.removeListener(_onConversationChanged);
+    _conversation.dispose();
     _controller.dispose();
     _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
-  }
-
-  void _setupRealtime() {
-    final ws = widget.sessionStore.webSocket;
-
-    // 1. Mensagens em tempo real pontuais
-    _msgSub = ws.onNewMessage.listen((data) {
-      if (data['conversation_id'] == widget.conversationId) {
-        final newMsg = ChatMessage.fromMap(data);
-        _handleIncomingMessage(newMsg);
-      }
-    });
-
-    // 2. Indicador de digitação
-    _typingSub = ws.onTyping.listen((data) {
-      if (data['conversation_id'] == widget.conversationId &&
-          data['user_id'] != _myUserId) {
-        final isTyping = data['is_typing'] == true;
-        if (mounted) {
-          setState(() {
-            _otherUserTyping = isTyping;
-          });
-        }
-        _otherTypingDebounceTimer?.cancel();
-        if (isTyping) {
-          _otherTypingDebounceTimer = Timer(const Duration(seconds: 4), () {
-            if (mounted) setState(() => _otherUserTyping = false);
-          });
-        }
-      }
-    });
-
-    // 3. Confirmação de leitura
-    _readSub = ws.onMessagesRead.listen((data) {
-      if (data['conversation_id'] == widget.conversationId) {
-        final readAtStr = data['read_at'];
-        final readAt = readAtStr != null
-            ? DateTime.tryParse(readAtStr)
-            : DateTime.now();
-        if (mounted) {
-          setState(() {
-            _messages = _messages.map((m) {
-              if (m.isMine(_myUserId)) {
-                return m.copyWith(isRead: true, readAt: readAt);
-              }
-              return m;
-            }).toList();
-          });
-        }
-      }
-    });
-
-    // 4. Presença online / visto por último
-    _presenceSub = ws.onPresence.listen((data) {
-      final userId = data['user_id']?.toString();
-      if (userId != null && (_otherUserId == null || userId == _otherUserId)) {
-        if (mounted) {
-          setState(() {
-            _isOnline = data['is_online'] == true;
-            if (data['last_seen_at'] != null) {
-              _lastSeenAt = DateTime.tryParse(data['last_seen_at'].toString());
-            }
-          });
-        }
-      }
-    });
-
-    // 5. Reações pontuais
-    _reactionSub = ws.onMessageReaction.listen((data) {
-      if (data['conversation_id'] == widget.conversationId) {
-        final msgId = data['message_id']?.toString();
-        final rawMap = data['reactions'] as Map?;
-        if (msgId != null && rawMap != null && mounted) {
-          final updatedReactions = <String, List<String>>{};
-          rawMap.forEach((k, v) {
-            if (v is List) {
-              updatedReactions[k.toString()] = v
-                  .map((e) => e.toString())
-                  .toList();
-            }
-          });
-          setState(() {
-            _messages = _messages.map((m) {
-              if (m.id == msgId) {
-                return m.copyWith(reactions: updatedReactions);
-              }
-              return m;
-            }).toList();
-          });
-        }
-      }
-    });
-
-    // 6. Mensagem editada pontual
-    _editSub = ws.onMessageEdited.listen((data) {
-      if (data['conversation_id'] == widget.conversationId) {
-        final msgId = data['message_id']?.toString();
-        final newBody = data['body']?.toString() ?? '';
-        if (msgId != null && mounted) {
-          setState(() {
-            _messages = _messages.map((m) {
-              if (m.id == msgId) {
-                return m.copyWith(body: newBody, isEdited: true);
-              }
-              return m;
-            }).toList();
-          });
-        }
-      }
-    });
-
-    // 7. Mensagem apagada pontual
-    _deleteSub = ws.onMessageDeleted.listen((data) {
-      if (data['conversation_id'] == widget.conversationId) {
-        final msgId = data['message_id']?.toString();
-        if (msgId != null && mounted) {
-          setState(() {
-            _messages = _messages.map((m) {
-              if (m.id == msgId) {
-                return m.copyWith(isDeleted: true, body: 'Mensagem apagada');
-              }
-              return m;
-            }).toList();
-          });
-        }
-      }
-    });
-
-    // 8. Fallback de polling a cada 30s APENAS se o WebSocket NÃO estiver conectado
-    _fallbackPollTimer = Timer.periodic(const Duration(seconds: 30), (_) {
-      if (!widget.sessionStore.webSocket.isConnected) {
-        _load(silent: true);
-      }
-    });
-  }
-
-  void _handleIncomingMessage(ChatMessage newMsg) {
-    if (!mounted) return;
-    setState(() {
-      final existingIndex = _messages.indexWhere((m) => m.id == newMsg.id);
-      if (existingIndex >= 0) {
-        _messages[existingIndex] = newMsg;
-      } else {
-        _messages = [..._messages, newMsg];
-      }
-    });
-
-    // Se a mensagem for do outro usuário, marcar como lida imediatamente
-    if (!newMsg.isMine(_myUserId)) {
-      _api.markRead(widget.conversationId);
-      widget.sessionStore.webSocket.sendRead(widget.conversationId);
-    }
-
-    _scrollToBottom();
-  }
-
-  Future<void> _load({bool silent = false}) async {
-    if (_fetching) return;
-    _fetching = true;
-    if (!silent && mounted) setState(() => _loading = true);
-
-    try {
-      final detailsFuture = _api.conversationDetails(widget.conversationId);
-      final messagesFuture = _api.messages(widget.conversationId);
-
-      final results = await Future.wait([detailsFuture, messagesFuture]);
-      final details = results[0] as Map<String, dynamic>;
-      final rawMessages = results[1] as List<Map<String, dynamic>>;
-
-      if (mounted) {
-        setState(() {
-          _username = details['username']?.toString() ?? _username;
-          _otherUserId = details['other_user_id']?.toString() ?? _otherUserId;
-          _avatarUrl = details['avatar_url']?.toString() ?? _avatarUrl;
-          if (details['is_online'] != null) {
-            _isOnline = details['is_online'] == true;
-          }
-          if (details['last_seen_at'] != null) {
-            _lastSeenAt = DateTime.tryParse(details['last_seen_at'].toString());
-          }
-          _sightingContext = details['sighting_context'] == true;
-
-          _messages = rawMessages.map((m) => ChatMessage.fromMap(m)).toList();
-          _error = null;
-        });
-
-        // Marcar como lida na abertura
-        _api.markRead(widget.conversationId);
-        widget.sessionStore.webSocket.sendRead(widget.conversationId);
-        _scrollToBottom(animate: false);
-      }
-    } catch (error) {
-      if (mounted && !silent) setState(() => _error = error.toString());
-    } finally {
-      _fetching = false;
-      if (mounted && !silent) setState(() => _loading = false);
-    }
-  }
-
-  void _onTextChanged(String text) {
-    if (text.isNotEmpty && !_amTyping) {
-      _amTyping = true;
-      widget.sessionStore.webSocket.sendTyping(widget.conversationId, true);
-    }
-
-    _myTypingTimer?.cancel();
-    _myTypingTimer = Timer(const Duration(seconds: 3), () {
-      if (_amTyping) {
-        _amTyping = false;
-        widget.sessionStore.webSocket.sendTyping(widget.conversationId, false);
-      }
-    });
   }
 
   void _scrollToBottom({bool animate = true}) {
@@ -357,151 +122,6 @@ class _ConversationPageState extends State<ConversationPage> {
     });
   }
 
-  Future<void> _sendMessage({
-    String body = '',
-    String type = 'text',
-    String? mediaUrl,
-    double? locationLat,
-    double? locationLng,
-    String? locationTitle,
-    Map<String, dynamic>? catData,
-  }) async {
-    final trimmedBody = body.trim();
-    if (type == 'text' && trimmedBody.isEmpty && _editingMessage == null) {
-      return;
-    }
-    if (_sending) return;
-
-    // Se estiver no modo de edição de mensagem
-    if (_editingMessage != null) {
-      await _commitEdit(trimmedBody);
-      return;
-    }
-
-    final replyId = _replyingTo?.id;
-    final replyMap = _replyingTo != null
-        ? {
-            'id': _replyingTo!.id,
-            'sender_id': _replyingTo!.senderId,
-            'body': _replyingTo!.previewText,
-          }
-        : null;
-
-    final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
-    final optimisticMsg = ChatMessage(
-      id: tempId,
-      conversationId: widget.conversationId,
-      senderId: _myUserId ?? 'me',
-      body: trimmedBody,
-      type: type,
-      mediaUrl: mediaUrl,
-      locationLat: locationLat,
-      locationLng: locationLng,
-      locationTitle: locationTitle,
-      catData: catData,
-      replyToId: replyId,
-      replyTo: replyMap,
-      createdAt: DateTime.now(),
-    );
-
-    setState(() {
-      _sending = true;
-      _optimisticIds.add(tempId);
-      _messages = [..._messages, optimisticMsg];
-      _replyingTo = null;
-    });
-    _controller.clear();
-    _scrollToBottom();
-
-    // Notificar fim de digitação
-    if (_amTyping) {
-      _amTyping = false;
-      widget.sessionStore.webSocket.sendTyping(widget.conversationId, false);
-    }
-
-    try {
-      final sentData = await _api.sendMessage(
-        widget.conversationId,
-        body: trimmedBody,
-        type: type,
-        mediaUrl: mediaUrl,
-        locationLat: locationLat,
-        locationLng: locationLng,
-        locationTitle: locationTitle,
-        catData: catData,
-        replyToId: replyId,
-      );
-
-      final realMsg = ChatMessage.fromMap(sentData);
-      if (mounted) {
-        setState(() {
-          _optimisticIds.remove(tempId);
-          _messages = _messages
-              .map((m) => m.id == tempId ? realMsg : m)
-              .toList();
-        });
-      }
-    } on SocialApiException catch (error) {
-      _rollbackOptimistic(tempId, trimmedBody, error.message);
-    } catch (e) {
-      _rollbackOptimistic(tempId, trimmedBody, 'Erro ao enviar mensagem: $e');
-    } finally {
-      if (mounted) setState(() => _sending = false);
-    }
-  }
-
-  void _rollbackOptimistic(
-    String tempId,
-    String originalText,
-    String errorMsg,
-  ) {
-    if (!mounted) return;
-    setState(() {
-      _messages = _messages.where((m) => m.id != tempId).toList();
-      _optimisticIds.remove(tempId);
-      if (_controller.text.isEmpty && originalText.isNotEmpty) {
-        _controller.text = originalText;
-      }
-    });
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(errorMsg)));
-  }
-
-  Future<void> _commitEdit(String newBody) async {
-    final target = _editingMessage;
-    if (target == null) return;
-
-    setState(() {
-      _editingMessage = null;
-      _sending = true;
-    });
-    _controller.clear();
-
-    try {
-      final updated = await _api.editMessage(
-        widget.conversationId,
-        target.id,
-        newBody,
-      );
-      final updatedMsg = ChatMessage.fromMap(updated);
-      if (mounted) {
-        setState(() {
-          _messages = _messages
-              .map((m) => m.id == target.id ? updatedMsg : m)
-              .toList();
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Erro ao editar mensagem: $e')));
-      }
-    } finally {
-      if (mounted) setState(() => _sending = false);
-    }
-  }
-
   Future<void> _pickAndSendPhoto(ImageSource source) async {
     try {
       final picker = ImagePicker();
@@ -512,25 +132,11 @@ class _ConversationPageState extends State<ConversationPage> {
       );
       if (picked == null) return;
 
-      setState(() => _sending = true);
+      setState(() => _preparingAttachment = true);
       final bytes = await picked.readAsBytes();
       final filename = picked.name.isNotEmpty ? picked.name : 'chat_photo.jpg';
 
-      final mediaUrl = await _api.uploadChatPhoto(
-        widget.conversationId,
-        bytes,
-        filename,
-      );
-
-      if (mediaUrl != null) {
-        await _sendMessage(body: '', type: 'photo', mediaUrl: mediaUrl);
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Erro ao enviar imagem.')),
-          );
-        }
-      }
+      await _conversation.uploadPhoto(bytes, filename);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -538,12 +144,12 @@ class _ConversationPageState extends State<ConversationPage> {
         ).showSnackBar(SnackBar(content: Text('Falha ao processar foto: $e')));
       }
     } finally {
-      if (mounted) setState(() => _sending = false);
+      if (mounted) setState(() => _preparingAttachment = false);
     }
   }
 
   Future<void> _sendCurrentLocation() async {
-    setState(() => _sending = true);
+    setState(() => _preparingAttachment = true);
     try {
       final pos = await LocationService.getCurrentLocation();
       if (pos == null) {
@@ -564,7 +170,7 @@ class _ConversationPageState extends State<ConversationPage> {
         pos.longitude,
       );
 
-      await _sendMessage(
+      await _conversation.sendMessage(
         type: 'location',
         locationLat: pos.latitude,
         locationLng: pos.longitude,
@@ -577,7 +183,7 @@ class _ConversationPageState extends State<ConversationPage> {
         );
       }
     } finally {
-      if (mounted) setState(() => _sending = false);
+      if (mounted) setState(() => _preparingAttachment = false);
     }
   }
 
@@ -719,7 +325,7 @@ class _ConversationPageState extends State<ConversationPage> {
       'location_name': cat.locationName,
     };
 
-    _sendMessage(
+    _conversation.sendMessage(
       type: 'cat_card',
       catData: catData,
       body: 'Ficha de ${cat.displayName}',
@@ -985,7 +591,7 @@ class _ConversationPageState extends State<ConversationPage> {
                             borderRadius: BorderRadius.circular(20),
                             onTap: () {
                               Navigator.pop(ctx);
-                              _toggleReaction(msg, key);
+                              _conversation.toggleReaction(msg, key);
                             },
                             child: Container(
                               padding: const EdgeInsets.all(8),
@@ -1024,8 +630,8 @@ class _ConversationPageState extends State<ConversationPage> {
                 onTap: () {
                   Navigator.pop(ctx);
                   setState(() {
-                    _replyingTo = msg;
-                    _editingMessage = null;
+                    _conversation.replyingTo = msg;
+                    _conversation.editingMessage = null;
                   });
                 },
               ),
@@ -1070,8 +676,8 @@ class _ConversationPageState extends State<ConversationPage> {
                   onTap: () {
                     Navigator.pop(ctx);
                     setState(() {
-                      _editingMessage = msg;
-                      _replyingTo = null;
+                      _conversation.editingMessage = msg;
+                      _conversation.replyingTo = null;
                       _controller.text = msg.body;
                     });
                   },
@@ -1104,43 +710,6 @@ class _ConversationPageState extends State<ConversationPage> {
     );
   }
 
-  Future<void> _toggleReaction(ChatMessage msg, String reaction) async {
-    // Atualização otimista
-    final myId = _myUserId ?? 'me';
-    final currentList = List<String>.from(msg.reactions[reaction] ?? []);
-    final alreadyReacted = currentList.contains(myId);
-
-    if (alreadyReacted) {
-      currentList.remove(myId);
-    } else {
-      currentList.add(myId);
-    }
-
-    final newReactions = Map<String, List<String>>.from(msg.reactions);
-    if (currentList.isEmpty) {
-      newReactions.remove(reaction);
-    } else {
-      newReactions[reaction] = currentList;
-    }
-
-    setState(() {
-      _messages = _messages
-          .map((m) => m.id == msg.id ? m.copyWith(reactions: newReactions) : m)
-          .toList();
-    });
-
-    try {
-      await _api.toggleMessageReaction(widget.conversationId, msg.id, reaction);
-    } catch (_) {
-      // Reverte em caso de falha de rede
-      if (mounted) {
-        setState(() {
-          _messages = _messages.map((m) => m.id == msg.id ? msg : m).toList();
-        });
-      }
-    }
-  }
-
   void _confirmDelete(ChatMessage msg) {
     showDialog(
       context: context,
@@ -1161,27 +730,7 @@ class _ConversationPageState extends State<ConversationPage> {
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              setState(() {
-                _messages = _messages
-                    .map(
-                      (m) => m.id == msg.id
-                          ? m.copyWith(
-                              isDeleted: true,
-                              body: 'Mensagem apagada',
-                            )
-                          : m,
-                    )
-                    .toList();
-              });
-              try {
-                await _api.deleteMessage(widget.conversationId, msg.id);
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Erro ao apagar mensagem: $e')),
-                  );
-                }
-              }
+              await _conversation.deleteMessage(msg);
             },
             child: const Text(
               'Apagar',
@@ -1425,12 +974,15 @@ class _ConversationPageState extends State<ConversationPage> {
   }
 
   Widget _buildAvatar() {
-    final avatarWidget = FramedUserAvatar(url: _avatarUrl, size: 38);
+    final avatarWidget = FramedUserAvatar(
+      url: _conversation.avatarUrl,
+      size: 38,
+    );
 
     return Stack(
       children: [
         avatarWidget,
-        if (_isOnline)
+        if (_conversation.isOnline)
           Positioned(
             right: 0,
             bottom: 0,
@@ -1450,11 +1002,13 @@ class _ConversationPageState extends State<ConversationPage> {
 
   @override
   Widget build(BuildContext context) {
-    final titleText = _username == null ? 'Conversa' : '@$_username';
+    final titleText = _conversation.username == null
+        ? 'Conversa'
+        : '@${_conversation.username}';
 
     // Subtítulo inteligente: digitando... > online > visto por último > amigo
     Widget subtitleWidget;
-    if (_otherUserTyping) {
+    if (_conversation.otherUserTyping) {
       subtitleWidget = Text(
         'digitando...',
         style: GoogleFonts.nunito(
@@ -1464,7 +1018,7 @@ class _ConversationPageState extends State<ConversationPage> {
           color: AppColors.greenProgress,
         ),
       );
-    } else if (_isOnline) {
+    } else if (_conversation.isOnline) {
       subtitleWidget = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1487,9 +1041,9 @@ class _ConversationPageState extends State<ConversationPage> {
           ),
         ],
       );
-    } else if (_lastSeenAt != null) {
+    } else if (_conversation.lastSeenAt != null) {
       subtitleWidget = Text(
-        'Visto por último ${AppDates.lastSeen(_lastSeenAt!)}',
+        'Visto por último ${AppDates.lastSeen(_conversation.lastSeenAt!)}',
         style: GoogleFonts.nunito(
           fontSize: 11,
           fontWeight: FontWeight.w600,
@@ -1520,8 +1074,8 @@ class _ConversationPageState extends State<ConversationPage> {
     }
 
     final filteredMessages = _searchQuery.isEmpty
-        ? _messages
-        : _messages
+        ? _conversation.messages
+        : _conversation.messages
               .where(
                 (m) =>
                     m.body.toLowerCase().contains(_searchQuery.toLowerCase()) ||
@@ -1719,7 +1273,7 @@ class _ConversationPageState extends State<ConversationPage> {
           Column(
             children: [
               // Banner Interativo de Avistamento / Resgate
-              if (_sightingContext)
+              if (_conversation.sightingContext)
                 Container(
                   margin: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.md,
@@ -1794,7 +1348,7 @@ class _ConversationPageState extends State<ConversationPage> {
                   ),
                 ),
 
-              if (_error != null)
+              if (_conversation.error != null)
                 Container(
                   margin: const EdgeInsets.all(AppSpacing.md),
                   padding: const EdgeInsets.all(AppSpacing.md),
@@ -1812,7 +1366,7 @@ class _ConversationPageState extends State<ConversationPage> {
                       const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: Text(
-                          _error!,
+                          _conversation.error!,
                           style: GoogleFonts.nunito(
                             fontSize: 12,
                             color: AppColors.errorText,
@@ -1821,7 +1375,7 @@ class _ConversationPageState extends State<ConversationPage> {
                       ),
                       IconButton(
                         icon: const Icon(LucideIcons.refreshCw, size: 16),
-                        onPressed: _load,
+                        onPressed: _conversation.load,
                       ),
                     ],
                   ),
@@ -1829,7 +1383,7 @@ class _ConversationPageState extends State<ConversationPage> {
 
               // Lista de Mensagens
               Expanded(
-                child: _loading
+                child: _conversation.loading
                     ? const Center(
                         child: CircularProgressIndicator(
                           color: AppColors.primary,
@@ -1871,7 +1425,9 @@ class _ConversationPageState extends State<ConversationPage> {
                                 const SizedBox(height: 12),
                                 OutlinedButton.icon(
                                   onPressed: () {
-                                    _sendMessage(body: 'Olá! Tudo bem?');
+                                    _conversation.sendMessage(
+                                      body: 'Olá! Tudo bem?',
+                                    );
                                   },
                                   icon: const Icon(
                                     Icons.pets,
@@ -1911,9 +1467,8 @@ class _ConversationPageState extends State<ConversationPage> {
                         itemBuilder: (context, index) {
                           final message = filteredMessages[index];
                           final mine = message.isMine(_myUserId);
-                          final isOptimistic = _optimisticIds.contains(
-                            message.id,
-                          );
+                          final isOptimistic = _conversation.optimisticIds
+                              .contains(message.id);
                           final showDateHeader =
                               index == 0 ||
                               AppDates.isDifferentLocalDay(
@@ -1967,12 +1522,12 @@ class _ConversationPageState extends State<ConversationPage> {
                                       mine: mine,
                                       isOptimistic: isOptimistic,
                                       currentUserId: _myUserId,
-                                      username: _username,
+                                      username: _conversation.username,
                                       accessToken: widget
                                           .sessionStore
                                           .session
                                           ?.accessToken,
-                                      onReact: _toggleReaction,
+                                      onReact: _conversation.toggleReaction,
                                       onOpenPhoto: _openFullscreenImage,
                                       onOpenLocation: _openLocationMap,
                                       onOpenCat: _openCatDetails,
@@ -1986,285 +1541,22 @@ class _ConversationPageState extends State<ConversationPage> {
                       ),
               ),
 
-              // Barra de pré-visualização de Reply
-              if (_replyingTo != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
-                  decoration: const BoxDecoration(
-                    color: AppColors.primarySoftBg,
-                    border: Border(
-                      top: BorderSide(color: AppColors.borderLight),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        LucideIcons.reply,
-                        size: 18,
-                        color: AppColors.primaryDark,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Respondendo a ${_replyingTo!.isMine(_myUserId) ? 'Você' : '@$_username'}',
-                              style: GoogleFonts.fredoka(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.primaryDark,
-                              ),
-                            ),
-                            Text(
-                              _replyingTo!.previewText,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.nunito(
-                                fontSize: 12,
-                                color: AppColors.textDark,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          LucideIcons.x,
-                          size: 18,
-                          color: AppColors.textDark,
-                        ),
-                        onPressed: () => setState(() => _replyingTo = null),
-                      ),
-                    ],
-                  ),
-                ),
-
-              // Barra de pré-visualização de Edição
-              if (_editingMessage != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.greenLight,
-                    border: const Border(
-                      top: BorderSide(color: AppColors.borderLight),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        LucideIcons.edit2,
-                        size: 18,
-                        color: AppColors.greenLink,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Editando mensagem',
-                              style: GoogleFonts.fredoka(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.greenLink,
-                              ),
-                            ),
-                            Text(
-                              _editingMessage!.body,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.nunito(
-                                fontSize: 12,
-                                color: AppColors.textDark,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          LucideIcons.x,
-                          size: 18,
-                          color: AppColors.textDark,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _editingMessage = null;
-                            _controller.clear();
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-
-              // Barra de Envio
-              SafeArea(
-                top: false,
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-                  decoration: const BoxDecoration(
-                    color: AppColors.background,
-                    border: Border(
-                      top: BorderSide(color: AppColors.borderLight),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      // Botão de Anexo (+)
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: AppColors.primarySoftBg,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppColors.borderProfile,
-                            width: 1.2,
-                          ),
-                        ),
-                        child: IconButton(
-                          tooltip: 'Anexar',
-                          icon: const Icon(
-                            LucideIcons.plus,
-                            size: 20,
-                            color: AppColors.primaryDark,
-                          ),
-                          onPressed: _showAttachmentMenu,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-
-                      // Campo de entrada de texto
-                      Expanded(
-                        child: TextField(
-                          controller: _controller,
-                          textCapitalization: TextCapitalization.sentences,
-                          minLines: 1,
-                          maxLines: 4,
-                          onChanged: _onTextChanged,
-                          style: GoogleFonts.nunito(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textDark,
-                          ),
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: AppColors.surface,
-                            hintText: _editingMessage != null
-                                ? 'Editar mensagem...'
-                                : 'Mensagem...',
-                            hintStyle: GoogleFonts.nunito(
-                              fontSize: 15,
-                              color: AppColors.textLight,
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 10,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                              borderSide: const BorderSide(
-                                color: AppColors.borderLight,
-                                width: 1.2,
-                              ),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                              borderSide: const BorderSide(
-                                color: AppColors.borderLight,
-                                width: 1.2,
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                              borderSide: const BorderSide(
-                                color: AppColors.primary,
-                                width: 1.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-
-                      // Botão rápido de respostas de resgate
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: AppColors.primarySoftBg,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppColors.borderProfile,
-                            width: 1.2,
-                          ),
-                        ),
-                        child: IconButton(
-                          tooltip: 'Respostas rápidas de resgate',
-                          icon: const Icon(
-                            Icons.pets,
-                            size: 18,
-                            color: AppColors.primary,
-                          ),
-                          onPressed: _showQuickRescueReplies,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-
-                      // Botão de Enviar
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: _editingMessage != null
-                              ? AppColors.greenProgress
-                              : AppColors.primary,
-                          shape: BoxShape.circle,
-                        ),
-                        child: IconButton(
-                          tooltip: _editingMessage != null
-                              ? 'Salvar edição'
-                              : 'Enviar',
-                          onPressed: _sending
-                              ? null
-                              : () => _sendMessage(body: _controller.text),
-                          icon: _sending
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : Icon(
-                                  _editingMessage != null
-                                      ? LucideIcons.check
-                                      : LucideIcons.send,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              ConversationComposer(
+                controller: _controller,
+                busy: _sending,
+                replyingTo: _conversation.replyingTo,
+                editingMessage: _conversation.editingMessage,
+                currentUserId: _myUserId,
+                username: _conversation.username,
+                onChanged: _conversation.onTextChanged,
+                onSend: () => _conversation.sendMessage(body: _controller.text),
+                onAttachment: _showAttachmentMenu,
+                onQuickReplies: _showQuickRescueReplies,
+                onCancelReply: () => _conversation.replyingTo = null,
+                onCancelEdit: () {
+                  _conversation.editingMessage = null;
+                  _controller.clear();
+                },
               ),
             ],
           ),

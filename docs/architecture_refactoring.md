@@ -1,5 +1,8 @@
 # Refatoração arquitetural — 21/10/2026
 
+> Estado atual: veja [architecture_completion.md](architecture_completion.md).
+> As pendências abaixo registram a etapa anterior, não o estado final desta rodada.
+
 Branch: `code-quality-cleanup`.
 
 ## Extrações realizadas em ordem de risco
@@ -27,7 +30,7 @@ editado manualmente nem foram removidos assets referenciados dinamicamente.
 - Depois da câmera: 13 testes de projeção, zoom, limites e interação aprovados.
 - Suíte completa final, depois de todas essas extrações: **264 aprovados, 6 condicionais e zero falhas**. Detalhes em `quality_review.md`.
 
-## Próximas fronteiras maiores do mapa
+## Fronteiras históricas da primeira etapa
 
 - Conversa: controlador de eventos, timers, reconciliação de mensagens otimistas e compositor. A bolha já foi extraída; o ciclo de vida ainda pertence à página.
 - Detalhes do gato: comandos e seções de mídia/análise; os dois componentes independentes já foram extraídos.

@@ -1,5 +1,7 @@
+import '../widgets/habitat_hud.dart';
+import '../widgets/habitat_ground_tools.dart';
+import '../controllers/habitat_interaction_state.dart';
 import '../widgets/app_loading_screen.dart';
-import '../widgets/quintal_production_widgets.dart';
 import '../widgets/quintal_return_dialog.dart';
 
 import 'dart:async';
@@ -21,8 +23,6 @@ import '../widgets/habitat_reward_reveal.dart';
 import '../stores/cat_store.dart';
 import '../stores/session_store.dart';
 import '../theme/app_theme.dart';
-import '../widgets/app_header_actions.dart';
-import '../widgets/habitat_coin_badge.dart';
 import '../widgets/habitat_sprite_preview.dart';
 import '../widgets/habitat_cat_preview.dart';
 import 'habitat_help_page.dart';
@@ -33,10 +33,6 @@ import 'quintal_game_page.dart';
 import '../widgets/quintal_object_actions.dart';
 import '../widgets/habitat_object_balloon.dart';
 import '../game/quintal_scene_target.dart';
-
-enum _GroundTool { move, paint, collect }
-
-enum _HabitatTray { none, inventory, cats }
 
 class HabitatPage extends StatefulWidget {
   const HabitatPage({
@@ -63,35 +59,19 @@ class HabitatPage extends StatefulWidget {
 }
 
 class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
+  final _interaction = HabitatInteractionState();
   late final HabitatService _habitat;
   late final HabitatSprites _sprites;
   late final HabitatGame _game;
   final GlobalKey _sceneKey = GlobalKey();
-  final Set<(int, int)> _pathStroke = {};
-  _HabitatTray _tray = _HabitatTray.none;
-  bool _menuOpen = false;
-  bool _productionTrayOpen = false;
   double _trayExtent = 0, _catSetExtent = 0, _productionTrayExtent = 0;
-  bool _editing = false;
   bool _showShop = false;
   bool _showHelp = false;
   bool _migrationNoticeShown = false;
-  String? _selectedItemId;
-  QuintalSceneTarget? _productionSelection;
-  ({String id, (int, int) anchor, (int, int) food, (int, int) water})? _catSet;
-  bool _choosingWater = false;
-  bool _placingSet = false;
   bool _sceneReady = false;
   Future<void>? _preparingScene;
   String? _sceneError;
-  String? _draggingCatId;
-  (int, int)? _hovered;
-  int _rotation = 0;
   double _scaleStart = 1;
-  _GroundTool _groundTool = _GroundTool.move;
-  String? _groundSku;
-  bool _groundOnly = false, _cameraGesture = false;
-  int _scenePointers = 0;
   Timer? _visitorTimer;
   DateTime _nextVisitCheck = DateTime.fromMillisecondsSinceEpoch(0);
   bool _foreground = true, _claimingGift = false;
@@ -235,7 +215,12 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
   }
 
   Future<void> _tickVisit() async {
-    if (!mounted || _editing || !widget.active.value || !_foreground) return;
+    if (!mounted ||
+        _interaction.editing ||
+        !widget.active.value ||
+        !_foreground) {
+      return;
+    }
     if (DateTime.now().isAfter(_nextVisitCheck)) {
       _nextVisitCheck = DateTime.now().add(const Duration(minutes: 1));
       await _habitat.checkVisitors();
@@ -283,11 +268,11 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
     HabitatNavigation.focusProduction.value = null;
     _game.focusProduction(space);
     setState(() {
-      _editing = false;
+      _interaction.editing = false;
       _game.editing = false;
-      _tray = _HabitatTray.none;
+      _interaction.tray = HabitatTray.none;
       _clearSelection();
-      _productionSelection = _game.productionDestination(space);
+      _interaction.productionSelection = _game.productionDestination(space);
     });
   }
 
@@ -315,8 +300,9 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
-  HabitatItem? get _selectedItem =>
-      _habitat.items.where((item) => item.id == _selectedItemId).firstOrNull;
+  HabitatItem? get _selectedItem => _habitat.items
+      .where((item) => item.id == _interaction.selectedItemId)
+      .firstOrNull;
 
   HabitatItem? _itemAt((int, int) cell) {
     HabitatItem? groundItem;
@@ -325,7 +311,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
         continue;
       }
       final type = _habitat.definition(item.sku);
-      if (_groundOnly && !type.isGround) continue;
+      if (_interaction.groundOnly && !type.isGround) continue;
       if (type.isGround) {
         if (_habitat.occupiedCells(item).contains(cell)) groundItem = item;
         continue;
@@ -354,15 +340,18 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
 
   void _selectItem(HabitatItem item) {
     setState(() {
-      _editing = true;
+      _interaction.editing = true;
       _game.editing = true;
-      _selectedItemId = item.id;
+      _interaction.selectedItemId = item.id;
       _game.selectedItemId = item.id;
-      _rotation = item.rotation;
-      _groundTool = _habitat.definition(item.sku).isGround && !item.isPlaced
-          ? _GroundTool.paint
-          : _GroundTool.move;
-      _groundSku = _habitat.definition(item.sku).isGround ? item.sku : null;
+      _interaction.rotation = item.rotation;
+      _interaction.groundTool =
+          _habitat.definition(item.sku).isGround && !item.isPlaced
+          ? GroundTool.paint
+          : GroundTool.move;
+      _interaction.groundSku = _habitat.definition(item.sku).isGround
+          ? item.sku
+          : null;
     });
     final type = _habitat.definition(item.sku);
     unawaited(
@@ -374,15 +363,13 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
   }
 
   void _clearSelection() {
-    _groundTool = _GroundTool.move;
-    _groundSku = null;
-    _selectedItemId = null;
+    _interaction.clearSelection();
     _game.selectedItemId = null;
     _clearPreview();
   }
 
   void _clearPreview() {
-    _hovered = null;
+    _interaction.hovered = null;
     _game.previewX = null;
     _game.previewY = null;
     _game.previewSku = null;
@@ -392,44 +379,48 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
 
   void _preview(Offset localPosition) {
     final cell = _game.cellAt(localPosition);
-    _hovered = cell;
+    _interaction.hovered = cell;
     _game.previewX = cell?.$1;
     _game.previewY = cell?.$2;
-    _game.previewSku = _draggingCatId != null || _selectedItem == null
+    _game.previewSku =
+        _interaction.draggingCatId != null || _selectedItem == null
         ? null
         : _selectedItem!.sku;
-    _game.previewCat = _draggingCatId != null;
-    _game.previewCatId = _draggingCatId;
-    _game.previewRotation = _rotation;
+    _game.previewCat = _interaction.draggingCatId != null;
+    _game.previewCatId = _interaction.draggingCatId;
+    _game.previewRotation = _interaction.rotation;
     _game.previewValid =
         cell != null &&
-        (_draggingCatId != null
+        (_interaction.draggingCatId != null
             ? _habitat.isFreeForCat(cell.$1, cell.$2) &&
                   !_habitat.catAnchors.entries.any(
                     (entry) =>
-                        entry.key != _draggingCatId && entry.value == cell,
+                        entry.key != _interaction.draggingCatId &&
+                        entry.value == cell,
                   )
             : _selectedItem != null &&
                   _habitat.canPlace(
                     _selectedItem!,
                     cell.$1,
                     cell.$2,
-                    _rotation,
+                    _interaction.rotation,
                   ));
     setState(() {});
   }
 
   void _extendPathStroke((int, int) cell) {
-    final previous = _pathStroke.lastOrNull;
+    final previous = _interaction.pathStroke.lastOrNull;
     if (previous == null) {
-      _pathStroke.add(cell);
+      _interaction.pathStroke.add(cell);
       return;
     }
     final steps = (cell.$1 - previous.$1).abs() + (cell.$2 - previous.$2).abs();
     for (var index = 1; index <= steps; index++) {
       final x = previous.$1 + ((cell.$1 - previous.$1) * index / steps).round();
       final y = previous.$2 + ((cell.$2 - previous.$2) * index / steps).round();
-      if (_habitat.buildableCells.contains((x, y))) _pathStroke.add((x, y));
+      if (_habitat.buildableCells.contains((x, y))) {
+        _interaction.pathStroke.add((x, y));
+      }
     }
   }
 
@@ -441,7 +432,9 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
         id,
         cell.$1,
         cell.$2,
-        id == _selectedItemId ? _rotation : item.rotation,
+        id == _interaction.selectedItemId
+            ? _interaction.rotation
+            : item.rotation,
       );
       if (placed) {
         setState(_clearSelection);
@@ -455,7 +448,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
   }
 
   void _openInventory() {
-    _openTray(_HabitatTray.inventory);
+    _openTray(HabitatTray.inventory);
     unawaited(_habitat.refreshProduction());
   }
 
@@ -478,7 +471,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
       return;
     }
     setState(
-      () => _productionSelection = QuintalSceneTarget(
+      () => _interaction.productionSelection = QuintalSceneTarget(
         'cat',
         cat.id,
         item.sku == 'water_bowl' ? 'water_cat' : 'food_cat',
@@ -509,17 +502,22 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
       return;
     }
     setState(() {
-      _catSet = (id: id, anchor: cell, food: choices[0], water: choices[1]);
-      _choosingWater = false;
-      _tray = _HabitatTray.none;
+      _interaction.catSet = (
+        id: id,
+        anchor: cell,
+        food: choices[0],
+        water: choices[1],
+      );
+      _interaction.choosingWater = false;
+      _interaction.tray = HabitatTray.none;
       _clearSelection();
-      _productionSelection = null;
+      _interaction.productionSelection = null;
       _syncCatSetPreview();
     });
   }
 
   void _syncCatSetPreview() {
-    final set = _catSet;
+    final set = _interaction.catSet;
     final color = set == null
         ? 0
         : (_habitat.productionCat(set.id)['color_index'] as num? ?? 0).toInt();
@@ -533,14 +531,14 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
   }
 
   void _cancelCatSet() {
-    _catSet = null;
+    _interaction.catSet = null;
     _syncCatSetPreview();
   }
 
   Future<void> _confirmCatSet() async {
-    final set = _catSet;
-    if (set == null || _placingSet) return;
-    setState(() => _placingSet = true);
+    final set = _interaction.catSet;
+    if (set == null || _interaction.placingSet) return;
+    setState(() => _interaction.placingSet = true);
     try {
       await _habitat.produce('add_cat', set.id, {
         'anchor': [set.anchor.$1, set.anchor.$2],
@@ -549,19 +547,19 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
       });
       if (mounted) {
         setState(() {
-          _catSet = null;
+          _interaction.catSet = null;
           _syncCatSetPreview();
         });
       }
     } on ProductApiException catch (e) {
       _message(e.message);
     } finally {
-      if (mounted) setState(() => _placingSet = false);
+      if (mounted) setState(() => _interaction.placingSet = false);
     }
   }
 
   Widget _catSetControls() {
-    final set = _catSet!;
+    final set = _interaction.catSet!;
     final name =
         _habitat.cats.where((c) => c.id == set.id).firstOrNull?.name ??
         'seu gato';
@@ -584,7 +582,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
               ),
               const SizedBox(height: 4),
               Text(
-                'Toque no chão para posicionar o pote de ${_choosingWater ? 'água' : 'comida'}.',
+                'Toque no chão para posicionar o pote de ${_interaction.choosingWater ? 'água' : 'comida'}.',
                 textAlign: TextAlign.center,
               ),
               Wrap(
@@ -594,34 +592,37 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
                 children: [
                   ChoiceChip(
                     label: const Text('Comida'),
-                    selected: !_choosingWater,
-                    onSelected: _placingSet
+                    selected: !_interaction.choosingWater,
+                    onSelected: _interaction.placingSet
                         ? null
-                        : (_) => setState(() => _choosingWater = false),
+                        : (_) => setState(
+                            () => _interaction.choosingWater = false,
+                          ),
                   ),
                   const SizedBox(width: 8),
                   ChoiceChip(
                     label: const Text('Água'),
-                    selected: _choosingWater,
-                    onSelected: _placingSet
+                    selected: _interaction.choosingWater,
+                    onSelected: _interaction.placingSet
                         ? null
-                        : (_) => setState(() => _choosingWater = true),
+                        : (_) =>
+                              setState(() => _interaction.choosingWater = true),
                   ),
 
                   IconButton(
                     tooltip: 'Cancelar posicionamento',
-                    onPressed: _placingSet
+                    onPressed: _interaction.placingSet
                         ? null
                         : () => setState(() {
-                            _catSet = null;
+                            _interaction.catSet = null;
                             _syncCatSetPreview();
                           }),
                     icon: const Icon(LucideIcons.x),
                   ),
                   IconButton(
                     tooltip: 'Confirmar posição dos potes',
-                    onPressed: _placingSet ? null : _confirmCatSet,
-                    icon: _placingSet
+                    onPressed: _interaction.placingSet ? null : _confirmCatSet,
+                    icon: _interaction.placingSet
                         ? const SizedBox.square(
                             dimension: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
@@ -670,12 +671,12 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
   }
 
   Future<void> _tapCell(Offset position) async {
-    if (_catSet case final set?) {
-      if (_placingSet) return;
+    if (_interaction.catSet case final set?) {
+      if (_interaction.placingSet) return;
       final cell = _game.cellAt(position);
       if (cell == null ||
           cell == set.anchor ||
-          cell == (_choosingWater ? set.food : set.water) ||
+          cell == (_interaction.choosingWater ? set.food : set.water) ||
           _habitat.catAnchors.entries.any(
             (entry) => entry.key != set.id && entry.value == cell,
           ) ||
@@ -684,25 +685,25 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
         return;
       }
       setState(() {
-        _catSet = (
+        _interaction.catSet = (
           id: set.id,
           anchor: set.anchor,
-          food: _choosingWater ? set.food : cell,
-          water: _choosingWater ? cell : set.water,
+          food: _interaction.choosingWater ? set.food : cell,
+          water: _interaction.choosingWater ? cell : set.water,
         );
         _syncCatSetPreview();
       });
       return;
     }
-    if (!_editing) {
-      if (_tray != _HabitatTray.none) {
-        setState(() => _tray = _HabitatTray.none);
+    if (!_interaction.editing) {
+      if (_interaction.tray != HabitatTray.none) {
+        setState(() => _interaction.tray = HabitatTray.none);
       }
       if (_game.productionObjectAt(position) case final target?) {
-        setState(() => _productionSelection = target);
+        setState(() => _interaction.productionSelection = target);
         return;
       }
-      setState(() => _productionSelection = null);
+      setState(() => _interaction.productionSelection = null);
       if (_game.giftAt(position)) {
         await _collectGift();
         return;
@@ -721,7 +722,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
       return;
     }
     final target = _game.cellAt(position);
-    if (_groundTool != _GroundTool.move && target != null) {
+    if (_interaction.groundTool != GroundTool.move && target != null) {
       await _applyGroundStroke([target]);
       return;
     }
@@ -729,7 +730,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
       if (target != null) await _dropItem(item.id, target);
       return;
     }
-    if (!_groundOnly) {
+    if (!_interaction.groundOnly) {
       if (_game.itemAtScreen(position) case final item?) {
         _selectItem(item);
         return;
@@ -743,7 +744,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
   Future<void> _rotateSelected() async {
     final item = _selectedItem;
     if (item == null || !_habitat.definition(item.sku).rotatable) return;
-    final previous = _rotation;
+    final previous = _interaction.rotation;
     final next = (previous + 1) % 4;
     if (item.isPlaced && !_habitat.canPlace(item, item.x!, item.y!, next)) {
       _message('Não há espaço para girar este item.');
@@ -752,9 +753,13 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
     await _sprites.ready(
       _sprites.keyFor(_habitat.definition(item.sku).displaySprite, next),
     );
-    if (!mounted || _selectedItemId != item.id || _rotation != previous) return;
+    if (!mounted ||
+        _interaction.selectedItemId != item.id ||
+        _interaction.rotation != previous) {
+      return;
+    }
     setState(() {
-      _rotation = next;
+      _interaction.rotation = next;
       _game.previewRotation = next;
     });
     if (item.isPlaced) {
@@ -953,42 +958,40 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
   }
 
   void _toggleEditing() {
-    if (_placingSet) return;
+    if (_interaction.placingSet) return;
     setState(() {
       _cancelCatSet();
-      _editing = !_editing;
-      _productionSelection = null;
-      _game.editing = _editing;
-      _menuOpen = false;
-      if (!_editing) {
-        _tray = _HabitatTray.none;
+      _interaction.toggleEditing();
+      _game.editing = _interaction.editing;
+      _interaction.menuOpen = false;
+      if (!_interaction.editing) {
+        _interaction.tray = HabitatTray.none;
         _clearSelection();
       }
     });
   }
 
-  void _openTray(_HabitatTray tray) {
-    if (_placingSet) return;
+  void _openTray(HabitatTray tray) {
+    if (_interaction.placingSet) return;
     setState(() {
       _cancelCatSet();
-      _tray = tray;
-      _menuOpen = false;
-      if (tray == _HabitatTray.cats) {
-        _editing = true;
+      _interaction.openTray(tray);
+      if (tray == HabitatTray.cats) {
+        _interaction.editing = true;
         _game.editing = true;
       }
-      _productionSelection = null;
+      _interaction.productionSelection = null;
       _game.selectedProduction = null;
       _clearSelection();
     });
   }
 
   void _openShop() {
-    if (_placingSet) return;
+    if (_interaction.placingSet) return;
     setState(() {
       _cancelCatSet();
-      _tray = _HabitatTray.none;
-      _menuOpen = false;
+      _interaction.tray = HabitatTray.none;
+      _interaction.menuOpen = false;
       _clearSelection();
       _showShop = true;
     });
@@ -1017,23 +1020,23 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
     },
     builder: (context, _, _) => Listener(
       onPointerDown: (_) {
-        if (_scenePointers == 0) {
-          _cameraGesture = false;
+        if (_interaction.scenePointers == 0) {
+          _interaction.cameraGesture = false;
         }
-        _scenePointers++;
-        if (_scenePointers > 1) {
-          _cameraGesture = true;
-          _pathStroke.clear();
+        _interaction.scenePointers++;
+        if (_interaction.scenePointers > 1) {
+          _interaction.cameraGesture = true;
+          _interaction.pathStroke.clear();
         }
       },
       onPointerUp: (_) {
-        if (_scenePointers > 0) {
-          _scenePointers--;
+        if (_interaction.scenePointers > 0) {
+          _interaction.scenePointers--;
         }
       },
       onPointerCancel: (_) {
-        if (_scenePointers > 0) {
-          _scenePointers--;
+        if (_interaction.scenePointers > 0) {
+          _interaction.scenePointers--;
         }
       },
       child: GestureDetector(
@@ -1041,10 +1044,11 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
         onTapUp: (details) => _tapCell(details.localPosition),
         onScaleStart: (details) {
           _scaleStart = _game.zoom;
-          _pathStroke.clear();
-          if (_editing &&
-              (_selectedItem != null || _groundTool == _GroundTool.collect)) {
-            if (_groundTool != _GroundTool.move) {
+          _interaction.pathStroke.clear();
+          if (_interaction.editing &&
+              (_selectedItem != null ||
+                  _interaction.groundTool == GroundTool.collect)) {
+            if (_interaction.groundTool != GroundTool.move) {
               if (_game.cellAt(details.localFocalPoint) case final cell?) {
                 _extendPathStroke(cell);
               }
@@ -1053,50 +1057,55 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
         },
         onScaleUpdate: (details) {
           if (details.pointerCount > 1) {
-            _cameraGesture = true;
-            _pathStroke.clear();
+            _interaction.cameraGesture = true;
+            _interaction.pathStroke.clear();
             _game.scaleCamera(
               _scaleStart * details.scale,
               details.localFocalPoint,
             );
             setState(() {});
-          } else if (_editing && _groundTool != _GroundTool.move) {
-            if (!_cameraGesture) {
+          } else if (_interaction.editing &&
+              _interaction.groundTool != GroundTool.move) {
+            if (!_interaction.cameraGesture) {
               if (_game.cellAt(details.localFocalPoint) case final cell?) {
                 _extendPathStroke(cell);
               }
             }
           } else if (_selectedItem != null) {
-            if (!_cameraGesture) _preview(details.localFocalPoint);
+            if (!_interaction.cameraGesture) _preview(details.localFocalPoint);
           } else {
             _game.moveCamera(details.focalPointDelta);
-            if (_editing || _productionSelection != null) setState(() {});
+            if (_interaction.editing ||
+                _interaction.productionSelection != null) {
+              setState(() {});
+            }
           }
         },
         onScaleEnd: (_) {
-          if (_editing && !_cameraGesture) {
-            if (_groundTool != _GroundTool.move && _pathStroke.isNotEmpty) {
-              unawaited(_applyGroundStroke(Set.of(_pathStroke)));
+          if (_interaction.editing && !_interaction.cameraGesture) {
+            if (_interaction.groundTool != GroundTool.move &&
+                _interaction.pathStroke.isNotEmpty) {
+              unawaited(_applyGroundStroke(Set.of(_interaction.pathStroke)));
             } else if (_selectedItem case final item?) {
-              if (_hovered case final cell?) {
+              if (_interaction.hovered case final cell?) {
                 unawaited(_dropItem(item.id, cell));
               }
             }
           }
-          _pathStroke.clear();
+          _interaction.pathStroke.clear();
           _clearPreview();
         },
         onLongPressStart: (details) {
-          if (!_editing) return;
-          if (!_groundOnly &&
+          if (!_interaction.editing) return;
+          if (!_interaction.groundOnly &&
               _game.itemAtScreen(details.localPosition) != null) {
             final item = _game.itemAtScreen(details.localPosition)!;
             _selectItem(item);
             return;
           }
-          if (!_groundOnly) {
+          if (!_interaction.groundOnly) {
             if (_game.catAtScreen(details.localPosition) case final id?) {
-              setState(() => _draggingCatId = id);
+              setState(() => _interaction.draggingCatId = id);
               return;
             }
           }
@@ -1105,23 +1114,23 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
           if (_itemAt(cell) case final item?) {
             _selectItem(item);
           } else if (_catAt(cell) case final id?) {
-            setState(() => _draggingCatId = id);
+            setState(() => _interaction.draggingCatId = id);
           }
         },
         onLongPressMoveUpdate: (details) {
-          if (_selectedItem != null || _draggingCatId != null) {
+          if (_selectedItem != null || _interaction.draggingCatId != null) {
             _preview(details.localPosition);
           }
         },
         onLongPressEnd: (_) {
-          if (_hovered case final cell?) {
-            if (_draggingCatId case final id?) {
+          if (_interaction.hovered case final cell?) {
+            if (_interaction.draggingCatId case final id?) {
               unawaited(_dropCat(id, cell));
             } else if (_selectedItem case final item?) {
               unawaited(_dropItem(item.id, cell));
             }
           }
-          setState(() => _draggingCatId = null);
+          setState(() => _interaction.draggingCatId = null);
           _clearPreview();
         },
         child: GameWidget(
@@ -1170,17 +1179,18 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
   );
 
   Widget _floatingMenu() => QuintalFloatingMenu(
-    trayExtent: _tray != _HabitatTray.none
+    trayExtent: _interaction.tray != HabitatTray.none
         ? _trayExtent
-        : _catSet != null
+        : _interaction.catSet != null
         ? _catSetExtent
-        : _productionSelection != null && _productionTrayOpen
+        : _interaction.productionSelection != null &&
+              _interaction.productionTrayOpen
         ? _productionTrayExtent
         : 0,
     actions: [
-      if (_menuOpen) ...[
+      if (_interaction.menuOpen) ...[
         _menuAction(
-          _editing ? 'Concluir edição' : 'Editar',
+          _interaction.editing ? 'Concluir edição' : 'Editar',
           LucideIcons.pencil,
           AppColors.greenLink,
           _toggleEditing,
@@ -1190,7 +1200,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
           LucideIcons.backpack,
           AppColors.amberDark,
           () => _habitat.production.isEmpty
-              ? _openTray(_HabitatTray.inventory)
+              ? _openTray(HabitatTray.inventory)
               : _openInventory(),
         ),
         _menuAction(
@@ -1203,16 +1213,19 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
           'Gatos',
           LucideIcons.cat,
           AppColors.socialPurpleText,
-          () => _openTray(_HabitatTray.cats),
+          () => _openTray(HabitatTray.cats),
         ),
       ],
     ],
     button: _circleAction(
-      icon: _menuOpen ? LucideIcons.x : LucideIcons.plus,
+      icon: _interaction.menuOpen ? LucideIcons.x : LucideIcons.plus,
       color: AppColors.greenButton,
-      onTap: () => setState(() => _menuOpen = !_menuOpen),
+      onTap: () =>
+          setState(() => _interaction.menuOpen = !_interaction.menuOpen),
       size: 52,
-      tooltip: _menuOpen ? 'Fechar ações' : 'Abrir ações do Quintal',
+      tooltip: _interaction.menuOpen
+          ? 'Fechar ações'
+          : 'Abrir ações do Quintal',
     ),
   );
 
@@ -1252,160 +1265,50 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
     return tooltip == null ? button : Tooltip(message: tooltip, child: button);
   }
 
-  Widget _hud() => Padding(
-    padding: const EdgeInsets.fromLTRB(14, 8, 10, 0),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Row(
-          children: [
-            if (_editing)
-              InkWell(
-                onTap: _toggleEditing,
-                borderRadius: BorderRadius.circular(24),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.greenButton.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        LucideIcons.pencil,
-                        size: 17,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Sair do modo edição',
-                        style: GoogleFonts.nunito(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            const Spacer(),
-            AppHeaderActions(store: widget.catStore),
-          ],
-        ),
-        const SizedBox(height: 9),
-        if (_habitat.selectedCatIds.isNotEmpty && !_editing)
-          Tooltip(
-            message: 'Conforto acessível, carinho e alimentação de hoje aumentam a satisfação e a chance de presentes.',
-            child: Chip(
-              avatar: const QuintalArtwork('cat_satisfaction', size: 32),
-              label: Text('Satisfação ${_habitat.satisfaction}%'),
-            ),
-          ),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            HabitatCoinBadge(balance: _habitat.balance),
-            IconButton.filledTonal(
-              tooltip: 'Ajuda do Quintal',
-              onPressed: () => setState(() {
-                _showHelp = true;
-                _menuOpen = false;
-              }),
-              icon: const Icon(LucideIcons.info, size: 18),
-            ),
-          ],
-        ),
-        if (widget.sessionStore.isSignedIn &&
-            _habitat.offline &&
-            _habitat.hasDraft)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              'Edições salvas neste aparelho',
-              style: GoogleFonts.nunito(
-                fontSize: 11,
-                color: AppColors.textMedium,
-              ),
-            ),
-          ),
-      ],
-    ),
+  Widget _hud() => HabitatHud(
+    store: widget.catStore,
+    editing: _interaction.editing,
+    hasCats: _habitat.selectedCatIds.isNotEmpty,
+    showOfflineDraft:
+        widget.sessionStore.isSignedIn && _habitat.offline && _habitat.hasDraft,
+    satisfaction: _habitat.satisfaction,
+    balance: _habitat.balance,
+    onToggleEditing: _toggleEditing,
+    onHelp: () => setState(() {
+      _showHelp = true;
+      _interaction.menuOpen = false;
+    }),
   );
 
   Future<void> _applyGroundStroke(Iterable<(int, int)> cells) async {
     try {
-      if (_groundTool == _GroundTool.collect) {
+      if (_interaction.groundTool == GroundTool.collect) {
         await _habitat.collectGround(cells);
-      } else if (_groundSku != null) {
-        await _paintGround(_groundSku!, cells);
+      } else if (_interaction.groundSku != null) {
+        await _paintGround(_interaction.groundSku!, cells);
       }
     } on ProductApiException catch (error) {
       _message(error.message);
     }
   }
 
-  Widget _groundTools() => Positioned(
-    left: 12,
-    right: 12,
-    top: MediaQuery.paddingOf(context).top + 88,
-    child: Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(16),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            for (final tool in _GroundTool.values)
-              TextButton(
-                onPressed: tool == _GroundTool.paint && _groundSku == null
-                    ? null
-                    : () => setState(() {
-                        _groundTool = tool;
-                        _clearPreview();
-                      }),
-                style: TextButton.styleFrom(
-                  foregroundColor: _groundTool == tool
-                      ? AppColors.primaryDark
-                      : AppColors.textMedium,
-                ),
-                child: Text(switch (tool) {
-                  _GroundTool.move => 'Selecionar / mover',
-                  _GroundTool.paint => 'Pintar',
-                  _GroundTool.collect => 'Recolher chão',
-                }),
-              ),
-            IconButton(
-              tooltip: _groundOnly
-                  ? 'Selecionar objetos'
-                  : 'Selecionar chão sob objetos',
-              onPressed: () => setState(() {
-                _clearSelection();
-                _groundOnly = !_groundOnly;
-              }),
-              icon: Icon(
-                LucideIcons.layers,
-                color: _groundOnly
-                    ? AppColors.primaryDark
-                    : AppColors.textMedium,
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
+  Widget _groundTools() => HabitatGroundTools(
+    selected: _interaction.groundTool,
+    canPaint: _interaction.groundSku != null,
+    groundOnly: _interaction.groundOnly,
+    onTool: (tool) => setState(() {
+      _interaction.groundTool = tool;
+      _clearPreview();
+    }),
+    onToggleGround: () => setState(() {
+      _clearSelection();
+      _interaction.groundOnly = !_interaction.groundOnly;
+    }),
   );
 
   Widget _selectedControls() {
     final item = _selectedItem;
-    if (!_editing || item == null || !item.isPlaced) {
+    if (!_interaction.editing || item == null || !item.isPlaced) {
       return const SizedBox.shrink();
     }
     return Positioned.fill(
@@ -1441,9 +1344,9 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
   }
 
   Widget _productionControls() {
-    final target = _productionSelection;
+    final target = _interaction.productionSelection;
     _game.selectedProduction = target;
-    if (_editing || target == null) return const SizedBox.shrink();
+    if (_interaction.editing || target == null) return const SizedBox.shrink();
     return QuintalObjectOverlay(
       game: _game,
       target: target,
@@ -1453,11 +1356,11 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
         }
       },
       onTrayChanged: (open) {
-        if (mounted) setState(() => _productionTrayOpen = open);
+        if (mounted) setState(() => _interaction.productionTrayOpen = open);
       },
       onClose: () => setState(() {
-        _productionSelection = null;
-        _productionTrayOpen = false;
+        _interaction.productionSelection = null;
+        _interaction.productionTrayOpen = false;
       }),
       onFish: () =>
           QuintalGamePage.open(context, habitat: _habitat, scene: _game),
@@ -1494,16 +1397,16 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
       _game.focusProduction(space);
     }
     setState(() {
-      _tray = _HabitatTray.none;
-      _editing = false;
+      _interaction.tray = HabitatTray.none;
+      _interaction.editing = false;
       _game.editing = false;
       _clearSelection();
-      _productionSelection = target;
+      _interaction.productionSelection = target;
     });
   }
 
   Widget _trayPanel() {
-    final isInventory = _tray == _HabitatTray.inventory;
+    final isInventory = _interaction.tray == HabitatTray.inventory;
     final available = <String, List<HabitatItem>>{};
     for (final item in _habitat.items.where(
       (item) => !item.isPlaced && item.careState['cat_id'] == null,
@@ -1555,18 +1458,18 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
                           name: type.name,
                           detail:
                               '${available[type.sku]!.length} ${available[type.sku]!.length == 1 ? 'disponível' : 'disponíveis'}',
-                          selected: _selectedItemId == item.id,
+                          selected: _interaction.selectedItemId == item.id,
                         ),
                       ),
                     );
                   },
                 ),
-          onClose: () => setState(() => _tray = _HabitatTray.none),
+          onClose: () => setState(() => _interaction.tray = HabitatTray.none),
           onTabChanged: (tab) {
             if (tab == 0) return;
             setState(() {
               _clearSelection();
-              _editing = false;
+              _interaction.editing = false;
               _game.editing = false;
             });
           },
@@ -1626,7 +1529,8 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
                     ),
                   IconButton(
                     tooltip: 'Fechar bandeja',
-                    onPressed: () => setState(() => _tray = _HabitatTray.none),
+                    onPressed: () =>
+                        setState(() => _interaction.tray = HabitatTray.none),
                     icon: const Icon(LucideIcons.x, size: 19),
                   ),
                 ],
@@ -1655,10 +1559,11 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
                                       _habitat.catCapacity
                               ? 1
                               : 0,
-                          onDragStarted: () =>
-                              setState(() => _draggingCatId = cat.id),
+                          onDragStarted: () => setState(
+                            () => _interaction.draggingCatId = cat.id,
+                          ),
                           onDragEnd: (_) => setState(() {
-                            _draggingCatId = null;
+                            _interaction.draggingCatId = null;
                             _clearPreview();
                           }),
                           feedback: Material(
@@ -1763,17 +1668,18 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
       children: [
         Positioned.fill(child: _scene()),
 
-        if (_editing && _catSet == null) _selectedControls(),
-        if (_catSet != null) _catSetControls(),
-        if (!_editing) _productionControls(),
-        if (_editing && _catSet == null) _groundTools(),
+        if (_interaction.editing && _interaction.catSet == null)
+          _selectedControls(),
+        if (_interaction.catSet != null) _catSetControls(),
+        if (!_interaction.editing) _productionControls(),
+        if (_interaction.editing && _interaction.catSet == null) _groundTools(),
         if (_habitat.pendingGift?['state'] == 'available')
           Positioned(
             left: 12,
             right: 12,
             top:
                 MediaQuery.paddingOf(context).top +
-                (_editing
+                (_interaction.editing
                     ? 144
                     : _habitat.selectedCatIds.isEmpty
                     ? 108
@@ -1799,7 +1705,7 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
               ],
             ),
           ),
-        if (_tray != _HabitatTray.none) _trayPanel(),
+        if (_interaction.tray != HabitatTray.none) _trayPanel(),
         SafeArea(child: _hud()),
         _floatingMenu(),
         if (_rewardLabel case final label?)
@@ -1814,10 +1720,10 @@ class _HabitatPageState extends State<HabitatPage> with WidgetsBindingObserver {
           ),
         if (widget.active.value &&
             _foreground &&
-            !_editing &&
+            !_interaction.editing &&
             !_showShop &&
             !_showHelp &&
-            _tray == _HabitatTray.none &&
+            _interaction.tray == HabitatTray.none &&
             ModalRoute.of(context)?.isCurrent != false)
           QuintalRewardCelebrations(
             habitat: _habitat,

@@ -82,7 +82,12 @@ class CatalogSyncService {
     if (response.statusCode >= 300) {
       throw const HttpException('Envio dos registros adiado.');
     }
-    for (final cat in cats.where((cat) => cat.deletedAt == null)) {
+    for (final cat in cats.where(
+      (cat) =>
+          cat.deletedAt == null &&
+          cat.status != 'pending_analysis' &&
+          cat.status != 'analyzing',
+    )) {
       final photo = File(cat.photoPath);
       if (!await photo.exists()) continue;
       await _uploadPhoto(cat, deviceId, token);

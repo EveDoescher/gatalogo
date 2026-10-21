@@ -74,7 +74,7 @@ extension HabitatCare on HabitatService {
       );
       await _persistSnapshot();
       _verifyCareOwner(owner);
-      final result = await _api.post('/app/habitat/interactions', {
+      final result = await _repository.interact({
         'action': action,
         'target_id': targetId,
         'bowl_id': bowlId,

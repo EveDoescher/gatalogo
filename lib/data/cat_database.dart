@@ -1,433 +1,92 @@
-import 'dart:convert';
-
-import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:uuid/uuid.dart';
 
 import '../models/cat.dart';
 import '../models/cat_analysis.dart';
 import '../models/cat_reference_photo.dart';
 
-class CatDatabase {
-  CatDatabase._();
+import 'cat_database_schema.dart';
+import 'repositories/habitat_cache_repository.dart';
+import 'repositories/sync_metadata_repository.dart';
+import 'repositories/reference_photo_repository.dart';
+import 'repositories/catalog_repository.dart';
 
-  static final CatDatabase instance = CatDatabase._();
+class CatDatabase {
+  CatDatabase() : _open = null;
+  CatDatabase.withConnection(this._open);
+  final Future<Database> Function()? _open;
+  Future<Database>? _opening;
+
+  static final CatDatabase instance = CatDatabase();
 
   Database? _database;
 
-  Future<Database> get database async {
-    if (_database != null) {
-      return _database!;
+  Future<Database> get database {
+    if (_database case final db?) return Future.value(db);
+    return _opening ??= _openDatabase();
+  }
+
+  Future<Database> _openDatabase() async {
+    try {
+      final db = await Future<Database>.sync(_open ?? _initDatabase);
+      _database = db;
+      return db;
+    } catch (_) {
+      _opening = null;
+      rethrow;
     }
-
-    _database = await _initDatabase();
-
-    return _database!;
   }
 
-  Future<Database> _initDatabase() async {
-    final databasePath = await getDatabasesPath();
-
-    final path = join(databasePath, 'gatalogo.db');
-
-    return openDatabase(
-      path,
-      version: 17,
-
-      onCreate: (db, version) async {
-        await db.execute('''
-      CREATE TABLE cats (
-        id TEXT PRIMARY KEY,
-        is_owned INTEGER NOT NULL DEFAULT 0,
-        capture_number INTEGER,
-        name TEXT,
-        photo_path TEXT NOT NULL,
-        captured_at TEXT NOT NULL,
-        latitude REAL,
-        longitude REAL,
-        location_name TEXT,
-        status TEXT NOT NULL,
-        automatic_retry_count INTEGER NOT NULL DEFAULT 0
-        ,owner_id TEXT
-        ,sync_state TEXT NOT NULL DEFAULT 'dirty'
-        ,local_updated_at TEXT
-        ,sync_device_id TEXT
-        ,sync_revision INTEGER NOT NULL DEFAULT 0
-        ,deleted_at TEXT
-        ,microchip TEXT
-        ,collar TEXT
-        ,distinguishing_marks TEXT
-        ,is_favorite INTEGER NOT NULL DEFAULT 0
-        ,individual_id TEXT
-        ,notes TEXT
-      )
-    ''');
-        await db.execute('''
-  CREATE TABLE cat_analyses (
-    cat_id TEXT PRIMARY KEY,
-    analysis_status TEXT NOT NULL,
-    coat_type TEXT,
-    hair_type TEXT,
-    primary_color TEXT,
-    colors_json TEXT NOT NULL,
-    confidence REAL,
-    pattern_map_json TEXT,
-    analyzed_at TEXT,
-    FOREIGN KEY (cat_id) REFERENCES cats(id)
-  )
-''');
-        await db.execute('''
-      CREATE TABLE app_metadata (
-    key TEXT PRIMARY KEY,
-    value TEXT NOT NULL
-  )
-''');
-        await _createReferencePhotoTable(db);
-        await _createHabitatCacheTable(db);
-      },
-
-      onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 17) {
-          await db.execute('ALTER TABLE cats ADD COLUMN individual_id TEXT');
-        }
-        if (oldVersion == 15) {
-          await db.execute(
-            'ALTER TABLE habitat_cache ADD COLUMN pending_purchases TEXT',
-          );
-        }
-        if (oldVersion < 15) {
-          await _createHabitatCacheTable(db);
-        }
-        if (oldVersion < 14) {
-          final columns = await db.rawQuery('PRAGMA table_info(cats)');
-          final names = columns.map((c) => c['name'] as String).toSet();
-          if (!names.contains('is_favorite')) {
-            await db.execute(
-              'ALTER TABLE cats ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0',
-            );
-          }
-          if (!names.contains('notes')) {
-            await db.execute('ALTER TABLE cats ADD COLUMN notes TEXT');
-          }
-        }
-        if (oldVersion < 13) {
-          final columns = await db.rawQuery('PRAGMA table_info(cats)');
-          final names = columns.map((c) => c['name'] as String).toSet();
-          if (!names.contains('microchip')) {
-            await db.execute('ALTER TABLE cats ADD COLUMN microchip TEXT');
-          }
-          if (!names.contains('collar')) {
-            await db.execute('ALTER TABLE cats ADD COLUMN collar TEXT');
-          }
-          if (!names.contains('distinguishing_marks')) {
-            await db.execute(
-              'ALTER TABLE cats ADD COLUMN distinguishing_marks TEXT',
-            );
-          }
-        }
-        if (oldVersion < 12) {
-          final columns = await db.rawQuery('PRAGMA table_info(cat_analyses)');
-          final hasHairType = columns.any(
-            (column) => column['name'] == 'hair_type',
-          );
-          if (!hasHairType) {
-            await db.execute(
-              'ALTER TABLE cat_analyses ADD COLUMN hair_type TEXT',
-            );
-          }
-        }
-        if (oldVersion < 11) {
-          await db.execute(
-            'ALTER TABLE cats ADD COLUMN is_owned INTEGER NOT NULL DEFAULT 0',
-          );
-        }
-        if (oldVersion < 2) {
-          await db.execute('ALTER TABLE cats ADD COLUMN location_name TEXT');
-        }
-
-        if (oldVersion < 3) {
-          await db.execute('ALTER TABLE cats ADD COLUMN name TEXT');
-
-          await db.execute(
-            'ALTER TABLE cats ADD COLUMN capture_number INTEGER',
-          );
-
-          final existingCats = await db.query(
-            'cats',
-            columns: ['id'],
-            orderBy: 'captured_at ASC',
-          );
-
-          for (int i = 0; i < existingCats.length; i++) {
-            await db.update(
-              'cats',
-              {'capture_number': i + 1},
-              where: 'id = ?',
-              whereArgs: [existingCats[i]['id']],
-            );
-          }
-        }
-        if (oldVersion < 4) {
-          await db.execute('''
-            CREATE TABLE IF NOT EXISTS cat_analyses (
-              cat_id TEXT PRIMARY KEY,
-              analysis_status TEXT NOT NULL,
-              coat_type TEXT,
-              primary_color TEXT,
-              colors_json TEXT NOT NULL,
-              confidence REAL,
-              analyzed_at TEXT,
-              FOREIGN KEY (cat_id) REFERENCES cats(id)
-            )
-          ''');
-          if (oldVersion < 5) {
-            await db.execute(
-              'ALTER TABLE cat_analyses '
-              'ADD COLUMN pattern_map_json TEXT',
-            );
-          }
-          if (oldVersion < 6) {
-            final columns = await db.rawQuery(
-              'PRAGMA table_info(cat_analyses)',
-            );
-
-            final hasPatternMap = columns.any(
-              (column) => column['name'] == 'pattern_map_json',
-            );
-
-            if (!hasPatternMap) {
-              await db.execute(
-                'ALTER TABLE cat_analyses '
-                'ADD COLUMN pattern_map_json TEXT',
-              );
-            }
-          }
-        }
-        if (oldVersion < 7) {
-          await db.execute(
-            'ALTER TABLE cats '
-            'ADD COLUMN automatic_retry_count INTEGER NOT NULL DEFAULT 0',
-          );
-        }
-        if (oldVersion < 8) {
-          await db.execute('ALTER TABLE cats ADD COLUMN owner_id TEXT');
-          await db.execute(
-            "ALTER TABLE cats ADD COLUMN sync_state TEXT NOT NULL DEFAULT 'dirty'",
-          );
-          await db.execute('ALTER TABLE cats ADD COLUMN local_updated_at TEXT');
-          await db.execute('ALTER TABLE cats ADD COLUMN sync_device_id TEXT');
-          await db.execute(
-            'ALTER TABLE cats ADD COLUMN sync_revision INTEGER NOT NULL DEFAULT 0',
-          );
-          await db.execute('ALTER TABLE cats ADD COLUMN deleted_at TEXT');
-          await db.execute(
-            "UPDATE cats SET local_updated_at = captured_at WHERE local_updated_at IS NULL",
-          );
-        }
-        if (oldVersion < 9) {
-          await db.execute('''
-            CREATE TABLE IF NOT EXISTS app_metadata (
-              key TEXT PRIMARY KEY,
-              value TEXT NOT NULL
-            )
-          ''');
-        }
-        if (oldVersion < 10) {
-          await _createReferencePhotoTable(db);
-        }
-      },
-    );
-  }
-
-  Future<void> _createReferencePhotoTable(DatabaseExecutor db) async {
-    await db.execute('''
-      CREATE TABLE IF NOT EXISTS cat_reference_photos (
-        cat_id TEXT NOT NULL,
-        kind TEXT NOT NULL,
-        local_path TEXT NOT NULL,
-        status TEXT NOT NULL DEFAULT 'ready',
-        updated_at TEXT NOT NULL,
-        sync_state TEXT NOT NULL DEFAULT 'dirty',
-        deleted_at TEXT,
-        PRIMARY KEY (cat_id, kind)
-      )
-    ''');
-  }
-
-  Future<void> _createHabitatCacheTable(DatabaseExecutor db) async {
-    await db.execute('''
-      CREATE TABLE IF NOT EXISTS habitat_cache (
-        owner_id TEXT PRIMARY KEY,
-        snapshot TEXT,
-        draft TEXT,
-        pending_purchases TEXT
-      )
-    ''');
-  }
-
-  Future<Map<String, dynamic>?> readHabitatCache(String ownerId) async {
-    final rows = await (await database).query(
-      'habitat_cache',
-      where: 'owner_id = ?',
-      whereArgs: [ownerId],
-      limit: 1,
-    );
-    if (rows.isEmpty) return null;
-    return {
-      'snapshot': rows.first['snapshot'] == null
-          ? null
-          : jsonDecode(rows.first['snapshot'] as String),
-      'draft': rows.first['draft'] == null
-          ? null
-          : jsonDecode(rows.first['draft'] as String),
-      'pending_purchases': rows.first['pending_purchases'] == null
-          ? null
-          : jsonDecode(rows.first['pending_purchases'] as String),
-    };
-  }
+  Future<Database> _initDatabase() => CatDatabaseSchema().open();
+  late final HabitatCacheRepository habitatCacheRepository =
+      HabitatCacheRepository(() => database);
+  late final SyncMetadataRepository syncMetadataRepository =
+      SyncMetadataRepository(() => database);
+  late final ReferencePhotoRepository referencePhotoRepository =
+      ReferencePhotoRepository(() => database);
+  late final CatalogRepository catalogRepository = CatalogRepository(
+    () => database,
+  );
+  Future<Map<String, dynamic>?> readHabitatCache(String ownerId) =>
+      habitatCacheRepository.readHabitatCache(ownerId);
 
   Future<void> saveHabitatSnapshot(
     String ownerId,
     Map<String, dynamic> snapshot,
-  ) async {
-    await (await database).rawInsert(
-      '''
-      INSERT INTO habitat_cache (owner_id, snapshot)
-      VALUES (?, ?)
-      ON CONFLICT(owner_id) DO UPDATE SET snapshot = excluded.snapshot
-    ''',
-      [ownerId, jsonEncode(snapshot)],
-    );
-  }
+  ) => habitatCacheRepository.saveHabitatSnapshot(ownerId, snapshot);
 
-  Future<void> saveHabitatDraft(
-    String ownerId,
-    Map<String, dynamic>? draft,
-  ) async {
-    await (await database).rawInsert(
-      '''
-      INSERT INTO habitat_cache (owner_id, draft)
-      VALUES (?, ?)
-      ON CONFLICT(owner_id) DO UPDATE SET draft = excluded.draft
-    ''',
-      [ownerId, draft == null ? null : jsonEncode(draft)],
-    );
-  }
+  Future<void> saveHabitatDraft(String ownerId, Map<String, dynamic>? draft) =>
+      habitatCacheRepository.saveHabitatDraft(ownerId, draft);
 
   Future<void> saveHabitatPendingPurchases(
     String ownerId,
     Map<String, String> pendingPurchases,
-  ) async {
-    await (await database).rawInsert(
-      '''
-      INSERT INTO habitat_cache (owner_id, pending_purchases)
-      VALUES (?, ?)
-      ON CONFLICT(owner_id) DO UPDATE SET pending_purchases = excluded.pending_purchases
-    ''',
-      [ownerId, jsonEncode(pendingPurchases)],
-    );
-  }
+  ) => habitatCacheRepository.saveHabitatPendingPurchases(
+    ownerId,
+    pendingPurchases,
+  );
 
-  Future<void> insertCat(Cat cat) async {
-    final db = await database;
+  Future<void> insertCat(Cat cat) => catalogRepository.insertCat(cat);
 
-    await db.insert(
-      'cats',
-      cat.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-  }
+  Future<void> insertCatWithAnalysis(Cat cat, CatAnalysis analysis) =>
+      catalogRepository.insertCatWithAnalysis(cat, analysis);
 
-  Future<void> insertCatWithAnalysis(Cat cat, CatAnalysis analysis) async {
-    final db = await database;
+  Future<List<Cat>> getCats({String? ownerId}) =>
+      catalogRepository.getCats(ownerId: ownerId);
 
-    await db.transaction((txn) async {
-      await txn.insert(
-        'cats',
-        cat.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+  Future<void> queueSighting(Map<String, dynamic> payload) =>
+      syncMetadataRepository.queueSighting(payload);
 
-      await txn.insert(
-        'cat_analyses',
-        analysis.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-    });
-  }
+  Future<List<Map<String, dynamic>>> queuedSightings() =>
+      syncMetadataRepository.queuedSightings();
 
-  Future<List<Cat>> getCats({String? ownerId}) async {
-    final db = await database;
+  Future<void> removeQueuedSighting(String key) =>
+      syncMetadataRepository.removeQueuedSighting(key);
 
-    final maps = await db.query(
-      'cats',
-      where: ownerId == null
-          ? 'deleted_at IS NULL AND owner_id IS NULL'
-          : 'deleted_at IS NULL AND (owner_id IS NULL OR owner_id = ?)',
-      whereArgs: ownerId == null ? null : [ownerId],
-      orderBy: 'captured_at DESC',
-    );
+  Future<int> getNextCaptureNumber() =>
+      catalogRepository.getNextCaptureNumber();
 
-    return maps.map((map) => Cat.fromMap(map)).toList();
-  }
-
-  Future<void> queueSighting(Map<String, dynamic> payload) async {
-    final db = await database;
-    await db.insert('app_metadata', {
-      'key': 'sighting:${const Uuid().v4()}',
-      'value': jsonEncode(payload),
-    });
-  }
-
-  Future<List<Map<String, dynamic>>> queuedSightings() async {
-    final db = await database;
-    final rows = await db.query(
-      'app_metadata',
-      where: 'key LIKE ?',
-      whereArgs: ['sighting:%'],
-    );
-    return rows
-        .map(
-          (row) => {
-            'queue_key': row['key'],
-            ...Map<String, dynamic>.from(
-              jsonDecode(row['value'] as String) as Map,
-            ),
-          },
-        )
-        .toList();
-  }
-
-  Future<void> removeQueuedSighting(String key) async {
-    final db = await database;
-    await db.delete('app_metadata', where: 'key = ?', whereArgs: [key]);
-  }
-
-  Future<int> getNextCaptureNumber() async {
-    final db = await database;
-
-    final result = await db.rawQuery('''
-    SELECT COALESCE(MAX(capture_number), 0) + 1 AS next_number
-    FROM cats
-  ''');
-
-    return Sqflite.firstIntValue(result) ?? 1;
-  }
-
-  Future<void> updateCatName(String id, String? name) async {
-    final db = await database;
-
-    await db.update(
-      'cats',
-      {
-        'name': name,
-        'sync_state': 'dirty',
-        'local_updated_at': DateTime.now().toUtc().toIso8601String(),
-      },
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
+  Future<void> updateCatName(String id, String? name) =>
+      catalogRepository.updateCatName(id, name);
 
   Future<void> updateCatDetails(
     String id, {
@@ -435,322 +94,98 @@ class CatDatabase {
     String? microchip,
     String? collar,
     String? distinguishingMarks,
-  }) async {
-    final db = await database;
-
-    await db.update(
-      'cats',
-      {
-        'name': name,
-        'microchip': microchip,
-        'collar': collar,
-        'distinguishing_marks': distinguishingMarks,
-        'sync_state': 'dirty',
-        'local_updated_at': DateTime.now().toUtc().toIso8601String(),
-      },
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
+  }) => catalogRepository.updateCatDetails(
+    id,
+    name: name,
+    microchip: microchip,
+    collar: collar,
+    distinguishingMarks: distinguishingMarks,
+  );
 
   Future<void> updateCatLocation(
     String id, {
     required double latitude,
     required double longitude,
     String? locationName,
-  }) async {
-    final db = await database;
-    await db.update(
-      'cats',
-      {
-        'latitude': latitude,
-        'longitude': longitude,
-        'location_name': locationName,
-        'sync_state': 'dirty',
-        'local_updated_at': DateTime.now().toUtc().toIso8601String(),
-      },
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
+  }) => catalogRepository.updateCatLocation(
+    id,
+    latitude: latitude,
+    longitude: longitude,
+    locationName: locationName,
+  );
 
   Future<void> updateCatStatus(
     String id,
     String status, {
     int? automaticRetryCount,
-  }) async {
-    final db = await database;
+  }) => catalogRepository.updateCatStatus(
+    id,
+    status,
+    automaticRetryCount: automaticRetryCount,
+  );
 
-    await db.update(
-      'cats',
-      {
-        'status': status,
-        ...?automaticRetryCount == null
-            ? null
-            : {'automatic_retry_count': automaticRetryCount},
-        'sync_state': 'dirty',
-        'local_updated_at': DateTime.now().toUtc().toIso8601String(),
-      },
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
+  Future<void> updateCatFavorite(String id, bool isFavorite) =>
+      catalogRepository.updateCatFavorite(id, isFavorite);
 
-  Future<void> updateCatFavorite(String id, bool isFavorite) async {
-    final db = await database;
-    await db.update(
-      'cats',
-      {
-        'is_favorite': isFavorite ? 1 : 0,
-        'sync_state': 'dirty',
-        'local_updated_at': DateTime.now().toUtc().toIso8601String(),
-      },
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
+  Future<void> updateCatNotes(String id, String? notes) =>
+      catalogRepository.updateCatNotes(id, notes);
 
-  Future<void> updateCatNotes(String id, String? notes) async {
-    final db = await database;
-    await db.update(
-      'cats',
-      {
-        'notes': notes,
-        'sync_state': 'dirty',
-        'local_updated_at': DateTime.now().toUtc().toIso8601String(),
-      },
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
+  Future<void> deleteCatWithAnalysis(String catId) =>
+      catalogRepository.deleteCatWithAnalysis(catId);
 
-  Future<void> deleteCatWithAnalysis(String catId) async {
-    final db = await database;
+  Future<void> upsertAnalysis(CatAnalysis analysis) =>
+      catalogRepository.upsertAnalysis(analysis);
 
-    await db.transaction((transaction) async {
-      await transaction.delete(
-        'cat_analyses',
-        where: 'cat_id = ?',
-        whereArgs: [catId],
-      );
-      await transaction.delete('cats', where: 'id = ?', whereArgs: [catId]);
-    });
-  }
+  Future<String> getOrCreateDeviceId() =>
+      syncMetadataRepository.getOrCreateDeviceId();
 
-  Future<void> upsertAnalysis(CatAnalysis analysis) async {
-    final db = await database;
+  Future<void> bindUnownedCatsToAccount(String ownerId, String deviceId) =>
+      syncMetadataRepository.bindUnownedCatsToAccount(ownerId, deviceId);
 
-    await db.insert(
-      'cat_analyses',
-      analysis.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-  }
+  Future<List<Cat>> getCatsForSync(String ownerId) =>
+      syncMetadataRepository.getCatsForSync(ownerId);
 
-  Future<String> getOrCreateDeviceId() async {
-    final db = await database;
-    const key = 'sync_device_id';
-    final row = await db.query(
-      'app_metadata',
-      where: 'key = ?',
-      whereArgs: [key],
-      limit: 1,
-    );
-    if (row.isNotEmpty) {
-      return row.first['value'] as String;
-    }
-    final value = const Uuid().v4();
-    await db.insert('app_metadata', {'key': key, 'value': value});
-    return value;
-  }
+  Future<void> markSynced(String id, int revision) =>
+      syncMetadataRepository.markSynced(id, revision);
 
-  Future<void> bindUnownedCatsToAccount(String ownerId, String deviceId) async {
-    final db = await database;
-    await db.update('cats', {
-      'owner_id': ownerId,
-      'sync_state': 'dirty',
-      'sync_device_id': deviceId,
-      'local_updated_at': DateTime.now().toUtc().toIso8601String(),
-    }, where: 'owner_id IS NULL');
-  }
+  Future<void> markDeleted(String id, String ownerId, String deviceId) =>
+      syncMetadataRepository.markDeleted(id, ownerId, deviceId);
 
-  Future<List<Cat>> getCatsForSync(String ownerId) async {
-    final db = await database;
-    final maps = await db.query(
-      'cats',
-      where: 'owner_id = ? AND sync_state = ?',
-      whereArgs: [ownerId, 'dirty'],
-    );
-    return maps.map(Cat.fromMap).toList();
-  }
+  Future<String> getSyncCursor(String ownerId) =>
+      syncMetadataRepository.getSyncCursor(ownerId);
 
-  Future<void> markSynced(String id, int revision) async {
-    final db = await database;
-    await db.update(
-      'cats',
-      {'sync_state': 'synced', 'sync_revision': revision},
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
+  Future<void> setSyncCursor(String ownerId, int cursor) =>
+      syncMetadataRepository.setSyncCursor(ownerId, cursor);
 
-  Future<void> markDeleted(String id, String ownerId, String deviceId) async {
-    final db = await database;
-    await db.update(
-      'cats',
-      {
-        'owner_id': ownerId,
-        'deleted_at': DateTime.now().toUtc().toIso8601String(),
-        'sync_state': 'dirty',
-        'sync_device_id': deviceId,
-        'local_updated_at': DateTime.now().toUtc().toIso8601String(),
-      },
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
+  Future<List<CatAnalysis>> getAnalyses() => catalogRepository.getAnalyses();
 
-  Future<String> getSyncCursor(String ownerId) async {
-    final db = await database;
-    final rows = await db.query(
-      'app_metadata',
-      where: 'key = ?',
-      whereArgs: ['sync_cursor_$ownerId'],
-      limit: 1,
-    );
-    return rows.isEmpty ? '0' : rows.first['value'] as String;
-  }
+  Future<CatAnalysis?> getAnalysisByCatId(String catId) =>
+      catalogRepository.getAnalysisByCatId(catId);
 
-  Future<void> setSyncCursor(String ownerId, int cursor) async {
-    final db = await database;
-    await db.insert('app_metadata', {
-      'key': 'sync_cursor_$ownerId',
-      'value': '$cursor',
-    }, conflictAlgorithm: ConflictAlgorithm.replace);
-  }
+  Future<Cat?> getCatById(String id) => catalogRepository.getCatById(id);
 
-  Future<List<CatAnalysis>> getAnalyses() async {
-    final db = await database;
+  Future<void> replaceCatFromSync(Cat cat, {CatAnalysis? analysis}) =>
+      catalogRepository.replaceCatFromSync(cat, analysis: analysis);
 
-    final maps = await db.query('cat_analyses');
+  Future<List<CatReferencePhoto>> getReferencePhotos(String catId) =>
+      referencePhotoRepository.getReferencePhotos(catId);
 
-    return maps.map((map) => CatAnalysis.fromMap(map)).toList();
-  }
+  Future<List<CatReferencePhoto>> getDirtyReferencePhotos(String ownerId) =>
+      referencePhotoRepository.getDirtyReferencePhotos(ownerId);
 
-  Future<CatAnalysis?> getAnalysisByCatId(String catId) async {
-    final db = await database;
-
-    final maps = await db.query(
-      'cat_analyses',
-      where: 'cat_id = ?',
-      whereArgs: [catId],
-      limit: 1,
-    );
-
-    if (maps.isEmpty) {
-      return null;
-    }
-
-    return CatAnalysis.fromMap(maps.first);
-  }
-
-  Future<Cat?> getCatById(String id) async {
-    final db = await database;
-    final rows = await db.query(
-      'cats',
-      where: 'id = ?',
-      whereArgs: [id],
-      limit: 1,
-    );
-    return rows.isEmpty ? null : Cat.fromMap(rows.first);
-  }
-
-  Future<void> replaceCatFromSync(Cat cat, {CatAnalysis? analysis}) async {
-    final db = await database;
-    await db.transaction((transaction) async {
-      await transaction.insert(
-        'cats',
-        cat.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-      if (analysis case final value?) {
-        await transaction.insert(
-          'cat_analyses',
-          value.toMap(),
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
-      }
-    });
-  }
-
-  Future<List<CatReferencePhoto>> getReferencePhotos(String catId) async {
-    final db = await database;
-    final rows = await db.query(
-      'cat_reference_photos',
-      where: 'cat_id = ? AND deleted_at IS NULL',
-      whereArgs: [catId],
-      orderBy: 'kind ASC',
-    );
-    return rows.map(CatReferencePhoto.fromMap).toList();
-  }
-
-  Future<List<CatReferencePhoto>> getDirtyReferencePhotos(
-    String ownerId,
-  ) async {
-    final db = await database;
-    final rows = await db.rawQuery(
-      '''
-      SELECT ref_photo.* FROM cat_reference_photos AS ref_photo
-      INNER JOIN cats ON cats.id = ref_photo.cat_id
-      WHERE cats.owner_id = ? AND ref_photo.sync_state = 'dirty'
-    ''',
-      [ownerId],
-    );
-    return rows.map(CatReferencePhoto.fromMap).toList();
-  }
-
-  Future<void> upsertReferencePhoto(CatReferencePhoto photo) async {
-    final db = await database;
-    await db.insert(
-      'cat_reference_photos',
-      photo.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-  }
+  Future<void> upsertReferencePhoto(CatReferencePhoto photo) =>
+      referencePhotoRepository.upsertReferencePhoto(photo);
 
   Future<void> markReferenceSynced(
     String catId,
     String kind, {
     String status = 'ready',
-  }) async {
-    final db = await database;
-    await db.update(
-      'cat_reference_photos',
-      {'sync_state': 'synced', 'status': status},
-      where: 'cat_id = ? AND kind = ?',
-      whereArgs: [catId, kind],
-    );
-  }
+  }) =>
+      referencePhotoRepository.markReferenceSynced(catId, kind, status: status);
 
-  Future<void> markReferenceDeleted(String catId, String kind) async {
-    final db = await database;
-    await db.update(
-      'cat_reference_photos',
-      {
-        'deleted_at': DateTime.now().toUtc().toIso8601String(),
-        'sync_state': 'dirty',
-      },
-      where: 'cat_id = ? AND kind = ?',
-      whereArgs: [catId, kind],
-    );
-  }
+  Future<void> markReferenceDeleted(String catId, String kind) =>
+      referencePhotoRepository.markReferenceDeleted(catId, kind);
 
-  Future<void> deleteReferencePhotoRecord(String catId, String kind) async {
-    final db = await database;
-    await db.delete(
-      'cat_reference_photos',
-      where: 'cat_id = ? AND kind = ?',
-      whereArgs: [catId, kind],
-    );
-  }
+  Future<void> deleteReferencePhotoRecord(String catId, String kind) =>
+      referencePhotoRepository.deleteReferencePhotoRecord(catId, kind);
 }

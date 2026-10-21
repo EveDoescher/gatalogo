@@ -80,3 +80,18 @@ Remove-Item Env:GATALOGO_CAPTURE_ALL, Env:GATALOGO_CAPTURE_MOTION
 Resultado em `build/galeria-visual/galeria.html`, com link para movimentos.
 Os novos GLBs são do mesmo pacote Kenney existente, com sua licença preservada;
 `tool/recover_habitat_decor.py` também recupera as fontes dos visitantes quando faltarem.
+
+
+## Conclusão da refatoração arquitetural
+
+O mapa de pendências e a validação desta rodada estão em
+[docs/architecture_completion.md](docs/architecture_completion.md).
+
+Release exige `--dart-define=API_BASE_URL=<URL explícita>`. Valide sem compilar:
+
+```powershell
+.\tool\build_release.ps1 -ApiUrl 'https://sua-api.exemplo' -CheckOnly
+```
+
+Para distribuir, remova `-CheckOnly` e informe `-Target apk`, `appbundle` ou `windows`.
+O endereço local padrão continua disponível apenas em desenvolvimento.

@@ -6,7 +6,7 @@ extension HabitatEncounters on HabitatService {
     _visitorRequest = true;
     final owner = _ownerId;
     try {
-      final result = await _api.post('/app/habitat/encounters', {});
+      final result = await _repository.visitors();
       if (owner != _ownerId || _disposed) return;
       final draft = hasDraft ? _draft() : null;
       _readSnapshot(result);
@@ -33,10 +33,7 @@ extension HabitatEncounters on HabitatService {
     _visitorRequest = true;
     final owner = _ownerId;
     try {
-      final result = await _api.post(
-        '/app/habitat/gifts/${gift['id']}/$action',
-        {},
-      );
+      final result = await _repository.gift(gift['id'].toString(), action);
       if (_disposed || owner != _ownerId) {
         throw const ProductApiException(
           'Sua conta mudou. Abra o Quintal novamente.',

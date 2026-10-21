@@ -129,3 +129,34 @@ Logs locais: `architecture-final-tests.log`, `architecture-components-tests.log`
 `architecture-camera-tests.log` e `architecture-analysis.log`.
 Os controladores maiores, estado de edição e repositórios ainda não extraídos
 continuam registrados como pendências no documento de arquitetura.
+
+
+## Conclusão da rodada — 21/10/2026
+
+O mapa anterior foi revisado item por item e substituído pelo estado consolidado
+em [architecture_completion.md](architecture_completion.md). Foram concluídas as
+fronteiras de conversa/compositor, detalhes/análise/histórico, estado/overlays e
+seleção do Habitat, repositório de rede/cache, schema e repositórios SQLite,
+consultas de coleção, coordenação de sync/notificações e contrato de produção.
+A configuração de release agora exige endpoint explícito; o desenvolvimento
+mantém seu padrão. CI usa Flutter 3.47.1, lockfile, analyzer e suíte padrão.
+
+Evidências finais:
+
+- Suíte completa: **274 aprovados, 6 condicionais e zero falhas**.
+- Contratos/controlador após ajuste final de release: **10 aprovados**.
+- `flutter analyze --no-pub`: **nenhum apontamento**.
+- Catálogo gerado: `python tool/export_habitat_catalog.py --check` aprovado.
+- Preflight de release aceitou HTTPS válido e rejeitou URI com credenciais;
+  não foi executado build Android, emulador ou teste em smartphone.
+- Conversa cobre cancelamento de assinaturas/timers, reconexão, mensagem otimista,
+  eco antes da confirmação, falha, upload e troca de conta com resposta atrasada.
+- SQLite cobre abertura concorrente única e retry após falha, além da suíte
+  existente de persistência/migrações e isolamento.
+
+Logs locais: `architecture-complete-full-tests.log`,
+`architecture-completion-last-contracts.log`, `architecture-completion-analysis.log`.
+O cliente live e sua integração PostgreSQL são consolidados no relatório da API;
+o skip padrão não deve ser contado como entrega real de FCM ou inferência física.
+As validações manuais/externas estão explicitadas no documento de conclusão.
+Não houve merge na main nesta rodada.
