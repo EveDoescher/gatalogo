@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 
+import '../sqlite_id_batches.dart';
 import '../../models/cat.dart';
 import '../../models/cat_analysis.dart';
 
@@ -202,6 +203,20 @@ class CatalogRepository {
     final maps = await db.query('cat_analyses');
 
     return maps.map((map) => CatAnalysis.fromMap(map)).toList();
+  }
+
+  Future<List<CatAnalysis>> getAnalysesForCats(Iterable<String> catIds) async {
+    final result = <CatAnalysis>[];
+    for (final ids in sqliteIdBatches(catIds)) {
+      final db = await database;
+      final rows = await db.query(
+        'cat_analyses',
+        where: 'cat_id IN (${List.filled(ids.length, '?').join(',')})',
+        whereArgs: ids,
+      );
+      result.addAll(rows.map(CatAnalysis.fromMap));
+    }
+    return result;
   }
 
   Future<CatAnalysis?> getAnalysisByCatId(String catId) async {

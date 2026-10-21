@@ -95,3 +95,7 @@ Release exige `--dart-define=API_BASE_URL=<URL explícita>`. Valide sem compilar
 
 Para distribuir, remova `-CheckOnly` e informe `-Target apk`, `appbundle` ou `windows`.
 O endereço local padrão continua disponível apenas em desenvolvimento.
+
+
+O mapa dos fluxos, medições de consultas e oportunidades de melhoria interna está
+em [docs/performance_flows.md](docs/performance_flows.md).

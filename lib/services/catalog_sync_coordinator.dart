@@ -43,13 +43,8 @@ class CatalogSyncCoordinator {
   Future<CatalogSnapshot> read(String? owner) async {
     final cats = await database.getCats(ownerId: owner);
     final ids = cats.map((cat) => cat.id).toSet();
-    final analyses = (await database.getAnalyses())
-        .where((a) => ids.contains(a.catId))
-        .toList();
-    final references = <String, List<CatReferencePhoto>>{};
-    for (final cat in cats) {
-      references[cat.id] = await database.getReferencePhotos(cat.id);
-    }
+    final analyses = await database.getAnalysesForCats(ids);
+    final references = await database.getReferencePhotosForCats(ids);
     return CatalogSnapshot(owner, cats, analyses, references);
   }
 

@@ -160,3 +160,14 @@ O cliente live e sua integração PostgreSQL são consolidados no relatório da 
 o skip padrão não deve ser contado como entrega real de FCM ou inferência física.
 As validações manuais/externas estão explicitadas no documento de conclusão.
 Não houve merge na main nesta rodada.
+
+
+## Mapeamento de fluxos e mecanismos — 21/10/2026
+
+Fluxos, medições e oportunidades priorizadas estão em
+[performance_flows.md](performance_flows.md). Leituras em lote substituem buscas
+por gato; a API também libera a conexão de autenticação antes da análise principal.
+As consultas, contratos, dados visíveis e regras foram comparados com o caminho
+anterior. Nenhuma alteração em páginas, widgets, modelos de IA ou parâmetros
+de imagem. Resultado desta rodada: **278 testes completos, 6 condicionais, zero falhas; 9 focados aprovados; analyzer final sem apontamentos**.
+As contagens de consultas/conexões não são medições de latência em smartphone.

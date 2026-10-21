@@ -2,7 +2,7 @@
 
 Gerado por `scripts/audit_quality.py` na API. Candidatos exigem revisão; ausência de referência não prova inutilidade.
 
-Arquivos versionados ou novos (respeitando .gitignore): 3072. Fontes Python/Dart: 330.
+Arquivos versionados ou novos (respeitando .gitignore): 3075. Fontes Python/Dart: 332.
 
 ## Distribuição das fontes
 
@@ -22,17 +22,17 @@ Arquivos versionados ou novos (respeitando .gitignore): 3072. Fontes Python/Dart
 | lib | 2 | 427 |
 | lib/config | 1 | 39 |
 | lib/controllers | 4 | 744 |
-| lib/data | 3 | 469 |
-| lib/data/repositories | 4 | 533 |
+| lib/data | 4 | 485 |
+| lib/data/repositories | 4 | 573 |
 | lib/formatters | 1 | 66 |
 | lib/game | 27 | 6608 |
 | lib/models | 11 | 1404 |
 | lib/pages | 33 | 24511 |
-| lib/services | 28 | 5570 |
+| lib/services | 28 | 5567 |
 | lib/stores | 3 | 1433 |
 | lib/theme | 1 | 747 |
 | lib/widgets | 53 | 12241 |
-| test | 77 | 14873 |
+| test | 78 | 15069 |
 | test/support | 3 | 527 |
 | tool | 40 | 4143 |
 
@@ -146,13 +146,14 @@ Inclui componentes acessíveis somente por testes ou ferramentas. Confirmar ante
 | `lib/controllers/cat_details_controller.dart` | 60 |
 | `lib/controllers/conversation_controller.dart` | 585 |
 | `lib/controllers/habitat_interaction_state.dart` | 50 |
-| `lib/data/cat_database.dart` | 191 |
+| `lib/data/cat_database.dart` | 198 |
 | `lib/data/cat_database_schema.dart` | 244 |
 | `lib/data/habitat_repository.dart` | 34 |
-| `lib/data/repositories/catalog_repository.dart` | 252 |
+| `lib/data/repositories/catalog_repository.dart` | 267 |
 | `lib/data/repositories/habitat_cache_repository.dart` | 73 |
-| `lib/data/repositories/reference_photo_repository.dart` | 81 |
+| `lib/data/repositories/reference_photo_repository.dart` | 106 |
 | `lib/data/repositories/sync_metadata_repository.dart` | 127 |
+| `lib/data/sqlite_id_batches.dart` | 9 |
 | `lib/formatters/app_dates.dart` | 66 |
 | `lib/game/habitat_camera.dart` | 134 |
 | `lib/game/habitat_cat_animations.dart` | 188 |
@@ -231,8 +232,8 @@ Inclui componentes acessíveis somente por testes ou ferramentas. Confirmar ante
 | `lib/services/authenticated_api_client.dart` | 76 |
 | `lib/services/cat_preflight_service.dart` | 355 |
 | `lib/services/cat_sharing_service.dart` | 192 |
-| `lib/services/catalog_sync_coordinator.dart` | 84 |
-| `lib/services/catalog_sync_service.dart` | 410 |
+| `lib/services/catalog_sync_coordinator.dart` | 79 |
+| `lib/services/catalog_sync_service.dart` | 412 |
 | `lib/services/experience_service.dart` | 151 |
 | `lib/services/favorites_manager.dart` | 126 |
 | `lib/services/gamification_service.dart` | 137 |
@@ -319,6 +320,7 @@ Inclui componentes acessíveis somente por testes ou ferramentas. Confirmar ante
 | `test/cat_details_page_test.dart` | 156 |
 | `test/cat_preflight_service_test.dart` | 49 |
 | `test/cat_sharing_service_test.dart` | 122 |
+| `test/catalog_read_performance_test.dart` | 196 |
 | `test/chat_rescue_test.dart` | 200 |
 | `test/conversation_controller_test.dart` | 221 |
 | `test/corrections_preview_test.dart` | 115 |

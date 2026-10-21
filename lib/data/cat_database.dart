@@ -159,6 +159,13 @@ class CatDatabase {
 
   Future<List<CatAnalysis>> getAnalyses() => catalogRepository.getAnalyses();
 
+  Future<List<CatAnalysis>> getAnalysesForCats(Iterable<String> catIds) =>
+      catalogRepository.getAnalysesForCats(catIds);
+
+  Future<Map<String, List<CatReferencePhoto>>> getReferencePhotosForCats(
+    Iterable<String> catIds,
+  ) => referencePhotoRepository.getReferencePhotosForCats(catIds);
+
   Future<CatAnalysis?> getAnalysisByCatId(String catId) =>
       catalogRepository.getAnalysisByCatId(catId);
 

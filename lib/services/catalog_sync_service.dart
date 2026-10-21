@@ -55,10 +55,12 @@ class CatalogSyncService {
   }) async {
     final cats = await _database.getCatsForSync(ownerId);
     if (cats.isEmpty) return;
-    final analyses = <String, CatAnalysis?>{};
-    for (final cat in cats) {
-      analyses[cat.id] = await _database.getAnalysisByCatId(cat.id);
-    }
+    final analyses = {
+      for (final analysis in await _database.getAnalysesForCats(
+        cats.map((cat) => cat.id),
+      ))
+        analysis.catId: analysis,
+    };
     final response = await _authorizedPost('/sync/push', token, {
       'operations': cats
           .map(

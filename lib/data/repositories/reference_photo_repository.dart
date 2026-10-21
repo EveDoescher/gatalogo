@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 
+import '../sqlite_id_batches.dart';
 import '../../models/cat_reference_photo.dart';
 
 /// SQL operations for ReferencePhotoRepository; shares the connection owned by CatDatabase.
@@ -17,6 +18,30 @@ class ReferencePhotoRepository {
       orderBy: 'kind ASC',
     );
     return rows.map(CatReferencePhoto.fromMap).toList();
+  }
+
+  Future<Map<String, List<CatReferencePhoto>>> getReferencePhotosForCats(
+    Iterable<String> catIds,
+  ) async {
+    final result = <String, List<CatReferencePhoto>>{};
+    for (final ids in sqliteIdBatches(catIds)) {
+      for (final id in ids) {
+        result[id] = [];
+      }
+      final db = await database;
+      final rows = await db.query(
+        'cat_reference_photos',
+        where:
+            'cat_id IN (${List.filled(ids.length, '?').join(',')}) AND deleted_at IS NULL',
+        whereArgs: ids,
+        orderBy: 'kind ASC',
+      );
+      for (final row in rows) {
+        final photo = CatReferencePhoto.fromMap(row);
+        result[photo.catId]!.add(photo);
+      }
+    }
+    return result;
   }
 
   Future<List<CatReferencePhoto>> getDirtyReferencePhotos(
