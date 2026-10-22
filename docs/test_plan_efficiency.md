@@ -153,3 +153,9 @@ Inclui dez testes de HabitatService, auditoria opt-in de AuthPage/QuintalHoldCon
 achados de contraste/alvos/truncamento e histórico de correções do executor.
 A auditoria é desktop e não aprova ACC integralmente; TalkBack/VoiceOver continuam
 pendentes. O produto não foi alterado. Não somar repetições como casos únicos.
+
+
+### Continuacao de 22/10/2026
+
+[Resultados e matriz cumulativa](../../gatalogo-ai-api/docs/campaigns/2026-10-22-continuation/README.md).
+Preserva todos os cenarios anteriores; cobertura parcial nao significa conclusao.
