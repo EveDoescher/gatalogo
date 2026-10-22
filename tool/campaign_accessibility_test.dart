@@ -47,12 +47,21 @@ void main() {
   });
   tearDown(() => debugDefaultTargetPlatformOverride = null);
 
-  for (final width in [320.0, 412.0]) {
-    for (final scale in [1.0, 2.0]) {
-      testWidgets('ACC login width=$width scale=$scale', (tester) async {
+  for (final viewport in [
+    const Size(320, 568),
+    const Size(360, 800),
+    const Size(412, 915),
+    const Size(800, 1280),
+  ]) {
+    final width = viewport.width;
+    final height = viewport.height;
+    for (final scale in [1.0, 1.3, 2.0]) {
+      testWidgets('ACC login width=$width height=$height scale=$scale', (
+        tester,
+      ) async {
         final handle = tester.ensureSemantics();
         try {
-          tester.view.physicalSize = Size(width, 800);
+          tester.view.physicalSize = Size(width, height);
           tester.view.devicePixelRatio = 1;
           addTearDown(tester.view.resetPhysicalSize);
           addTearDown(tester.view.resetDevicePixelRatio);
@@ -82,11 +91,11 @@ void main() {
               overflows.add((element.widget as Text).data ?? '<rich text>');
             }
           }
-          record('login-$width-$scale', {
+          record('login-$width-$height-$scale', {
             'scenarios': ['ACC-01', 'ACC-02', 'ACC-03', 'ACC-05', 'ACC-07'],
             'widget': 'AuthPage',
             'width': width,
-            'height': 800,
+            'height': height,
             'scale': scale,
             'guidelines': findings,
             'layoutError': error?.toString(),
@@ -108,6 +117,57 @@ void main() {
       });
     }
   }
+
+  testWidgets(
+    'ACC08 login validation exposes error text and survives keyboard viewport',
+    (tester) async {
+      final handle = tester.ensureSemantics();
+      final account = SessionStore();
+      try {
+        tester.view.physicalSize = const Size(360, 800);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.lightTheme,
+            home: AuthPage(sessionStore: account, onContinueOffline: () {}),
+          ),
+        );
+        await tester.runAsync(() async {
+          await GoogleFonts.pendingFonts();
+        });
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(find.text('Entrar'));
+        await tester.tap(find.text('Entrar'));
+        await tester.pumpAndSettle();
+        final error = find.text('Informe seu e-mail.');
+        expect(error, findsOneWidget);
+        final semantics = tester.getSemantics(error).getSemanticsData();
+        final errorInTree = semantics.label.contains('Informe seu e-mail.');
+        tester.view.viewInsets = const FakeViewPadding(bottom: 320);
+        addTearDown(tester.view.resetViewInsets);
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(find.text('Entrar'));
+        await tester.pumpAndSettle();
+        final layoutError = tester.takeException();
+        record('ACC08-login-validation', {
+          'scenarios': ['ACC-08'],
+          'errorTextExposedInSemantics': errorInTree,
+          'keyboardInset': 320,
+          'layoutError': layoutError?.toString(),
+          'scope': 'Empty email only. Actual reader announcement/focus, offline/server errors and in-progress states pending.',
+        });
+        expect(errorInTree, true);
+        expect(layoutError, isNull);
+        await tester.pumpWidget(const SizedBox());
+      } finally {
+        handle.dispose();
+        account.dispose();
+        debugDefaultTargetPlatformOverride = null;
+      }
+    },
+  );
 
   for (final scale in [1.0, 2.0]) {
     for (final reduced in [false, true]) {
