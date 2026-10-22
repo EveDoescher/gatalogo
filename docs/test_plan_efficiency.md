@@ -143,3 +143,13 @@ Revisar IDs/prioridade/fixtures, aparelho e orçamento. Na execução, registrar
 A primeira campanha compara main e code-quality-cleanup conforme BR; o par refatorado aceito vira baseline futura. Mudança posterior deve preservar o contrato e repetir os mesmos casos; segurança/integridade reprovam a otimização mesmo que fique mais rápida.
 
 Registro obrigatório no modelo compartilhado: HIP → cenário/variante → código nos SHAs → teste/script/roteiro versionado → RUN/evidências → PROB → FIX/commit futuro → REV e comparação antes/depois. Todos os campos de execução e correção continuam sem resultado nesta revisão documental.
+
+
+### Continuação da campanha crítica — 21/10/2026
+
+Resultados e matriz cumulativa compartilhados em
+[relatório da bateria crítica](../../gatalogo-ai-api/docs/campaigns/2026-10-21-critical/README.md).
+Inclui dez testes de HabitatService, auditoria opt-in de AuthPage/QuintalHoldControl,
+achados de contraste/alvos/truncamento e histórico de correções do executor.
+A auditoria é desktop e não aprova ACC integralmente; TalkBack/VoiceOver continuam
+pendentes. O produto não foi alterado. Não somar repetições como casos únicos.
