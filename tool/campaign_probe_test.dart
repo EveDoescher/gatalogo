@@ -97,6 +97,12 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   test('DB-01 common public CatStore load contract (no remote IO)', () async {
     final output = Platform.environment['QUALITY_FLUTTER_OUTPUT'];
+    final count = int.parse(
+      Platform.environment['QUALITY_FLUTTER_COUNT'] ?? '40',
+    );
+    expect([0, 40, 501], contains(count));
+    final includeGuest =
+        Platform.environment['QUALITY_FLUTTER_NO_GUEST'] != '1';
     expect(output, isNotNull);
     sqfliteFfiInit();
     final folder = await Directory.systemTemp.createTemp(
@@ -118,8 +124,8 @@ void main() {
     try {
       final batch = db.batch();
       for (final id in [
-        ...List.generate(40, (i) => 'a-$i'),
-        'guest',
+        ...List.generate(count, (i) => 'a-$i'),
+        if (includeGuest) 'guest',
         'foreign',
         'deleted',
       ]) {
@@ -166,7 +172,10 @@ void main() {
         await store.loadCats();
         watch.stop();
         final ids = store.cats.map((c) => c.id).toSet();
-        expect(ids, {...List.generate(40, (i) => 'a-$i'), 'guest'});
+        expect(ids, {
+          ...List.generate(count, (i) => 'a-$i'),
+          if (includeGuest) 'guest',
+        });
         for (final id in ids) {
           expect(store.analysisFor(id)?.coatType, 'Fixture');
           expect(store.referencePhotosFor(id).map((p) => p.kind).toList(), [
@@ -187,7 +196,9 @@ void main() {
           'status': 'PASS',
           'samples': samples,
           'limitations': 'real SQLite FFI desktop, public loadCats; background network paths overridden; no phone latency',
-          'expected_visible': 41,
+          'expected_visible': count + (includeGuest ? 1 : 0),
+          'configured_owned_rows': count,
+          'include_guest': includeGuest,
           'resources': {
             'rss_bytes': ProcessInfo.currentRss,
             'peak_rss_bytes': ProcessInfo.maxRss,
