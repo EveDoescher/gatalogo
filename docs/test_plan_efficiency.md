@@ -1,5 +1,7 @@
 # Plano de eficiência — roteiro Flutter
 
+Escopo vigente em 23/10/2026: [fechamento sequencial e correções](https://github.com/EveDoescher/gatalogo-api/blob/code-quality-cleanup/docs/campaigns/2026-10-23-sequential/README.md). iOS, iPhone e VoiceOver estão fora do escopo por decisão do usuário e não impedem o fechamento Android/API. As definições originais abaixo permanecem como histórico.
+
 Execução posterior ao planejamento aprovado: [relatório da primeira campanha-piloto compartilhada](https://github.com/EveDoescher/gatalogo-api/blob/code-quality-cleanup/docs/campaigns/2026-10-21-pilot/README.md). Inclui comparação SQLite A/B, troca de conta em B, limitações e matriz atual. Os cenários abaixo continuam preservados como plano; a campanha não os declara integralmente concluídos.
 
 Data: 21/10/2026. Branch `code-quality-cleanup`. **Somente documentação para revisão; nenhum teste desta campanha executado nesta etapa.** Sem alteração funcional/visual, instrumentação ou build Android/emulador.
