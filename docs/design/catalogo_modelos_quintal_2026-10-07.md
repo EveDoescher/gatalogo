@@ -4,7 +4,7 @@ Data: 07/10/2026. Escopo consolidado com a usuária para o lote de arte e integr
 
 **Estado da entrega — 08/10:** a revisão dos abrigos, cozinha, Mercadinho e recipientes foi exportada para os GLBs e imagens usados pelo jogo. Os seis cultivos agora têm 24 estados 3D revisados, incluindo trigo com espigas facetadas e maturação verde/dourada. Foram acrescentados quatro canteiros e três estados de ampliação. A galeria está em `build/galeria-visual/modelos-novos/index.html`, com comparação dos cultivos na mesma escala em `cultivos.html`. O lote completo continua em desenvolvimento: animações de interação, demais estados complementares e validação dos fluxos no Quintal ainda precisam ser concluídos. As imagens isoladas não comprovam o funcionamento desses fluxos.
 
-Referências de implementação: `docs/plano_quintal_producao_2026-10-06.md`, `lib/game/quintal_production_scene.dart`, `tool/build_quintal_compositions.py` e, na API, `app/services/quintal_catalog.py` e `app/services/quintal_production.py`.
+Referências de implementação: `docs/product/plano_quintal_producao_2026-10-06.md`, `lib/game/quintal_production_scene.dart`, `tool/build_quintal_compositions.py` e, na API, `app/services/quintal_catalog.py` e `app/services/quintal_production.py`.
 
 Conferência atual: [auditoria dos 28 itens, fontes e pendências](auditoria_modelos_quintal_2026-10-08.md). A galeria completa inclui os 117 GLBs do lote, suas 468 vistas e acesso às adaptações anteriores dos animais. Foram retiradas as seis variantes indevidas de nível 2 abandonado/em reforma e as duas caixas de correio. A espiga madura tem corpo afunilado, grãos encaixados em toda a circunferência e palha aberta; caule, folhas e pendão foram preservados.
 

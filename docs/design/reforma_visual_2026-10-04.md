@@ -8,7 +8,7 @@ As miniaturas protegidas de pistas receberam tamanho e enquadramento próprios, 
 
 A galeria passou de 44 para 59 imagens, com listas preenchidas, três estados de pistas, contribuição reconhecida e progresso de missões/conquistas. A captura exige fotografias decodificadas nas miniaturas. Cartaz encerrado exibe o estado correto e não oferece repost premiado. Os exemplos são restritos aos testes.
 
-As pendências de evidência dos estados preenchidos citadas nas rodadas anteriores foram cobertas nesta rodada. O inventário por área, componentes, invariantes e limites está em `docs/auditoria_reforma_visual.md`. Verificação: 19 testes da rodada visual e 122 testes da suíte geral aprovados; três ignorados. Login e fontes reais de dados preservados. A validação nativa continua sem evidência neste ambiente.
+As pendências de evidência dos estados preenchidos citadas nas rodadas anteriores foram cobertas nesta rodada. O inventário por área, componentes, invariantes e limites está em `docs/design/auditoria_reforma_visual.md`. Verificação: 19 testes da rodada visual e 122 testes da suíte geral aprovados; três ignorados. Login e fontes reais de dados preservados. A validação nativa continua sem evidência neste ambiente.
 
 ## Continuação — buscas, configurações e compartilhamento
 

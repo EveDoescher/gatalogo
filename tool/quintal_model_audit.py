@@ -14,7 +14,7 @@ from habitat_model import read_document,load_model
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'build/galeria-visual/modelos-novos'
 ASSETS=ROOT/'assets/quintal/production'
-CATALOG=ROOT/'docs/catalogo_modelos_quintal_2026-10-07.md'
+CATALOG=ROOT/'docs/design/catalogo_modelos_quintal_2026-10-07.md'
 
 # ID, title, file pattern, expected export count, scene evidence, remaining work.
 REQUIREMENTS=[
@@ -111,7 +111,7 @@ def audit():
         '- API: `app/services/quintal_production.py` e `tests/test_quintal_production.py`: coleta por residente.',
         '- `test/quintal_production_visual_test.dart`: capturas de demonstração; não substituem validação de conta real.','',
         '## Resultado da checagem de arquivos','',*(errors or ['Nenhuma divergência de arquivo encontrada.'])]
-    (ROOT/'docs/auditoria_modelos_quintal_2026-10-08.md').write_text('\n'.join(lines)+'\n',encoding='utf-8')
+    (ROOT/'docs/design/auditoria_modelos_quintal_2026-10-08.md').write_text('\n'.join(lines)+'\n',encoding='utf-8')
     if errors:raise ValueError('\n'.join(errors))
     return report
 

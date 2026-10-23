@@ -162,7 +162,7 @@ App: `habitat_page.dart`, `habitat_game.dart`, `habitat_interactions.dart`, `hab
 
 API: `app/routers/habitat.py`, `app/services/habitat_service.py`, `app/services/habitat_interactions.py`, `app/routers/social.py`, schemas, progressão, modelos e migrações. Acrescentar serviços próprios para encontros/satisfação; não concentrar toda a mecânica nova no router.
 
-Documento canônico no app. A API mantém `docs/plano_habitat_social_2026-10-04.md` com seu escopo e referência a este plano. A elaboração inicial deste documento precedeu o código. O registro abaixo descreve a implementação atual.
+Documento canônico no app. A API mantém `docs/product/plano_habitat_social_2026-10-04.md` com seu escopo e referência a este plano. A elaboração inicial deste documento precedeu o código. O registro abaixo descreve a implementação atual.
 
 
 ## Registro da implementação — 04/10/2026

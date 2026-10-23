@@ -112,7 +112,7 @@ a passagem dos testes não significa que toda a dívida arquitetural foi elimina
 
 O mapa inicial acima é histórico. O estado atual das extrações e as fronteiras
 maiores que continuam pendentes estão em
-[architecture_refactoring.md](architecture_refactoring.md).
+[architecture_refactoring.md](../architecture/architecture_refactoring.md).
 
 Foram extraídos datas, páginas de resgate/pistas, componentes de detalhes e chat,
 valores do habitat e projeção/câmera da cena. Contratos, estilos e navegação foram
@@ -134,7 +134,7 @@ continuam registrados como pendências no documento de arquitetura.
 ## Conclusão da rodada — 21/10/2026
 
 O mapa anterior foi revisado item por item e substituído pelo estado consolidado
-em [architecture_completion.md](architecture_completion.md). Foram concluídas as
+em [architecture_completion.md](../architecture/architecture_completion.md). Foram concluídas as
 fronteiras de conversa/compositor, detalhes/análise/histórico, estado/overlays e
 seleção do Habitat, repositório de rede/cache, schema e repositórios SQLite,
 consultas de coleção, coordenação de sync/notificações e contrato de produção.
@@ -165,7 +165,7 @@ Não houve merge na main nesta rodada.
 ## Mapeamento de fluxos e mecanismos — 21/10/2026
 
 Fluxos, medições e oportunidades priorizadas estão em
-[performance_flows.md](performance_flows.md). Leituras em lote substituem buscas
+[performance_flows.md](../performance/performance_flows.md). Leituras em lote substituem buscas
 por gato; a API também libera a conexão de autenticação antes da análise principal.
 As consultas, contratos, dados visíveis e regras foram comparados com o caminho
 anterior. Nenhuma alteração em páginas, widgets, modelos de IA ou parâmetros

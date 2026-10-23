@@ -60,7 +60,7 @@ flutter test tool/habitat_preview_test.dart --plain-name "capture Quintal with b
 
 ### Quintal e Social — rodada 04/10/2026
 
-A implementação está detalhada em `docs/plano_habitat_social_2026-10-04.md`.
+A implementação está detalhada em `docs/product/plano_habitat_social_2026-10-04.md`.
 O modo de loja gratuita é controlado pela API (`HABITAT_FREE_SHOP=true`),
 sem substituir saldo, inventário ou progressão por dados de demonstração.
 A galeria contém somente fixtures de teste e não usa contas de produção.
@@ -85,7 +85,7 @@ Os novos GLBs são do mesmo pacote Kenney existente, com sua licença preservada
 ## Conclusão da refatoração arquitetural
 
 O mapa de pendências e a validação desta rodada estão em
-[docs/architecture_completion.md](docs/architecture_completion.md).
+[docs/architecture/architecture_completion.md](docs/architecture/architecture_completion.md).
 
 Release exige `--dart-define=API_BASE_URL=<URL explícita>`. Valide sem compilar:
 
@@ -98,8 +98,12 @@ O endereço local padrão continua disponível apenas em desenvolvimento.
 
 
 O mapa dos fluxos, medições de consultas e oportunidades de melhoria interna está
-em [docs/performance_flows.md](docs/performance_flows.md).
+em [docs/performance/performance_flows.md](docs/performance/performance_flows.md).
 
 ## Plano de testes de eficiência
 
 Cenários para revisão antes da execução: [latência, carga, dados, segurança, celular e mutação de código](docs/test_plan_efficiency.md). O plano distingue cobertura existente de medições futuras.
+
+## Organização do projeto
+
+[Índice da documentação](docs/README.md) · [Artefatos locais](artifacts/README.md). Logs antigos, anexos recebidos e relatórios locais estão agrupados em `artifacts/`; fontes, configurações e diretórios de build mantêm seus caminhos.

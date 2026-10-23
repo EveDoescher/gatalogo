@@ -60,7 +60,7 @@ públicos anteriores continuam disponíveis; não houve alteração ou migraçã
 
 A API também passou a carregar páginas de sync em lote e a liberar a conexão de
 autenticação antes da IA no envio principal. O mapa completo, riscos e próximas
-medições estão em [performance_flows.md da API](https://github.com/EveDoescher/gatalogo-api/blob/code-quality-cleanup/docs/performance_flows.md).
+medições estão em [performance_flows.md da API](https://github.com/EveDoescher/gatalogo-api/blob/code-quality-cleanup/docs/performance/performance_flows.md).
 
 ## Próxima fila de avaliação
 

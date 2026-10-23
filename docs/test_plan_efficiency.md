@@ -30,7 +30,7 @@ Depois da comparação revisada, congelar o par B aceito como baseline das otimi
 | Quintal/cache/rascunho/comando/replay/cena | `services/habitat_service.dart`, `data/habitat_repository.dart`, `models/quintal_snapshot.dart`, `game/` | LAT-06, LOAD-03, DATA-03/04/07, RES-02/03, UX-03/07 |
 | Feed/busca/pistas/favoritos | `services/social_api_service.dart`, páginas de resgate, `widgets/private_clue_photo.dart` | LAT-07, DATA-09, SEC-02/04, UX-06 |
 
-Caminhos sem prefixo são relativos a `lib/`, salvo quando indicado. O mapa de melhorias já medidas está em [performance_flows.md](performance_flows.md), separado desta campanha futura.
+Caminhos sem prefixo são relativos a `lib/`, salvo quando indicado. O mapa de melhorias já medidas está em [performance_flows.md](performance/performance_flows.md), separado desta campanha futura.
 
 ## Variantes e passos locais
 

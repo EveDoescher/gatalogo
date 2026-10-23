@@ -17,7 +17,7 @@ O resumo histórico abaixo registra o aceite anterior. Esta revisão reabre os f
 | R07 · Edição | Feito localmente | Cabeçalho “Sair do modo edição”; Deselecionar recebe largura adequada e botões quebram entre ações. Captura de edição aprovada e inspecionada em 19/10. |
 | R08 · Bandejas | Feito localmente | Corrigido em 20/10: removido o recuo inferior duplicado do “+”; botão a 8 px da navegação ou da altura real da bandeja. Inventário/gatos/potes com limite de tela e rolagem; conteúdo do inventário tem altura própria e abas não quebram palavras. Escolhas de produção adaptam altura à tela. 20 regressões de menu/ações + 1 de inventário com navegação real, fonte 1,6× e telas 320×568/640×360 aprovadas; captura local inspecionada. |
 | R09 · Temporizadores | Feito localmente | Indicadores elevados com folga de 10 px entre o fim da barra e o topo calculado do objeto; área de toque acompanha a posição. Capturas de horta e residentes inspecionadas. |
-| R10 · Sessão | Parcial — ativação pela usuária | Cliente restaura perfil local, renova com chamada compartilhada, grava tokens juntos e impede renovação atrasada após logout; quatro testes passaram. Migração `20261018_14` e patch da API preparados, sem execução conforme pedido. [Ordem de ativação](../../gatalogo-ai-api/docs/session_rotation_activation.md). Prazo de 365 dias NÃO aplicado. |
+| R10 · Sessão | Parcial — ativação pela usuária | Cliente restaura perfil local, renova com chamada compartilhada, grava tokens juntos e impede renovação atrasada após logout; quatro testes passaram. Migração `20261018_14` e patch da API preparados, sem execução conforme pedido. [Ordem de ativação](../../../gatalogo-ai-api/docs/security/session_rotation_activation.md). Prazo de 365 dias NÃO aplicado. |
 | R11 · Abertura | Feito localmente | Tela espera dados/sincronização e prontidão da cena/assets, com retry em falha. Teste só libera o toque após callback de prontidão; cena, inventário e edição aprovados. Ícone novo confirmado no bundle. |
 | R12 · Notificações / Social | Feito localmente | Ordem por data/ID, cursor estável, páginas incrementais e placeholders. Feed passa por posts privados sem encerrar cedo. Regressões de paginação/isolamento da API e store passaram; capturas de notificações e Social aprovadas e inspecionadas em 19/10. |
 | R13 · Assets fornecidos | Feito localmente | 46 PNGs conferidos e importados; ações, recursos, rações existentes, carinho, satisfação e carregamento usam as artes. Capturas atualizadas inspecionadas. Artes sem receita/mecânica correspondente ficam disponíveis, sem inventar novas regras. |
@@ -415,9 +415,9 @@ Na investigação original, uma chamada isolada ao serviço legado reproduziu `1
 
 ## Referências e importação
 
-- Origem fornecida: `C:/Users/Evelynn_Doescher/Downloads/game_refs`. As oito imagens foram copiadas para [referências locais de Kingshot](referencias/kingshot/), com correspondência de nomes em `manifest.json`.
+- Origem fornecida: `C:/Users/Evelynn_Doescher/Downloads/game_refs`. As oito imagens foram copiadas para [referências locais de Kingshot](../referencias/kingshot), com correspondência de nomes em `manifest.json`.
 - Pontos observados: barras compactas sobre construções com tempo central de alto contraste; identificação clara do objeto; painéis de detalhe com título/nível, informação agrupada e ação principal evidente. Adaptar esses princípios à arte do Gatálogo, sem importar seus menus militares, publicidade ou excesso de indicadores.
-- Origem dos assets: `C:/Users/Evelynn_Doescher/Downloads/Quintal`. A revisão de 18/10 conferiu **46 PNGs**, substituindo o inventário anterior de 38. [Hashes e dimensões](assets_quintal_2026-10-18.json).
+- Origem dos assets: `C:/Users/Evelynn_Doescher/Downloads/Quintal`. A revisão de 18/10 conferiu **46 PNGs**, substituindo o inventário anterior de 38. [Hashes e dimensões](../design/assets_quintal_2026-10-18.json).
 - Importados para `assets/quintal/ui/`, com uso nas ações, recursos, carinho, satisfação, rações existentes e tela de carregamento. Varinha, troca e melhoria já existiam; a revisão inclui também os demais arquivos fornecidos.
 - Artes de rações sem receita correspondente permanecem disponíveis no projeto. A presença de um asset não cria uma receita nem altera o balanceamento.
 - Capturas locais usam os assets empacotados no app, sem depender da pasta Downloads.
@@ -426,15 +426,15 @@ Na investigação original, uma chamada isolada ao serviço legado reproduziu `1
 
 | Evidência | Fonte |
 |---|---|
-| Regras, reservas, capacidades, preferências, datas e coleta | [quintal_production.py](../../gatalogo-ai-api/app/services/quintal_production.py), [quintal_catalog.py](../../gatalogo-ai-api/app/services/quintal_catalog.py) |
-| Regra centralizada de carinho e rota | [habitat.py](../../gatalogo-ai-api/app/routers/habitat.py), [habitat_interactions.py](../../gatalogo-ai-api/app/services/habitat_interactions.py) |
-| Projeção das missões, data e unidade dos eventos | [quintal_progress.py](../../gatalogo-ai-api/app/services/quintal_progress.py), [milestones.py](../../gatalogo-ai-api/app/services/milestones.py), [progression.py](../../gatalogo-ai-api/app/services/progression.py) |
-| Processamento e avisos do Quintal | [quintal_notifications.py](../../gatalogo-ai-api/app/services/quintal_notifications.py), [router](../../gatalogo-ai-api/app/routers/quintal.py) |
-| Atualização de estado e vínculo no cliente | [habitat_care.dart](../lib/services/habitat_care.dart), [quintal_production.dart](../lib/services/quintal_production.dart), [habitat_service.dart](../lib/services/habitat_service.dart) |
-| Objetos, modelos e rotinas | [quintal_production_scene.dart](../lib/game/quintal_production_scene.dart), [quintal_resident_motion.dart](../lib/game/quintal_resident_motion.dart) |
-| Ações, estoques, próximos marcos e minijogos | [quintal_object_actions.dart](../lib/widgets/quintal_object_actions.dart), [inventário](../lib/widgets/quintal_inventory_tray.dart), [ficha do gato](../lib/widgets/habitat_care_sheet.dart), [minijogos](../lib/pages/quintal_game_page.dart) |
-| Capturas e cobertura existentes | [galeria](../build/galeria-visual/galeria.html), `test/quintal_*`, API `tests/test_quintal_production.py` e `tests/test_quintal_router.py` |
-| Inventário de fontes 3D | [auditoria de modelos](auditoria_modelos_quintal_2026-10-08.md): 117 GLBs, 468 vistas, 28 itens de catálogo |
+| Regras, reservas, capacidades, preferências, datas e coleta | [quintal_production.py](../../../gatalogo-ai-api/app/services/quintal_production.py), [quintal_catalog.py](../../../gatalogo-ai-api/app/services/quintal_catalog.py) |
+| Regra centralizada de carinho e rota | [habitat.py](../../../gatalogo-ai-api/app/routers/habitat.py), [habitat_interactions.py](../../../gatalogo-ai-api/app/services/habitat_interactions.py) |
+| Projeção das missões, data e unidade dos eventos | [quintal_progress.py](../../../gatalogo-ai-api/app/services/quintal_progress.py), [milestones.py](../../../gatalogo-ai-api/app/services/milestones.py), [progression.py](../../../gatalogo-ai-api/app/services/progression.py) |
+| Processamento e avisos do Quintal | [quintal_notifications.py](../../../gatalogo-ai-api/app/services/quintal_notifications.py), [router](../../../gatalogo-ai-api/app/routers/quintal.py) |
+| Atualização de estado e vínculo no cliente | [habitat_care.dart](../../lib/services/habitat_care.dart), [quintal_production.dart](../../lib/services/quintal_production.dart), [habitat_service.dart](../../lib/services/habitat_service.dart) |
+| Objetos, modelos e rotinas | [quintal_production_scene.dart](../../lib/game/quintal_production_scene.dart), [quintal_resident_motion.dart](../../lib/game/quintal_resident_motion.dart) |
+| Ações, estoques, próximos marcos e minijogos | [quintal_object_actions.dart](../../lib/widgets/quintal_object_actions.dart), [inventário](../../lib/widgets/quintal_inventory_tray.dart), [ficha do gato](../../lib/widgets/habitat_care_sheet.dart), [minijogos](../../lib/pages/quintal_game_page.dart) |
+| Capturas e cobertura existentes | [galeria](../../build/galeria-visual/galeria.html), `test/quintal_*`, API `tests/test_quintal_production.py` e `tests/test_quintal_router.py` |
+| Inventário de fontes 3D | [auditoria de modelos](../design/auditoria_modelos_quintal_2026-10-08.md): 117 GLBs, 468 vistas, 28 itens de catálogo |
 
 Os testes existentes já cobrem vários casos de repetição, fila, recusa, coleta individual e troca de conta. Não classificar esses mecanismos como ausentes. PostgreSQL/concorrência, viradas de período, cliente conectado com perda de resposta/reinício e matriz local de layout/movimento foram aprovados em 18/10. Ainda faltam os gates físicos de F06/V09/V11/U05 discriminados acima. O estado atual de cada item está nas seções Feito localmente, Parcial e Pendente. As correções registradas têm evidência de implementação/testes; documentar uma tarefa não a torna concluída.
 
