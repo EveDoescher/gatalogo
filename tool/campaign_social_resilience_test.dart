@@ -25,6 +25,18 @@ class _HistoryApi extends fixtures.Api {
   }
 }
 
+class _ReadSocket extends fixtures.Socket {
+  _ReadSocket(super.session);
+  final receipts = StreamController<Map<String, dynamic>>.broadcast();
+  @override
+  Stream<Map<String, dynamic>> get onMessagesRead => receipts.stream;
+  @override
+  void dispose() {
+    receipts.close();
+    super.dispose();
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   testWidgets(
@@ -86,14 +98,23 @@ void main() {
         await tester.pump();
         expect(controller.optimisticIds, hasLength(1));
         if (order == 'ws-first') {
-          socket.incoming.add(fixtures.message('real'));
+          socket.incoming.add({
+            'conversation_id': 'chat',
+            'message': fixtures.message('real'),
+          });
           await tester.pump();
         }
         api.pending!.complete(fixtures.message('real'));
         await send;
         await tester.pump();
-        socket.incoming.add(fixtures.message('real'));
-        socket.incoming.add(fixtures.message('real'));
+        socket.incoming.add({
+          'conversation_id': 'chat',
+          'message': fixtures.message('real'),
+        });
+        socket.incoming.add({
+          'conversation_id': 'chat',
+          'message': fixtures.message('real'),
+        });
         await tester.pump();
         expect(controller.messages.map((m) => m.id), ['real']);
         expect(controller.optimisticIds, isEmpty);
@@ -104,6 +125,87 @@ void main() {
       }
     });
   }
+  for (final ids in [
+    ['b', 'a'],
+    ['a', 'b'],
+  ]) {
+    testWidgets('DATA08 equal timestamps are deterministic for $ids', (
+      tester,
+    ) async {
+      final account = fixtures.SwitchableAccount();
+      final socket = fixtures.Socket(account), api = _HistoryApi(account);
+      api.history = Completer();
+      final controller = ConversationController(
+        account,
+        'chat',
+        api: api,
+        socket: socket,
+      );
+      try {
+        controller.start();
+        await tester.pump();
+        for (final id in ids) {
+          socket.incoming.add({
+            'conversation_id': 'chat',
+            'message': fixtures.message(id),
+          });
+        }
+        await tester.pump();
+        expect(controller.messages.map((m) => m.id), ['a', 'b']);
+        api.history!.complete([
+          for (final id in ids.reversed) fixtures.message(id),
+        ]);
+        await tester.pump();
+        expect(controller.messages.map((m) => m.id), ['a', 'b']);
+      } finally {
+        controller.dispose();
+        socket.dispose();
+        account.dispose();
+      }
+    });
+  }
+  testWidgets(
+    'DATA08 read receipt survives delayed unread history and duplicate echo',
+    (tester) async {
+      final account = fixtures.SwitchableAccount()..changeAccount();
+      final socket = _ReadSocket(account), api = _HistoryApi(account);
+      final controller = ConversationController(
+        account,
+        'chat',
+        api: api,
+        socket: socket,
+      );
+      final mine = {...fixtures.message('mine'), 'sender_id': 'new-user'};
+      const readAt = '2026-10-21T10:02:00Z';
+      try {
+        controller.start();
+        await tester.pump();
+        socket.incoming.add(mine);
+        await tester.pump();
+        api.history = Completer();
+        final loading = controller.load(silent: true);
+        await tester.pump();
+        socket.receipts.add({'conversation_id': 'chat', 'read_at': readAt});
+        await tester.pump();
+        expect(controller.messages.single.isRead, isTrue);
+        api.history!.complete([mine]);
+        await loading;
+        expect(controller.messages.single.isRead, isTrue);
+        expect(controller.messages.single.readAt, DateTime.parse(readAt));
+        socket.incoming.add(mine);
+        socket.receipts.add({
+          'conversation_id': 'chat',
+          'read_at': '2026-10-21T10:01:00Z',
+        });
+        await tester.pump();
+        expect(controller.messages.single.readAt, DateTime.parse(readAt));
+      } finally {
+        controller.dispose();
+        socket.dispose();
+        account.dispose();
+      }
+    },
+  );
   testWidgets('DATA08 live event survives late empty history snapshot', (
     tester,
   ) async {

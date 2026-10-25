@@ -180,7 +180,12 @@ class ConversationController extends ChangeNotifier {
     // 1. Mensagens em tempo real pontuais
     _msgSub = ws.onNewMessage.listen((data) {
       if (data['conversation_id'] == conversationId) {
-        final newMsg = ChatMessage.fromMap(data);
+        final nested = data['message'];
+        if (nested != null && nested is! Map<String, dynamic>) return;
+        final payload = nested is Map<String, dynamic> ? nested : data;
+        if (payload['conversation_id'] != conversationId) return;
+        final newMsg = ChatMessage.fromMap(payload);
+        if (newMsg.id.isEmpty) return;
         _handleIncomingMessage(newMsg);
       }
     });
@@ -213,12 +218,14 @@ class ConversationController extends ChangeNotifier {
             : DateTime.now();
         if (mounted) {
           _update(() {
-            _messages = _messages.map((m) {
-              if (m.isMine(_myUserId)) {
-                return m.copyWith(isRead: true, readAt: readAt);
-              }
-              return m;
-            }).toList();
+            _messages = _orderedMessages(
+              _messages.map((m) {
+                if (m.isMine(_myUserId)) {
+                  return m.copyWith(isRead: true, readAt: readAt);
+                }
+                return m;
+              }),
+            );
           });
         }
       }
@@ -311,16 +318,34 @@ class ConversationController extends ChangeNotifier {
     });
   }
 
+  List<ChatMessage> _orderedMessages(Iterable<ChatMessage> messages) {
+    final previous = {for (final message in _messages) message.id: message};
+    final merged = <String, ChatMessage>{};
+    for (var message in messages) {
+      final known = merged[message.id] ?? previous[message.id];
+      if (known != null && known.isRead) {
+        final knownReadAt = known.readAt;
+        final incomingReadAt = message.readAt;
+        if (!message.isRead ||
+            (knownReadAt != null &&
+                (incomingReadAt == null ||
+                    incomingReadAt.isBefore(knownReadAt)))) {
+          message = message.copyWith(isRead: true, readAt: knownReadAt);
+        }
+      }
+      merged[message.id] = message;
+    }
+    return merged.values.toList()..sort((a, b) {
+      final time = a.createdAt.compareTo(b.createdAt);
+      return time == 0 ? a.id.compareTo(b.id) : time;
+    });
+  }
+
   void _handleIncomingMessage(ChatMessage newMsg) {
     if (!mounted) return;
     _liveMessageIds.add(newMsg.id);
     _update(() {
-      final existingIndex = _messages.indexWhere((m) => m.id == newMsg.id);
-      if (existingIndex >= 0) {
-        _messages[existingIndex] = newMsg;
-      } else {
-        _messages = [..._messages, newMsg];
-      }
+      _messages = _orderedMessages([..._messages, newMsg]);
     });
 
     // Se a mensagem for do outro usuário, marcar como lida imediatamente
@@ -367,8 +392,7 @@ class ConversationController extends ChangeNotifier {
                   _liveMessageIds.contains(m.id),
             ),
           ];
-          _messages = {for (final message in merged) message.id: message}.values
-              .toList();
+          _messages = _orderedMessages(merged);
           _error = null;
         });
 
@@ -481,12 +505,9 @@ class ConversationController extends ChangeNotifier {
       if (mounted) {
         _update(() {
           _optimisticIds.remove(tempId);
-          _messages = {
-            for (final m in _messages)
-              (m.id == tempId ? realMsg.id : m.id): (m.id == tempId
-                  ? realMsg
-                  : m),
-          }.values.toList();
+          _messages = _orderedMessages(
+            _messages.map((m) => m.id == tempId ? realMsg : m),
+          );
         });
       }
     } on SocialApiException catch (error) {
