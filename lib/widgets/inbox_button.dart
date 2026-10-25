@@ -28,63 +28,74 @@ class InboxButton extends StatelessWidget {
           );
           await store.refreshNotifications();
         },
-        child: Tooltip(
-          message: 'Notificações',
-          child: Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: illustrated ? const Color(0xFFFBF6E8) : AppColors.surface,
-              border: Border.all(
-                color: illustrated
-                    ? const Color(0xFF94724E)
-                    : AppColors.borderProfile,
-                width: illustrated ? 1.8 : 1.4,
-              ),
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                const Icon(
-                  LucideIcons.bell,
-                  size: 20,
-                  color: AppColors.textDark,
+        child: Semantics(
+          label: 'Notificações',
+          value: store.notifications.unreadCount == 1
+              ? '1 não lida'
+              : '${store.notifications.unreadCount} não lidas',
+          button: true,
+          child: ExcludeSemantics(
+            child: Tooltip(
+              message: 'Notificações',
+              child: Container(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: illustrated
+                      ? const Color(0xFFFBF6E8)
+                      : AppColors.surface,
+                  border: Border.all(
+                    color: illustrated
+                        ? const Color(0xFF94724E)
+                        : AppColors.borderProfile,
+                    width: illustrated ? 1.8 : 1.4,
+                  ),
                 ),
-                if (store.notifications.unreadCount > 0)
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: TweenAnimationBuilder<double>(
-                      tween: Tween<double>(begin: 0, end: 1),
-                      duration: const Duration(milliseconds: 200),
-                      builder: (context, scale, child) {
-                        return Transform.scale(scale: scale, child: child);
-                      },
-                      child: Container(
-                        width: 18,
-                        height: 18,
-                        decoration: const BoxDecoration(
-                          color: AppColors.primary,
-                          shape: BoxShape.circle,
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          store.notifications.unreadCount > 99
-                              ? '99+'
-                              : store.notifications.unreadCount.toString(),
-                          style: GoogleFonts.nunito(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            height: 1.0,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    const Icon(
+                      LucideIcons.bell,
+                      size: 20,
+                      color: AppColors.textDark,
+                    ),
+                    if (store.notifications.unreadCount > 0)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: TweenAnimationBuilder<double>(
+                          tween: Tween<double>(begin: 0, end: 1),
+                          duration: const Duration(milliseconds: 200),
+                          builder: (context, scale, child) {
+                            return Transform.scale(scale: scale, child: child);
+                          },
+                          child: Container(
+                            width: 18,
+                            height: 18,
+                            decoration: const BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              store.notifications.unreadCount > 99
+                                  ? '99+'
+                                  : store.notifications.unreadCount.toString(),
+                              style: GoogleFonts.nunito(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                height: 1.0,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
                           ),
-                          textAlign: TextAlign.center,
                         ),
                       ),
-                    ),
-                  ),
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
         ),

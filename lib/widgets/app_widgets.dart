@@ -334,34 +334,40 @@ class UserAvatarButton extends StatelessWidget {
             ),
           ),
           borderRadius: BorderRadius.circular(size / 2),
-          child: framed
-              ? FramedUserAvatar(url: avatarUrl, size: size)
-              : Container(
-                  width: size,
-                  height: size,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.surface,
-                    border: Border.all(
-                      color: AppColors.borderProfile,
-                      width: 1.4,
-                    ),
-                  ),
-                  child: ClipOval(
-                    child: RemoteAvatarImage(
-                      url: avatarUrl,
+          child: Semantics(
+            label: 'Perfil',
+            button: true,
+            child: ExcludeSemantics(
+              child: framed
+                  ? FramedUserAvatar(url: avatarUrl, size: size)
+                  : Container(
                       width: size,
                       height: size,
-                      fallback: Center(
-                        child: Icon(
-                          LucideIcons.user,
-                          size: size * 0.48,
-                          color: AppColors.textLight,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.surface,
+                        border: Border.all(
+                          color: AppColors.borderProfile,
+                          width: 1.4,
+                        ),
+                      ),
+                      child: ClipOval(
+                        child: RemoteAvatarImage(
+                          url: avatarUrl,
+                          width: size,
+                          height: size,
+                          fallback: Center(
+                            child: Icon(
+                              LucideIcons.user,
+                              size: size * 0.48,
+                              color: AppColors.textLight,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
+            ),
+          ),
         );
       },
     );
