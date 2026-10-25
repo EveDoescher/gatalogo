@@ -87,6 +87,22 @@ void main() {
         db = CatDatabase.instance;
     final receipt = File(options['receipt']);
     final watch = Stopwatch()..start();
+    var explicitSyncAttempts = 0;
+    Future<void> settleCatalog() async {
+      final deadline = DateTime.now().add(const Duration(seconds: 10));
+      do {
+        await store.syncCatalog(manual: true);
+        explicitSyncAttempts++;
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        if (store.cats.every((cat) => cat.syncState == 'synced')) return;
+        expect(
+          DateTime.now().isBefore(deadline),
+          isTrue,
+          reason: 'Explicit metadata sync must converge',
+        );
+      } while (true);
+    }
+
     try {
       await store.loadCats();
       if (online && analysisEnabled) {
@@ -103,7 +119,20 @@ void main() {
           );
           await Future<void>.delayed(const Duration(milliseconds: 20));
         }
-        await store.syncCatalog(manual: true);
+        if (phase == 'sync') {
+          final retryDeadline = DateTime.now().add(const Duration(seconds: 75));
+          while (store.isSynchronizing ||
+              store.cats.any((cat) => cat.syncState != 'synced')) {
+            expect(
+              DateTime.now().isBefore(retryDeadline),
+              isTrue,
+              reason: 'Observe the real one-minute retry timer',
+            );
+            await Future<void>.delayed(const Duration(milliseconds: 50));
+          }
+        } else {
+          await settleCatalog();
+        }
         await store.refreshGamification();
         await store.refreshNotifications();
       }
@@ -117,7 +146,7 @@ void main() {
             distinguishingMarks: cat.distinguishingMarks,
           );
         }
-        await store.syncCatalog(manual: true);
+        await settleCatalog();
         await receipt.writeAsString(
           jsonEncode(
             store.cats
@@ -207,6 +236,7 @@ void main() {
           'sync_states': store.cats.map((cat) => cat.syncState).toList(),
           'analysis_enabled': analysisEnabled,
           'elapsed_ms_observed': watch.elapsedMilliseconds,
+          'explicit_sync_attempts': explicitSyncAttempts,
           'scope': 'real desktop SQLite/files and public CatStore methods; sync/metadata phases use disposable HTTP API; analysis is controlled by explicit fixture option, geolocation disabled',
         }),
       );
