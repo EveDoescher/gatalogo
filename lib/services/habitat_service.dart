@@ -170,6 +170,7 @@ class HabitatService extends ChangeNotifier {
       _catalog[sku] ?? (throw StateError('Item desconhecido no Quintal: $sku'));
 
   Future<void> load() async {
+    if (_disposed) return;
     final owner = _ownerId;
     if (_loadedOwner != owner) {
       _loadedOwner = owner;
@@ -190,6 +191,7 @@ class HabitatService extends ChangeNotifier {
     } catch (_) {
       // The scene can still open if local storage is temporarily unavailable.
     }
+    if (_disposed || owner != _ownerId) return;
     _pendingPurchases = {
       for (final entry
           in (cached?['pending_purchases'] as Map? ?? const {}).entries)
@@ -220,8 +222,10 @@ class HabitatService extends ChangeNotifier {
       if (_normalizeDraftLayout()) {
         hasDraft = true;
         await _repository.saveDraft(owner, _draft());
+        if (_disposed || owner != _ownerId) return;
       }
       await _persistSnapshot();
+      if (_disposed || owner != _ownerId) return;
     }
     if (!session.isSignedIn) {
       _readLocalCats();
@@ -235,7 +239,7 @@ class HabitatService extends ChangeNotifier {
         _repository.snapshot(),
         _repository.catalog(),
       ]);
-      if (owner != _ownerId) return;
+      if (_disposed || owner != _ownerId) return;
       _readSnapshot(results.first);
       shop = ((results.last['items'] as List?) ?? const [])
           .map(
@@ -251,17 +255,22 @@ class HabitatService extends ChangeNotifier {
         _applyDraft(Map<String, dynamic>.from(draft));
         if (_normalizeDraftLayout()) {
           await _repository.saveDraft(_ownerId, _draft());
+          if (_disposed || owner != _ownerId) return;
         }
       }
       await _persistSnapshot();
+      if (_disposed || owner != _ownerId) return;
       offline = false;
       await refreshProduction();
     } catch (_) {
+      if (_disposed || owner != _ownerId) return;
       offline = true;
       if (items.isEmpty && !session.isSignedIn) _seedGuest();
     } finally {
-      loading = false;
-      notifyListeners();
+      if (!_disposed && owner == _ownerId) {
+        loading = false;
+        notifyListeners();
+      }
     }
   }
 

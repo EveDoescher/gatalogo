@@ -397,6 +397,7 @@ class CatStore extends ChangeNotifier {
       await _scheduleAutomaticRetry(cat);
       return false;
     } on AnalysisApiException catch (error) {
+      if (!_isCurrentPhoto(cat)) return true;
       if (error.retryable) {
         await _scheduleAutomaticRetry(cat);
         return false;
@@ -405,6 +406,7 @@ class CatStore extends ChangeNotifier {
       await _setAnalysisState(cat.id, AnalysisStatus.failed, 'failed');
       return true;
     } on AnalysisRejectedException {
+      if (!_isCurrentPhoto(cat)) return true;
       await _setAnalysisState(cat.id, AnalysisStatus.failed, 'failed');
       return true;
     } catch (error, stackTrace) {

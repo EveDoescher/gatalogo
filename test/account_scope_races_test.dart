@@ -55,12 +55,8 @@ class _Sync extends CatalogSyncService {
 }
 
 class _Store extends CatStore {
-  _Store(_Account account, _Sync sync, this.network)
-    : super(
-        account,
-        catalogSync: sync,
-        networkAvailable: () async => network.value,
-      );
+  _Store(super.account, _Sync sync, this.network)
+    : super(catalogSync: sync, networkAvailable: () async => network.value);
   final ValueNotifier<bool> network;
   @override
   Future<void> resolvePendingLocations() async {}
@@ -129,11 +125,12 @@ void main() {
     await connection.delete('cats');
   });
 
-  for (final boundary in ['switch', 'logout', 'dispose']) {
+  for (final boundary in ['switch', 'logout', 'dispose', 'current']) {
     for (final flow in [
       'catalog',
       'analysis-success',
       'analysis-rejected',
+      'analysis-api-error',
       'analysis-retry',
     ]) {
       test(
@@ -160,7 +157,7 @@ void main() {
               entered = Completer<void>();
           final client = MockClient((request) {
             expect(request.url.path, '/analyze');
-          expect(request.body, contains(id));
+            expect(request.body, contains(id));
             entered.complete();
             return response.future;
           });
@@ -176,12 +173,12 @@ void main() {
               await (flow == 'catalog' ? sync.entered.future : entered.future)
                   .timeout(const Duration(seconds: 10));
               final before = await database.getCatById(id);
-            if (flow != 'catalog') expect(before?.status, 'analyzing');
+              if (flow != 'catalog') expect(before?.status, 'analyzing');
               final beforeAnalysis = await database.getAnalysisByCatId(id);
               if (boundary == 'dispose') {
                 store.dispose();
                 disposed = true;
-              } else {
+              } else if (boundary != 'current') {
                 account.change(boundary == 'switch' ? 'b' : null);
                 await store.ready;
               }
@@ -208,10 +205,27 @@ void main() {
                     422,
                   ),
                 );
+              } else if (flow == 'analysis-api-error') {
+                response.complete(
+                  http.Response('{"detail":"synthetic forbidden"}', 403),
+                );
               } else {
                 response.complete(http.Response('{}', 503));
               }
               await pending;
+              if (boundary == 'current' && flow != 'catalog') {
+                final expected = flow == 'analysis-success'
+                    ? 'completed'
+                    : flow == 'analysis-retry'
+                    ? 'pending_analysis'
+                    : 'failed';
+                expect((await database.getCatById(id))?.status, expected);
+                expect(store.cats.single.status, expected);
+                if (flow == 'analysis-success') {
+                  expect(store.analysisFor(id)?.coatType, 'synthetic');
+                }
+                return;
+              }
               expect(store.cats.map((cat) => cat.id).toList(), visible);
               expect(store.analysisFor(id)?.toMap(), analysis);
               expect((await database.getCatById(id))?.toMap(), before?.toMap());
@@ -230,6 +244,7 @@ void main() {
       );
     }
 
+    if (boundary == 'current') continue;
     test('RES03 chat history and event after $boundary are ignored', () async {
       final account = _ChatAccount()..change('a');
       final socket = chat.Socket(account), api = _History(account);
