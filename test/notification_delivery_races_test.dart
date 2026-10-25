@@ -25,9 +25,9 @@ class _Push extends Fake implements PushNotificationService {
 class _Account extends Fake implements SessionStore {
   String owner = 'A';
   @override
-  final webSocket = _Socket();
+  final _Socket webSocket = _Socket();
   @override
-  final pushNotifications = _Push();
+  final _Push pushNotifications = _Push();
   @override
   bool get isSignedIn => true;
   @override
