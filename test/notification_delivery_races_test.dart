@@ -65,12 +65,13 @@ void main() {
       'DLV05 real activity bridge coalesces WS/push wsFirst=$wsFirst',
       () async {
         final account = _Account();
-        final activity = AccountActivityController(account, () async {});
-        final response = Completer<http.Response>();
+        late final AccountActivityController activity;
+        var response = Completer<http.Response>();
         var gets = 0;
         try {
           await http.runWithClient(
             () async {
+              activity = AccountActivityController(account, () async {});
               if (wsFirst) {
                 account.webSocket.events.add({'id': 'same'});
               } else {
@@ -89,10 +90,13 @@ void main() {
               await flush();
               expect(activity.notifications.items.single['id'], 'same');
               expect(activity.notifications.unreadCount, 1);
+              response = Completer<http.Response>();
               account.webSocket.events.add({'id': 'same'});
               account.pushNotifications.events.add('same');
               await flush();
               expect(gets, 2);
+              response.complete(page([notice('same')]));
+              await flush();
               expect(activity.notifications.items, hasLength(1));
               expect(activity.notifications.unreadCount, 1);
             },
