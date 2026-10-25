@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 
@@ -19,6 +20,9 @@ class CatalogSyncService {
 
   final SessionStore _sessionStore;
   final CatDatabase _database;
+
+  // SyncPushRequest accepts at most 500 operations per request.
+  static const _pushBatchSize = 500;
 
   Future<bool>? _inFlight;
   Future<bool> sync() =>
@@ -61,28 +65,36 @@ class CatalogSyncService {
       ))
         analysis.catId: analysis,
     };
-    final response = await _authorizedPost('/sync/push', token, {
-      'operations': cats
-          .map(
-            (cat) => {
-              'client_id': cat.id,
-              'updated_at': cat.localUpdatedAt.toUtc().toIso8601String(),
-              'device_id': cat.syncDeviceId ?? deviceId,
-              'deleted_at': cat.deletedAt?.toUtc().toIso8601String(),
-              'payload': _payloadFor(cat),
-              'analysis': analyses[cat.id]?.toApiJson(),
-            },
-          )
-          .toList(),
-    });
-    if (response.statusCode == 401 && !retried) {
-      final refreshed = await _sessionStore.accessToken(refresh: true);
-      if (refreshed != null) {
-        return _pushDirtyCats(ownerId, deviceId, refreshed, retried: true);
+    final ordered = _orderForBatches(cats);
+    for (var start = 0; start < ordered.length; start += _pushBatchSize) {
+      final end = start + _pushBatchSize;
+      final batch = ordered.sublist(
+        start,
+        end > ordered.length ? ordered.length : end,
+      );
+      final response = await _authorizedPost('/sync/push', token, {
+        'operations': batch
+            .map(
+              (cat) => {
+                'client_id': cat.id,
+                'updated_at': cat.localUpdatedAt.toUtc().toIso8601String(),
+                'device_id': cat.syncDeviceId ?? deviceId,
+                'deleted_at': cat.deletedAt?.toUtc().toIso8601String(),
+                'payload': _payloadFor(cat),
+                'analysis': analyses[cat.id]?.toApiJson(),
+              },
+            )
+            .toList(),
+      });
+      if (response.statusCode == 401 && !retried) {
+        final refreshed = await _sessionStore.accessToken(refresh: true);
+        if (refreshed != null) {
+          return _pushDirtyCats(ownerId, deviceId, refreshed, retried: true);
+        }
       }
-    }
-    if (response.statusCode >= 300) {
-      throw const HttpException('Envio dos registros adiado.');
+      if (response.statusCode >= 300) {
+        throw const HttpException('Envio dos registros adiado.');
+      }
     }
     for (final cat in cats.where(
       (cat) =>
@@ -94,6 +106,32 @@ class CatalogSyncService {
       if (!await photo.exists()) continue;
       await _uploadPhoto(cat, deviceId, token);
     }
+  }
+
+  List<Cat> _orderForBatches(List<Cat> cats) {
+    // Within one request the API already orders identity dependencies.
+    if (cats.length <= _pushBatchSize) return cats;
+    final ids = cats.map((cat) => cat.id).toSet();
+    final dependents = <String, List<Cat>>{};
+    final ready = Queue<Cat>();
+    for (final cat in cats) {
+      final target = cat.individualId;
+      if (cat.deletedAt != null || target == cat.id || !ids.contains(target)) {
+        ready.add(cat);
+      } else {
+        (dependents[target!] ??= []).add(cat);
+      }
+    }
+    final ordered = <Cat>[];
+    while (ready.isNotEmpty) {
+      final cat = ready.removeFirst();
+      ordered.add(cat);
+      ready.addAll(dependents.remove(cat.id) ?? const <Cat>[]);
+    }
+    if (ordered.length != cats.length) {
+      throw const HttpException('Envio dos registros adiado.');
+    }
+    return ordered;
   }
 
   Future<void> _pushDirtyReferencePhotos(String ownerId, String token) async {
@@ -316,7 +354,9 @@ class CatalogSyncService {
         url,
         token,
       );
-      if (path == null) continue;
+      if (path == null) {
+        throw const HttpException('Foto complementar ainda não recebida.');
+      }
       await _database.upsertReferencePhoto(
         CatReferencePhoto(
           catId: catId,
