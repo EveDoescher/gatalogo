@@ -124,9 +124,11 @@ class IllustratedProgress extends StatelessWidget {
   final double height;
   @override
   Widget build(BuildContext context) => Container(
-    height:
-        height.clamp(20.0, double.infinity) *
-        MediaQuery.textScalerOf(context).scale(1),
+    constraints: BoxConstraints(
+      minHeight:
+          height.clamp(20.0, double.infinity) *
+          MediaQuery.textScalerOf(context).scale(1),
+    ),
     padding: const EdgeInsets.all(2),
     decoration: BoxDecoration(
       color: const Color(0xFFF4EBD9),
@@ -134,23 +136,27 @@ class IllustratedProgress extends StatelessWidget {
       border: Border.all(color: const Color(0xFFC6AE8E), width: 1.4),
     ),
     child: Stack(
+      alignment: Alignment.center,
       children: [
-        FractionallySizedBox(
-          widthFactor: target > 0 ? (current / target).clamp(0.0, 1.0) : 0,
-          heightFactor: 1,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: const Color(0xFF8EB35C),
-              borderRadius: BorderRadius.circular(20),
+        Positioned.fill(
+          child: FractionallySizedBox(
+            alignment: Alignment.centerLeft,
+            widthFactor: target > 0 ? (current / target).clamp(0.0, 1.0) : 0,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: const Color(0xFF8EB35C),
+                borderRadius: BorderRadius.circular(20),
+              ),
             ),
           ),
         ),
         Center(
+          heightFactor: 1,
           child: Text(
             label ?? '${current.toInt()} / ${target.toInt()}',
             style: GoogleFonts.nunito(
               fontSize: 11,
-              height: 1,
+              height: MediaQuery.textScalerOf(context).scale(11) > 11 ? 1.2 : 1,
               fontWeight: FontWeight.w800,
               color: HomeArt.ink,
             ),
