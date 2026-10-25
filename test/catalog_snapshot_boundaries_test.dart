@@ -9,6 +9,7 @@ import 'package:catlogue/services/catalog_sync_coordinator.dart';
 import 'package:catlogue/services/catalog_sync_service.dart';
 import 'package:catlogue/services/vision_api_service.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -149,7 +150,7 @@ void main() {
                 },
                 {for (final c in expected) c.id: references[c.id]},
               );
-              print(
+            debugPrintSynchronously(
                 jsonEncode({
                   'scenario': 'DB-01',
                   'owned': count,
