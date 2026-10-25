@@ -83,8 +83,9 @@ void main() {
             expect(data.value, count == 1 ? '1 não lida' : '$count não lidas');
             expect(data.flagsCollection.isButton, isTrue);
             expect(data.hasAction(SemanticsAction.tap), isTrue);
-            if (count > 0)
+            if (count > 0) {
               expect(find.text(count > 99 ? '99+' : '$count'), findsOneWidget);
+            }
           } finally {
             await tester.pumpWidget(const SizedBox());
             store.dispose();
