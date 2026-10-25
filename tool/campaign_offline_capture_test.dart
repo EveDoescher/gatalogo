@@ -94,7 +94,9 @@ void main() {
         await store.syncCatalog(manual: true);
         explicitSyncAttempts++;
         await Future<void>.delayed(const Duration(milliseconds: 20));
-        if (store.cats.every((cat) => cat.syncState == 'synced')) return;
+        if (store.cats.every((cat) => cat.syncState == 'synced')) {
+          return;
+        }
         expect(
           DateTime.now().isBefore(deadline),
           isTrue,
@@ -225,7 +227,9 @@ void main() {
             await File(cat.photoPath).readAsBytes(),
             orderedEquals(await File(options['photo']).readAsBytes()),
           );
-          if (online || phase == 'final') expect(cat.syncState, 'synced');
+          if (online || phase == 'final') {
+            expect(cat.syncState, 'synced');
+          }
         }
       }
       await File(options['output']).writeAsString(
