@@ -9,16 +9,18 @@ import 'package:catlogue/services/habitat_service.dart';
 import 'package:catlogue/services/product_api_service.dart';
 
 class _Account extends SessionStore {
-  String id = 'one';
+  String? id = 'one';
   @override
-  bool get isSignedIn => true;
+  bool get isSignedIn => id != null;
   @override
-  AuthSession get session => AuthSession(
-    userId: id,
-    email: 'qa@test.local',
-    accessToken: 'test',
-    refreshToken: 'test',
-  );
+  AuthSession? get session => id == null
+      ? null
+      : AuthSession(
+          userId: id!,
+          email: 'qa@test.local',
+          accessToken: 'test',
+          refreshToken: 'test',
+        );
 }
 
 class _Store extends CatStore {
@@ -103,6 +105,59 @@ class _Api extends ProductApiService {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  for (final boundary in ['switch', 'logout', 'dispose']) {
+    for (final method in ['load', 'produce']) {
+      test('RES03 Quintal late $method after $boundary is ignored', () async {
+        final account = _Account(), db = _Database();
+        final store = _Store(account), api = _Api(account);
+        final habitat = HabitatService(account, store, database: db, api: api);
+        var disposed = false;
+        try {
+          await habitat.load();
+          final pending = Completer<Map<String, dynamic>>();
+          if (method == 'load') {
+            api.delayedGet = pending;
+          } else {
+            api.delayedPost = pending;
+          }
+          Object? failure;
+          final request =
+              (method == 'load'
+                      ? habitat.load()
+                      : habitat.produce('harvest', '0').then<void>((_) {}))
+                  .catchError((Object error) {
+                    failure = error;
+                  });
+          await Future<void>.delayed(Duration.zero);
+          if (boundary == 'dispose') {
+            habitat.dispose();
+            disposed = true;
+          } else {
+            account.id = boundary == 'switch' ? 'two' : null;
+            api.delayedGet = null;
+            api.currentState = state(2);
+            await habitat.load();
+          }
+          final beforeStock = Map<String, int>.from(habitat.productionStock);
+          final beforeCache = Map<String, Map<String, dynamic>>.from(db.values);
+          pending.complete(state(999));
+          await request;
+          expect(
+            failure == null || failure is ProductApiException,
+            isTrue,
+            reason:
+                'Disposed notifier must not receive a late update: $failure',
+          );
+          expect(habitat.productionStock, beforeStock);
+          expect(db.values, beforeCache);
+        } finally {
+          if (!disposed) habitat.dispose();
+          store.dispose();
+          account.dispose();
+        }
+      });
+    }
+  }
   test('pet response updates affinity immediately and persists across restart', () async {
     final a = _Account(), db = _Database();
     final store = _Store(a), api = _Api(a);
