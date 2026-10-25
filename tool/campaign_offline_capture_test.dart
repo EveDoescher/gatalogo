@@ -31,16 +31,22 @@ class _Account extends SessionStore {
 }
 
 class _Store extends CatStore {
-  _Store(super.session, this.online)
+  _Store(super.session, this.online, this.analysisEnabled)
     : super(networkAvailable: () async => online);
   final bool online;
+  final bool analysisEnabled;
   @override
   Future<void> syncCatalog({bool manual = false}) async {
     if (online) await super.syncCatalog(manual: manual);
   }
 
   @override
-  Future<void> syncPendingAnalyses({bool manual = false}) async {}
+  Future<void> syncPendingAnalyses({bool manual = false}) async {
+    if (online && analysisEnabled) {
+      await super.syncPendingAnalyses(manual: manual);
+    }
+  }
+
   @override
   Future<void> resolvePendingLocations() async {}
 }
@@ -52,7 +58,8 @@ void main() {
       Platform.environment['QUALITY_OFFLINE_FLOW']!,
     ) as Map<String, dynamic>;
     final phase = options['phase'] as String;
-    final online = phase == 'sync';
+    final online = phase == 'sync' || phase == 'metadata';
+    final analysisEnabled = options['analysis_enabled'] == true;
     HttpOverrides.global = null;
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
@@ -76,10 +83,55 @@ void main() {
       Map<String, dynamic>.from(options['account']),
       online,
     );
-    final store = _Store(account, online), db = CatDatabase.instance;
+    final store = _Store(account, online, analysisEnabled),
+        db = CatDatabase.instance;
     final receipt = File(options['receipt']);
+    final watch = Stopwatch()..start();
     try {
       await store.loadCats();
+      if (online && analysisEnabled) {
+        final deadline = DateTime.now().add(const Duration(seconds: 20));
+        while (store.isSynchronizing ||
+            store.cats.any(
+              (cat) =>
+                  cat.status == 'pending_analysis' || cat.status == 'analyzing',
+            )) {
+          expect(
+            DateTime.now().isBefore(deadline),
+            isTrue,
+            reason: 'Controlled analysis must converge',
+          );
+          await Future<void>.delayed(const Duration(milliseconds: 20));
+        }
+        await store.syncCatalog(manual: true);
+        await store.refreshGamification();
+        await store.refreshNotifications();
+      }
+      if (phase == 'metadata') {
+        for (final cat in store.cats.toList()) {
+          await store.updateCatDetails(
+            cat.id,
+            name: cat.isOwned ? 'Lua revista' : 'Praça revista',
+            microchip: cat.microchip,
+            collar: cat.collar,
+            distinguishingMarks: cat.distinguishingMarks,
+          );
+        }
+        await store.syncCatalog(manual: true);
+        await receipt.writeAsString(
+          jsonEncode(
+            store.cats
+                .map(
+                  (cat) => {
+                    'id': cat.id,
+                    'owned': cat.isOwned,
+                    'name': cat.name,
+                  },
+                )
+                .toList(),
+          ),
+        );
+      }
       if (phase == 'capture') {
         expect(store.cats, isEmpty);
         for (final owned in [false, true]) {
@@ -130,7 +182,12 @@ void main() {
           expect(cat.name, row['name']);
           expect(cat.isOwned, row['owned']);
           expect(cat.ownerId, options['account']['id']);
-          expect(store.analysisFor(cat.id)?.status, AnalysisStatus.pending);
+          final completed =
+              analysisEnabled && ['sync', 'metadata', 'final'].contains(phase);
+          expect(
+            store.analysisFor(cat.id)?.status,
+            completed ? AnalysisStatus.completed : AnalysisStatus.pending,
+          );
           expect(cat.microchip, 'SYNTHETIC');
           expect(cat.collar, 'azul');
           expect(cat.distinguishingMarks, 'fixture');
@@ -148,7 +205,9 @@ void main() {
           'visible': store.cats.length,
           'ids': store.cats.map((cat) => cat.id).toList(),
           'sync_states': store.cats.map((cat) => cat.syncState).toList(),
-          'scope': 'real desktop SQLite/files and public CatStore methods; only sync phase uses disposable HTTP API; analysis and geolocation disabled',
+          'analysis_enabled': analysisEnabled,
+          'elapsed_ms_observed': watch.elapsedMilliseconds,
+          'scope': 'real desktop SQLite/files and public CatStore methods; sync/metadata phases use disposable HTTP API; analysis is controlled by explicit fixture option, geolocation disabled',
         }),
       );
     } finally {
