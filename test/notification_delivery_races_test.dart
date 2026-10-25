@@ -184,8 +184,9 @@ void main() {
         try {
           await http.runWithClient(
             () async {
-              if (oldRequest == 'loadMore')
+              if (oldRequest == 'loadMore') {
                 await activity.notifications.refresh();
+              }
               final pending = oldRequest == 'loadMore'
                   ? activity.notifications.loadMore()
                   : activity.notifications.refresh();
@@ -199,11 +200,13 @@ void main() {
               expect(activity.notifications.unreadCount, 1);
             },
             () => MockClient((request) {
-              if (request.headers['Authorization'] == 'Bearer B')
+              if (request.headers['Authorization'] == 'Bearer B') {
                 return Future.value(page([notice('B')]));
+              }
               callsA++;
-              if (oldRequest == 'loadMore' && callsA == 1)
+              if (oldRequest == 'loadMore' && callsA == 1) {
                 return Future.value(page(firstPage()));
+              }
               return old.future;
             }),
           );
