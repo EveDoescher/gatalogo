@@ -66,6 +66,8 @@ class _QuintalGameActionState extends State<QuintalGameAction> {
     button: true,
     enabled: widget.onPressed != null,
     label: widget.label,
+    onTap: widget.onPressed,
+    excludeSemantics: true,
     child: Material(
       color: Colors.transparent,
       child: InkWell(

@@ -14,70 +14,105 @@ Widget app(Widget child, bool reduced) => MaterialApp(
   ),
 );
 
+Future<void> withSemantics(
+  WidgetTester tester,
+  Future<void> Function() body,
+) async {
+  final handle = tester.ensureSemantics();
+  try {
+    await body();
+  } finally {
+    handle.dispose();
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => GoogleFonts.config.allowRuntimeFetching = false);
   for (final reduced in [false, true]) {
-    testWidgets('ACC05/06 yard action reduced=$reduced', (tester) async {
-      final semantics = tester.ensureSemantics();
-      addTearDown(semantics.dispose);
-      var calls = 0;
-      await tester.pumpWidget(
-        app(
-          QuintalGameAction(
-            artwork: const SizedBox(),
-            label: 'Coletar',
-            onPressed: () => calls++,
+    testWidgets(
+      'ACC05/06 yard action reduced=$reduced',
+      (tester) => withSemantics(tester, () async {
+        var calls = 0;
+        await tester.pumpWidget(
+          app(
+            QuintalGameAction(
+              artwork: const SizedBox(),
+              label: 'Coletar',
+              onPressed: () => calls++,
+            ),
+            reduced,
           ),
-          reduced,
-        ),
-      );
-      final animation = tester.widget<AnimatedScale>(
-        find.byType(AnimatedScale),
-      );
-      expect(
-        animation.duration,
-        reduced ? Duration.zero : const Duration(milliseconds: 90),
-      );
-      final node = tester.getSemantics(find.byType(QuintalGameAction));
-      expect(node.getSemanticsData().label, 'Coletar');
-      expect(node.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
-      tester.binding.pipelineOwner.semanticsOwner!.performAction(
-        node.id,
-        SemanticsAction.tap,
-      );
-      await tester.pump();
-      expect(calls, 1);
-    });
-    testWidgets('ACC05/06 hold toggle reduced=$reduced', (tester) async {
-      final semantics = tester.ensureSemantics();
-      addTearDown(semantics.dispose);
-      bool? changed;
-      await tester.pumpWidget(
-        app(
-          QuintalHoldControl(
-            held: false,
-            onChanged: (value) => changed = value,
+        );
+        final animation = tester.widget<AnimatedScale>(
+          find.byType(AnimatedScale),
+        );
+        expect(
+          animation.duration,
+          reduced ? Duration.zero : const Duration(milliseconds: 90),
+        );
+        final node = tester.getSemantics(find.byType(QuintalGameAction));
+        expect(node.getSemanticsData().label, 'Coletar');
+        expect(node.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
+        tester.binding.pipelineOwner.semanticsOwner!.performAction(
+          node.id,
+          SemanticsAction.tap,
+        );
+        await tester.pump();
+        expect(calls, 1);
+        await tester.tap(find.byType(QuintalGameAction));
+        await tester.pumpAndSettle();
+        expect(calls, 2);
+      }),
+    );
+    testWidgets(
+      'ACC05/06 disabled yard action reduced=$reduced',
+      (tester) => withSemantics(tester, () async {
+        await tester.pumpWidget(
+          app(
+            const QuintalGameAction(
+              artwork: SizedBox(),
+              label: 'Coletar',
+              onPressed: null,
+            ),
+            reduced,
           ),
-          reduced,
-        ),
-      );
-      final animation = tester.widget<AnimatedContainer>(
-        find.byType(AnimatedContainer),
-      );
-      expect(
-        animation.duration,
-        reduced ? Duration.zero : const Duration(milliseconds: 90),
-      );
-      final node = tester.getSemantics(find.byType(QuintalHoldControl));
-      expect(node.getSemanticsData().value, 'Descendo');
-      tester.binding.pipelineOwner.semanticsOwner!.performAction(
-        node.id,
-        SemanticsAction.tap,
-      );
-      await tester.pump();
-      expect(changed, isTrue);
-    });
+        );
+        final node = tester.getSemantics(find.byType(QuintalGameAction));
+        expect(node.getSemanticsData().label, 'Coletar');
+        expect(node.getSemanticsData().hasAction(SemanticsAction.tap), isFalse);
+      }),
+    );
+    testWidgets(
+      'ACC05/06 hold toggle reduced=$reduced',
+      (tester) => withSemantics(tester, () async {
+        bool? changed;
+        await tester.pumpWidget(
+          app(
+            QuintalHoldControl(
+              held: false,
+              onChanged: (value) => changed = value,
+            ),
+            reduced,
+          ),
+        );
+        final animation = tester.widget<AnimatedContainer>(
+          find.byType(AnimatedContainer),
+        );
+        expect(
+          animation.duration,
+          reduced ? Duration.zero : const Duration(milliseconds: 90),
+        );
+        final node = tester.getSemantics(find.byType(QuintalHoldControl));
+        expect(node.getSemanticsData().value, 'Descendo');
+        tester.binding.pipelineOwner.semanticsOwner!.performAction(
+          node.id,
+          SemanticsAction.tap,
+        );
+        await tester.pump();
+        expect(changed, isTrue);
+      }),
+    );
     testWidgets('ACC06 celebration preserves content reduced=$reduced', (
       tester,
     ) async {
