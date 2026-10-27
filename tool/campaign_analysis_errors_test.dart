@@ -14,6 +14,13 @@ void main() {
     Platform.environment['QUALITY_ANALYSIS_ERRORS_CONFIG']!,
   ) as Map<String, dynamic>;
   final rows = <Map<String, Object?>>[];
+  setUp(() {
+    final endpoint = Uri.parse(ApiConfig.baseUrl);
+    expect(endpoint.host, '127.0.0.1');
+    expect(endpoint.port, isNot(8000));
+    // Flutter's test binding otherwise replaces every HTTP response with 400.
+    HttpOverrides.global = null;
+  });
   final variants = [
     'rejected',
     'unavailable-json',
