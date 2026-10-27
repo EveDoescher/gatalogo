@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:catlogue/data/cat_database.dart';
 import 'package:catlogue/models/auth_session.dart';
 import 'package:catlogue/models/cat.dart';
+import 'package:catlogue/models/cat_analysis.dart';
 import 'package:catlogue/services/catalog_sync_service.dart';
 import 'package:catlogue/stores/session_store.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -31,9 +32,55 @@ class _Account extends SessionStore {
   Future<String?> accessToken({bool refresh = false}) async => options['token'];
 }
 
+class _MeasuredDatabase extends CatDatabase {
+  final applyMicroseconds = <int>[];
+  @override
+  Future<void> replaceCatFromSync(Cat cat, {CatAnalysis? analysis}) async {
+    final watch = Stopwatch()..start();
+    try {
+      await super.replaceCatFromSync(cat, analysis: analysis);
+    } finally {
+      applyMicroseconds.add(watch.elapsedMicroseconds);
+    }
+  }
+}
+
+// Decode exact received pull bodies after the timed sync, never inside HTTP.
+List<Map<String, Object?>> _profileDecode(List<List<int>> bodies) {
+  return [for (final bytes in bodies) _profileBody(bytes)];
+}
+
+Map<String, Object?> _profileBody(List<int> bytes) {
+  final expected = (jsonDecode(utf8.decode(bytes))['changes'] as List).length;
+  for (var i = 0; i < 20; i++) {
+    jsonDecode(utf8.decode(bytes));
+  }
+  final batches = <int>[];
+  var checksum = 0;
+  for (var batch = 0; batch < 100; batch++) {
+    final watch = Stopwatch()..start();
+    for (var i = 0; i < 10; i++) {
+      checksum += (jsonDecode(utf8.decode(bytes))['changes'] as List).length;
+    }
+    batches.add(watch.elapsedMicroseconds);
+  }
+  expect(checksum, expected * 1000);
+  return {
+    'response_bytes': bytes.length,
+    'changes': expected,
+    'warmup_decodes': 20,
+    'batches': 100,
+    'decodes_per_batch': 10,
+    'batch_elapsed_us': batches,
+    'checksum': checksum,
+    'scope': 'UTF8 plus jsonDecode of actual wire body; model mapping and SQLite excluded. Correlated microbenchmark batches, not independent request latencies.',
+  };
+}
+
 class _Measured extends http.BaseClient {
   final http.Client delegate = IOClient();
   final List<Map<String, dynamic>> samples = [];
+  final pullBodies = <List<int>>[];
   bool failSecondPush;
   int pushes = 0;
   _Measured(this.failSecondPush);
@@ -50,6 +97,9 @@ class _Measured extends http.BaseClient {
         ? http.StreamedResponse(Stream.value(utf8.encode('{}')), 503)
         : await delegate.send(request);
     final bytes = await reply.stream.toBytes();
+    if (request.url.path == '/sync/pull' && reply.statusCode == 200) {
+      pullBodies.add(bytes);
+    }
     samples.add({
       'method': request.method,
       'path_query':
@@ -95,7 +145,7 @@ void main() {
         );
         await folder.create();
         await databaseFactory.setDatabasesPath(folder.path);
-        final storage = CatDatabase();
+        final storage = _MeasuredDatabase();
         final db = await storage.database;
         final account = _Account(Map<String, dynamic>.from(accounts[index]));
         final client = _Measured(variant['failure'] == true);
@@ -173,6 +223,9 @@ void main() {
             isEmpty,
           );
         } finally {
+          watch.stop();
+          final syncRss = ProcessInfo.currentRss;
+          final decodeProfiles = _profileDecode(client.pullBodies);
           await File(p.join(folder.path, 'metrics.json')).writeAsString(
             jsonEncode({
               'variant': variant['name'],
@@ -180,7 +233,10 @@ void main() {
               'cycles': cycles,
               'requests': client.samples,
               'elapsed_us': watch.elapsedMicroseconds,
-              'rss_bytes_observed': ProcessInfo.currentRss,
+              'rss_bytes_observed': syncRss,
+              'decode_profiler_rss_after': ProcessInfo.currentRss,
+              'production_apply_us': storage.applyMicroseconds,
+              'json_decode_profiles': decodeProfiles,
             }),
           );
           client.dispose();
