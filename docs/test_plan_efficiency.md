@@ -179,3 +179,5 @@ Resultados Android de 25/10/2026: [fontes, teclado, TalkBack, correção do XP e
 
 
 Resultados locais de 27/10/2026, sem aparelho: [LAT-04 — 21 casos, cinco repetições de 501 registros e perfis separados de JSON/SQLite](https://github.com/EveDoescher/gatalogo-api/blob/code-quality-cleanup/docs/campaigns/2026-10-23-sequential/LAT04-20261027-results.json). A matriz única da API mantém a rastreabilidade; estes dados Windows/SQLite FFI não certificam desempenho Android nem demonstram ganho.
+
+Continuação sem USB de 27/10/2026: [fechamentos, correções, mutantes e evidências arquivadas](https://github.com/EveDoescher/gatalogo-api/blob/code-quality-cleanup/docs/campaigns/2026-10-23-sequential/README.md#atualização-sem-usb--27102026). Os resultados de SMTP, resiliência, recursos sob limites, modelos locais e rejeições de imagem permanecem na matriz compartilhada, com fontes e limitações por cenário. Não houve execução em aparelho, chamada de IA paga ou alteração de telas nesta bateria.
