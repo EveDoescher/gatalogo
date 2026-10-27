@@ -68,6 +68,29 @@ class AnalysisApiService {
         }
       }
 
+      // Proxies may return HTML during outages; status still controls retryability.
+      if (response.statusCode == 503) {
+        throw const AnalysisApiException(
+          'O serviço de análise está indisponível no momento.',
+          retryable: true,
+        );
+      }
+
+      if (response.statusCode == 401) {
+        throw const AnalysisApiException(
+          'Sua sessão expirou. Entre novamente para continuar.',
+          retryable: true,
+        );
+      }
+
+      if (response.statusCode >= 500) {
+        throw AnalysisApiException(
+          'O serviço de análise está temporariamente indisponível '
+          '(HTTP ${response.statusCode}).',
+          retryable: true,
+        );
+      }
+
       final Map<String, dynamic> body = response.body.isEmpty
           ? {}
           : Map<String, dynamic>.from(jsonDecode(response.body) as Map);
@@ -89,28 +112,6 @@ class AnalysisApiService {
                 'A imagem não pôde ser utilizada.',
           );
         }
-      }
-
-      if (response.statusCode == 503) {
-        throw const AnalysisApiException(
-          'O serviço de análise está indisponível no momento.',
-          retryable: true,
-        );
-      }
-
-      if (response.statusCode == 401) {
-        throw const AnalysisApiException(
-          'Sua sessão expirou. Entre novamente para continuar.',
-          retryable: true,
-        );
-      }
-
-      if (response.statusCode >= 500) {
-        throw AnalysisApiException(
-          'O serviço de análise está temporariamente indisponível '
-          '(HTTP ${response.statusCode}).',
-          retryable: true,
-        );
       }
 
       throw AnalysisApiException(
