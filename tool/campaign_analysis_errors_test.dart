@@ -59,7 +59,7 @@ void main() {
               try {
                 final renewed = await AuthApiService().refresh(
                   refreshToken: variant == 'refresh-failed'
-                      ? 'controlled-invalid-refresh'
+                    ? 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
                       : config['refresh_token'] as String,
                   deviceId: 'analysis-errors-fixture',
                 );
